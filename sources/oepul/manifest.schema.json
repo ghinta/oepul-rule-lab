@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oepul-rule-lab:sources:oepul:manifest:v1.1",
+  "title": "Current official AMA OePUL source manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "source_pack_id",
+    "generated_at",
+    "scope",
+    "source_indexes",
+    "provenance",
+    "expected_document_ids",
+    "summary",
+    "documents",
+    "legal_basis_documents",
+    "year_specific_notices"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.1.0"},
+    "source_pack_id": {"const": "ama-oepul-current"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mandatory_core", "core_complete", "legal_completeness_claimed", "note"],
+      "properties": {
+        "mandatory_core": {"const": "27 current AMA OePUL information sheets"},
+        "core_complete": {"const": true},
+        "legal_completeness_claimed": {"const": false},
+        "note": {"type": "string", "minLength": 1}
+      }
+    },
+    "source_indexes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["information_sheets", "legal_basis", "notices_2026"],
+      "properties": {
+        "information_sheets": {"$ref": "#/$defs/source_index"},
+        "legal_basis": {"$ref": "#/$defs/source_index"},
+        "notices_2026": {"$ref": "#/$defs/source_index"}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "information_sheets_index_snapshot_path",
+        "legal_basis_index_snapshot_path",
+        "notices_index_snapshot_path",
+        "manifest_snapshot_path",
+        "run_record_path"
+      ],
+      "properties": {
+        "run_id": {"type": "string", "pattern": "^[0-9]{8}T[0-9]{12}Z$"},
+        "information_sheets_index_snapshot_path": {"type": "string"},
+        "legal_basis_index_snapshot_path": {"type": "string"},
+        "notices_index_snapshot_path": {"type": "string"},
+        "manifest_snapshot_path": {"type": "string"},
+        "run_record_path": {"type": "string"}
+      }
+    },
+    "expected_document_ids": {
+      "type": "array",
+      "minItems": 27,
+      "maxItems": 27,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^o6_(general|1[abc]|[2-9]|1[0-9]|2[0-4])$"}
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "core_document_count",
+        "edition_counts",
+        "current_2026_document_count",
+        "official_current_2025_document_count",
+        "legal_basis_document_count",
+        "year_specific_notice_count",
+        "all_recorded_sources_are_current_index_targets"
+      ],
+      "properties": {
+        "core_document_count": {"const": 27},
+        "edition_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 1}},
+        "current_2026_document_count": {"type": "integer", "minimum": 0},
+        "official_current_2025_document_count": {"type": "integer", "minimum": 0},
+        "legal_basis_document_count": {"type": "integer", "minimum": 1},
+        "year_specific_notice_count": {"type": "integer", "minimum": 1},
+        "all_recorded_sources_are_current_index_targets": {"const": true}
+      }
+    },
+    "documents": {
+      "type": "array",
+      "minItems": 27,
+      "maxItems": 27,
+      "items": {"$ref": "#/$defs/information_sheet"}
+    },
+    "legal_basis_documents": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/legal_pdf"}
+    },
+    "year_specific_notices": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/notice"}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_index": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["publisher", "url", "retrieved_at", "sha256"],
+      "properties": {
+        "publisher": {"const": "Agrarmarkt Austria (AMA)"},
+        "url": {"type": "string", "pattern": "^https://www\\.ama\\.at/fachliche-informationen/oepul/"},
+        "retrieved_at": {"type": "string", "format": "date-time"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "http_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["response_url", "status", "content_type", "etag", "last_modified"],
+      "properties": {
+        "response_url": {"type": "string"},
+        "status": {"type": "integer", "minimum": 200, "maximum": 299},
+        "content_type": {"type": ["string", "null"]},
+        "etag": {"type": ["string", "null"]},
+        "last_modified": {"type": ["string", "null"]}
+      }
+    },
+    "file_identity": {
+      "type": "object",
+      "required": ["official_url", "source_filename", "local_path", "retrieved_at", "sha256", "file_size_bytes", "http_provenance"],
+      "properties": {
+        "official_url": {"type": "string", "pattern": "^https://www\\.ama\\.at/"},
+        "source_filename": {"type": "string", "minLength": 1},
+        "local_path": {"type": "string", "pattern": "^sources/oepul/"},
+        "retrieved_at": {"type": "string", "format": "date-time"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "file_size_bytes": {"type": "integer", "minimum": 1},
+        "http_provenance": {"$ref": "#/$defs/http_provenance"}
+      }
+    },
+    "information_sheet": {
+      "allOf": [
+        {"$ref": "#/$defs/file_identity"},
+        {
+          "type": "object",
+          "required": ["document_id", "measure_id", "source_type", "category", "title", "edition", "edition_label", "edition_status", "page_count", "pdf_version"],
+          "properties": {
+            "document_id": {"type": "string", "pattern": "^o6_(general|1[abc]|[2-9]|1[0-9]|2[0-4])$"},
+            "measure_id": {"type": ["string", "null"]},
+            "source_type": {"enum": ["general_information_sheet", "measure_information_sheet"]},
+            "category": {"enum": ["Allgemein", "Grünland", "Acker", "Dauerkulturen", "Tiere"]},
+            "title": {"type": "string", "minLength": 1},
+            "edition": {"type": "string", "pattern": "^20[0-9]{2}-(0[1-9]|1[0-2])$"},
+            "edition_label": {"type": "string", "pattern": "^Stand .+ 20[0-9]{2}$"},
+            "edition_status": {"enum": ["current_2026_edition", "official_current_2025_edition"]},
+            "page_count": {"type": "integer", "minimum": 1},
+            "pdf_version": {"type": "string", "pattern": "^%PDF-[0-9]+\\.[0-9]+$"}
+          }
+        }
+      ]
+    },
+    "legal_pdf": {
+      "allOf": [
+        {"$ref": "#/$defs/file_identity"},
+        {
+          "type": "object",
+          "required": ["source_id", "source_type", "title", "source_date", "current_status", "version_note", "page_count", "pdf_version"],
+          "properties": {
+            "source_id": {"type": "string"},
+            "source_type": {"const": "legal_basis_pdf"},
+            "title": {"type": "string"},
+            "source_date": {"type": "string", "format": "date"},
+            "current_status": {"const": "current_official_target_at_capture"},
+            "version_label": {"type": "string", "pattern": "^Zuletzt geändert mit: 2024-0\\.489\\.174$"},
+            "version_note": {"type": "string"},
+            "page_count": {"type": "integer", "minimum": 1},
+            "pdf_version": {"type": "string", "pattern": "^%PDF-[0-9]+\\.[0-9]+$"}
+          }
+        }
+      ]
+    },
+    "notice": {
+      "allOf": [
+        {"$ref": "#/$defs/file_identity"},
+        {
+          "type": "object",
+          "required": ["source_id", "source_type", "publication_year", "published_on", "title", "topic_tags"],
+          "properties": {
+            "source_id": {"type": "string"},
+            "source_type": {"const": "year_specific_notice_html"},
+            "publication_year": {"const": 2026},
+            "published_on": {"type": "string", "format": "date"},
+            "title": {"type": "string"},
+            "topic_tags": {"type": "array", "minItems": 1, "items": {"type": "string"}}
+          }
+        }
+      ]
+    }
+  }
+}

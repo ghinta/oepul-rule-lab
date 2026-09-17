@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oepul-rule-lab.invalid/contracts/run-artifact-v1.schema.json",
+  "title": "ÖPUL Rule Lab run.json contract v1",
+  "description": "Metadata written incrementally by rulelab prepare, run, and finalize.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "run_id",
+    "created_at",
+    "status",
+    "mode",
+    "measure",
+    "model",
+    "profile",
+    "sources"
+  ],
+  "properties": {
+    "contract_version": {"const": "1.0"},
+    "run_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{5,159}$"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "status": {"enum": ["prepared", "running", "generated", "failed", "finalized"]},
+    "mode": {"enum": ["discover", "conform"]},
+    "measure": {"type": "string", "pattern": "^o6_[0-9]+[a-z]?$"},
+    "model": {"$ref": "model-config-v1.schema.json"},
+    "profile": {"$ref": "#/$defs/profile"},
+    "sources": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/source"}
+    },
+    "started_at": {"type": "string", "format": "date-time"},
+    "finished_at": {"type": "string", "format": "date-time"},
+    "generator_exit_code": {"type": "integer"},
+    "generation_attempt": {"type": "integer", "minimum": 1},
+    "invocation": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string"}
+    },
+    "finalized_at": {"type": "string", "format": "date-time"},
+    "metrics": {"$ref": "#/$defs/metrics"}
+  },
+  "$defs": {
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "source_path", "sha256", "bytes"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1},
+        "source_path": {"$ref": "#/$defs/relativePath"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "bytes": {"type": "integer", "minimum": 1}
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rego_files",
+        "rego_lines",
+        "input_paths",
+        "profile_paths_added",
+        "profile_paths_removed",
+        "profile_paths_changed",
+        "structured_rule_count",
+        "source_reference_count",
+        "generated_test_count",
+        "data_files",
+        "data_bytes",
+        "required_outputs_missing",
+        "conform_profile_unchanged",
+        "inventory_created"
+      ],
+      "properties": {
+        "rego_files": {"type": "integer", "minimum": 0},
+        "rego_lines": {"type": "integer", "minimum": 0},
+        "input_paths": {"type": "integer", "minimum": 0},
+        "profile_paths_added": {"type": "integer", "minimum": 0},
+        "profile_paths_removed": {"type": "integer", "minimum": 0},
+        "profile_paths_changed": {"type": "integer", "minimum": 0},
+        "structured_rule_count": {"type": ["integer", "null"], "minimum": 0},
+        "source_reference_count": {"type": ["integer", "null"], "minimum": 0},
+        "generated_test_count": {"type": "integer", "minimum": 0},
+        "data_files": {"type": "integer", "minimum": 0},
+        "data_bytes": {"type": "integer", "minimum": 0},
+        "technical_validation_exit_code": {"type": "integer"},
+        "required_outputs_missing": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string"}
+        },
+        "conform_profile_unchanged": {"type": "boolean"},
+        "inventory_created": {"type": "boolean"}
+      }
+    }
+  }
+}

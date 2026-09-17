@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oepul-rule-lab.invalid/contracts/generation-config-v1.schema.json",
+  "title": "ÖPUL Rule Lab generation configuration v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "config_id",
+    "mode",
+    "provider",
+    "model",
+    "inputs",
+    "generation",
+    "logging",
+    "run_layout"
+  ],
+  "properties": {
+    "contract_version": {"const": "generation-config-v1.0.0"},
+    "config_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,79}$"},
+    "mode": {"enum": ["discover", "conform"]},
+    "provider": {"$ref": "#/$defs/provider"},
+    "model": {"$ref": "#/$defs/model"},
+    "inputs": {"$ref": "#/$defs/inputs"},
+    "generation": {"$ref": "#/$defs/generation"},
+    "logging": {"$ref": "#/$defs/logging"},
+    "run_layout": {"$ref": "#/$defs/runLayout"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"mode": {"const": "discover"}}},
+      "then": {
+        "properties": {
+          "generation": {
+            "properties": {
+              "profile_edit_policy": {"const": "run_local_extensions"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"mode": {"const": "conform"}}},
+      "then": {
+        "properties": {
+          "generation": {
+            "properties": {
+              "profile_edit_policy": {"const": "canonical_fields_only"}
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "envName": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Z][A-Z0-9_]*$"
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "api_style", "adapter_config_path", "base_url_env", "credential_env"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{1,39}$"},
+        "api_style": {
+          "enum": [
+            "openai_responses",
+            "openai_compatible",
+            "anthropic_messages",
+            "gemini_generate_content",
+            "codex_cli",
+            "external_command",
+            "local_process",
+            "custom"
+          ]
+        },
+        "adapter_config_path": {"$ref": "#/$defs/relativePath"},
+        "base_url_env": {"$ref": "#/$defs/envName"},
+        "credential_env": {"$ref": "#/$defs/envName"}
+      }
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "temperature", "top_p", "seed", "max_output_tokens", "request_timeout_seconds"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "maxLength": 160},
+        "temperature": {"type": ["number", "null"], "minimum": 0, "maximum": 2},
+        "top_p": {"type": ["number", "null"], "exclusiveMinimum": 0, "maximum": 1},
+        "seed": {"type": ["integer", "null"], "minimum": 0},
+        "max_output_tokens": {"type": "integer", "minimum": 256, "maximum": 1000000},
+        "request_timeout_seconds": {"type": "integer", "minimum": 1, "maximum": 7200}
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_manifest_path", "source_selection", "canonical_profile", "prompts"],
+      "properties": {
+        "source_manifest_path": {"$ref": "#/$defs/relativePath"},
+        "source_selection": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/sourceSelection"}
+        },
+        "canonical_profile": {"$ref": "#/$defs/canonicalProfile"},
+        "prompts": {"$ref": "#/$defs/prompts"}
+      }
+    },
+    "sourceSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "clause_scopes"],
+      "properties": {
+        "source_id": {"type": "string", "minLength": 1, "maxLength": 160},
+        "clause_scopes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 160}
+        }
+      }
+    },
+    "canonicalProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_id", "path", "schema_path", "expected_sha256"],
+      "properties": {
+        "profile_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{2,79}$"},
+        "path": {"$ref": "#/$defs/relativePath"},
+        "schema_path": {"anyOf": [{"$ref": "#/$defs/relativePath"}, {"type": "null"}]},
+        "expected_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "prompts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["system_path", "task_template_path"],
+      "properties": {
+        "system_path": {"$ref": "#/$defs/relativePath"},
+        "task_template_path": {"$ref": "#/$defs/relativePath"}
+      }
+    },
+    "generation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "objective",
+        "candidate_count",
+        "profile_edit_policy",
+        "require_rego_tests",
+        "require_source_references"
+      ],
+      "properties": {
+        "objective": {"const": "maximize_source_grounded_rule_extraction"},
+        "candidate_count": {"type": "integer", "minimum": 1, "maximum": 100},
+        "profile_edit_policy": {"enum": ["run_local_extensions", "canonical_fields_only"]},
+        "require_rego_tests": {"const": true},
+        "require_source_references": {"const": true}
+      }
+    },
+    "logging": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw_jsonl", "capture_requests", "capture_responses", "redact_credentials"],
+      "properties": {
+        "raw_jsonl": {"const": true},
+        "capture_requests": {"const": true},
+        "capture_responses": {"const": true},
+        "redact_credentials": {"const": true}
+      }
+    },
+    "runLayout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root_template", "manifest_name"],
+      "properties": {
+        "root_template": {"const": "runs/{run_id}"},
+        "manifest_name": {"const": "run.json"}
+      }
+    }
+  }
+}
