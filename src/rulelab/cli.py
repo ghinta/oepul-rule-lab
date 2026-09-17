@@ -12,15 +12,15 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from .contracts import GENERATOR_CONTRACT_MODELS, export_generator_schemas
+from .grounding import known_profile_paths, validate_grounded_outputs
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_PROFILE = REPO_ROOT / "profiles" / "canonical_farm_profile.json"
 DEFAULT_SOURCES = REPO_ROOT / "sources" / "oepul"
 OPA_RUNNER = REPO_ROOT / "runner" / "validation" / "opa_validate.py"
-GENERATOR_CONTRACTS = (
-    "rules-catalog-v1.schema.json",
-    "source-references-v1.schema.json",
-)
+GENERATOR_CONTRACTS = tuple(GENERATOR_CONTRACT_MODELS)
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -29,11 +29,6 @@ def read_json(path: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError(f"Expected a JSON object in {path}")
     return value
-
-
-def read_json_value(path: Path) -> Any:
-    with path.open(encoding="utf-8") as handle:
-        return json.load(handle)
 
 
 def write_json(path: Path, value: Any) -> None:
@@ -541,215 +536,65 @@ def rego_input_paths(files: list[Path]) -> list[str]:
     return sorted(paths)
 
 
-def collection_count(path: Path, key: str) -> int | None:
-    if not path.is_file():
-        return None
-    try:
-        value = read_json_value(path)
-    except (OSError, json.JSONDecodeError):
-        return None
-    if isinstance(value, list):
-        return len(value)
-    if isinstance(value, dict) and isinstance(value.get(key), list):
-        return len(value[key])
-    return None
-
-
-def validate_rules_catalog(path: Path, measure: str) -> tuple[int | None, list[str]]:
-    """Validate the generated catalog's core JSON contract without extra packages."""
-    try:
-        value = read_json_value(path)
-    except (OSError, json.JSONDecodeError) as exc:
-        return None, [f"invalid JSON: {exc}"]
-    if not isinstance(value, dict):
-        return None, ["root must be an object"]
-    errors: list[str] = []
-    allowed = {"contract_version", "measure", "rules"}
-    extra = sorted(set(value) - allowed)
-    if extra:
-        errors.append(f"unexpected top-level keys: {', '.join(extra)}")
-    if value.get("contract_version") != "rules-catalog-v1.0.0":
-        errors.append("contract_version must be rules-catalog-v1.0.0")
-    if value.get("measure") != measure:
-        errors.append(f"measure must be {measure}")
-    rules = value.get("rules")
-    if not isinstance(rules, list):
-        errors.append("rules must be an array")
-        return None, errors
-    for index, rule in enumerate(rules):
-        prefix = f"rules[{index}]"
-        if not isinstance(rule, dict):
-            errors.append(f"{prefix} must be an object")
-            continue
-        for key in ("id", "rule_type", "statement"):
-            if not isinstance(rule.get(key), str) or not rule[key].strip():
-                errors.append(f"{prefix}.{key} must be a non-empty string")
-        if not isinstance(rule.get("conditions"), list):
-            errors.append(f"{prefix}.conditions must be an array")
-        if "result" not in rule:
-            errors.append(f"{prefix}.result is required")
-        sources = rule.get("sources")
-        if not isinstance(sources, list) or not sources:
-            errors.append(f"{prefix}.sources must be a non-empty array")
-            continue
-        for source_index, source in enumerate(sources):
-            source_prefix = f"{prefix}.sources[{source_index}]"
-            if not isinstance(source, dict):
-                errors.append(f"{source_prefix} must be an object")
-                continue
-            if not isinstance(source.get("document"), str) or not source["document"].strip():
-                errors.append(f"{source_prefix}.document must be a non-empty string")
-            page = source.get("page")
-            if page is not None and (
-                not isinstance(page, int) or isinstance(page, bool) or page < 1
-            ):
-                errors.append(
-                    f"{source_prefix}.page must be null or an integer >= 1"
-                )
-    return len(rules), errors
-
-
-def _relative_path(value: Any) -> bool:
-    if not isinstance(value, str) or not value:
-        return False
-    path = Path(value)
-    return not path.is_absolute() and ".." not in path.parts
-
-
-def validate_source_references(
-    path: Path, run_dir: Path, run_id: str
-) -> tuple[int | None, list[str]]:
-    """Validate citation shape plus source hashes and generated artifact targets."""
-    try:
-        value = read_json_value(path)
-    except (OSError, json.JSONDecodeError) as exc:
-        return None, [f"invalid JSON: {exc}"]
-    if not isinstance(value, dict):
-        return None, ["root must be an object"]
-    errors: list[str] = []
-    allowed = {"contract_version", "run_id", "references"}
-    extra = sorted(set(value) - allowed)
-    if extra:
-        errors.append(f"unexpected top-level keys: {', '.join(extra)}")
-    if value.get("contract_version") != "source-references-v1.0.0":
-        errors.append("contract_version must be source-references-v1.0.0")
-    if value.get("run_id") != run_id:
-        errors.append(f"run_id must be {run_id}")
-    references = value.get("references")
-    if not isinstance(references, list):
-        errors.append("references must be an array")
-        return None, errors
-    if not references:
-        errors.append("references must not be empty")
-    id_pattern = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{2,119}$")
-    digest_pattern = re.compile(r"^[0-9a-f]{64}$")
-    for index, reference in enumerate(references):
-        prefix = f"references[{index}]"
-        if not isinstance(reference, dict):
-            errors.append(f"{prefix} must be an object")
-            continue
-        expected = {
-            "reference_id",
-            "source_id",
-            "source_path",
-            "source_sha256",
-            "page",
-            "section",
-            "claim",
-            "used_by",
-        }
-        missing = sorted(expected - set(reference))
-        extra = sorted(set(reference) - expected)
-        if missing:
-            errors.append(f"{prefix} missing: {', '.join(missing)}")
-        if extra:
-            errors.append(f"{prefix} unexpected: {', '.join(extra)}")
-        reference_id = reference.get("reference_id")
-        if not isinstance(reference_id, str) or not id_pattern.fullmatch(reference_id):
-            errors.append(f"{prefix}.reference_id has an invalid format")
-        if not isinstance(reference.get("source_id"), str) or not reference["source_id"].strip():
-            errors.append(f"{prefix}.source_id must be a non-empty string")
-        source_path = reference.get("source_path")
-        if not _relative_path(source_path):
-            errors.append(f"{prefix}.source_path must be a safe relative path")
-        else:
-            source_file = run_dir / source_path
-            if not source_file.is_file():
-                errors.append(f"{prefix}.source_path does not exist: {source_path}")
-            elif reference.get("source_sha256") != sha256(source_file):
-                errors.append(f"{prefix}.source_sha256 does not match {source_path}")
-        source_digest = reference.get("source_sha256")
-        if not isinstance(source_digest, str) or not digest_pattern.fullmatch(source_digest):
-            errors.append(f"{prefix}.source_sha256 must be lowercase SHA-256")
-        page = reference.get("page")
-        if page is not None and (
-            not isinstance(page, int) or isinstance(page, bool) or page < 1
-        ):
-            errors.append(f"{prefix}.page must be null or an integer >= 1")
-        section = reference.get("section")
-        if section is not None and (
-            not isinstance(section, str) or not section.strip()
-        ):
-            errors.append(f"{prefix}.section must be null or a non-empty string")
-        if not isinstance(reference.get("claim"), str) or not reference["claim"].strip():
-            errors.append(f"{prefix}.claim must be a non-empty string")
-        uses = reference.get("used_by")
-        if not isinstance(uses, list) or not uses:
-            errors.append(f"{prefix}.used_by must be a non-empty array")
-            continue
-        for use_index, use in enumerate(uses):
-            use_prefix = f"{prefix}.used_by[{use_index}]"
-            if not isinstance(use, dict):
-                errors.append(f"{use_prefix} must be an object")
-                continue
-            if set(use) != {"artifact_path", "symbol", "line_start", "line_end"}:
-                errors.append(
-                    f"{use_prefix} must contain exactly artifact_path, symbol, "
-                    "line_start, line_end"
-                )
-            artifact_path = use.get("artifact_path")
-            if not _relative_path(artifact_path):
-                errors.append(f"{use_prefix}.artifact_path must be a safe relative path")
-            elif not (run_dir / artifact_path).is_file():
-                errors.append(
-                    f"{use_prefix}.artifact_path does not exist: {artifact_path}"
-                )
-            if not isinstance(use.get("symbol"), str) or not use["symbol"].strip():
-                errors.append(f"{use_prefix}.symbol must be a non-empty string")
-            for line_key in ("line_start", "line_end"):
-                line = use.get(line_key)
-                if line is not None and (
-                    not isinstance(line, int) or isinstance(line, bool) or line < 1
-                ):
-                    errors.append(
-                        f"{use_prefix}.{line_key} must be null or an integer >= 1"
-                    )
-            if (
-                isinstance(use.get("line_start"), int)
-                and isinstance(use.get("line_end"), int)
-                and use["line_end"] < use["line_start"]
-            ):
-                errors.append(f"{use_prefix}.line_end must be >= line_start")
-    return len(references), errors
+def validate_rego_profile_paths(
+    rego_files: list[Path], proposed_profile: dict[str, Any]
+) -> tuple[list[str], list[str]]:
+    input_paths = rego_input_paths(rego_files)
+    available_profile_paths = known_profile_paths(proposed_profile)
+    unknown_paths = sorted(
+        path
+        for path in input_paths
+        if path.removeprefix("input.") not in available_profile_paths
+    )
+    return input_paths, unknown_paths
 
 
 def finalize(args: argparse.Namespace) -> int:
     run_dir = Path(args.run_dir).resolve()
     workspace = run_dir / "workspace"
     metadata = read_json(run_dir / "run.json")
-    before = read_json(run_dir / "baseline_profile.json")
-    after = read_json(workspace / "canonical_farm_profile.json")
-    diff = profile_diff(before, after)
-    write_json(run_dir / "artifacts" / "profile-diff.json", diff)
+    baseline = read_json(run_dir / "baseline_profile.json")
+    working = read_json(workspace / "canonical_farm_profile.json")
+    direct_profile_diff = profile_diff(baseline, working)
+    write_json(
+        run_dir / "artifacts" / "direct-profile-diff.json", direct_profile_diff
+    )
 
+    grounded = validate_grounded_outputs(run_dir, metadata, baseline)
     rego_modules = sorted((workspace / "policy").rglob("*.rego"))
     rego_tests = sorted((workspace / "tests").rglob("*.rego"))
-    data_files = sorted(path for path in (workspace / "data").rglob("*") if path.is_file())
+    data_files = sorted(
+        path for path in (workspace / "data").rglob("*") if path.is_file()
+    )
     rego_files = [*rego_modules, *rego_tests]
-    input_paths = rego_input_paths(rego_files)
+    input_paths, unknown_rego_input_paths = validate_rego_profile_paths(
+        rego_files, grounded.proposed_profile
+    )
+    if unknown_rego_input_paths:
+        grounded.errors["profile_application"].append(
+            "Rego uses paths absent from proposed profile: "
+            f"{unknown_rego_input_paths}"
+        )
+    write_json(
+        run_dir / "artifacts" / "grounding-validation.json",
+        {
+            "contract_version": "grounding-validation-v1.0.0",
+            "status": "passed" if grounded.valid else "failed",
+            "errors": grounded.errors,
+        },
+    )
+    write_json(
+        run_dir / "artifacts" / "proposed-profile.json", grounded.proposed_profile
+    )
+    diff = profile_diff(baseline, grounded.proposed_profile)
+    write_json(run_dir / "artifacts" / "profile-diff.json", diff)
     write_json(
         run_dir / "artifacts" / "input-paths.json",
-        {"paths": input_paths, "count": len(input_paths)},
+        {
+            "paths": input_paths,
+            "count": len(input_paths),
+            "unknown_profile_paths": unknown_rego_input_paths,
+        },
     )
     metrics = {
         "rego_files": len(rego_files),
@@ -758,11 +603,13 @@ def finalize(args: argparse.Namespace) -> int:
             for path in rego_files
         ),
         "input_paths": len(input_paths),
+        "unknown_input_paths": len(unknown_rego_input_paths),
         "profile_paths_added": len(diff["added"]),
         "profile_paths_removed": len(diff["removed"]),
         "profile_paths_changed": len(diff["changed"]),
         "data_files": len(data_files),
         "data_bytes": sum(path.stat().st_size for path in data_files),
+        "working_profile_unchanged": not any(direct_profile_diff.values()),
     }
     validation_exit_code: int | None = None
     if not args.skip_validation and rego_files:
@@ -798,6 +645,9 @@ def finalize(args: argparse.Namespace) -> int:
     required_files = {
         "structured_rules": workspace / "rules" / "rules.json",
         "source_references": workspace / "rules" / "citations.json",
+        "profile_changes": workspace / "rules" / "profile_changes.json",
+        "coverage_ledger": workspace / "rules" / "coverage.json",
+        "data_inventory": workspace / "rules" / "data_inventory.json",
         "assumptions": workspace / "notes" / "assumptions.md",
         "raw_log": run_dir / "raw" / "events.jsonl",
     }
@@ -808,22 +658,34 @@ def finalize(args: argparse.Namespace) -> int:
         missing_outputs.append("rego_modules")
     if not rego_tests:
         missing_outputs.append("rego_tests")
-    structured_rule_count, rules_contract_errors = validate_rules_catalog(
-        required_files["structured_rules"], str(metadata.get("measure", ""))
+    structured_rule_count = len(grounded.rules.rules) if grounded.rules else None
+    source_reference_count = (
+        len(grounded.references.references) if grounded.references else None
     )
-    source_reference_count, references_contract_errors = validate_source_references(
-        required_files["source_references"],
-        run_dir,
-        str(metadata.get("run_id", "")),
+    profile_change_count = (
+        len(grounded.profile_changes.changes) if grounded.profile_changes else None
     )
-    if required_files["structured_rules"].is_file() and rules_contract_errors:
-        missing_outputs.append("structured_rules_contract_invalid")
-    elif structured_rule_count == 0:
+    coverage_item_count = (
+        sum(len(source.items) for source in grounded.coverage.sources)
+        if grounded.coverage
+        else None
+    )
+    data_table_count = (
+        sum(
+            len(artifact.tables)
+            for artifact in grounded.data_inventory.artifacts
+        )
+        if grounded.data_inventory
+        else None
+    )
+    if structured_rule_count == 0:
         missing_outputs.append("structured_rules_empty")
-    if required_files["source_references"].is_file() and references_contract_errors:
-        missing_outputs.append("source_references_contract_invalid")
-    elif source_reference_count == 0:
+    if source_reference_count == 0:
         missing_outputs.append("source_references_empty")
+    if not grounded.valid:
+        missing_outputs.append("grounding_validation_failed")
+    if any(direct_profile_diff.values()):
+        missing_outputs.append("working_profile_modified_directly")
     test_pattern = re.compile(r"(?m)^\s*(test_[A-Za-z0-9_]+)\s+(?:if|contains|:=|=)")
     generated_test_count = sum(
         len(test_pattern.findall(path.read_text(encoding="utf-8", errors="replace")))
@@ -831,18 +693,22 @@ def finalize(args: argparse.Namespace) -> int:
     )
     metrics["structured_rule_count"] = structured_rule_count
     metrics["source_reference_count"] = source_reference_count
-    metrics["contract_errors"] = {
-        "rules_catalog": rules_contract_errors,
-        "source_references": references_contract_errors,
-    }
+    metrics["profile_change_proposal_count"] = profile_change_count
+    metrics["coverage_item_count"] = coverage_item_count
+    metrics["data_table_count"] = data_table_count
+    metrics["grounding_valid"] = grounded.valid
+    metrics["contract_errors"] = grounded.errors
     metrics["generated_test_count"] = generated_test_count
     metrics["required_outputs_missing"] = sorted(missing_outputs)
-    metrics["conform_profile_unchanged"] = not any(diff.values())
+    metrics["conform_profile_unchanged"] = (
+        metrics["working_profile_unchanged"]
+        and (profile_change_count or 0) == 0
+    )
 
     inventory_created = False
     if not missing_outputs:
         inventory = {
-            "contract_version": "artifact-inventory-v1.0.0",
+            "contract_version": "artifact-inventory-v2.0.0",
             "run_id": metadata["run_id"],
             "source_files": [
                 file_record(path, run_dir)
@@ -853,13 +719,27 @@ def finalize(args: argparse.Namespace) -> int:
             "working_profile": file_record(
                 workspace / "canonical_farm_profile.json", run_dir
             ),
+            "proposed_profile": file_record(
+                run_dir / "artifacts" / "proposed-profile.json", run_dir
+            ),
+            "direct_profile_diff": file_record(
+                run_dir / "artifacts" / "direct-profile-diff.json", run_dir
+            ),
             "profile_diff": file_record(
                 run_dir / "artifacts" / "profile-diff.json", run_dir
             ),
-            "structured_rules": file_record(required_files["structured_rules"], run_dir),
+            "grounding_validation": file_record(
+                run_dir / "artifacts" / "grounding-validation.json", run_dir
+            ),
+            "structured_rules": file_record(
+                required_files["structured_rules"], run_dir
+            ),
             "source_references": file_record(
                 required_files["source_references"], run_dir
             ),
+            "profile_changes": file_record(required_files["profile_changes"], run_dir),
+            "coverage_ledger": file_record(required_files["coverage_ledger"], run_dir),
+            "data_inventory": file_record(required_files["data_inventory"], run_dir),
             "rego_modules": [file_record(path, run_dir) for path in rego_modules],
             "data_files": [file_record(path, run_dir) for path in data_files],
             "rego_tests": [file_record(path, run_dir) for path in rego_tests],
@@ -871,11 +751,14 @@ def finalize(args: argparse.Namespace) -> int:
     metrics["inventory_created"] = inventory_created
     write_json(run_dir / "artifacts" / "metrics.json", metrics)
 
-    conform_violation = metadata["mode"] == "conform" and not metrics[
-        "conform_profile_unchanged"
-    ]
+    conform_violation = (
+        metadata["mode"] == "conform"
+        and not metrics["conform_profile_unchanged"]
+    )
     validation_failed = validation_exit_code not in {None, 0}
-    finalization_failed = bool(missing_outputs) or conform_violation or validation_failed
+    finalization_failed = (
+        bool(missing_outputs) or conform_violation or validation_failed
+    )
     metadata["status"] = "failed" if finalization_failed else "finalized"
     metadata["finalized_at"] = utc_now()
     metadata["metrics"] = metrics
@@ -913,9 +796,19 @@ def compare_runs(args: argparse.Namespace) -> int:
                 "data_files": metrics.get("data_files"),
                 "data_bytes": metrics.get("data_bytes"),
                 "input_paths": metrics.get("input_paths"),
+                "unknown_input_paths": metrics.get("unknown_input_paths"),
                 "profile_paths_added": metrics.get("profile_paths_added"),
                 "profile_paths_removed": metrics.get("profile_paths_removed"),
                 "profile_paths_changed": metrics.get("profile_paths_changed"),
+                "profile_change_proposal_count": metrics.get(
+                    "profile_change_proposal_count"
+                ),
+                "coverage_item_count": metrics.get("coverage_item_count"),
+                "data_table_count": metrics.get("data_table_count"),
+                "grounding_valid": metrics.get("grounding_valid"),
+                "working_profile_unchanged": metrics.get(
+                    "working_profile_unchanged"
+                ),
             }
         )
     result = {"contract_version": "run-comparison-v1.0.0", "runs": rows}
@@ -928,6 +821,40 @@ def compare_runs(args: argparse.Namespace) -> int:
     return 0
 
 
+def export_schemas(args: argparse.Namespace) -> int:
+    output = Path(args.output).resolve()
+    for path in export_generator_schemas(output):
+        print(path)
+    return 0
+
+
+def verify_grounding(args: argparse.Namespace) -> int:
+    """Run the deterministic grounding gates without modifying the run."""
+    run_dir = Path(args.run_dir).resolve()
+    metadata = read_json(run_dir / "run.json")
+    baseline = read_json(run_dir / "baseline_profile.json")
+    grounded = validate_grounded_outputs(run_dir, metadata, baseline)
+    workspace = run_dir / "workspace"
+    rego_files = sorted((workspace / "policy").rglob("*.rego")) + sorted(
+        (workspace / "tests").rglob("*.rego")
+    )
+    _, unknown_rego_input_paths = validate_rego_profile_paths(
+        rego_files, grounded.proposed_profile
+    )
+    if unknown_rego_input_paths:
+        grounded.errors["profile_application"].append(
+            "Rego uses paths absent from proposed profile: "
+            f"{unknown_rego_input_paths}"
+        )
+    result = {
+        "contract_version": "grounding-validation-v1.0.0",
+        "status": "passed" if grounded.valid else "failed",
+        "errors": grounded.errors,
+    }
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return 0 if grounded.valid else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="rulelab")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -935,7 +862,9 @@ def build_parser() -> argparse.ArgumentParser:
     prepare_parser = subparsers.add_parser("prepare")
     prepare_parser.add_argument("--measure", required=True)
     prepare_parser.add_argument("--model", required=True)
-    prepare_parser.add_argument("--mode", choices=("discover", "conform"), default="discover")
+    prepare_parser.add_argument(
+        "--mode", choices=("discover", "conform"), default="discover"
+    )
     prepare_parser.add_argument("--run-id")
     prepare_parser.add_argument("--profile", default=str(DEFAULT_PROFILE))
     prepare_parser.add_argument("--sources", default=str(DEFAULT_SOURCES))
@@ -957,10 +886,24 @@ def build_parser() -> argparse.ArgumentParser:
     finalize_parser.add_argument("--skip-validation", action="store_true")
     finalize_parser.set_defaults(func=finalize)
 
+    verify_parser = subparsers.add_parser(
+        "verify-grounding",
+        help=(
+            "Validate contracts, evidence, coverage, data, and profile proposals "
+            "read-only"
+        ),
+    )
+    verify_parser.add_argument("run_dir")
+    verify_parser.set_defaults(func=verify_grounding)
+
     compare_parser = subparsers.add_parser("compare")
     compare_parser.add_argument("run_dirs", nargs="+")
     compare_parser.add_argument("--output")
     compare_parser.set_defaults(func=compare_runs)
+
+    schemas_parser = subparsers.add_parser("export-schemas")
+    schemas_parser.add_argument("--output", default=str(REPO_ROOT / "contracts"))
+    schemas_parser.set_defaults(func=export_schemas)
     return parser
 
 
