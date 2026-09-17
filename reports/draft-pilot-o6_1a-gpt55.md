@@ -2,6 +2,12 @@
 
 Status: **DRAFT – technisch reproduzierbarer Kandidat, nicht fachlich freigegeben**
 
+Hinweis: Dieser historische Pilot entstand vor den Grounding-Verträgen v2.
+Seine damalige Vertragsprüfung ist deshalb nicht mit der heutigen Prüfung von
+wörtlichen Belegen, Coverage, Datentabellen und validierten Profilvorschlägen
+gleichzusetzen. Für Modellvergleiche muss die Maßnahme mit den aktuellen
+Verträgen neu erzeugt werden.
+
 Dieser Pilot prüft, ob ein Modell aus dem Canonical Farm Profile und den
 amtlichen Quellen einen möglichst vollständigen, ausführbaren Regelkandidaten
 erzeugen kann. Er ist kein Nachweis fachlicher Vollständigkeit oder

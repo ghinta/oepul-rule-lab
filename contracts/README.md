@@ -12,15 +12,23 @@ gates.
 | `model-config-v1.schema.json` | Live `config/models/*.json` adapter and model identity |
 | `generation-config-v1.schema.json` | Declarative provider/model, source, mode, and output preset |
 | `run-artifact-v1.schema.json` | Incremental `runs/<run_id>/run.json` metadata written by the CLI |
-| `artifact-inventory-v1.schema.json` | Final file-level inventory and hashes for a completed run |
+| `artifact-inventory-v2.schema.json` | Grounded file-level inventory and hashes for a completed run |
 | `profile-diff-v1.schema.json` | Current flattened `artifacts/profile-diff.json` shape |
-| `source-references-v1.schema.json` | Source-to-symbol references in `workspace/rules/citations.json` |
-| `rules-catalog-v1.schema.json` | Strukturierter Katalog aller extrahierten Aussagen |
+| `source-references-v2.schema.json` | Source-to-symbol references with verifiable evidence text |
+| `rules-catalog-v2.schema.json` | Strict structured catalog with citation IDs |
+| `profile-changes-v1.schema.json` | Source- and rule-linked profile change proposals |
+| `coverage-ledger-v1.schema.json` | Section, paragraph, table, footnote, and notice review ledger |
+| `data-inventory-v1.schema.json` | Hashes and row counts for generated executable tables |
 | `run-comparison-v1.schema.json` | Vergleichbare Kennzahlen mehrerer Modellläufe |
 | `raw-log-event-v1.schema.json` | Minimal JSON-object constraint for each provider-native JSONL event |
 
 The schemas use JSON Schema Draft 2020-12. Contract versions describe file
 semantics, not research protocol versions.
+
+The v1 rule-catalog, source-reference, and inventory schemas remain only for
+reading archived pilots. New runs require the versions listed above. Regenerate
+the five model-authored schemas from their authoritative Pydantic models with
+`python3 -m rulelab export-schemas`.
 
 ## Model switching
 
@@ -42,13 +50,14 @@ Both modes copy `profiles/canonical_farm_profile.json` twice:
 - `baseline_profile.json` is the immutable comparison snapshot;
 - `workspace/canonical_farm_profile.json` is the run-local working copy.
 
-`discover` permits the generator to extend or correct only the working copy
-when a source rule requires an unrepresented fact. A rule must not be dropped
+The working copy is read-only by contract in both modes. `discover` records
+needed additions, changes, and removals in `rules/profile_changes.json`. The
+finalizer validates their rule and source links, applies them to an in-memory
+copy, and writes `artifacts/proposed-profile.json`. A rule must not be dropped
 merely because the starting profile is incomplete.
 
-`conform` prohibits any working-profile change. Finalization still produces a
-diff for auditability and marks the run failed when any of `added`, `removed`,
-or `changed` is non-empty.
+`conform` requires an empty proposal list. Any direct working-profile edit
+fails every mode and is captured separately in `direct-profile-diff.json`.
 
 The canonical repository profile is never edited by a run. A useful discovery
 can be reviewed and promoted later through a separate repository change.
@@ -79,6 +88,9 @@ runs/<run_id>/
     tests/**/*.rego
     rules/rules.json
     rules/citations.json
+    rules/profile_changes.json
+    rules/coverage.json
+    rules/data_inventory.json
     notes/assumptions.md
     tools/opa_validate.py
     tools/opa-version.txt
@@ -88,6 +100,9 @@ runs/<run_id>/
     final-message.md
   artifacts/
     profile-diff.json
+    direct-profile-diff.json
+    proposed-profile.json
+    grounding-validation.json
     input-paths.json
     metrics.json
     inventory.json
@@ -100,8 +115,9 @@ metrics. Paths are repository-relative or run-relative; portable artifacts do
 not depend on machine-specific absolute paths.
 
 `artifacts/inventory.json` hashes every source copy, both profile snapshots,
-Rego module, Rego test, structured rule catalog, citations, assumptions, diff,
-and raw log. The CLI materializes it only after every required output exists;
+Rego module, Rego test, structured rule catalog, citations, profile proposals,
+coverage, data inventory, assumptions, diffs, grounding result, and raw log.
+The CLI materializes it only after every required output exists;
 otherwise `metrics.json` lists the missing outputs and the run is marked failed.
 
 ## Required generator outputs
@@ -112,27 +128,32 @@ ambiguous:
 - `workspace/rules/rules.json`: every discovered normative or
   decision-relevant statement;
 - `workspace/rules/citations.json`: source, page, section, normalized claim,
-  and generated Rego symbol/line mapping;
+  exact evidence text, and generated Rego symbol/line mapping;
+- `workspace/rules/profile_changes.json`: proposed profile changes with rule and
+  source-reference links;
+- `workspace/rules/coverage.json`: disposition of reviewed source locations;
+- `workspace/rules/data_inventory.json`: every generated data artifact, hash,
+  JSON pointer, row count, and source-reference links;
 - Rego-v1 modules below `workspace/policy/`;
 - meaningful generated tests below `workspace/tests/`;
 - `workspace/notes/assumptions.md`: ambiguity and unresolved questions.
 
-`prepare` copies the rule-catalog and source-reference schemas into the
-isolated workspace. `finalize` rejects wrong top-level versions or shapes,
-invalid required rule fields, unresolved citation artifact paths, and source
-hash mismatches before it writes an inventory. This validation intentionally
-has no optional Python package dependency so the contract gate remains active
-in minimal agent environments.
+`prepare` copies all five Pydantic-generated schemas into the isolated
+workspace. `finalize` applies strict Pydantic validation (`extra=forbid`), then
+checks cross-references, exact evidence presence on the cited page, source and
+data hashes, artifact line bounds, profile proposal preconditions, source
+coverage, and table row counts before it writes an inventory.
 
 Generated tests are extraction aids, not independent proof that a rule is
 semantically correct.
 
 ## Profile diff
 
-The live finalizer flattens both profiles into dot paths. Paths found only in
-the working copy appear under `added`, lost paths under `removed`, and changed
-values as `{before, after}` under `changed`. Array shapes use the `[]` marker
-because the canonical profile is a shape blueprint rather than farm case data.
+The live finalizer flattens the baseline and validated proposed profile into dot
+paths. Paths found only in the proposal appear under `added`, lost paths under
+`removed`, and changed values as `{before, after}` under `changed`. Array shapes
+use the `[]` marker because the canonical profile is a shape blueprint rather
+than farm case data.
 
 The diff records what changed. The structured rule catalog, citations, and
 assumptions record why. Every discovered input path should link to at least one
@@ -140,9 +161,10 @@ extracted rule and source reference during validation.
 
 ## Source references and raw protocol
 
-Source references store a normalized claim rather than a long verbatim extract.
-The source hash binds it to the copied document; page and section locate it;
-`used_by` maps it to generated symbols and line ranges.
+Source references store a normalized claim plus a short verbatim
+`evidence_text`. The source hash binds it to the copied document; page and
+section locate it; the finalizer normalizes and finds the evidence on that page
+or in the HTML source. `used_by` maps it to generated symbols and line ranges.
 
 `raw/events.jsonl` is append-only provider-native stdout. Each non-empty line is
 a JSON object, but provider fields remain verbatim. `raw/stderr.log` and
@@ -180,8 +202,9 @@ directories remain independently owned; these contracts modify neither.
 
 `run-artifact-v1.schema.json` mirrors the keys and lifecycle currently emitted
 by `src/rulelab/cli.py`; `profile-diff-v1.schema.json` mirrors the current
-finalizer output. The following declared capabilities are not yet executed by
-the CLI and must not be inferred from config files alone:
+baseline-to-proposal diff. Pydantic and the grounding validator actively
+execute the five generator contracts. The following declarative capabilities
+are not yet applied to the live request:
 
 1. `generation-*.yaml` is not yet a CLI input. Source scopes,
    `candidate_count`, temperature, top-p, seed, and token budget in that preset

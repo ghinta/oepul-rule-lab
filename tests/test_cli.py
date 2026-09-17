@@ -63,6 +63,21 @@ allow if {
             self.assertIn("input.land.parcels[].area_ha", paths)
             self.assertIn("input.land.parcels[].crop.name", paths)
 
+    def test_rejects_rego_paths_absent_from_proposed_profile(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            policy = Path(directory) / "policy.rego"
+            policy.write_text(
+                "package test\nallow if input.farm.invented == true\n",
+                encoding="utf-8",
+            )
+
+            paths, unknown = cli.validate_rego_profile_paths(
+                [policy], {"farm": {"year": "int"}}
+            )
+
+            self.assertEqual(paths, ["input.farm.invented"])
+            self.assertEqual(unknown, ["input.farm.invented"])
+
 
 class CodexCommandTests(unittest.TestCase):
     def test_codex_command_uses_explicit_sandbox_without_auto_approval(self) -> None:
@@ -156,7 +171,7 @@ class FinalizeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             run = Path(directory).resolve()
             workspace = run / "workspace"
-            for relative in ("policy", "tests", "rules", "notes", "sources"):
+            for relative in ("policy", "tests", "rules", "notes", "sources", "data"):
                 (workspace / relative).mkdir(parents=True, exist_ok=True)
             (run / "raw").mkdir()
             (run / "artifacts").mkdir()
@@ -164,11 +179,14 @@ class FinalizeTests(unittest.TestCase):
             (run / "baseline_profile.json").write_text(
                 json.dumps(profile), encoding="utf-8"
             )
-            profile["farm"]["district"] = "string"
             (workspace / "canonical_farm_profile.json").write_text(
                 json.dumps(profile), encoding="utf-8"
             )
-            (workspace / "sources" / "source.pdf").write_bytes(b"%PDF-source")
+            source = workspace / "sources" / "source.html"
+            source.write_text(
+                "<html><body><p>Official evidence text for the example rule.</p></body></html>",
+                encoding="utf-8",
+            )
             (workspace / "policy" / "policy.rego").write_text(
                 "package generated\nallow if input.farm.year >= 2026\n",
                 encoding="utf-8",
@@ -179,21 +197,27 @@ class FinalizeTests(unittest.TestCase):
             (workspace / "rules" / "rules.json").write_text(
                 json.dumps(
                     {
-                        "contract_version": "rules-catalog-v1.0.0",
+                        "contract_version": "rules-catalog-v2.0.0",
                         "measure": "o6_1a",
                         "rules": [
                             {
-                                "id": "r1",
+                                "id": "r01",
                                 "rule_type": "eligibility",
                                 "statement": "Example rule.",
-                                "conditions": [],
-                                "result": True,
-                                "sources": [
+                                "conditions": [
                                     {
-                                        "document": "workspace/sources/source.pdf",
-                                        "page": 1,
+                                        "expression": "input.farm.year >= 2026",
+                                        "description": "The application year is 2026 or later.",
+                                        "input_paths": ["farm.year"],
                                     }
                                 ],
+                                "result": {
+                                    "outcome": "eligible",
+                                    "description": "The example condition is satisfied.",
+                                    "value": True,
+                                },
+                                "source_reference_ids": ["c01"],
+                                "rego_symbols": ["allow"],
                             }
                         ],
                     }
@@ -203,19 +227,18 @@ class FinalizeTests(unittest.TestCase):
             (workspace / "rules" / "citations.json").write_text(
                 json.dumps(
                     {
-                        "contract_version": "source-references-v1.0.0",
+                        "contract_version": "source-references-v2.0.0",
                         "run_id": "test-run",
                         "references": [
                             {
                                 "reference_id": "c01",
                                 "source_id": "source",
-                                "source_path": "workspace/sources/source.pdf",
-                                "source_sha256": cli.sha256(
-                                    workspace / "sources" / "source.pdf"
-                                ),
-                                "page": 1,
+                                "source_path": "workspace/sources/source.html",
+                                "source_sha256": cli.sha256(source),
+                                "page": None,
                                 "section": "1",
                                 "claim": "Example claim.",
+                                "evidence_text": "Official evidence text for the example rule.",
                                 "used_by": [
                                     {
                                         "artifact_path": "workspace/policy/policy.rego",
@@ -230,13 +253,87 @@ class FinalizeTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
+            (workspace / "rules" / "profile_changes.json").write_text(
+                json.dumps(
+                    {
+                        "contract_version": "profile-changes-v1.0.0",
+                        "run_id": "test-run",
+                        "measure": "o6_1a",
+                        "changes": [
+                            {
+                                "action": "add",
+                                "path": "farm.district",
+                                "value_before": None,
+                                "value_after": "string",
+                                "rationale": "The cited rule needs a district input.",
+                                "rule_ids": ["r01"],
+                                "source_reference_ids": ["c01"],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (workspace / "rules" / "coverage.json").write_text(
+                json.dumps(
+                    {
+                        "contract_version": "coverage-ledger-v1.0.0",
+                        "run_id": "test-run",
+                        "sources": [
+                            {
+                                "source_id": "source",
+                                "source_path": "workspace/sources/source.html",
+                                "source_sha256": cli.sha256(source),
+                                "review_scope": "full_document",
+                                "scope_reason": None,
+                                "pages_reviewed": [],
+                                "items": [
+                                    {
+                                        "item_id": "cov01",
+                                        "kind": "paragraph",
+                                        "locator": "p1",
+                                        "page_start": None,
+                                        "page_end": None,
+                                        "disposition": "rules",
+                                        "rule_ids": ["r01"],
+                                        "reason": None,
+                                    }
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (workspace / "rules" / "data_inventory.json").write_text(
+                json.dumps(
+                    {
+                        "contract_version": "data-inventory-v1.0.0",
+                        "run_id": "test-run",
+                        "artifacts": [],
+                    }
+                ),
+                encoding="utf-8",
+            )
             (workspace / "notes" / "assumptions.md").write_text(
                 "No assumptions.\n", encoding="utf-8"
             )
             (run / "raw" / "events.jsonl").write_text("{}\n", encoding="utf-8")
             (run / "run.json").write_text(
                 json.dumps(
-                    {"run_id": "test-run", "mode": "discover", "measure": "o6_1a"}
+                    {
+                        "run_id": "test-run",
+                        "mode": "discover",
+                        "measure": "o6_1a",
+                        "sources": [
+                            {
+                                "name": "source.html",
+                                "source_path": "notices/2026/source.html",
+                                "sha256": cli.sha256(source),
+                                "bytes": source.stat().st_size,
+                            }
+                        ],
+                    }
                 ),
                 encoding="utf-8",
             )
@@ -251,9 +348,17 @@ class FinalizeTests(unittest.TestCase):
                 (run / "artifacts" / "metrics.json").read_text(encoding="utf-8")
             )
             self.assertEqual(metrics["profile_paths_added"], 1)
+            self.assertTrue(metrics["working_profile_unchanged"])
+            self.assertTrue(metrics["grounding_valid"])
             self.assertEqual(metrics["required_outputs_missing"], [])
             self.assertTrue(metrics["inventory_created"])
             self.assertTrue((run / "artifacts" / "inventory.json").is_file())
+            proposed = json.loads(
+                (run / "artifacts" / "proposed-profile.json").read_text(
+                    encoding="utf-8"
+                )
+            )
+            self.assertEqual(proposed["farm"]["district"], "string")
 
     def test_finalize_rejects_contract_like_but_invalid_json_outputs(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -295,14 +400,7 @@ class FinalizeTests(unittest.TestCase):
             metrics = json.loads(
                 (run / "artifacts" / "metrics.json").read_text(encoding="utf-8")
             )
-            self.assertIn(
-                "structured_rules_contract_invalid",
-                metrics["required_outputs_missing"],
-            )
-            self.assertIn(
-                "source_references_contract_invalid",
-                metrics["required_outputs_missing"],
-            )
+            self.assertIn("grounding_validation_failed", metrics["required_outputs_missing"])
             self.assertTrue(metrics["contract_errors"]["rules_catalog"])
             self.assertTrue(metrics["contract_errors"]["source_references"])
 

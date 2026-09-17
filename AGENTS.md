@@ -9,14 +9,15 @@ Regeln aus den bereitgestellten ÖPUL-Quellen.
    Tabellen, Fußnoten, Definitionen, Ausnahmen, Optionen und Übergangsregeln.
 2. Identifiziere jede normative oder entscheidungsrelevante Aussage und bilde
    sie als strukturierten Regel-Datensatz und, wo sinnvoll, als Rego ab.
-3. Fehlt eine benötigte Eingabevariable, erweitere im `discover`-Modus das
-   Canonical Farm Profile. Überspringe eine Regel nicht allein deshalb, weil das
+3. Fehlt eine benötigte Eingabevariable, erfasse sie im `discover`-Modus als
+   belegten Vorschlag in `rules/profile_changes.json`. Ändere das Canonical Farm
+   Profile nie direkt. Überspringe eine Regel nicht allein deshalb, weil das
    Ausgangsprofil unvollständig ist.
 4. Lange Tabellen und geschlossene Listen werden vollständig als Daten unter
    `data/` erfasst und von Rego referenziert. Größe allein ist kein Grund, eine
    Tabellenzeile, Art, Sorte, Prämienstufe oder Kombinationszelle wegzulassen.
-5. Jede Regel muss auf Dokument, Seite, Abschnitt und möglichst eine kurze
-   Quellenstelle zurückführen.
+5. Jede Regel muss auf Dokument, Seite, Abschnitt und einen kurzen wörtlichen
+   Beleg zurückführen, der auf der angegebenen Seite maschinell auffindbar ist.
 6. Erzeuge Rego v1, formatiere es und repariere Compile- bzw. Testfehler
    iterativ. Keine Platzhalterregeln, die eine fachliche Entscheidung vortäuschen.
 7. Erhalte Mehrdeutigkeit als explizite Annahme oder offene Frage; sie darf die
@@ -24,17 +25,19 @@ Regeln aus den bereitgestellten ÖPUL-Quellen.
 
 ## Erlaubte Änderungen im Run-Workspace
 
-- `canonical_farm_profile.json`
 - `policy/**/*.rego`
 - `data/**/*.json`
 - `tests/**/*.rego`
 - `rules/rules.json`
 - `rules/citations.json`
+- `rules/profile_changes.json`
+- `rules/coverage.json`
+- `rules/data_inventory.json`
 - `notes/assumptions.md`
 
-Ändere keine Quelldokumente. Arbeite ausschließlich im vorbereiteten
-Run-Workspace. Thesis-Konformität und spätere Gold-/Hidden-Tests sind nicht Teil
-des Generierungsauftrags.
+Ändere weder `canonical_farm_profile.json` noch Quelldokumente. Arbeite
+ausschließlich im vorbereiteten Run-Workspace. Thesis-Konformität und spätere
+Gold-/Hidden-Tests sind nicht Teil des Generierungsauftrags.
 
 Der vorbereitete Workspace enthält den technischen Validator. Verwende ihn
 während der Arbeit wiederholt:

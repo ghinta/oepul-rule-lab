@@ -7,9 +7,10 @@ Generierung von ÖPUL-Regeln. Der Generator bekommt bewusst nur:
 2. die ausgewählten offiziellen ÖPUL-Quellen und
 3. den Generierungsauftrag.
 
-In `discover`-Läufen darf ein Agent das Profil erweitern, Felder ersetzen und
-Rego samt Tests iterativ reparieren. Die Änderungen werden gemessen, nicht vorab
-verboten. `conform`-Läufe verwenden später ein festes Profil.
+In `discover`-Läufen darf ein Agent neue Profilfelder vorschlagen und Rego samt
+Tests iterativ reparieren. Das Arbeitsprofil selbst bleibt unverändert:
+Vorschläge werden erst nach Pydantic-, Quellen- und Cross-Link-Prüfung auf eine
+separate Profilkopie angewendet. `conform`-Läufe erlauben keine Vorschläge.
 
 ## Schnellstart
 
@@ -17,6 +18,7 @@ verboten. `conform`-Läufe verwenden später ein festes Profil.
 python3 -m pip install -e .
 python3 -m rulelab prepare --measure o6_1a --model config/models/codex-gpt-5.5.json
 python3 -m rulelab run runs/<run-id>
+python3 -m rulelab verify-grounding runs/<run-id>
 python3 -m rulelab finalize runs/<run-id>
 python3 -m rulelab compare runs/<run-a> runs/<run-b>
 PYTHONPATH=src python3 -m unittest discover -s tests -v
@@ -44,14 +46,25 @@ Manifest sichtbar und werden niemals nur zur Vereinheitlichung umbenannt.
 
 `prepare` legt einen isolierten Arbeitsbereich an und erzeugt für jedes PDF eine
 seitenmarkierte Textfassung, damit der Agent systematisch suchen und trotzdem
-auf PDF-Seiten zitieren kann. Die beiden Schemas für Regelkatalog und
-Quellenbelege werden in jeden Workspace kopiert und im Prompt ausdrücklich als
-verbindlich benannt. `run` startet den in der
+auf PDF-Seiten zitieren kann. Fünf aus Pydantic-Modellen erzeugte Schemas für
+Regeln, Quellenbelege, Profilvorschläge, Quellenabdeckung und Datentabellen
+werden in jeden Workspace kopiert und im Prompt ausdrücklich als verbindlich
+benannt. `run` startet den in der
 Modellkonfiguration gewählten Adapter. `finalize` schreibt Profil-Diff,
 verwendete `input`-Pfade und technische Kennzahlen nach `artifacts/`. Es prüft
-außerdem die Kernstruktur beider JSON-Verträge, Quellenhashes, auflösbare
-Artefaktpfade sowie OPA-Formatierung, Strict-Compile und Tests. Ein nur ähnlich
-aussehendes älteres JSON-Format lässt den Lauf damit sichtbar fehlschlagen.
+außerdem strikt verbotene Zusatzfelder, Cross-Links, Quellen- und Datenhashes,
+wörtliche Belege auf der zitierten Seite, Abdeckung, Tabellenzeilenzahlen,
+Profiländerungsvoraussetzungen, die Existenz aller Regel- und Rego-Eingabepfade
+im vorgeschlagenen Profil sowie OPA-Formatierung, Strict-Compile und Tests.
+Erfundene oder nur ähnlich strukturierte Angaben lassen den Lauf sichtbar
+fehlschlagen.
+
+`verify-grounding` führt die deterministischen Pydantic-, Quellen-, Coverage-,
+Daten- und Profilprüfungen read-only aus. So kann ein zweiter Agent oder ein
+Review-Schritt dieselben Gates wiederholen, ohne Run-Artefakte zu verändern.
+
+Die Details und Grenzen dieser Härtung stehen in
+[`docs/grounding-validation.md`](docs/grounding-validation.md).
 
 ## Verzeichnisstruktur
 
