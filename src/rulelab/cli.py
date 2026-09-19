@@ -20,6 +20,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_PROFILE = REPO_ROOT / "profiles" / "canonical_farm_profile.json"
 DEFAULT_SOURCES = REPO_ROOT / "sources" / "oepul"
 OPA_RUNNER = REPO_ROOT / "runner" / "validation" / "opa_validate.py"
+OPA_VALIDATION_TARGETS = ("policy", "data", "tests")
 GENERATOR_CONTRACTS = tuple(GENERATOR_CONTRACT_MODELS)
 
 
@@ -621,10 +622,11 @@ def finalize(args: argparse.Namespace) -> int:
                 "validate",
                 "--workspace",
                 str(workspace),
-                "--target",
-                "policy",
-                "--target",
-                "tests",
+                *(
+                    argument
+                    for target in OPA_VALIDATION_TARGETS
+                    for argument in ("--target", target)
+                ),
                 "--result-json",
                 str(validation_result),
                 "--pretty",

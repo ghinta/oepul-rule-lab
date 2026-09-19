@@ -12,6 +12,11 @@ from unittest.mock import patch
 from rulelab import cli
 
 
+class OpaValidationConfigurationTests(unittest.TestCase):
+    def test_generated_data_is_loaded_during_validation(self) -> None:
+        self.assertEqual(cli.OPA_VALIDATION_TARGETS, ("policy", "data", "tests"))
+
+
 class ProfileDiffTests(unittest.TestCase):
     def test_reports_added_removed_and_changed_paths(self) -> None:
         before = {"farm": {"year": "int", "old": "string"}, "parcels": [{"id": "string"}]}
