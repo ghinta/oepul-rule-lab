@@ -45,5 +45,5 @@ Der vorbereitete Workspace enthält den technischen Validator. Verwende ihn
 während der Arbeit wiederholt:
 
 ```bash
-python3 tools/opa_validate.py validate --workspace . --target policy --target tests --write --result-json technical-validation.json --pretty
+python3 tools/opa_validate.py validate --workspace . --target policy --target data --target tests --write --result-json technical-validation.json --pretty
 ```
