@@ -88,6 +88,9 @@ dauerhaft festzuschreiben.
 Der erste technisch abgeschlossene UBB-Pilot ist bewusst als nicht fachlich
 freigegebener Entwurf dokumentiert:
 [`reports/draft-pilot-o6_1a-gpt55.md`](reports/draft-pilot-o6_1a-gpt55.md).
+Der technisch validierte Terra-Discover-Lauf für den zuvor geparkten
+Grundwasserschutz ist ebenfalls als Draft dokumentiert:
+[`reports/draft-o6_16-gpt-5.6-terra.md`](reports/draft-o6_16-gpt-5.6-terra.md).
 
 ## Grundsatz
 
