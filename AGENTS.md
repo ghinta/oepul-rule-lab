@@ -12,7 +12,9 @@ Regeln aus den bereitgestellten ÖPUL-Quellen.
 3. Fehlt eine benötigte Eingabevariable, erfasse sie im `discover`-Modus als
    belegten Vorschlag in `rules/profile_changes.json`. Ändere das Canonical Farm
    Profile nie direkt. Überspringe eine Regel nicht allein deshalb, weil das
-   Ausgangsprofil unvollständig ist.
+   Ausgangsprofil unvollständig ist. `value_after` muss dieselbe JSON-Notation
+   wie das Canonical Farm Profile verwenden; Arrays werden als JSON-Array mit
+   einem repräsentativen Objekt beschrieben, nicht als String `array<object>`.
 4. Lange Tabellen und geschlossene Listen werden vollständig als Daten unter
    `data/` erfasst und von Rego referenziert. Größe allein ist kein Grund, eine
    Tabellenzeile, Art, Sorte, Prämienstufe oder Kombinationszelle wegzulassen.

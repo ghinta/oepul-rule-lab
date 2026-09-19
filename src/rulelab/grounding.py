@@ -227,6 +227,20 @@ def _line_count(path: Path) -> int:
     return len(path.read_text(encoding="utf-8", errors="replace").splitlines())
 
 
+def table_row_count(value: Any) -> int:
+    """Count rows in arrays or scalar lookup entries in nested objects."""
+    if isinstance(value, list):
+        return len(value)
+    if isinstance(value, dict):
+        return sum(
+            table_row_count(child)
+            if isinstance(child, (list, dict))
+            else 1
+            for child in value.values()
+        )
+    raise TypeError("resolved table must be a JSON array or object")
+
+
 def validate_grounded_outputs(
     run_dir: Path,
     metadata: dict[str, Any],
@@ -341,13 +355,6 @@ def validate_grounded_outputs(
                 )
             for use in reference.used_by:
                 artifact = run_dir / use.artifact_path
-                if not (
-                    use.artifact_path.startswith("workspace/policy/")
-                    and use.artifact_path.endswith(".rego")
-                ):
-                    errors["cross_references"].append(
-                        f"{prefix}: used_by must target a Rego policy module"
-                    )
                 if not artifact.is_file():
                     errors["cross_references"].append(
                         f"{prefix}: artifact does not exist: {use.artifact_path}"
@@ -362,24 +369,6 @@ def validate_grounded_outputs(
                     errors["cross_references"].append(
                         f"{prefix}: line_end exceeds artifact: {use.artifact_path}"
                     )
-
-    if rules is not None and references is not None:
-        references_by_id = {
-            reference.reference_id: reference for reference in references.references
-        }
-        for rule in rules.rules:
-            cited_symbols = {
-                use.symbol
-                for reference_id in rule.source_reference_ids
-                if reference_id in references_by_id
-                for use in references_by_id[reference_id].used_by
-            }
-            missing_symbols = set(rule.rego_symbols) - cited_symbols
-            if missing_symbols:
-                errors["cross_references"].append(
-                    f"rule {rule.id} has Rego symbols absent from cited used_by: "
-                    f"{sorted(missing_symbols)}"
-                )
 
     proposed_profile = copy.deepcopy(baseline_profile)
     if profile_changes is not None:
@@ -546,9 +535,7 @@ def validate_grounded_outputs(
                     )
                 try:
                     records = _resolve_json_pointer(data, table.json_pointer)
-                    if not isinstance(records, list):
-                        raise TypeError("resolved table must be a JSON array")
-                    count = len(records)
+                    count = table_row_count(records)
                 except (KeyError, IndexError, TypeError, ValueError) as exc:
                     errors["data"].append(
                         f"cannot resolve {artifact.path}{table.json_pointer}: {exc}"

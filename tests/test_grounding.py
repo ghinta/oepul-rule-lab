@@ -17,6 +17,7 @@ from rulelab.grounding import (
     normalize_evidence,
     sha256,
     source_evidence_text,
+    table_row_count,
     validate_grounded_outputs,
 )
 
@@ -167,6 +168,20 @@ class EvidenceTests(unittest.TestCase):
                 "ref01: line_start exceeds artifact: workspace/policy/policy.rego",
                 result.errors["cross_references"],
             )
+
+
+class DataInventoryTests(unittest.TestCase):
+    def test_counts_array_rows_and_lookup_object_entries(self) -> None:
+        self.assertEqual(table_row_count([{"id": 1}, {"id": 2}]), 2)
+        self.assertEqual(table_row_count({"A": 1, "B": 2}), 2)
+        self.assertEqual(
+            table_row_count({"group_a": ["x", "y"], "group_b": ["z"]}),
+            3,
+        )
+
+    def test_rejects_scalar_as_table(self) -> None:
+        with self.assertRaisesRegex(TypeError, "JSON array or object"):
+            table_row_count("not-a-table")
 
 
 class ProfileProposalTests(unittest.TestCase):

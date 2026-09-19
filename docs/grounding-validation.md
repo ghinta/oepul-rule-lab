@@ -57,7 +57,10 @@ ist. Deshalb kombiniert der Finalizer fünf unterschiedliche Gates.
    begründetem Abschnittsscope geprüft werden.
 
    `rules/data_inventory.json` bindet jede JSON-Datei unter `data/` per Hash ein
-   und prüft Tabellen über JSON-Pointer, Zeilenzahl und Quellenbelege.
+   und prüft Tabellen über JSON-Pointer, Zeilenzahl und Quellenbelege. Als
+   ausführbare Tabellen gelten sowohl Arrays als auch Lookup-Objekte. Bei
+   Arrays zählen die Elemente; bei verschachtelten Lookup-Objekten werden die
+   skalaren Einträge gezählt.
 
 ## Artefakte
 
