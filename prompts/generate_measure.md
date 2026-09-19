@@ -40,8 +40,10 @@ Fußnoten und Querverweisen vollständig:
 5. Ändere `canonical_farm_profile.json` niemals direkt. Lies
    `contracts/profile-changes-v1.schema.json` und schreibe benötigte Ergänzungen,
    Änderungen oder Löschungen nach `rules/profile_changes.json`. Jeder Vorschlag
-   benötigt verknüpfte Regel- und Quellenbeleg-IDs. Im Modus `conform` muss das
-   Array `changes` leer bleiben.
+   benötigt verknüpfte Regel- und Quellenbeleg-IDs. Verwende für `value_after`
+   exakt die Struktur-Notation des Canonical Farm Profile: insbesondere ein
+   JSON-Array mit repräsentativem Objekt statt des Strings `array<object>`. Im
+   Modus `conform` muss das Array `changes` leer bleiben.
 6. Führe OPA-Formatierung, Strict-Compile-Check und Tests wiederholt aus und
    repariere technische Fehler. Dokumentiere verbleibende fachliche
    Mehrdeutigkeiten in `notes/assumptions.md`.
