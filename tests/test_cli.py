@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import io
 import json
+import os
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -15,6 +16,47 @@ from rulelab import cli
 class OpaValidationConfigurationTests(unittest.TestCase):
     def test_generated_data_is_loaded_during_validation(self) -> None:
         self.assertEqual(cli.OPA_VALIDATION_TARGETS, ("policy", "data", "tests"))
+
+
+class OpaBootstrapTests(unittest.TestCase):
+    def test_platform_key_normalizes_supported_architectures(self) -> None:
+        with (
+            patch.object(cli.platform, "system", return_value="Darwin"),
+            patch.object(cli.platform, "machine", return_value="arm64"),
+        ):
+            self.assertEqual(cli.opa_platform_key(), "darwin-arm64")
+        with (
+            patch.object(cli.platform, "system", return_value="Linux"),
+            patch.object(cli.platform, "machine", return_value="x86_64"),
+        ):
+            self.assertEqual(cli.opa_platform_key(), "linux-amd64")
+
+    def test_matching_opa_bin_is_copied_into_workspace(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            workspace = root / "workspace"
+            tools = workspace / "tools"
+            tools.mkdir(parents=True)
+            (tools / "opa-version.txt").write_text("1.18.2\n", encoding="utf-8")
+            source = root / "opa"
+            source.write_text(
+                "#!/bin/sh\nprintf 'Version: 1.18.2\\nRego Version: v1\\n'\n",
+                encoding="utf-8",
+            )
+            source.chmod(0o755)
+
+            with patch.dict(os.environ, {"OPA_BIN": str(source)}):
+                metadata = cli.stage_workspace_opa(
+                    workspace, cache_root=root / "cache"
+                )
+
+            destination = tools / "opa"
+            self.assertTrue(destination.is_file())
+            self.assertTrue(os.access(destination, os.X_OK))
+            self.assertEqual(metadata["version"], "1.18.2")
+            self.assertEqual(metadata["source"], "OPA_BIN")
+            self.assertTrue(metadata["self_test_available"])
+            cli.verify_opa_binary(destination, "1.18.2")
 
 
 class ProfileDiffTests(unittest.TestCase):

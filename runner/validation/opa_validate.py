@@ -116,6 +116,9 @@ def resolve_runtime(args: argparse.Namespace, workspace: Path) -> OpaRuntime:
     if requested == "auto":
         if configured_bin:
             kind = "local"
+        elif (workspace / "tools" / "opa").is_file():
+            kind = "local"
+            configured_bin = str(workspace / "tools" / "opa")
         elif shutil.which("opa"):
             kind = "local"
             configured_bin = shutil.which("opa")

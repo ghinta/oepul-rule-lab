@@ -60,6 +60,13 @@ im vorgeschlagenen Profil sowie OPA-Formatierung, Strict-Compile und Tests.
 Erfundene oder nur ähnlich strukturierte Angaben lassen den Lauf sichtbar
 fehlschlagen.
 
+Vor dem Modellstart stellt `run` zusätzlich die exakt gepinnte OPA-Binary im
+isolierten Workspace unter `tools/opa` bereit. Vorhandene lokale Binaries werden
+nur bei passender Version übernommen; andernfalls wird ein plattformspezifisches
+Artefakt anhand der eingecheckten SHA-256-Prüfsumme verifiziert und gecacht.
+Damit kann der Generator Formatierung, Strict-Compile und Tests selbst iterativ
+ausführen, ohne Zugriff auf den Docker-Socket oder ein breiteres Sandbox-Profil.
+
 `verify-grounding` führt die deterministischen Pydantic-, Quellen-, Coverage-,
 Daten- und Profilprüfungen read-only aus. So kann ein zweiter Agent oder ein
 Review-Schritt dieselben Gates wiederholen, ohne Run-Artefakte zu verändern.

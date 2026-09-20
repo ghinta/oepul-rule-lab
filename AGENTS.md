@@ -47,3 +47,7 @@ während der Arbeit wiederholt:
 ```bash
 python3 tools/opa_validate.py validate --workspace . --target policy --target data --target tests --write --result-json technical-validation.json --pretty
 ```
+
+Eine zur Repository-Pin passende lokale OPA-Binary liegt unter `tools/opa`.
+Der Validator verwendet sie automatisch. Führe die Prüfung selbst aus und
+repariere Fehler iterativ; Docker-Zugriff ist dafür weder nötig noch erlaubt.

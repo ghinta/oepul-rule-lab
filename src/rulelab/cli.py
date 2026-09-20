@@ -5,10 +5,13 @@ import datetime as dt
 import hashlib
 import json
 import os
+import platform
 import re
 import shutil
 import subprocess
 import sys
+import tempfile
+import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +23,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_PROFILE = REPO_ROOT / "profiles" / "canonical_farm_profile.json"
 DEFAULT_SOURCES = REPO_ROOT / "sources" / "oepul"
 OPA_RUNNER = REPO_ROOT / "runner" / "validation" / "opa_validate.py"
+OPA_VERSION_FILE = OPA_RUNNER.parent / "opa-version.txt"
+OPA_CHECKSUMS_FILE = OPA_RUNNER.parent / "opa-checksums.json"
 OPA_VALIDATION_TARGETS = ("policy", "data", "tests")
 GENERATOR_CONTRACTS = tuple(GENERATOR_CONTRACT_MODELS)
 
@@ -45,6 +50,151 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def opa_platform_key() -> str:
+    system = platform.system().lower()
+    machine = platform.machine().lower()
+    architecture = {
+        "aarch64": "arm64",
+        "arm64": "arm64",
+        "amd64": "amd64",
+        "x86_64": "amd64",
+    }.get(machine)
+    if system not in {"darwin", "linux"} or architecture is None:
+        raise ValueError(
+            f"Unsupported OPA bootstrap platform: {system}/{machine}. "
+            "Set OPA_BIN to a pinned compatible executable."
+        )
+    return f"{system}-{architecture}"
+
+
+def verify_opa_binary(path: Path, expected_version: str) -> None:
+    try:
+        completed = subprocess.run(
+            [str(path), "version"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=20,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise ValueError(f"Could not execute OPA binary {path}: {exc}") from exc
+    match = re.search(r"^Version:\s*(\S+)", completed.stdout, re.MULTILINE)
+    actual = match.group(1) if match else None
+    if completed.returncode != 0 or actual != expected_version:
+        raise ValueError(
+            f"OPA binary {path} has version {actual!r}; "
+            f"expected {expected_version!r}"
+        )
+
+
+def download_pinned_opa(target: Path, expected_version: str) -> dict[str, str]:
+    checksums = read_json(OPA_CHECKSUMS_FILE)
+    platform_key = opa_platform_key()
+    version_specs = checksums.get(expected_version)
+    if not isinstance(version_specs, dict):
+        raise ValueError(f"No pinned OPA checksums for version {expected_version}")
+    spec = version_specs.get(platform_key)
+    if not isinstance(spec, dict):
+        raise ValueError(
+            f"No pinned OPA asset for version {expected_version} on {platform_key}"
+        )
+    asset = str(spec["asset"])
+    expected_sha256 = str(spec["sha256"])
+    url = f"https://openpolicyagent.org/downloads/v{expected_version}/{asset}"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=target.parent, delete=False) as handle:
+            temporary = Path(handle.name)
+            with urllib.request.urlopen(url, timeout=180) as response:
+                shutil.copyfileobj(response, handle)
+        if sha256(temporary) != expected_sha256:
+            raise ValueError(f"Checksum mismatch for downloaded OPA asset {asset}")
+        temporary.chmod(0o755)
+        verify_opa_binary(temporary, expected_version)
+        os.replace(temporary, target)
+        temporary = None
+    finally:
+        if temporary is not None and temporary.exists():
+            temporary.unlink()
+    return {
+        "source": "official-download",
+        "asset": asset,
+        "url": url,
+        "platform": platform_key,
+        "sha256": expected_sha256,
+    }
+
+
+def stage_workspace_opa(
+    workspace: Path, *, cache_root: Path | None = None
+) -> dict[str, Any]:
+    version_file = workspace / "tools" / "opa-version.txt"
+    if not version_file.is_file():
+        raise ValueError(f"Missing pinned OPA version file: {version_file}")
+    expected_version = version_file.read_text(encoding="utf-8").strip()
+    if not expected_version:
+        raise ValueError(f"Pinned OPA version is empty: {version_file}")
+
+    configured = os.environ.get("OPA_BIN")
+    configured_path = shutil.which(configured) if configured else None
+    host_candidate = (
+        Path(configured_path or configured).expanduser().resolve()
+        if configured
+        else None
+    )
+    source: dict[str, Any] | None = None
+    if host_candidate is not None:
+        verify_opa_binary(host_candidate, expected_version)
+        source = {"source": "OPA_BIN", "path": str(host_candidate.resolve())}
+    else:
+        discovered = shutil.which("opa")
+        if discovered:
+            candidate: Path | None = Path(discovered).resolve()
+            try:
+                verify_opa_binary(candidate, expected_version)
+            except ValueError:
+                candidate = None
+            if candidate is not None:
+                host_candidate = candidate
+                source = {"source": "PATH", "path": str(candidate)}
+
+    if host_candidate is None:
+        platform_key = opa_platform_key()
+        cache = cache_root or REPO_ROOT / ".rulelab-cache" / "opa"
+        cached = cache / expected_version / platform_key / "opa"
+        if cached.is_file():
+            try:
+                verify_opa_binary(cached, expected_version)
+            except ValueError:
+                source = download_pinned_opa(cached, expected_version)
+            else:
+                source = {
+                    "source": "verified-cache",
+                    "path": str(cached.resolve()),
+                    "platform": platform_key,
+                    "sha256": sha256(cached),
+                }
+        else:
+            source = download_pinned_opa(cached, expected_version)
+        host_candidate = cached
+
+    destination = workspace / "tools" / "opa"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(host_candidate, destination)
+    destination.chmod(0o755)
+    verify_opa_binary(destination, expected_version)
+    return {
+        "version": expected_version,
+        "workspace_path": "workspace/tools/opa",
+        "sha256": sha256(destination),
+        "self_test_available": True,
+        **(source or {}),
+    }
 
 
 def extract_pdf_text(source: Path, target: Path) -> None:
@@ -188,9 +338,8 @@ def prepare(args: argparse.Namespace) -> int:
         shutil.copy2(contract, workspace / "contracts" / contract_name)
     if OPA_RUNNER.is_file():
         shutil.copy2(OPA_RUNNER, workspace / "tools" / "opa_validate.py")
-        version_file = OPA_RUNNER.parent / "opa-version.txt"
-        if version_file.is_file():
-            shutil.copy2(version_file, workspace / "tools" / "opa-version.txt")
+        if OPA_VERSION_FILE.is_file():
+            shutil.copy2(OPA_VERSION_FILE, workspace / "tools" / "opa-version.txt")
 
     source_records: list[dict[str, Any]] = []
     prompt_source_lines: list[str] = []
@@ -326,12 +475,20 @@ def run_agent(args: argparse.Namespace) -> int:
         print(json.dumps(command, ensure_ascii=False, indent=2))
         return 0
 
+    workspace = run_dir / "workspace"
+    if OPA_RUNNER.is_file():
+        shutil.copy2(OPA_RUNNER, workspace / "tools" / "opa_validate.py")
+    if OPA_VERSION_FILE.is_file():
+        shutil.copy2(OPA_VERSION_FILE, workspace / "tools" / "opa-version.txt")
+    opa_runtime = stage_workspace_opa(workspace)
+
     prompt = (run_dir / "prompt.md").read_text(encoding="utf-8")
     generation_attempt = prepare_raw_attempt(run_dir / "raw")
     metadata["status"] = "running"
     metadata["started_at"] = utc_now()
     metadata["invocation"] = command
     metadata["generation_attempt"] = generation_attempt
+    metadata["opa_runtime"] = opa_runtime
     write_json(run_dir / "run.json", metadata)
 
     timeout = int(config.get("timeout_seconds", 3600))
