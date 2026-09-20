@@ -1,0 +1,155 @@
+{
+  "command": "validate",
+  "duration_ms": 1596,
+  "exit_code": 0,
+  "opa": {
+    "binary": null,
+    "expected_version": "1.18.2",
+    "image": "openpolicyagent/opa:1.18.2-static",
+    "runtime": "docker"
+  },
+  "rego_files": [
+    "policy/o6_11.rego",
+    "tests/o6_11_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "docker",
+          "run",
+          "--rm",
+          "-v",
+          "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_11-luna-20260920/workspace:/workspace:ro",
+          "-w",
+          "/workspace",
+          "openpolicyagent/opa:1.18.2-static",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 278,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_11.rego",
+        "tests/o6_11_test.rego"
+      ],
+      "duration_ms": 654,
+      "executions": [
+        {
+          "argv": [
+            "docker",
+            "run",
+            "--rm",
+            "-v",
+            "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_11-luna-20260920/workspace:/workspace:ro",
+            "-w",
+            "/workspace",
+            "openpolicyagent/opa:1.18.2-static",
+            "fmt",
+            "policy/o6_11.rego"
+          ],
+          "duration_ms": 357,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_11\n\nimport data as ref\nimport rego.v1\n\nfarm := object.get(input, \"farm\", {})\nland := object.get(input, \"land\", {})\nparcels := object.get(land, \"parcels\", [])\noepul := object.get(farm, \"oepul\", {})\nmeasure_applications := object.get(oepul, \"measure_applications\", [])\n\ntarget_category(p) := category if {\n\tcategory := object.get(object.get(p, \"crop\", {}), \"crop_category\", null)\n\tcategory in ref.eligible_crop_categories\n}\n\nexcluded_orchard_crop(p) if {\n\tcategory := object.get(object.get(p, \"crop\", {}), \"crop_category\", null)\n\tcategory == \"orchard\"\n\tcrop_name := object.get(object.get(p, \"crop\", {}), \"crop_name\", null)\n\tcrop_name in ref.excluded_orchard_crops\n}\n\ntarget_parcel(p) if {\n\ttarget_category(p)\n\tland_use := object.get(p, \"land_use\", null)\n\tland_use == \"special_crop\"\n}\n\ntarget_area_ha := total if {\n\tvalues := [p.area_ha | some p in parcels; target_parcel(p)]\n\ttotal := sum(values)\n}\n\nfirst_year := object.get(farm, \"year\", null)\n\ndefault minimum_participation_area_satisfied := false\n\nminimum_participation_area_satisfied if {\n\ttarget_area_ha >= 0.5\n}\n\nprotected_cultivation_area_ha := object.get(land, \"protected_cultivation_area_ha\", 0)\noepul_eligible_area_ha := object.get(land, \"oepul_eligible_area_ha\", 0)\nk20_continuation_only := object.get(oepul, \"k20_continuation_only\", false)\n\ndefault general_minimum_farm_size_satisfied := false\n\ngeneral_minimum_farm_size_satisfied if {\n\tprotected_cultivation_area_ha >= 0.5\n}\n\ngeneral_minimum_farm_size_satisfied if {\n\toepul_eligible_area_ha >= 1.5\n}\n\ngeneral_minimum_farm_size_satisfied if {\n\tk20_continuation_only\n}\n\ncontract_start_year := object.get(oepul, \"o6_11_contract_start_year\", null)\n\ncontract_end_year := 2028 if {\n\tcontract_start_year in {2023, 2024, 2025}\n}\n\ncontract_duration_years := duration if {\n\tcontract_start_year in {2023, 2024, 2025}\n\tduration := (contract_end_year - contract_start_year) + 1\n}\n\ncontract_duration_satisfied if {\n\tcontract_duration_years >= 4\n}\n\napplication_year := object.get(oepul, \"o6_11_application_year\", null)\n\napplication_deadline_satisfied if {\n\tapplication_year == null\n}\n\napplication_deadline_satisfied if {\n\tapplication_year >= 2023\n\tapplication_year <= 2025\n}\n\nlast_entry_satisfied if {\n\tapplication_year == null\n}\n\nlast_entry_satisfied if {\n\tapplication_year <= 2025\n}\n\nherbicide_application(app) if {\n\teffect_type := object.get(app, \"effect_type\", null)\n\teffect_type == \"Herbizid\"\n}\n\nherbicide_application(app) if {\n\tobject.get(app, \"is_herbicide\", false)\n}\n\nherbicide_use_on_target_parcel if {\n\tsome p in parcels\n\ttarget_parcel(p)\n\toperations := object.get(p, \"operations\", {})\n\tapplications := object.get(operations, \"pesticide_applications\", [])\n\tsome app in applications\n\therbicide_application(app)\n}\n\ndefault herbicide_ban_satisfied := false\n\nherbicide_ban_satisfied if {\n\tnot herbicide_use_on_target_parcel\n}\n\nformic_acid_use_on_target_parcel if {\n\tsome p in parcels\n\ttarget_parcel(p)\n\toperations := object.get(p, \"operations\", {})\n\tapplications := object.get(operations, \"pesticide_applications\", [])\n\tsome app in applications\n\tingredient := object.get(app, \"active_ingredient\", \"\")\n\tlower(ingredient) == \"ameisensäure\"\n}\n\npurchase_or_storage_of_herbicide if {\n\tpurchases := object.get(oepul, \"herbicide_purchases_storage\", [])\n\tsome item in purchases\n\tobject.get(item, \"is_herbicide\", false)\n\tnot object.get(item, \"permitted_for_other_crops\", false)\n}\n\ndefault purchase_storage_ban_satisfied := false\n\npurchase_storage_ban_satisfied if {\n\tnot purchase_or_storage_of_herbicide\n}\n\nbio_participation_conflict if {\n\tsome m in measure_applications\n\tobject.get(m, \"measure_id\", \"\") == \"o6_1b\"\n\tobject.get(m, \"active\", false)\n\tobject.get(m, \"participation_type\", \"whole_farm\") != \"teilbetrieb_acker_gruenland\"\n}\n\ndefault combination_satisfied := false\n\ncombination_satisfied if {\n\tnot bio_participation_conflict\n}\n\npremium_eur_per_ha := value if {\n\tfirst_year == 2023\n\tvalue := ref.premium_eur_per_ha[\"2023\"]\n}\n\npremium_eur_per_ha := value if {\n\tfirst_year >= 2024\n\tvalue := ref.premium_eur_per_ha[\"2024_and_later\"]\n}\n\npremium_eligible_parcel(p) if {\n\ttarget_parcel(p)\n\tnot object.get(p, \"o6_11_code\", \"\") == \"OP\"\n\tnot object.get(p, \"o6_11_code\", \"\") == \"OP11\"\n\tnot excluded_orchard_crop(p)\n\tplant_material := object.get(object.get(p, \"crop\", {}), \"plant_material_is_grafted\", true)\n\tplant_material\n}\n\npremium_area_ha := total if {\n\tvalues := [p.area_ha | some p in parcels; premium_eligible_parcel(p)]\n\ttotal := sum(values)\n}\n\npremium_amount_eur := amount if {\n\trate := premium_eur_per_ha\n\tarea := premium_area_ha\n\tamount := rate * area\n}\n\npsm_reporting_required if {\n\tfirst_year <= 2025\n}\n\npsm_reporting_not_required if {\n\tfirst_year >= 2026\n}\n\no6_11_measure_application if {\n\tsome m in measure_applications\n\tobject.get(m, \"measure_id\", \"\") == \"o6_11\"\n}\n\ndefault area_access_is_annually_bound := false\n\narea_access_is_annually_bound if {\n\to6_11_measure_application\n}\n\nviolations contains {\"code\": \"minimum_participation_area\", \"severity\": \"access\"} if {\n\tnot minimum_participation_area_satisfied\n}\n\nviolations contains {\"code\": \"general_minimum_farm_size\", \"severity\": \"access\"} if {\n\tnot general_minimum_farm_size_satisfied\n}\n\nviolations contains {\"code\": \"contract_duration\", \"severity\": \"access\"} if {\n\tcontract_start_year != null\n\tnot contract_duration_satisfied\n}\n\nviolations contains {\"code\": \"herbicide_use\", \"severity\": \"content\"} if {\n\therbicide_use_on_target_parcel\n}\n\nviolations contains {\"code\": \"formic_acid_use\", \"severity\": \"content\"} if {\n\tformic_acid_use_on_target_parcel\n}\n\nviolations contains {\"code\": \"purchase_or_storage\", \"severity\": \"content\"} if {\n\tpurchase_or_storage_of_herbicide\n}\n\nviolations contains {\"code\": \"bio_combination\", \"severity\": \"combination\"} if {\n\tbio_participation_conflict\n}\n\ndecision := {\n\t\"measure\": \"o6_11\",\n\t\"eligible\": minimum_participation_area_satisfied,\n\t\"general_minimum_farm_size_satisfied\": general_minimum_farm_size_satisfied,\n\t\"target_area_ha\": target_area_ha,\n\t\"premium_area_ha\": premium_area_ha,\n\t\"premium_eur_per_ha\": premium_eur_per_ha,\n\t\"premium_amount_eur\": premium_amount_eur,\n\t\"contract_end_year\": contract_end_year,\n\t\"herbicide_ban_satisfied\": herbicide_ban_satisfied,\n\t\"purchase_storage_ban_satisfied\": purchase_storage_ban_satisfied,\n\t\"combination_satisfied\": combination_satisfied,\n\t\"violations\": violations,\n\t\"profile_requirements\": [\n\t\t\"farm.oepul.o6_11_application_year\",\n\t\t\"farm.oepul.o6_11_contract_start_year\",\n\t\t\"farm.oepul.measure_applications[]\",\n\t\t\"land.parcels[].operations.pesticide_applications[]\",\n\t\t\"farm.oepul.herbicide_purchases_storage[]\",\n\t],\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "docker",
+            "run",
+            "--rm",
+            "-v",
+            "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_11-luna-20260920/workspace:/workspace:ro",
+            "-w",
+            "/workspace",
+            "openpolicyagent/opa:1.18.2-static",
+            "fmt",
+            "tests/o6_11_test.rego"
+          ],
+          "duration_ms": 297,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_11_test\n\nimport data.oepul.o6_11 as policy\nimport rego.v1\n\nbase_profile := {\n\t\"farm\": {\n\t\t\"year\": 2024,\n\t\t\"oepul\": {\n\t\t\t\"o6_11_application_year\": 2024,\n\t\t\t\"o6_11_contract_start_year\": 2024,\n\t\t\t\"measure_applications\": [],\n\t\t},\n\t},\n\t\"land\": {\n\t\t\"parcels\": [\n\t\t\t{\n\t\t\t\t\"parcel_id\": \"V1\",\n\t\t\t\t\"area_ha\": 0.6,\n\t\t\t\t\"land_use\": \"special_crop\",\n\t\t\t\t\"crop\": {\n\t\t\t\t\t\"crop_category\": \"vineyard\",\n\t\t\t\t\t\"crop_name\": \"Wein\",\n\t\t\t\t},\n\t\t\t\t\"operations\": {\n\t\t\t\t\t\"pesticide_applications\": [],\n\t\t\t\t},\n\t\t\t},\n\t\t],\n\t},\n}\n\ntest_minimum_area_and_premium if {\n\tresult := policy.decision with input as base_profile\n\tresult.eligible\n\tresult.target_area_ha == 0.6\n\tresult.premium_eur_per_ha == 270\n\tresult.premium_amount_eur == 162\n}\n\ntest_herbicide_application_is_violation if {\n\tprofile := object.union(base_profile, {\n\t\t\"land\": {\n\t\t\t\"parcels\": [\n\t\t\t\t{\n\t\t\t\t\t\"parcel_id\": \"V1\",\n\t\t\t\t\t\"area_ha\": 0.6,\n\t\t\t\t\t\"land_use\": \"special_crop\",\n\t\t\t\t\t\"crop\": {\"crop_category\": \"vineyard\", \"crop_name\": \"Wein\"},\n\t\t\t\t\t\"operations\": {\n\t\t\t\t\t\t\"pesticide_applications\": [\n\t\t\t\t\t\t\t{\"effect_type\": \"Herbizid\", \"is_herbicide\": true},\n\t\t\t\t\t\t],\n\t\t\t\t\t},\n\t\t\t\t},\n\t\t\t],\n\t\t},\n\t})\n\tresult := policy.decision with input as profile\n\tnot result.herbicide_ban_satisfied\n\t{\"code\": \"herbicide_use\", \"severity\": \"content\"} in result.violations\n}\n\ntest_walnut_is_not_premium_area if {\n\tprofile := object.union(base_profile, {\n\t\t\"land\": {\n\t\t\t\"parcels\": [\n\t\t\t\t{\n\t\t\t\t\t\"parcel_id\": \"W1\",\n\t\t\t\t\t\"area_ha\": 1.0,\n\t\t\t\t\t\"land_use\": \"special_crop\",\n\t\t\t\t\t\"crop\": {\"crop_category\": \"orchard\", \"crop_name\": \"Walnüsse\"},\n\t\t\t\t\t\"operations\": {\"pesticide_applications\": []},\n\t\t\t\t},\n\t\t\t],\n\t\t},\n\t})\n\tresult := policy.decision with input as profile\n\tresult.target_area_ha == 1\n\tresult.premium_area_ha == 0\n\tresult.eligible\n}\n\ntest_bio_combination_is_excluded_except_part_farm if {\n\tprofile := object.union(base_profile, {\n\t\t\"farm\": {\n\t\t\t\"year\": 2024,\n\t\t\t\"oepul\": {\n\t\t\t\t\"o6_11_application_year\": 2024,\n\t\t\t\t\"o6_11_contract_start_year\": 2024,\n\t\t\t\t\"measure_applications\": [\n\t\t\t\t\t{\"measure_id\": \"o6_1b\", \"active\": true, \"participation_type\": \"whole_farm\"},\n\t\t\t\t],\n\t\t\t},\n\t\t},\n\t})\n\tresult := policy.decision with input as profile\n\tnot result.combination_satisfied\n\t{\"code\": \"bio_combination\", \"severity\": \"combination\"} in result.violations\n}\n\ntest_participation_area_counts_vineyard_orchard_hop_only if {\n\tprofile := object.union(base_profile, {\n\t\t\"land\": {\n\t\t\t\"parcels\": [\n\t\t\t\t{\n\t\t\t\t\t\"parcel_id\": \"A1\",\n\t\t\t\t\t\"area_ha\": 0.4,\n\t\t\t\t\t\"land_use\": \"special_crop\",\n\t\t\t\t\t\"crop\": {\"crop_category\": \"orchard\", \"crop_name\": \"Apfel\"},\n\t\t\t\t\t\"operations\": {\"pesticide_applications\": []},\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"parcel_id\": \"X1\",\n\t\t\t\t\t\"area_ha\": 5.0,\n\t\t\t\t\t\"land_use\": \"arable\",\n\t\t\t\t\t\"crop\": {\"crop_category\": \"cereal\", \"crop_name\": \"Weizen\"},\n\t\t\t\t\t\"operations\": {\"pesticide_applications\": []},\n\t\t\t\t},\n\t\t\t],\n\t\t},\n\t})\n\tresult := policy.decision with input as profile\n\tresult.target_area_ha == 0.4\n\tnot result.eligible\n}\n\ntest_general_minimum_farm_size_by_eligible_area if {\n\tprofile := object.union(base_profile, {\n\t\t\"land\": object.union(base_profile.land, {\"oepul_eligible_area_ha\": 1.5}),\n\t})\n\tresult := policy.decision with input as profile\n\tresult.general_minimum_farm_size_satisfied\n}\n\ntest_general_minimum_farm_size_missing_is_violation if {\n\tresult := policy.decision with input as base_profile\n\tnot result.general_minimum_farm_size_satisfied\n\t{\"code\": \"general_minimum_farm_size\", \"severity\": \"access\"} in result.violations\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "docker",
+          "run",
+          "--rm",
+          "-v",
+          "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_11-luna-20260920/workspace:/workspace:ro",
+          "-w",
+          "/workspace",
+          "openpolicyagent/opa:1.18.2-static",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 285,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 7/7\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "docker",
+          "run",
+          "--rm",
+          "-v",
+          "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_11-luna-20260920/workspace:/workspace:ro",
+          "-w",
+          "/workspace",
+          "openpolicyagent/opa:1.18.2-static",
+          "version"
+        ],
+        "duration_ms": 377,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297-dirty\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: linux/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_11-luna-20260920/workspace"
+}
