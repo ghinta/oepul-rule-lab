@@ -51,3 +51,9 @@ python3 tools/opa_validate.py validate --workspace . --target policy --target da
 Eine zur Repository-Pin passende lokale OPA-Binary liegt unter `tools/opa`.
 Der Validator verwendet sie automatisch. Führe die Prüfung selbst aus und
 repariere Fehler iterativ; Docker-Zugriff ist dafür weder nötig noch erlaubt.
+
+Der Generator startet mit einer expliziten lokalen OPA-Umgebung: `OPA_RUNTIME`
+steht auf `local`, `OPA_BIN` zeigt auf `tools/opa`, und `tools/` ist im `PATH`.
+Damit funktionieren sowohl `opa fmt/check/test ...` als auch der Validator
+innerhalb des Modell-Sandboxes. Verwende keine Docker-Kommandos und verlasse
+dich nicht auf eine hostweit installierte OPA-Version.

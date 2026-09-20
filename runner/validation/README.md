@@ -5,8 +5,12 @@ workspaces. It deliberately answers only whether artifacts are formatted,
 strictly compilable, and executable under their OPA tests. It does not assess
 source fidelity, rule semantics, or experiment eligibility.
 
-The default OPA version is pinned in `opa-version.txt`. With no local `opa`
-binary, the runner uses `openpolicyagent/opa:<version>-static` through Docker.
+The default OPA version is pinned in `opa-version.txt`. Generator workspaces
+contain a verified executable at `tools/opa`; the generator exports
+`OPA_RUNTIME=local`, `OPA_BIN=tools/opa`, and puts `tools/` on `PATH`, so models
+can run the same checks without Docker or host permissions. For standalone
+validation outside a prepared workspace, the runner may still use Docker as a
+fallback when no local binary is available.
 
 ## Validate a run workspace
 

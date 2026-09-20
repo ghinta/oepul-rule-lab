@@ -112,6 +112,10 @@ class OpaRuntime:
 
 def resolve_runtime(args: argparse.Namespace, workspace: Path) -> OpaRuntime:
     requested = args.runtime
+    if requested == "auto":
+        configured_runtime = os.environ.get("OPA_RUNTIME", "").strip().lower()
+        if configured_runtime in {"local", "docker"}:
+            requested = configured_runtime
     configured_bin = args.opa_bin or os.environ.get("OPA_BIN")
     if requested == "auto":
         if configured_bin:

@@ -197,6 +197,29 @@ def stage_workspace_opa(
     }
 
 
+def generator_environment(workspace: Path) -> dict[str, str]:
+    """Return the environment exposed to a model generator.
+
+    A model run is intentionally sandboxed to its run workspace.  Relying on
+    a host-level ``opa`` executable (or on Docker) therefore makes the same
+    prompt behave differently depending on the host.  ``run_agent`` stages a
+    verified binary at ``tools/opa`` first; this helper makes that capability
+    explicit and discoverable for both ``opa ...`` and the Python validator.
+    """
+
+    tools = (workspace / "tools").resolve()
+    opa = tools / "opa"
+    environment = os.environ.copy()
+    environment["OPA_RUNTIME"] = "local"
+    environment["OPA_BIN"] = str(opa)
+    environment["PATH"] = os.pathsep.join(
+        item for item in (str(tools), environment.get("PATH", "")) if item
+    )
+    environment["RULELAB_OPA_RUNTIME"] = "local"
+    environment["RULELAB_OPA_BIN"] = "tools/opa"
+    return environment
+
+
 def extract_pdf_text(source: Path, target: Path) -> None:
     try:
         from pypdf import PdfReader
@@ -481,6 +504,7 @@ def run_agent(args: argparse.Namespace) -> int:
     if OPA_VERSION_FILE.is_file():
         shutil.copy2(OPA_VERSION_FILE, workspace / "tools" / "opa-version.txt")
     opa_runtime = stage_workspace_opa(workspace)
+    model_environment = generator_environment(workspace)
 
     prompt = (run_dir / "prompt.md").read_text(encoding="utf-8")
     generation_attempt = prepare_raw_attempt(run_dir / "raw")
@@ -489,6 +513,11 @@ def run_agent(args: argparse.Namespace) -> int:
     metadata["invocation"] = command
     metadata["generation_attempt"] = generation_attempt
     metadata["opa_runtime"] = opa_runtime
+    metadata["generator_environment"] = {
+        "opa_runtime": model_environment["OPA_RUNTIME"],
+        "opa_bin": model_environment["RULELAB_OPA_BIN"],
+        "path_prefix": "tools",
+    }
     write_json(run_dir / "run.json", metadata)
 
     timeout = int(config.get("timeout_seconds", 3600))
@@ -502,7 +531,7 @@ def run_agent(args: argparse.Namespace) -> int:
             cwd=run_dir / "workspace",
             timeout=timeout,
             check=False,
-            env=os.environ.copy(),
+            env=model_environment,
         )
     (run_dir / "raw" / "stderr.log").write_text(
         completed.stderr or "", encoding="utf-8"
