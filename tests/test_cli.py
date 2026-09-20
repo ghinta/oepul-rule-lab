@@ -58,6 +58,18 @@ class OpaBootstrapTests(unittest.TestCase):
             self.assertTrue(metadata["self_test_available"])
             cli.verify_opa_binary(destination, "1.18.2")
 
+    def test_generator_environment_exposes_workspace_opa_without_docker(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory) / "workspace"
+            tools = workspace / "tools"
+            tools.mkdir(parents=True)
+            environment = cli.generator_environment(workspace)
+
+            self.assertEqual(environment["OPA_RUNTIME"], "local")
+            self.assertEqual(environment["OPA_BIN"], str((tools / "opa").resolve()))
+            self.assertEqual(environment["RULELAB_OPA_BIN"], "tools/opa")
+            self.assertEqual(environment["PATH"].split(os.pathsep)[0], str(tools.resolve()))
+
 
 class ProfileDiffTests(unittest.TestCase):
     def test_reports_added_removed_and_changed_paths(self) -> None:
