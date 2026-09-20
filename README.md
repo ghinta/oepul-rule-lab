@@ -27,7 +27,8 @@ PYTHONPATH=src python3 -m unittest discover -s tests -v
 Alternativ enthält `.devcontainer/` Python und die gepinnte OPA-Version. Ein
 Modellwechsel benötigt beim gleichen Adapter nur eine zweite JSON-Datei unter
 `config/models/` mit einem anderen `model`-Wert. Vorbereitet sind Konfigurationen
-für `gpt-5.5`, `gpt-5.6-terra`, `gpt-5.6-sol` und `gpt-6-astra`; ein externer
+für `gpt-5.5`, `gpt-5.6-luna`, `gpt-5.6-terra`, `gpt-5.6-sol` und
+`gpt-6-astra`; ein externer
 Command-Adapter ist ebenfalls dokumentiert.
 
 ## Quellen aktualisieren
