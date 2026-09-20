@@ -1,0 +1,155 @@
+{
+  "command": "validate",
+  "duration_ms": 1630,
+  "exit_code": 0,
+  "opa": {
+    "binary": null,
+    "expected_version": "1.18.2",
+    "image": "openpolicyagent/opa:1.18.2-static",
+    "runtime": "docker"
+  },
+  "rego_files": [
+    "policy/o6_1a.rego",
+    "tests/o6_1a_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "docker",
+          "run",
+          "--rm",
+          "-v",
+          "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_1a-gpt55-20260918/workspace:/workspace:ro",
+          "-w",
+          "/workspace",
+          "openpolicyagent/opa:1.18.2-static",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 294,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_1a.rego",
+        "tests/o6_1a_test.rego"
+      ],
+      "duration_ms": 661,
+      "executions": [
+        {
+          "argv": [
+            "docker",
+            "run",
+            "--rm",
+            "-v",
+            "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_1a-gpt55-20260918/workspace:/workspace:ro",
+            "-w",
+            "/workspace",
+            "openpolicyagent/opa:1.18.2-static",
+            "fmt",
+            "policy/o6_1a.rego"
+          ],
+          "duration_ms": 371,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_1a\n\nimport rego.v1\n\ndefault allow := false\n\nallow if {\n\tcount(violations) == 0\n}\n\nyear := input.farm.year\n\ntables := {\n\t\"crop_groups\": data.crop_groups,\n\t\"premium_rates\": data.premium_rates,\n\t\"rare_cultivars\": data.rare_cultivars,\n}\n\nviolations contains {\"rule_id\": \"O6_1A.ARABLE_DIVERSIFICATION.CEREAL_MAIZE_MAX_75\", \"message\": msg} if {\n\tinput.land.arable_area_ha > 5\n\tshare := (100 * cereal_maize_area) / input.land.arable_area_ha\n\tshare > 75\n\tmsg := sprintf(\"Getreide und Mais betragen %.2f %% der Ackerfläche und überschreiten 75 %%\", [share])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.ARABLE_DIVERSIFICATION.SINGLE_CROP_MAX_55\", \"message\": msg} if {\n\tinput.land.arable_area_ha > 5\n\tp := input.land.parcels[_]\n\tp.land_use == \"arable\"\n\tcrop := p.crop.crop_name\n\tnot single_crop_exempt(crop)\n\tarea := crop_area(crop)\n\tshare := (100 * area) / input.land.arable_area_ha\n\tshare > 55\n\tmsg := sprintf(\"%s beträgt %.2f %% der Ackerfläche und überschreitet 55 %%\", [crop, share])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.GRASSLAND_RETENTION.MAX_CONVERSION_1HA\", \"message\": msg} if {\n\tconverted := object.get(input.land, \"grassland_converted_ha_contract_period\", 0)\n\tnew_grass := object.get(input.land, \"grassland_newly_established_ha_contract_period\", 0)\n\tnet := converted - new_grass\n\tnet > 1\n\tmsg := sprintf(\"Netto-Grünlandumwandlung %.2f ha überschreitet die Toleranz von 1,00 ha\", [net])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.TRAINING.BIODIVERSITY_3H_BY_2025\", \"message\": \"Biodiversitätsweiterbildung von mindestens 3 Stunden bis 31.12.2025 fehlt\"} if {\n\tyear >= 2026\n\thours := object.get(input.documentation, \"biodiversity_training_hours_since_2022\", 0)\n\thours < 3\n}\n\nviolations contains {\"rule_id\": \"O6_1A.ARABLE_BIODIVERSITY.MIN_7_PERCENT\", \"message\": msg} if {\n\tinput.land.arable_area_ha > 2\n\trequired := 0.07 * input.land.arable_area_ha\n\teligible := arable_biodiversity_credit_area\n\teligible < required\n\tmsg := sprintf(\"Acker-Biodiversitätsflächen %.2f ha unterschreiten 7 %% von %.2f ha\", [eligible, input.land.arable_area_ha])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.GRASSLAND_BIODIVERSITY.MIN_7_PERCENT\", \"message\": msg} if {\n\tmown := object.get(input.land, \"mown_grassland_area_excluding_mountain_meadows_ha\", input.land.grassland_area_ha)\n\tmown > 2\n\trequired := 0.07 * mown\n\teligible := grassland_biodiversity_credit_area\n\teligible < required\n\tmsg := sprintf(\"Grünland-Biodiversitätsflächen %.2f ha unterschreiten 7 %% von %.2f ha\", [eligible, mown])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.ARABLE_FIELD_BLOCK.MIN_0_15HA\", \"message\": msg} if {\n\tinput.land.arable_area_ha >= 10\n\tblock := object.get(input.land, \"field_blocks\", [])[_]\n\tblock.land_use == \"arable\"\n\tblock.area_ha > 5\n\tcredit := object.get(block, \"biodiversity_credit_area_ha\", 0)\n\tcredit < 0.15\n\tmsg := sprintf(\"Acker-Feldstück %s über 5 ha hat nur %.2f ha anrechenbare Biodiversitätsfläche\", [block.field_block_id, credit])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.GRASSLAND_FIELD_BLOCK.MIN_0_15HA\", \"message\": msg} if {\n\tmown := object.get(input.land, \"mown_grassland_area_excluding_mountain_meadows_ha\", input.land.grassland_area_ha)\n\tmown >= 10\n\tblock := object.get(input.land, \"field_blocks\", [])[_]\n\tblock.land_use == \"grassland\"\n\tobject.get(block, \"mown_area_excluding_mountain_meadows_ha\", block.area_ha) > 5\n\tcredit := object.get(block, \"biodiversity_credit_area_ha\", 0)\n\tcredit < 0.15\n\tmsg := sprintf(\"Grünland-Feldstück %s über 5 ha hat nur %.2f ha anrechenbare Biodiversitätsfläche\", [block.field_block_id, credit])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.ARABLE_BIODIVERSITY.SEED_MIX\", \"message\": msg} if {\n\tp := arable_biodiversity_parcels[_]\n\tnot object.get(p.constraints.biodiversity_area, \"legacy_seed_mix_exemption\", false)\n\tmix := object.get(p.constraints.biodiversity_area, \"seed_mix\", {})\n\tobject.get(mix, \"insect_pollinated_partners\", 0) < 7\n\tmsg := sprintf(\"Acker-Biodiversitätsfläche %s hat weniger als 7 insektenblütige Mischungspartner\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.ARABLE_BIODIVERSITY.SEED_MIX_FAMILIES\", \"message\": msg} if {\n\tp := arable_biodiversity_parcels[_]\n\tnot object.get(p.constraints.biodiversity_area, \"legacy_seed_mix_exemption\", false)\n\tmix := object.get(p.constraints.biodiversity_area, \"seed_mix\", {})\n\tobject.get(mix, \"plant_families\", 0) < 3\n\tmsg := sprintf(\"Acker-Biodiversitätsfläche %s hat weniger als 3 Pflanzenfamilien\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.ARABLE_BIODIVERSITY.NON_INSECT_MAX_10\", \"message\": msg} if {\n\tp := arable_biodiversity_parcels[_]\n\tmix := object.get(p.constraints.biodiversity_area, \"seed_mix\", {})\n\tobject.get(mix, \"non_insect_pollinated_percent\", 0) > 10\n\tmsg := sprintf(\"Acker-Biodiversitätsfläche %s überschreitet 10 %% nicht insektenblütige Mischungspartner\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.ARABLE_BIODIVERSITY.SOWING_BY_MAY_15\", \"message\": msg} if {\n\tp := arable_biodiversity_parcels[_]\n\tdate := object.get(p.constraints.biodiversity_area, \"sowing_date\", \"\")\n\tdate != \"\"\n\tmonth_day(date) > \"05-15\"\n\tmsg := sprintf(\"Acker-Biodiversitätsfläche %s wurde nach dem 15. Mai angesät\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.ARABLE_BIODIVERSITY.NO_PSM_OR_FERTILIZER\", \"message\": msg} if {\n\tp := arable_biodiversity_parcels[_]\n\tp.operations.psm_used\n\tnot object.get(p.operations, \"psm_bio_regulation_only\", false)\n\tmsg := sprintf(\"Acker-Biodiversitätsfläche %s verwendet unzulässige Pflanzenschutzmittel\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.ARABLE_BIODIVERSITY.NO_PSM_OR_FERTILIZER\", \"message\": msg} if {\n\tp := arable_biodiversity_parcels[_]\n\ttotal_n(p) > 0\n\tmsg := sprintf(\"Acker-Biodiversitätsfläche %s wurde gedüngt\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.ARABLE_BIODIVERSITY.MAX_TWO_USES\", \"message\": msg} if {\n\tp := arable_biodiversity_parcels[_]\n\tuses := object.get(p.operations, \"biodiversity_use_count\", 0)\n\tuses > 2\n\tnot dry_2026_third_use_exception(p)\n\tmsg := sprintf(\"Acker-Biodiversitätsfläche %s überschreitet maximal zwei Nutzungen pro Jahr\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.ARABLE_BIODIVERSITY.BEFORE_AUG_1_LIMIT\", \"message\": msg} if {\n\tearly := object.get(input.land, \"arable_biodiversity_area_used_before_august_1_ha\", 0)\n\tlimit := 0.25 * arable_biodiversity_total_area\n\tearly > limit\n\tnot dry_2026_op_exception_area_ok\n\tmsg := sprintf(\"Vor dem 1. August genutzte Acker-DIV-Fläche %.2f ha überschreitet 25 %%\", [early])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.GRASSLAND_BIODIVERSITY.NO_PSM\", \"message\": msg} if {\n\tp := grassland_biodiversity_parcels[_]\n\tp.operations.psm_used\n\tnot object.get(p.operations, \"psm_bio_regulation_only\", false)\n\tmsg := sprintf(\"Grünland-Biodiversitätsfläche %s verwendet unzulässige Pflanzenschutzmittel\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.GRASSLAND_DIVSZ.FIRST_USE_DATE\", \"message\": msg} if {\n\tp := grassland_biodiversity_parcels[_]\n\tbiodiv_code(p, \"DIVSZ\")\n\tfirst := object.get(p.operations, \"first_use_date\", \"\")\n\tfirst != \"\"\n\tnot divsz_date_ok(p, first)\n\tmsg := sprintf(\"DIVSZ-Fläche %s wurde zu früh genutzt\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.GRASSLAND_DIVNFZ.NINE_WEEKS\", \"message\": msg} if {\n\tp := grassland_biodiversity_parcels[_]\n\tbiodiv_code(p, \"DIVNFZ\")\n\tdays := object.get(p.operations, \"use_free_period_days_after_first_use\", 0)\n\tdays < 63\n\tnot dry_2026_grassland_divnfz_op_exception(p, days)\n\tmsg := sprintf(\"DIVNFZ-Fläche %s hat weniger als 63 nutzungsfreie Tage\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.GRASSLAND_DIVAGF.LAST_USE_AUG_15\", \"message\": msg} if {\n\tp := grassland_biodiversity_parcels[_]\n\tbiodiv_code(p, \"DIVAGF\")\n\tlast := object.get(p.operations, \"last_use_date\", \"\")\n\tlast != \"\"\n\tmonth_day(last) > \"08-15\"\n\tmsg := sprintf(\"DIVAGF-Fläche %s wurde nach dem 15. August genutzt\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.DIVRS.REGIONAL_SEED_MIX\", \"message\": msg} if {\n\tp := biodiversity_parcels[_]\n\tbiodiv_code(p, \"DIVRS\")\n\tmix := object.get(p.constraints.biodiversity_area, \"seed_mix\", {})\n\tobject.get(mix, \"species_count\", 0) < 30\n\tmsg := sprintf(\"DIVRS-Fläche %s hat weniger als 30 Arten\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.DIVRS.REGIONAL_SEED_MIX\", \"message\": msg} if {\n\tp := biodiversity_parcels[_]\n\tbiodiv_code(p, \"DIVRS\")\n\tmix := object.get(p.constraints.biodiversity_area, \"seed_mix\", {})\n\tobject.get(mix, \"plant_families\", 0) < 7\n\tmsg := sprintf(\"DIVRS-Fläche %s hat weniger als 7 Pflanzenfamilien\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.DIVRS.SOWING_RATE\", \"message\": msg} if {\n\tp := biodiversity_parcels[_]\n\tbiodiv_code(p, \"DIVRS\")\n\tmix := object.get(p.constraints.biodiversity_area, \"seed_mix\", {})\n\tobject.get(mix, \"sowing_rate_kg_per_ha\", 0) < 20\n\tmsg := sprintf(\"DIVRS-Fläche %s unterschreitet 20 kg/ha Saatstärke\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.DIVRS.MAX_SINGLE_SPECIES_5_PERCENT\", \"message\": msg} if {\n\tp := biodiversity_parcels[_]\n\tbiodiv_code(p, \"DIVRS\")\n\tmix := object.get(p.constraints.biodiversity_area, \"seed_mix\", {})\n\tnot object.get(mix, \"ecotype_seed_exception\", false)\n\tobject.get(mix, \"max_single_species_weight_percent\", 0) > 5\n\tmsg := sprintf(\"DIVRS-Fläche %s überschreitet 5 Gewichtsprozent je Art\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.GRASSLAND_DIVRS.SITE\", \"message\": msg} if {\n\tp := grassland_biodiversity_parcels[_]\n\tbiodiv_code(p, \"DIVRS\")\n\tobject.get(p.constraints, \"average_grassland_score\", 0) < 30\n\tmsg := sprintf(\"Grünland-DIVRS-Fläche %s unterschreitet Grünlandzahl 30\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.GRASSLAND_DIVRS.SITE\", \"message\": msg} if {\n\tp := grassland_biodiversity_parcels[_]\n\tbiodiv_code(p, \"DIVRS\")\n\tp.slope_percent >= 18\n\tmsg := sprintf(\"Grünland-DIVRS-Fläche %s hat mindestens 18 %% Hangneigung\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.WILD_HERB_BREEDING.REQUIREMENTS\", \"message\": msg} if {\n\tp := object.get(input.land, \"parcels\", [])[_]\n\thas_code(p, \"WB\")\n\tnot is_cereal(p)\n\tmsg := sprintf(\"WB-Schlag %s ist keine Getreidefläche\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.WILD_HERB_BREEDING.REQUIREMENTS\", \"message\": msg} if {\n\tp := object.get(input.land, \"parcels\", [])[_]\n\thas_code(p, \"WB\")\n\tobject.get(p.operations, \"row_spacing_cm\", 0) < 20\n\tmsg := sprintf(\"WB-Schlag %s unterschreitet 20 cm Reihenabstand\", [p.parcel_id])\n}\n\nviolations contains {\"rule_id\": \"O6_1A.PHEROMONE_BEET.MIN_15_PER_HA\", \"message\": msg} if {\n\tp := object.get(input.land, \"parcels\", [])[_]\n\thas_code(p, \"PZR\")\n\tdensity := object.get(p.operations, \"pheromone_traps_per_ha\", 0)\n\tdensity < 15\n\tmsg := sprintf(\"PZR-Schlag %s hat weniger als 15 Pheromonfallen je Hektar\", [p.parcel_id])\n}\n\nclassification := {\n\t\"is_livestock_holding\": is_livestock_holding,\n\t\"rgve_total\": rgve_total,\n\t\"forage_area_ha\": forage_area,\n}\n\nis_livestock_holding if {\n\tforage_area > 0\n\trgve_total / forage_area >= 0.30\n}\n\npremium_rates := tables.premium_rates.from_2025\n\neligible_arable_biodiversity_extra_area_ha := max([0, min([pure_arable_biodiversity_area, 0.20 * input.land.arable_area_ha]) - (0.07 * input.land.arable_area_ha)])\n\neligible_grassland_biodiversity_extra_area_ha := max([0, min([pure_grassland_biodiversity_area, 0.20 * mown_grassland_area]) - (0.07 * mown_grassland_area)])\n\neligible_rare_cultivars contains p.parcel_id if {\n\tp := object.get(input.land, \"parcels\", [])[_]\n\thas_code(p, \"SLK\")\n\tslk_entry(p)\n\tobject.get(p.operations, \"sort_pure\", false)\n}\n\neligible_bhg_parcels contains p.parcel_id if {\n\tp := object.get(input.land, \"parcels\", [])[_]\n\thas_code(p, \"BHG\")\n\tcontains_name(tables.crop_groups.bhg, p.crop.crop_name)\n}\n\nslk_entry(p) if {\n\tentry := tables.rare_cultivars[_]\n\tlower(entry.cultivar) == lower(object.get(p.crop, \"cultivar\", \"\"))\n\tobject.get(entry, \"valid_from_year\", null) == null\n}\n\nslk_entry(p) if {\n\tentry := tables.rare_cultivars[_]\n\tlower(entry.cultivar) == lower(object.get(p.crop, \"cultivar\", \"\"))\n\tyear >= entry.valid_from_year\n}\n\ncereal_maize_area := sum([p.area_ha | p := object.get(input.land, \"parcels\", [])[_]; p.land_use == \"arable\"; is_cereal_or_maize(p)])\n\ncrop_area(crop) := sum([p.area_ha | p := object.get(input.land, \"parcels\", [])[_]; p.land_use == \"arable\"; lower(p.crop.crop_name) == lower(crop)])\n\nforage_area := input.land.grassland_area_ha + sum([p.area_ha | p := object.get(input.land, \"parcels\", [])[_]; p.land_use == \"arable\"; contains_name(tables.crop_groups.forage_crops, p.crop.crop_name)])\n\nrgve_total := sum([group.gve | group := object.get(input.livestock, \"species_groups\", [])[_]; group.gve != null])\n\nmown_grassland_area := object.get(input.land, \"mown_grassland_area_excluding_mountain_meadows_ha\", input.land.grassland_area_ha)\n\narable_biodiversity_total_area := sum([p.area_ha | p := arable_biodiversity_parcels[_]])\n\npure_arable_biodiversity_area := sum([p.area_ha | p := arable_biodiversity_parcels[_]; not biodiversity_from_other_measure(p); not has_code(p, \"GLÖZ4\")])\n\narable_biodiversity_credit_area := sum([p.area_ha | p := arable_biodiversity_parcels[_]; not has_code(p, \"K20\")])\n\ngrassland_biodiversity_credit_area := sum([p.area_ha | p := grassland_biodiversity_parcels[_]])\n\npure_grassland_biodiversity_area := sum([p.area_ha | p := grassland_biodiversity_parcels[_]; not biodiversity_from_other_measure(p); not has_code(p, \"GLÖZ4\")])\n\narable_biodiversity_parcels contains p if {\n\tp := object.get(input.land, \"parcels\", [])[_]\n\tp.land_use == \"arable\"\n\tp.constraints.biodiversity_area.is_biodiversity_area\n}\n\ngrassland_biodiversity_parcels contains p if {\n\tp := object.get(input.land, \"parcels\", [])[_]\n\tp.land_use == \"grassland\"\n\tp.constraints.biodiversity_area.is_biodiversity_area\n}\n\nbiodiversity_parcels contains p if {\n\tp := arable_biodiversity_parcels[_]\n}\n\nbiodiversity_parcels contains p if {\n\tp := grassland_biodiversity_parcels[_]\n}\n\nis_cereal_or_maize(p) if {\n\tis_cereal(p)\n}\n\nis_cereal_or_maize(p) if {\n\tlower(p.crop.crop_name) == \"mais\"\n}\n\nis_cereal_or_maize(p) if {\n\tp.crop.crop_category == \"maize\"\n}\n\nis_cereal(p) if {\n\tcontains_name(tables.crop_groups.cereals, p.crop.crop_name)\n}\n\nsingle_crop_exempt(crop) if {\n\tcontains_name(tables.crop_groups.forage_crops, crop)\n}\n\nsingle_crop_exempt(crop) if {\n\tyear >= 2025\n\tlower(crop) == \"grünbrache\"\n}\n\nsingle_crop_exempt(crop) if {\n\tyear >= 2025\n\tlower(crop) == \"spargel\"\n}\n\nbiodiv_code(p, code) if {\n\thas_code(p, code)\n}\n\nbiodiv_code(p, code) if {\n\tobject.get(p.constraints.biodiversity_area, \"variant_code\", \"\") == code\n}\n\nhas_code(p, code) if {\n\tcodes := object.get(p, \"codes\", [])\n\tsome c in codes\n\tc == code\n}\n\nbiodiversity_from_other_measure(p) if {\n\thas_code(p, \"NAT\")\n}\n\nbiodiversity_from_other_measure(p) if {\n\thas_code(p, \"EBW\")\n}\n\nbiodiversity_from_other_measure(p) if {\n\thas_code(p, \"BAW\")\n}\n\nbiodiversity_from_other_measure(p) if {\n\thas_code(p, \"AG\")\n}\n\nbiodiversity_from_other_measure(p) if {\n\thas_code(p, \"N2\")\n}\n\ntotal_n(p) := n if {\n\tf := object.get(p.operations, \"fertilizer\", {})\n\tn := number_or_zero(object.get(f, \"mineral_n_kg_per_ha\", 0)) + number_or_zero(object.get(f, \"organic_n_kg_per_ha\", 0))\n}\n\nnumber_or_zero(value) := value if {\n\tis_number(value)\n}\n\nnumber_or_zero(value) := 0 if {\n\tnot is_number(value)\n}\n\nmonth_day(date) := substring(date, 5, 5)\n\ndivsz_date_ok(p, first) if {\n\tmonth_day(first) >= \"06-15\"\n\tobject.get(p.operations, \"comparable_second_cut_occurred\", false)\n}\n\ndivsz_date_ok(_, first) if {\n\tmonth_day(first) >= \"07-15\"\n}\n\ndivsz_date_ok(p, first) if {\n\tyear == 2026\n\tobject.get(p, \"op_code_no_ubb_premium\", false)\n\tobject.get(p.operations, \"comparable_second_cut_occurred\", false)\n\tmonth_day(first) >= object.get(p.operations, \"dry_2026_earliest_use_month_day\", \"05-25\")\n}\n\ndry_2026_op_exception_area_ok if {\n\tyear == 2026\n\tarea := object.get(input.land, \"arable_biodiversity_area_used_before_august_1_without_ubb_premium_ha\", 0)\n\tearly := object.get(input.land, \"arable_biodiversity_area_used_before_august_1_ha\", 0)\n\tregular_limit := 0.25 * arable_biodiversity_total_area\n\tearly <= regular_limit + area\n}\n\ndry_2026_third_use_exception(p) if {\n\tyear == 2026\n\tobject.get(p.operations, \"biodiversity_use_count\", 0) == 3\n\tobject.get(p, \"op_code_no_ubb_premium\", false)\n\tnot has_code(p, \"NAT\")\n\tnot has_code(p, \"EBW\")\n}\n\ndry_2026_grassland_divnfz_op_exception(p, days) if {\n\tyear == 2026\n\tobject.get(p, \"op_code_no_ubb_premium\", false)\n\tdays >= 49\n}\n\ncontains_name(list, name) if {\n\tsome x in list\n\tlower(x) == lower(name)\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "docker",
+            "run",
+            "--rm",
+            "-v",
+            "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_1a-gpt55-20260918/workspace:/workspace:ro",
+            "-w",
+            "/workspace",
+            "openpolicyagent/opa:1.18.2-static",
+            "fmt",
+            "tests/o6_1a_test.rego"
+          ],
+          "duration_ms": 289,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_1a\n\nimport rego.v1\n\nbase_input := {\n\t\"farm\": {\"year\": 2026, \"region\": {\"federal_state\": \"Niederösterreich\", \"district\": \"Amstetten\"}},\n\t\"land\": {\n\t\t\"arable_area_ha\": 10,\n\t\t\"grassland_area_ha\": 4,\n\t\t\"mown_grassland_area_excluding_mountain_meadows_ha\": 4,\n\t\t\"parcels\": [\n\t\t\t{\n\t\t\t\t\"parcel_id\": \"A1\",\n\t\t\t\t\"area_ha\": 5,\n\t\t\t\t\"land_use\": \"arable\",\n\t\t\t\t\"slope_percent\": 0,\n\t\t\t\t\"crop\": {\"crop_category\": \"cereal\", \"crop_name\": \"Weizen\"},\n\t\t\t\t\"operations\": {\"psm_used\": false, \"fertilizer\": {\"mineral_n_kg_per_ha\": 0, \"organic_n_kg_per_ha\": 0}},\n\t\t\t\t\"constraints\": {\"biodiversity_area\": {\"is_biodiversity_area\": false}},\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"parcel_id\": \"A2\",\n\t\t\t\t\"area_ha\": 4,\n\t\t\t\t\"land_use\": \"arable\",\n\t\t\t\t\"slope_percent\": 0,\n\t\t\t\t\"crop\": {\"crop_category\": \"legume\", \"crop_name\": \"Erbsen\"},\n\t\t\t\t\"operations\": {\"psm_used\": false, \"fertilizer\": {\"mineral_n_kg_per_ha\": 0, \"organic_n_kg_per_ha\": 0}},\n\t\t\t\t\"constraints\": {\"biodiversity_area\": {\"is_biodiversity_area\": false}},\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"parcel_id\": \"DIV-A\",\n\t\t\t\t\"area_ha\": 1,\n\t\t\t\t\"land_use\": \"arable\",\n\t\t\t\t\"slope_percent\": 0,\n\t\t\t\t\"codes\": [\"DIV\"],\n\t\t\t\t\"crop\": {\"crop_category\": \"fallow\", \"crop_name\": \"Grünbrache\"},\n\t\t\t\t\"operations\": {\"psm_used\": false, \"biodiversity_use_count\": 1, \"fertilizer\": {\"mineral_n_kg_per_ha\": 0, \"organic_n_kg_per_ha\": 0}},\n\t\t\t\t\"constraints\": {\"biodiversity_area\": {\"is_biodiversity_area\": true, \"sowing_date\": \"2026-05-01\", \"seed_mix\": {\"insect_pollinated_partners\": 7, \"plant_families\": 3, \"non_insect_pollinated_percent\": 10}}},\n\t\t\t},\n\t\t\t{\n\t\t\t\t\"parcel_id\": \"DIV-G\",\n\t\t\t\t\"area_ha\": 0.4,\n\t\t\t\t\"land_use\": \"grassland\",\n\t\t\t\t\"slope_percent\": 10,\n\t\t\t\t\"codes\": [\"DIVSZ\"],\n\t\t\t\t\"crop\": {\"crop_category\": \"other\", \"crop_name\": \"Mähwiese/-weide\"},\n\t\t\t\t\"operations\": {\"psm_used\": false, \"first_use_date\": \"2026-07-15\", \"fertilizer\": {\"mineral_n_kg_per_ha\": 0, \"organic_n_kg_per_ha\": 0}},\n\t\t\t\t\"constraints\": {\"biodiversity_area\": {\"is_biodiversity_area\": true, \"variant_code\": \"DIVSZ\"}},\n\t\t\t},\n\t\t],\n\t\t\"field_blocks\": [\n\t\t\t{\"field_block_id\": \"FB-A\", \"land_use\": \"arable\", \"area_ha\": 6, \"biodiversity_credit_area_ha\": 0.15},\n\t\t\t{\"field_block_id\": \"FB-G\", \"land_use\": \"grassland\", \"area_ha\": 6, \"mown_area_excluding_mountain_meadows_ha\": 6, \"biodiversity_credit_area_ha\": 0.15},\n\t\t],\n\t},\n\t\"livestock\": {\"species_groups\": [{\"species\": \"cattle\", \"category\": \"cattle_from_2_years\", \"animal_count\": 2, \"gve\": 2}]},\n\t\"documentation\": {\"biodiversity_training_hours_since_2022\": 3},\n}\n\ntest_base_input_allows if {\n\tallow with input as base_input\n}\n\ntest_cereal_maize_limit_violation if {\n\tbad_land := object.union(base_input.land, {\"parcels\": [object.union(base_input.land.parcels[0], {\"area_ha\": 8}), base_input.land.parcels[1], base_input.land.parcels[2], base_input.land.parcels[3]]})\n\tbad := object.union(base_input, {\"land\": bad_land})\n\tresult := violations with input as bad\n\thas_violation(result, \"O6_1A.ARABLE_DIVERSIFICATION.CEREAL_MAIZE_MAX_75\")\n}\n\ntest_arable_biodiversity_minimum_violation if {\n\tbad_land := object.union(base_input.land, {\"parcels\": [base_input.land.parcels[0], base_input.land.parcels[1], object.union(base_input.land.parcels[2], {\"area_ha\": 0.5}), base_input.land.parcels[3]]})\n\tbad := object.union(base_input, {\"land\": bad_land})\n\tresult := violations with input as bad\n\thas_violation(result, \"O6_1A.ARABLE_BIODIVERSITY.MIN_7_PERCENT\")\n}\n\ntest_divrs_species_violation if {\n\tdivrs := object.union(base_input.land.parcels[3], {\n\t\t\"codes\": [\"DIVRS\"],\n\t\t\"constraints\": {\"average_grassland_score\": 35, \"biodiversity_area\": {\"is_biodiversity_area\": true, \"variant_code\": \"DIVRS\", \"seed_mix\": {\"species_count\": 20, \"plant_families\": 7, \"sowing_rate_kg_per_ha\": 20, \"max_single_species_weight_percent\": 5}}},\n\t})\n\tbad_land := object.union(base_input.land, {\"parcels\": [base_input.land.parcels[0], base_input.land.parcels[1], base_input.land.parcels[2], divrs]})\n\tbad := object.union(base_input, {\"land\": bad_land})\n\tresult := violations with input as bad\n\thas_violation(result, \"O6_1A.DIVRS.REGIONAL_SEED_MIX\")\n}\n\ntest_livestock_classification if {\n\tresult := classification with input as base_input\n\tresult == {\"is_livestock_holding\": true, \"rgve_total\": 2, \"forage_area_ha\": 4}\n}\n\ntest_dry_2026_third_use_exception if {\n\tdiv := object.union(base_input.land.parcels[2], {\"op_code_no_ubb_premium\": true, \"operations\": object.union(base_input.land.parcels[2].operations, {\"biodiversity_use_count\": 3})})\n\texc_land := object.union(base_input.land, {\"parcels\": [base_input.land.parcels[0], base_input.land.parcels[1], div, base_input.land.parcels[3]]})\n\texc := object.union(base_input, {\"land\": exc_land})\n\tresult := violations with input as exc\n\tnot has_violation(result, \"O6_1A.ARABLE_BIODIVERSITY.MAX_TWO_USES\")\n}\n\ntest_premium_rate_loaded if {\n\tpremium_rates.arable_base == 85.0\n\tpremium_rates.pheromone_beet == 150.0\n}\n\nhas_violation(result, rule_id) if {\n\tsome v in result\n\tv.rule_id == rule_id\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "docker",
+          "run",
+          "--rm",
+          "-v",
+          "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_1a-gpt55-20260918/workspace:/workspace:ro",
+          "-w",
+          "/workspace",
+          "openpolicyagent/opa:1.18.2-static",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 313,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 7/7\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "docker",
+          "run",
+          "--rm",
+          "-v",
+          "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_1a-gpt55-20260918/workspace:/workspace:ro",
+          "-w",
+          "/workspace",
+          "openpolicyagent/opa:1.18.2-static",
+          "version"
+        ],
+        "duration_ms": 360,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297-dirty\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: linux/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_1a-gpt55-20260918/workspace"
+}

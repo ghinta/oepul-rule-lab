@@ -1,0 +1,155 @@
+{
+  "command": "validate",
+  "duration_ms": 1656,
+  "exit_code": 0,
+  "opa": {
+    "binary": null,
+    "expected_version": "1.18.2",
+    "image": "openpolicyagent/opa:1.18.2-static",
+    "runtime": "docker"
+  },
+  "rego_files": [
+    "policy/o6_16.rego",
+    "tests/o6_16_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "docker",
+          "run",
+          "--rm",
+          "-v",
+          "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_16-terra-20260919/workspace:/workspace:ro",
+          "-w",
+          "/workspace",
+          "openpolicyagent/opa:1.18.2-static",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 268,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_16.rego",
+        "tests/o6_16_test.rego"
+      ],
+      "duration_ms": 640,
+      "executions": [
+        {
+          "argv": [
+            "docker",
+            "run",
+            "--rm",
+            "-v",
+            "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_16-terra-20260919/workspace:/workspace:ro",
+            "-w",
+            "/workspace",
+            "openpolicyagent/opa:1.18.2-static",
+            "fmt",
+            "policy/o6_16.rego"
+          ],
+          "duration_ms": 366,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_16\n\nimport rego.v1\n\ndefault eligible := false\n\neligible if {\n\tinput.oepul.o6_16.enrolled\n\tinput.oepul.o6_16.cover_crop_measure in {\"zwischenfruchtanbau\", \"system_immergruen\"}\n\tinput.oepul.o6_16.first_year_area_in_eligible_zone_ha >= 2\n}\n\nviolations contains v if {\n\tinput.oepul.o6_16.enrolled\n\tnot eligible\n\tv := {\"rule_id\": \"o6_16.entry\", \"message\": \"Mindestfläche oder Begrünungs-Kombinationsverpflichtung fehlt.\"}\n}\n\nviolations contains v if {\n\tinput.oepul.o6_16.business_plan_date > \"2026-02-28\"\n\tv := {\"rule_id\": \"o6_16.records.plan\", \"message\": \"Voraussichtliche Düngeplanung ist verspätet.\"}\n}\n\nviolations contains v if {\n\tinput.oepul.o6_16.business_balance_date > \"2027-01-31\"\n\tv := {\"rule_id\": \"o6_16.records.balance\", \"message\": \"Betriebliche Düngebilanz ist verspätet.\"}\n}\n\nviolations contains v if {\n\tsome p in input.oepul.o6_16.parcels\n\tp.in_eligible_zone\n\tp.crop_area_ha > 0.3\n\tnot p.electronic_field_record\n\tv := {\"rule_id\": \"o6_16.field_records\", \"parcel_id\": p.parcel_id, \"message\": \"Elektronische schlagbezogene Aufzeichnung fehlt.\"}\n}\n\nviolations contains v if {\n\tsome p in input.oepul.o6_16.parcels\n\tp.in_eligible_zone\n\tp.record_completion_days_after_event > 14\n\tv := {\"rule_id\": \"o6_16.field_records.timeliness\", \"parcel_id\": p.parcel_id, \"message\": \"Schlagaufzeichnung wurde nicht binnen 14 Tagen fertiggestellt.\"}\n}\n\nnitrogen_transfer_factor(high_reduction_area) := 0.8 if {\n\thigh_reduction_area\n}\n\nnitrogen_transfer_factor(high_reduction_area) := 0.6 if {\n\tnot high_reduction_area\n}\n\nnitrogen_transfer_kg_per_ha(saldo, year, high_reduction_area) := transfer if {\n\tyear <= 2024\n\tsaldo > 10\n\tfactor := nitrogen_transfer_factor(high_reduction_area)\n\ttransfer := saldo * factor\n}\n\nnitrogen_transfer_kg_per_ha(saldo, year, high_reduction_area) := transfer if {\n\tyear >= 2025\n\tsaldo > 20\n\tcapped := min([saldo, 100])\n\tfactor := nitrogen_transfer_factor(high_reduction_area)\n\ttransfer := capped * factor\n}\n\nviolations contains v if {\n\tsome p in input.oepul.o6_16.parcels\n\tp.in_eligible_zone\n\trequired := nitrogen_transfer_kg_per_ha(p.previous_nitrogen_surplus_kg_per_ha, input.farm.year, p.high_reduction_area)\n\tp.nitrogen_reduction_next_crop_kg_per_ha < required\n\tv := {\"rule_id\": \"o6_16.nitrogen.transfer\", \"parcel_id\": p.parcel_id, \"required_reduction\": required, \"message\": \"Stickstoffüberschuss wurde nicht ausreichend auf die Folgekultur angerechnet.\"}\n}\n\nviolations contains v if {\n\tsome p in input.oepul.o6_16.parcels\n\tp.in_eligible_zone\n\tp.previous_nitrogen_surplus_kg_per_ha > 30\n\tnot p.autumn_follow_crop_or_eligible_cover_by_15_nov\n\tnot p.harvest_after_30_sep\n\tv := {\"rule_id\": \"o6_16.nitrogen.autumn_crop\", \"parcel_id\": p.parcel_id, \"message\": \"Erforderliche Herbstfolge- oder Zwischenfrucht fehlt.\"}\n}\n\nviolations contains v if {\n\tinput.oepul.o6_16.training_hours < 10\n\tv := {\"rule_id\": \"o6_16.training\", \"message\": \"Mindestens zehn Weiterbildungsstunden fehlen.\"}\n}\n\nviolations contains v if {\n\tnot input.oepul.o6_16.water_protection_concept_completed\n\tv := {\"rule_id\": \"o6_16.water_concept\", \"message\": \"Betriebsbezogenes Gewässerschutzkonzept fehlt.\"}\n}\n\nrequired_soil_samples(area) := ceil(area / 5)\n\nviolations contains v if {\n\trequired := required_soil_samples(input.oepul.o6_16.arable_area_eligible_zone_2026_ha)\n\tinput.oepul.o6_16.accredited_soil_samples_submitted < required\n\tv := {\"rule_id\": \"o6_16.soil_samples\", \"required\": required, \"message\": \"Mindestanzahl akkreditierter Bodenproben nicht erfüllt.\"}\n}\n\nviolations contains v if {\n\tsome p in input.oepul.o6_16.parcels\n\tp.in_eligible_zone\n\tp.crop in data.restricted_crops\n\tsome a in p.active_ingredients\n\ta in data.banned_active_ingredients\n\tv := {\"rule_id\": \"o6_16.psm.ban\", \"parcel_id\": p.parcel_id, \"active_ingredient\": a, \"message\": \"Unzulässiger Pflanzenschutzwirkstoff.\"}\n}\n\nviolations contains v if {\n\tsome p in input.oepul.o6_16.parcels\n\tp.upper_austria\n\tp.lightly_soluble_n_application_date >= \"2026-10-15\"\n\tp.lightly_soluble_n_application_date <= \"2027-02-15\"\n\tnot p.is_arable_fodder\n\tv := {\"rule_id\": \"o6_16.upper_austria.closed_period\", \"parcel_id\": p.parcel_id, \"message\": \"Leichtlöslicher Stickstoff im Sperrzeitraum ausgebracht.\"}\n}\n\nviolations contains v if {\n\tsome p in input.oepul.o6_16.parcels\n\tp.ag_option\n\tp.average_soil_number > 40\n\tv := {\"rule_id\": \"o6_16.ag.soil_number\", \"parcel_id\": p.parcel_id, \"message\": \"AG-Option nur bis durchschnittlicher Ackerzahl 40.\"}\n}\n\nviolations contains v if {\n\tsome p in input.oepul.o6_16.parcels\n\tp.ag_option\n\tp.ag_sown_date > \"2026-05-15\"\n\tnot p.existing_green_fallow_or_arable_fodder\n\tv := {\"rule_id\": \"o6_16.ag.sowing\", \"parcel_id\": p.parcel_id, \"message\": \"Winterharte Begrünung nicht fristgerecht angelegt.\"}\n}\n\nviolations contains v if {\n\tsome p in input.oepul.o6_16.parcels\n\tp.ag_option\n\tp.ag_uses_fertilizer_or_psm\n\tv := {\"rule_id\": \"o6_16.ag.no_inputs\", \"parcel_id\": p.parcel_id, \"message\": \"Auf AG-Fläche sind Düngung und Pflanzenschutz verboten.\"}\n}\n\nviolations contains v if {\n\tinput.oepul.o6_16.wien_humus_option\n\tsome p in input.oepul.o6_16.parcels\n\tp.in_wien_zone\n\tp.plough_used\n\tnot p.tillage_after_maize\n\tv := {\"rule_id\": \"o6_16.wien.no_plough\", \"parcel_id\": p.parcel_id, \"message\": \"Wendende Bodenbearbeitung in Wien unzulässig.\"}\n}\n\nviolations contains v if {\n\tinput.oepul.o6_16.pig_feed_option\n\tinput.oepul.o6_16.pig_gve_per_arable_ha < 1\n\tv := {\"rule_id\": \"o6_16.pig_feed.minimum_gve\", \"message\": \"Mindestens 1,00 GVE Schweine je ha Ackerfläche fehlen.\"}\n}\n\nviolations contains v if {\n\tinput.oepul.o6_16.cultan_option\n\tsome p in input.oepul.o6_16.parcels\n\tp.cultan_claimed\n\tnot p.cultan_ammonium_depot_injected\n\tv := {\"rule_id\": \"o6_16.cultan.application\", \"parcel_id\": p.parcel_id, \"message\": \"Cultan-Ammoniumdepot-Injektion fehlt.\"}\n}\n\npremium_base_eur_per_ha := amount if {\n\tinput.farm.year == 2023\n\tamount := data.premiums_eur_per_ha[\"2023\"].base\n}\n\npremium_base_eur_per_ha := amount if {\n\tinput.farm.year >= 2024\n\tamount := data.premiums_eur_per_ha[\"2024_plus\"].base\n}\n\n# The Anhang-G list is deliberately kept as data, rather than duplicating 1,566\n# Katastralgemeinden in policy.  A KG number is the stable GIS-facing key.\nkg_in_eligible_zone(kg_number) if {\n\tsome row in data.eligible_katastralgemeinden\n\trow.kg_number == kg_number\n}\n\npremium_base_for_participation_eur_per_ha(year, bio_or_eb) := amount if {\n\tyear == 2023\n\tbio_or_eb\n\tamount := data.premiums_eur_per_ha[\"2023\"].base_bio_or_eb\n}\n\npremium_base_for_participation_eur_per_ha(year, bio_or_eb) := amount if {\n\tyear == 2023\n\tnot bio_or_eb\n\tamount := data.premiums_eur_per_ha[\"2023\"].base\n}\n\npremium_base_for_participation_eur_per_ha(year, bio_or_eb) := amount if {\n\tyear >= 2024\n\tbio_or_eb\n\tamount := data.premiums_eur_per_ha[\"2024_plus\"].base_bio_or_eb\n}\n\npremium_base_for_participation_eur_per_ha(year, bio_or_eb) := amount if {\n\tyear >= 2024\n\tnot bio_or_eb\n\tamount := data.premiums_eur_per_ha[\"2024_plus\"].base\n}\n\nviolations contains v if {\n\tsome p in input.oepul.o6_16.parcels\n\tp.in_eligible_zone\n\tp.upper_austria\n\tp.is_maize\n\tp.lightly_soluble_n_application_date >= \"2026-10-15\"\n\tp.lightly_soluble_n_application_date <= \"2027-03-21\"\n\tv := {\"rule_id\": \"o6_16.upper_austria.maize_closed_period\", \"parcel_id\": p.parcel_id, \"message\": \"Leichtlöslicher Stickstoff bei Mais im erweiterten Sperrzeitraum ausgebracht.\"}\n}\n\nviolations contains v if {\n\tsome p in input.oepul.o6_16.parcels\n\tp.in_eligible_zone\n\tp.upper_austria\n\tp.nitrogen_application_kg_per_ha > 80\n\tnot p.delayed_release_fertilizer\n\tnot p.nitrogen_gift_split\n\tv := {\"rule_id\": \"o6_16.upper_austria.split_gift\", \"parcel_id\": p.parcel_id, \"message\": \"Stickstoffgabe über 80 kg/ha wurde nicht geteilt.\"}\n}\n\nviolations contains v if {\n\tsome p in input.oepul.o6_16.parcels\n\tp.in_eligible_zone\n\tp.upper_austria\n\tp.cover_crop_variant == 3\n\tv := {\"rule_id\": \"o6_16.upper_austria.no_cover_crop_variant_3\", \"parcel_id\": p.parcel_id, \"message\": \"Begrünungsvariante 3 ist in Oberösterreich unzulässig.\"}\n}\n\nviolations contains v if {\n\tsome p in input.oepul.o6_16.parcels\n\tp.in_eligible_zone\n\tp.upper_austria\n\tp.chemical_psm_used\n\tnot p.pre_psm_field_inspection_documented\n\tnot p.warndienst_notice_documented\n\tv := {\"rule_id\": \"o6_16.upper_austria.integrated_psm\", \"parcel_id\": p.parcel_id, \"message\": \"Kontrollgang oder Warndienstmeldung vor chemischer Pflanzenschutzmaßnahme fehlt.\"}\n}\n\nviolations contains v if {\n\tsome p in input.oepul.o6_16.parcels\n\tp.ag_option\n\tp.ag_plough_date < p.ag_second_year_september_15\n\tv := {\"rule_id\": \"o6_16.ag.minimum_duration\", \"parcel_id\": p.parcel_id, \"message\": \"AG-Fläche vor dem 15. September des zweiten Jahres umgebrochen.\"}\n}\n\nviolations contains v if {\n\tsome p in input.oepul.o6_16.parcels\n\tp.ag_option\n\tnot p.ag_mown_or_mulched_in_two_years\n\tv := {\"rule_id\": \"o6_16.ag.maintenance\", \"parcel_id\": p.parcel_id, \"message\": \"AG-Fläche wurde nicht mindestens einmal in zwei Jahren gemäht oder gehäckselt.\"}\n}\n\nviolations contains v if {\n\tsome p in input.oepul.o6_16.parcels\n\tp.ag_option\n\tp.ag_grazed_or_harvested\n\tv := {\"rule_id\": \"o6_16.ag.no_grazing_or_harvest\", \"parcel_id\": p.parcel_id, \"message\": \"Beweidung oder Drusch auf AG-Fläche ist unzulässig.\"}\n}\n\nviolations contains v if {\n\tinput.oepul.o6_16.wien_humus_option\n\tnot input.oepul.o6_16.wien_project_participation_confirmation\n\tv := {\"rule_id\": \"o6_16.wien.project_confirmation\", \"message\": \"Teilnahmebestätigung der wissenschaftlichen Begleitung fehlt.\"}\n}\n\nviolations contains v if {\n\tinput.oepul.o6_16.wien_humus_option\n\tinput.oepul.o6_16.wien_training_hours < 3\n\tv := {\"rule_id\": \"o6_16.wien.additional_training\", \"message\": \"Drei zusätzliche Stunden Bildung und Beratung fehlen.\"}\n}\n\nrequired_wien_soil_samples(area) := ceil(area / 5) * 2\n\nviolations contains v if {\n\tinput.oepul.o6_16.wien_humus_option\n\trequired := required_wien_soil_samples(input.oepul.o6_16.wien_zone_arable_area_2026_ha)\n\tinput.oepul.o6_16.wien_accredited_soil_samples_submitted < required\n\tv := {\"rule_id\": \"o6_16.wien.soil_samples\", \"required\": required, \"message\": \"Doppelte Mindestanzahl Wiener Bodenproben nicht erfüllt.\"}\n}\n\nviolations contains v if {\n\tinput.oepul.o6_16.pig_feed_option\n\tsome category, values in input.oepul.o6_16.pig_protein_g_per_kg_88_tm\n\tlimits := data.protein_limits_g_per_kg_88_tm[category]\n\tvalues.average > limits.average_max\n\tv := {\"rule_id\": \"o6_16.pig_feed.protein_average\", \"category\": category, \"message\": \"Rohprotein-Durchschnittsgrenze überschritten.\"}\n}\n\nviolations contains v if {\n\tinput.oepul.o6_16.pig_feed_option\n\tsome category, values in input.oepul.o6_16.pig_protein_g_per_kg_88_tm\n\tlimits := data.protein_limits_g_per_kg_88_tm[category]\n\tvalues.phase > limits.phase_max\n\tv := {\"rule_id\": \"o6_16.pig_feed.protein_phase\", \"category\": category, \"message\": \"Rohprotein-Phasengrenze überschritten.\"}\n}\n\nviolations contains v if {\n\tinput.oepul.o6_16.pig_feed_option\n\tnot input.oepul.o6_16.pig_feed_recipe_evidence\n\tv := {\"rule_id\": \"o6_16.pig_feed.evidence\", \"message\": \"Rezeptur- oder Fütterungsnachweis fehlt.\"}\n}\n\nviolations contains v if {\n\tinput.oepul.o6_16.cultan_option\n\tinput.farm.year < 2025\n\tv := {\"rule_id\": \"o6_16.cultan.start_year\", \"message\": \"Cultan-Zuschlag erst ab Antragsjahr 2025 verfügbar.\"}\n}\n\nviolations contains v if {\n\tinput.oepul.o6_16.cultan_option\n\tsome p in input.oepul.o6_16.parcels\n\tp.cultan_claimed\n\tnot p.cultan_field_record_complete\n\tv := {\"rule_id\": \"o6_16.cultan.field_record\", \"parcel_id\": p.parcel_id, \"message\": \"Schlagbezogene Cultan-Aufzeichnung fehlt.\"}\n}\n\nviolations contains v if {\n\tinput.oepul.o6_16.cultan_option\n\tsome p in input.oepul.o6_16.parcels\n\tp.cultan_claimed\n\tp.cultan_contractor_equipment\n\tnot p.cultan_contractor_evidence\n\tv := {\"rule_id\": \"o6_16.cultan.contractor_evidence\", \"parcel_id\": p.parcel_id, \"message\": \"Nachweis für betriebsfremdes Cultan-Gerät fehlt.\"}\n}\n\nag_option_premium_area_ha(total_arable_area_ha, ag_claimed_area_ha) := min([ag_claimed_area_ha, total_arable_area_ha * 0.2])\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "docker",
+            "run",
+            "--rm",
+            "-v",
+            "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_16-terra-20260919/workspace:/workspace:ro",
+            "-w",
+            "/workspace",
+            "openpolicyagent/opa:1.18.2-static",
+            "fmt",
+            "tests/o6_16_test.rego"
+          ],
+          "duration_ms": 274,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_16_test\n\nimport data.oepul.o6_16\nimport rego.v1\n\ntest_eligible if {\n\to6_16.eligible with input as {\"farm\": {\"year\": 2026}, \"oepul\": {\"o6_16\": {\"enrolled\": true, \"cover_crop_measure\": \"system_immergruen\", \"first_year_area_in_eligible_zone_ha\": 2}}}\n}\n\ntest_nitrogen_transfer_60_percent if {\n\to6_16.nitrogen_transfer_kg_per_ha(30, 2026, false) == 18\n}\n\ntest_nitrogen_transfer_80_percent_and_cap if {\n\to6_16.nitrogen_transfer_kg_per_ha(150, 2026, true) == 80\n}\n\ntest_soil_samples_round_up if {\n\to6_16.required_soil_samples(5.03) == 2\n}\n\ntest_wien_soil_samples_round_up_and_double if {\n\to6_16.required_wien_soil_samples(5.03) == 4\n}\n\ntest_annex_g_kg_is_available_as_data if {\n\to6_16.kg_in_eligible_zone(32001)\n\tnot o6_16.kg_in_eligible_zone(99999)\n}\n\ntest_bio_base_premium_is_halved if {\n\to6_16.premium_base_for_participation_eur_per_ha(2026, true) == 27\n\to6_16.premium_base_for_participation_eur_per_ha(2026, false) == 54\n}\n\ntest_ag_premium_area_cap if {\n\to6_16.ag_option_premium_area_ha(100, 25) == 20\n}\n\ntest_banned_active_ingredient_detected if {\n\tviolations := o6_16.violations with input as {\"farm\": {\"year\": 2026}, \"oepul\": {\"o6_16\": {\"enrolled\": true, \"cover_crop_measure\": \"system_immergruen\", \"first_year_area_in_eligible_zone_ha\": 2, \"parcels\": [{\"parcel_id\": \"p1\", \"in_eligible_zone\": true, \"crop\": \"Mais\", \"active_ingredients\": [\"Terbuthylazin\"]}]}}}\n\tsome v in violations\n\tv.rule_id == \"o6_16.psm.ban\"\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "docker",
+          "run",
+          "--rm",
+          "-v",
+          "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_16-terra-20260919/workspace:/workspace:ro",
+          "-w",
+          "/workspace",
+          "openpolicyagent/opa:1.18.2-static",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 312,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 9/9\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "docker",
+          "run",
+          "--rm",
+          "-v",
+          "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_16-terra-20260919/workspace:/workspace:ro",
+          "-w",
+          "/workspace",
+          "openpolicyagent/opa:1.18.2-static",
+          "version"
+        ],
+        "duration_ms": 434,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297-dirty\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: linux/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_16-terra-20260919/workspace"
+}
