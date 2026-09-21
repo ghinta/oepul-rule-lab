@@ -1,0 +1,902 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_1a",
+  "rules": [
+    {
+      "id": "o6_1a.contract.duration",
+      "rule_type": "eligibility",
+      "statement": "UBB has a four-, five- or six-year commitment ending on 31 December 2028.",
+      "conditions": [
+        {
+          "expression": "entry year is 2023, 2024 or 2025",
+          "description": "entry year is 2023, 2024 or 2025",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "commitment_required",
+        "description": "Maintain the measure commitment through 2028."
+      },
+      "source_reference_ids": [
+        "c.info.contract"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.general.applicant",
+      "rule_type": "eligibility",
+      "statement": "The applicant must operate an Austrian agricultural holding in its own name and account and control requested land.",
+      "conditions": [
+        {
+          "expression": "participation requested",
+          "description": "participation requested",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "eligible_applicant_required",
+        "description": "Eligibility depends on applicant and land-control status."
+      },
+      "source_reference_ids": [
+        "c.gen.eligibility",
+        "c.gen.austria"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.general.minimum_size",
+      "rule_type": "eligibility",
+      "statement": "In the first participation year, the holding must meet the general minimum holding size.",
+      "conditions": [
+        {
+          "expression": "first ÖPUL participation year",
+          "description": "first ÖPUL participation year",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "minimum_area_required",
+        "description": "At least 1.50 ha eligible agricultural land (or 0.50 ha protected cultivation) is required."
+      },
+      "source_reference_ids": [
+        "c.gen.minimum"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.general.minimum_cultivation",
+      "rule_type": "obligation",
+      "statement": "Every eligible area entered into ÖPUL must meet the applicable minimum cultivation criterion: proper cultivation and annual care on arable/protected-cultivation areas, prescribed harvest or grazing on permanent crops and grassland, and at least biennial mulching or maintenance mowing on land taken out of production.",
+      "conditions": [
+        {
+          "expression": "area is eligible and entered in ÖPUL",
+          "description": "The general minimum-cultivation criteria apply to all eligible areas entered into measures; individual measures can impose additional requirements.",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "minimum_cultivation_required",
+        "description": "Comply with the land-use-specific minimum cultivation criterion."
+      },
+      "source_reference_ids": [
+        "c.gen.duties"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.general.land_access",
+      "rule_type": "calculation",
+      "statement": "UBB land accessions are fully premium-eligible in 2024 and 2025. From 2026, premium-eligible expansion is limited to 50% of the 2025 measure area, but an expansion of up to 5 ha remains eligible; land already covered by the same measure is not an accession.",
+      "conditions": [
+        {
+          "expression": "area is added to UBB during the commitment period",
+          "description": "The accession rule applies to UBB areas newly added during the contractual period.",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "premium_eligible_access_area_ha",
+        "description": "All added area in 2024–2025; thereafter the greater of 50% of 2025 UBB area and 5 ha, unless the area was already under UBB."
+      },
+      "source_reference_ids": [
+        "c.gen.access"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.premium_eligible_access_ha"
+      ]
+    },
+    {
+      "id": "o6_1a.grassland.retention",
+      "rule_type": "obligation",
+      "statement": "Retain the grassland reference; conversion to arable, permanent/special crops, vineyards or protected cultivation may not exceed 1 ha during the contract.",
+      "conditions": [
+        {
+          "expression": "UBB commitment active",
+          "description": "UBB commitment active",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "maximum_conversion_ha",
+        "description": "1.00"
+      },
+      "source_reference_ids": [
+        "c.info.grass"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.crop.cereal_maize_limit",
+      "rule_type": "threshold",
+      "statement": "Where arable area exceeds 5 ha, cereal and maize together may cover at most 75%.",
+      "conditions": [
+        {
+          "expression": "arable_area_ha > 5",
+          "description": "arable_area_ha > 5",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "maximum_share",
+        "description": "0.75"
+      },
+      "source_reference_ids": [
+        "c.info.crops",
+        "c.srl.ubb"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.violations"
+      ]
+    },
+    {
+      "id": "o6_1a.crop.single_crop_limit",
+      "rule_type": "threshold",
+      "statement": "No crop may exceed 55% of arable land; fodder crops and, from 2025, green fallow and asparagus are exempt.",
+      "conditions": [
+        {
+          "expression": "arable_area_ha > 5",
+          "description": "arable_area_ha > 5",
+          "input_paths": []
+        },
+        {
+          "expression": "crop is not exempt",
+          "description": "crop is not exempt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "maximum_share",
+        "description": "0.55"
+      },
+      "source_reference_ids": [
+        "c.info.crops",
+        "c.srl.ubb"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.violations"
+      ]
+    },
+    {
+      "id": "o6_1a.training.minimum",
+      "rule_type": "documentation",
+      "statement": "Complete at least three hours of biodiversity-specific recognised training by 31 December 2025.",
+      "conditions": [
+        {
+          "expression": "UBB participation",
+          "description": "UBB participation",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "training_hours_required",
+        "description": "3"
+      },
+      "source_reference_ids": [
+        "c.info.training"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.violations"
+      ]
+    },
+    {
+      "id": "o6_1a.biodiv.arable_minimum",
+      "rule_type": "threshold",
+      "statement": "More than 2 ha of arable land requires eligible biodiversity area of at least 7% of arable land.",
+      "conditions": [
+        {
+          "expression": "arable_area_ha > 2",
+          "description": "arable_area_ha > 2",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "minimum_area_ha",
+        "description": "arable area × 0.07"
+      },
+      "source_reference_ids": [
+        "c.info.arablemin"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.required_arable_biodiversity_ha"
+      ]
+    },
+    {
+      "id": "o6_1a.biodiv.arable_fieldpiece",
+      "rule_type": "threshold",
+      "statement": "On each arable field piece over 5 ha, provide at least 0.15 ha biodiversity/creditable area if holding arable area is at least 10 ha.",
+      "conditions": [
+        {
+          "expression": "field_piece_area_ha > 5",
+          "description": "field_piece_area_ha > 5",
+          "input_paths": []
+        },
+        {
+          "expression": "arable_area_ha >= 10",
+          "description": "arable_area_ha >= 10",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "minimum_area_ha",
+        "description": "0.15"
+      },
+      "source_reference_ids": [
+        "c.info.fieldpiece"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.biodiv.arable_creditable",
+      "rule_type": "eligibility",
+      "statement": "Only specifically listed NAT/EBW fallows, compliant multi-use hedges, BAW/AG, and eligible GLÖZ areas with DIV coding can count as arable biodiversity area.",
+      "conditions": [
+        {
+          "expression": "area is credited to 7% requirement",
+          "description": "area is credited to 7% requirement",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "coding_required",
+        "description": "DIV plus applicable measure code."
+      },
+      "source_reference_ids": [
+        "c.info.arablecredit"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.biodiv.arable_seed_mix",
+      "rule_type": "obligation",
+      "statement": "New arable biodiversity sowing requires at least seven insect-flowering partners from three families and at most 10% non-insect-flowering partners.",
+      "conditions": [
+        {
+          "expression": "new DIV sowing",
+          "description": "new DIV sowing",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "seed_mix_required",
+        "description": "7 partners, 3 families, ≤10% non-insect flowering."
+      },
+      "source_reference_ids": [
+        "c.info.seed"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.violations"
+      ]
+    },
+    {
+      "id": "o6_1a.biodiv.arable_duration",
+      "rule_type": "obligation",
+      "statement": "Sow by 15 May; do not plough before 15 September of year two (or after 31 July for winter crop/cover crop); fallow use is prohibited until 31 December after ploughing.",
+      "conditions": [
+        {
+          "expression": "new DIV sowing",
+          "description": "new DIV sowing",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "two_year_site_commitment",
+        "description": "required"
+      },
+      "source_reference_ids": [
+        "c.info.seed"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.biodiv.arable_management",
+      "rule_type": "obligation",
+      "statement": "From 2025, manage DIV at least once every second year and no more than twice yearly; grazing is only allowed from 1 August and harvest/threshing is prohibited.",
+      "conditions": [
+        {
+          "expression": "arable biodiversity area",
+          "description": "arable biodiversity area",
+          "input_paths": []
+        },
+        {
+          "expression": "year >= 2025",
+          "description": "year >= 2025",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "management_compliant",
+        "description": "required"
+      },
+      "source_reference_ids": [
+        "c.info.arablecare"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.violations"
+      ]
+    },
+    {
+      "id": "o6_1a.biodiv.arable_inputs",
+      "rule_type": "prohibition",
+      "statement": "No fertilisation or pesticide use from 1 January of first DIV declaration until ploughing/other declaration, except products containing only EU-organic-allowed active substances.",
+      "conditions": [
+        {
+          "expression": "arable biodiversity area",
+          "description": "arable biodiversity area",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "inputs_prohibited",
+        "description": "true"
+      },
+      "source_reference_ids": [
+        "c.info.inputs"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.violations"
+      ]
+    },
+    {
+      "id": "o6_1a.biodiv.regional_arable",
+      "rule_type": "option",
+      "statement": "DIVRS requires at least 30 listed species from seven families, 20 kg/ha sowing rate, maximum 5% per species, regional-origin proof and seed documentation.",
+      "conditions": [
+        {
+          "expression": "DIVRS arable option",
+          "description": "DIVRS arable option",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "regional_seed_bonus_eligible",
+        "description": "conditional"
+      },
+      "source_reference_ids": [
+        "c.info.divrsarable",
+        "c.annex.species"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.violations"
+      ]
+    },
+    {
+      "id": "o6_1a.biodiv.grassland_minimum",
+      "rule_type": "threshold",
+      "statement": "More than 2 ha mown grassland excluding mountain meadows requires at least 7% eligible biodiversity area.",
+      "conditions": [
+        {
+          "expression": "mown_grassland_area_ha > 2",
+          "description": "mown_grassland_area_ha > 2",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "minimum_area_ha",
+        "description": "mown grassland × 0.07"
+      },
+      "source_reference_ids": [
+        "c.info.grassmin"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.required_grassland_biodiversity_ha"
+      ]
+    },
+    {
+      "id": "o6_1a.biodiv.grassland_fieldpiece",
+      "rule_type": "threshold",
+      "statement": "On each grassland field piece with more than 5 ha mown land provide 0.15 ha when holding mown grassland is at least 10 ha.",
+      "conditions": [
+        {
+          "expression": "field_piece_mown_area_ha > 5",
+          "description": "field_piece_mown_area_ha > 5",
+          "input_paths": []
+        },
+        {
+          "expression": "mown_grassland_area_ha >= 10",
+          "description": "mown_grassland_area_ha >= 10",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "minimum_area_ha",
+        "description": "0.15"
+      },
+      "source_reference_ids": [
+        "c.info.grassmin"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.biodiv.grassland_inputs",
+      "rule_type": "prohibition",
+      "statement": "Pesticides on grassland biodiversity areas are prohibited except products containing only EU-organic-allowed active substances.",
+      "conditions": [
+        {
+          "expression": "grassland biodiversity area",
+          "description": "grassland biodiversity area",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "inputs_prohibited",
+        "description": "true"
+      },
+      "source_reference_ids": [
+        "c.info.grassinputs"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.violations"
+      ]
+    },
+    {
+      "id": "o6_1a.biodiv.divsz",
+      "rule_type": "obligation",
+      "statement": "DIVSZ first use is with second mowing of comparable parcels or one-cut meadow; use no earlier than 15 June and always allowed from 15 July; do not fertilise before first use.",
+      "conditions": [
+        {
+          "expression": "DIVSZ",
+          "description": "DIVSZ",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "variant_compliant",
+        "description": "required"
+      },
+      "source_reference_ids": [
+        "c.info.divsz"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.biodiv.divnfz_rest",
+      "rule_type": "obligation",
+      "statement": "DIVNFZ requires at least nine weeks/63 calendar days without use, driving or fertilisation after first use, and a second use annually.",
+      "conditions": [
+        {
+          "expression": "DIVNFZ",
+          "description": "DIVNFZ",
+          "input_paths": []
+        },
+        {
+          "expression": "not eligible 2026 exception",
+          "description": "not eligible 2026 exception",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "rest_days_minimum",
+        "description": "63"
+      },
+      "source_reference_ids": [
+        "c.info.divnfz"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.violations"
+      ]
+    },
+    {
+      "id": "o6_1a.biodiv.divagf",
+      "rule_type": "obligation",
+      "statement": "DIVAGF requires standing old grass over winter; final use is no later than 15 August and no driving/fertilisation until next year's use.",
+      "conditions": [
+        {
+          "expression": "DIVAGF",
+          "description": "DIVAGF",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "next_year_code",
+        "description": "DIVSZ"
+      },
+      "source_reference_ids": [
+        "c.info.divagf"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.biodiv.regional_grassland",
+      "rule_type": "option",
+      "statement": "Grassland DIVRS needs Grünlandzahl at least 30, slope below 18%, 30 listed species from seven families, 20 kg/ha, documented regional origin, and no more than two uses.",
+      "conditions": [
+        {
+          "expression": "grassland DIVRS option",
+          "description": "grassland DIVRS option",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "regional_seed_bonus_eligible",
+        "description": "conditional"
+      },
+      "source_reference_ids": [
+        "c.info.divrsgrass",
+        "c.info.species"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.violations"
+      ]
+    },
+    {
+      "id": "o6_1a.options.landscape_elements",
+      "rule_type": "eligibility",
+      "statement": "Point landscape elements must be controlled by the holding, within/on 5 m of agricultural land, crown diameter at least 2 m, at most 100 m² and 5 m apart.",
+      "conditions": [
+        {
+          "expression": "landscape element option",
+          "description": "landscape element option",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "element_eligible",
+        "description": "conditional"
+      },
+      "source_reference_ids": [
+        "c.info.options"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.options.monitoring",
+      "rule_type": "eligibility",
+      "statement": "Monitoring bonus needs participation confirmation, first-year introductory event confirmation, and annual timely complete data entry.",
+      "conditions": [
+        {
+          "expression": "monitoring bonus requested",
+          "description": "monitoring bonus requested",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "monitoring_eligible",
+        "description": "conditional"
+      },
+      "source_reference_ids": [
+        "c.info.monitor"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.culture.rare",
+      "rule_type": "eligibility",
+      "statement": "Rare-crop bonus applies only to pure varieties in the exhaustive Annex B list; documentation is retained and subsidy is at most 10 ha per variety.",
+      "conditions": [
+        {
+          "expression": "SLK option requested",
+          "description": "SLK option requested",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "premium_tier",
+        "description": "A or B from data list"
+      },
+      "source_reference_ids": [
+        "c.info.culture",
+        "c.info.varieties",
+        "c.annex.varieties"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.rare_cultivar_tier"
+      ]
+    },
+    {
+      "id": "o6_1a.culture.wildbird",
+      "rule_type": "obligation",
+      "statement": "Wild herb and breeding areas are cereal with at least 20 cm double row spacing and no undersowing; 15 March–30 June has no driving, fertilisation, pesticides or mechanical weed control.",
+      "conditions": [
+        {
+          "expression": "WB option requested",
+          "description": "WB option requested",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "wildbird_option_compliant",
+        "description": "required"
+      },
+      "source_reference_ids": [
+        "c.info.wb"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.option.pheromone",
+      "rule_type": "obligation",
+      "statement": "PZR needs at least 15 pheromone traps/ha, installation within 14 days, five-week retention, at least two emptyings, pre-harvest removal, records and evidence.",
+      "conditions": [
+        {
+          "expression": "PZR option requested",
+          "description": "PZR option requested",
+          "input_paths": []
+        },
+        {
+          "expression": "year >= 2025",
+          "description": "year >= 2025",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "pheromone_option_compliant",
+        "description": "required"
+      },
+      "source_reference_ids": [
+        "c.info.pheromone"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.premium.base_arable",
+      "rule_type": "calculation",
+      "statement": "Arable base premium is EUR 85/ha from 2025; green fallow is capped at 20% of arable area.",
+      "conditions": [
+        {
+          "expression": "eligible arable area",
+          "description": "eligible arable area",
+          "input_paths": []
+        },
+        {
+          "expression": "year >= 2025",
+          "description": "year >= 2025",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "rate_eur_per_ha",
+        "description": "85"
+      },
+      "source_reference_ids": [
+        "c.info.premiums",
+        "c.srl.premium"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.premium_rate"
+      ]
+    },
+    {
+      "id": "o6_1a.premium.base_grassland",
+      "rule_type": "calculation",
+      "statement": "From 2024 base grassland premium is EUR 75.60/ha for livestock holdings and EUR 27/ha otherwise; livestock status is at least 0.30 RGVE/fodder ha.",
+      "conditions": [
+        {
+          "expression": "eligible grassland",
+          "description": "eligible grassland",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "rate_eur_per_ha",
+        "description": "75.6 or 27"
+      },
+      "source_reference_ids": [
+        "c.info.premiums",
+        "c.gen.livestock",
+        "c.info.rgve",
+        "c.annex.gve"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.is_livestock_farm",
+        "data.oepul.o6_1a.rgve_factor"
+      ]
+    },
+    {
+      "id": "o6_1a.general.modulation",
+      "rule_type": "calculation",
+      "statement": "All measure premiums are modulated: 100% to 200 ha, 90% next 100 ha, 85% through 1,000 ha, 75% above.",
+      "conditions": [
+        {
+          "expression": "premium calculation",
+          "description": "premium calculation",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "modulation",
+        "description": "progressive factor"
+      },
+      "source_reference_ids": [
+        "c.gen.modulation"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.general.exit",
+      "rule_type": "consequence",
+      "statement": "Early exit from multi-year UBB before contractual end generally requires repayment of prior measure premiums.",
+      "conditions": [
+        {
+          "expression": "exit before 31 December 2028",
+          "description": "exit before 31 December 2028",
+          "input_paths": []
+        },
+        {
+          "expression": "no exception",
+          "description": "no exception",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "repayment",
+        "description": "required"
+      },
+      "source_reference_ids": [
+        "c.gen.exit"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.exception.2026_early_arable",
+      "rule_type": "exception",
+      "statement": "In 2026, arable biodiversity area may be used before 1 August beyond regular limits only with OPUBB/OPBIO and without UBB/BIO premium; other obligations remain.",
+      "conditions": [
+        {
+          "expression": "year = 2026",
+          "description": "year = 2026",
+          "input_paths": []
+        },
+        {
+          "expression": "early use",
+          "description": "early use",
+          "input_paths": []
+        },
+        {
+          "expression": "OPUBB or OPBIO set",
+          "description": "OPUBB or OPBIO set",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "premium_for_area",
+        "description": "0"
+      },
+      "source_reference_ids": [
+        "c.may.exception"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.exception.2026_early_grassland",
+      "rule_type": "exception",
+      "statement": "In 2026, grassland biodiversity use may be advanced 14 days only with OPUBB/OPBIO and no UBB/BIO premium.",
+      "conditions": [
+        {
+          "expression": "year = 2026",
+          "description": "year = 2026",
+          "input_paths": []
+        },
+        {
+          "expression": "early grassland use",
+          "description": "early grassland use",
+          "input_paths": []
+        },
+        {
+          "expression": "OPUBB or OPBIO set",
+          "description": "OPUBB or OPBIO set",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "premium_for_area",
+        "description": "0"
+      },
+      "source_reference_ids": [
+        "c.may.grass_exception"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.exception.2026_divnfz",
+      "rule_type": "exception",
+      "statement": "In 2026, DIVNFZ rest may be seven weeks/49 days with OPUBB/OPBIO and no premium.",
+      "conditions": [
+        {
+          "expression": "year = 2026",
+          "description": "year = 2026",
+          "input_paths": []
+        },
+        {
+          "expression": "DIVNFZ",
+          "description": "DIVNFZ",
+          "input_paths": []
+        },
+        {
+          "expression": "OPUBB or OPBIO set",
+          "description": "OPUBB or OPBIO set",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "rest_days_minimum",
+        "description": "49"
+      },
+      "source_reference_ids": [
+        "c.may.divnfz_exception"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.violations"
+      ]
+    },
+    {
+      "id": "o6_1a.exception.2026_third_use",
+      "rule_type": "exception",
+      "statement": "In 2026 a third use of arable biodiversity area is allowed only with OPUBB/OPBIO; no premium is paid and NAT/EBW project rules still prevail.",
+      "conditions": [
+        {
+          "expression": "year = 2026",
+          "description": "year = 2026",
+          "input_paths": []
+        },
+        {
+          "expression": "third use",
+          "description": "third use",
+          "input_paths": []
+        },
+        {
+          "expression": "OPUBB or OPBIO set",
+          "description": "OPUBB or OPBIO set",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "premium_for_area",
+        "description": "0"
+      },
+      "source_reference_ids": [
+        "c.aug12.third_use"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_1a.exception.2026_drought_harvest",
+      "rule_type": "exception",
+      "statement": "In listed 2026 drought districts, no harvest/removal on 85% of a parcel is required where drought leaves no harvestable crop; premium remains payable.",
+      "conditions": [
+        {
+          "expression": "year = 2026",
+          "description": "year = 2026",
+          "input_paths": []
+        },
+        {
+          "expression": "eligible district",
+          "description": "eligible district",
+          "input_paths": []
+        },
+        {
+          "expression": "no harvestable crop because drought",
+          "description": "no harvestable crop because drought",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "force_majeure",
+        "description": "automatically recognised"
+      },
+      "source_reference_ids": [
+        "c.aug5.harvest"
+      ],
+      "rego_symbols": []
+    }
+  ]
+}

@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 197,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rulelab-opa-smoke-20260920/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_1a.rego",
+    "tests/o6_1a_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rulelab-opa-smoke-20260920/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 15,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_1a.rego",
+        "tests/o6_1a_test.rego"
+      ],
+      "duration_ms": 29,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rulelab-opa-smoke-20260920/tools/opa",
+            "fmt",
+            "policy/o6_1a.rego"
+          ],
+          "duration_ms": 15,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_1a\n\nimport rego.v1\n\n# Input is the discover-mode extension proposed in rules/profile_changes.json.\nrequired_arable_biodiversity_ha := input.ubb.arable_area_ha * 0.07 if input.ubb.arable_area_ha > 2\nrequired_arable_biodiversity_ha := 0 if input.ubb.arable_area_ha <= 2\n\nrequired_grassland_biodiversity_ha := input.ubb.mown_grassland_area_ha * 0.07 if input.ubb.mown_grassland_area_ha > 2\nrequired_grassland_biodiversity_ha := 0 if input.ubb.mown_grassland_area_ha <= 2\n\nis_livestock_farm if input.ubb.rgve_total / input.ubb.fodder_area_ha >= 0.3\n\nrgve_factor(category) := factor if {\n\trow := data.rgve_factors_full[_]\n\trow.category == category\n\tfactor := object.get(row, \"rgve_per_head\", object.get(row, \"gve_per_head\", null))\n\tfactor != null\n}\n\npremium_eligible_access_ha := input.ubb.access.added_area_ha if input.ubb.access.year <= 2025\n\npremium_eligible_access_ha := input.ubb.access.added_area_ha if input.ubb.access.previously_under_same_measure == true\n\npremium_eligible_access_ha := max([input.ubb.access.measure_area_ha_2025 * 0.5, 5]) if {\n\tinput.ubb.access.year >= 2026\n\tinput.ubb.access.previously_under_same_measure != true\n}\n\ndivnfz_2026_exception(p) if {\n\tinput.farm.year == 2026\n\tp.biodiversity.op_ubb_or_bio == true\n\tp.biodiversity.rest_days >= 49\n}\n\nviolations contains v if {\n\tinput.ubb.arable_area_ha > 5\n\tinput.ubb.cereal_maize_area_ha / input.ubb.arable_area_ha > 0.75\n\tv := {\"rule_id\": \"o6_1a.crop.cereal_maize_limit\", \"message\": \"Getreide und Mais übersteigen 75 % der Ackerfläche.\"}\n}\n\nviolations contains v if {\n\tsome crop in input.ubb.crop_shares\n\tcrop.exempt_55pct != true\n\tcrop.area_ha / input.ubb.arable_area_ha > 0.55\n\tv := {\"rule_id\": \"o6_1a.crop.single_crop_limit\", \"message\": sprintf(\"Kultur %s übersteigt 55 %% der Ackerfläche.\", [crop.name])}\n}\n\nviolations contains v if {\n\tinput.ubb.arable_biodiversity_eligible_ha < required_arable_biodiversity_ha\n\tv := {\"rule_id\": \"o6_1a.biodiv.arable_minimum\", \"message\": \"Die erforderlichen 7 % Acker-Biodiversitätsfläche werden nicht erreicht.\"}\n}\n\nviolations contains v if {\n\tinput.ubb.mown_grassland_biodiversity_eligible_ha < required_grassland_biodiversity_ha\n\tv := {\"rule_id\": \"o6_1a.biodiv.grassland_minimum\", \"message\": \"Die erforderlichen 7 % Grünland-Biodiversitätsfläche werden nicht erreicht.\"}\n}\n\nviolations contains v if {\n\tsome p in input.ubb.parcels\n\tp.biodiversity.code == \"DIV\"\n\tp.biodiversity.insect_flowering_partners < 7\n\tv := {\"rule_id\": \"o6_1a.biodiv.arable_seed_mix\", \"message\": \"DIV-Ansaat hat weniger als sieben insektenblütige Mischungspartner.\"}\n}\n\nviolations contains v if {\n\tsome p in input.ubb.parcels\n\tp.biodiversity.code == \"DIV\"\n\tp.biodiversity.plant_families < 3\n\tv := {\"rule_id\": \"o6_1a.biodiv.arable_seed_mix\", \"message\": \"DIV-Ansaat hat weniger als drei Pflanzenfamilien.\"}\n}\n\nviolations contains v if {\n\tsome p in input.ubb.parcels\n\tp.biodiversity.code == \"DIVRS\"\n\tp.biodiversity.species_count < 30\n\tv := {\"rule_id\": \"o6_1a.biodiv.regional_seed\", \"message\": \"DIVRS-Ansaat hat weniger als 30 Arten.\"}\n}\n\nviolations contains v if {\n\tsome p in input.ubb.parcels\n\tp.biodiversity.code == \"DIVRS\"\n\tp.biodiversity.family_count < 7\n\tv := {\"rule_id\": \"o6_1a.biodiv.regional_seed\", \"message\": \"DIVRS-Ansaat hat weniger als sieben Pflanzenfamilien.\"}\n}\n\nviolations contains v if {\n\tsome p in input.ubb.parcels\n\tp.biodiversity.code == \"DIVRS\"\n\tp.biodiversity.seed_rate_kg_ha < 20\n\tv := {\"rule_id\": \"o6_1a.biodiv.regional_seed\", \"message\": \"DIVRS-Saatstärke liegt unter 20 kg/ha.\"}\n}\n\nviolations contains v if {\n\tsome p in input.ubb.parcels\n\tp.biodiversity.is_arable\n\tp.biodiversity.drusch == true\n\tv := {\"rule_id\": \"o6_1a.biodiv.arable_no_harvest\", \"message\": \"Drusch auf Acker-Biodiversitätsfläche ist verboten.\"}\n}\n\nviolations contains v if {\n\tsome p in input.ubb.parcels\n\tp.biodiversity.is_arable\n\tp.biodiversity.fertilized == true\n\tv := {\"rule_id\": \"o6_1a.biodiv.arable_inputs\", \"message\": \"Düngung auf Acker-Biodiversitätsfläche ist verboten.\"}\n}\n\nviolations contains v if {\n\tsome p in input.ubb.parcels\n\tp.biodiversity.is_grassland\n\tp.biodiversity.pesticide_non_bio == true\n\tv := {\"rule_id\": \"o6_1a.biodiv.grassland_inputs\", \"message\": \"Nicht-Bio-Pflanzenschutzmittel auf Grünland-Biodiversitätsfläche.\"}\n}\n\nviolations contains v if {\n\tsome p in input.ubb.parcels\n\tp.biodiversity.code == \"DIVNFZ\"\n\tp.biodiversity.rest_days < 63\n\tnot divnfz_2026_exception(p)\n\tv := {\"rule_id\": \"o6_1a.biodiv.divnfz_rest\", \"message\": \"DIVNFZ hat keinen nutzungsfreien Zeitraum von mindestens 63 Tagen.\"}\n}\n\nviolations contains v if {\n\tinput.ubb.training.biodiversity_hours < 3\n\tv := {\"rule_id\": \"o6_1a.training.minimum\", \"message\": \"Dreistündige biodiversitätsrelevante Weiterbildung fehlt.\"}\n}\n\npremium_rate := 85 if input.farm.year >= 2025\npremium_rate := 75.6 if input.farm.year == 2024\npremium_rate := 70 if input.farm.year == 2023\n\npremium_rate_grassland := 75.6 if is_livestock_farm\npremium_rate_grassland := 27 if not is_livestock_farm\n\nrare_cultivar_tier[cultivar] := tier if {\n\trow := data.rare_cultivars[_]\n\tcultivar := row.cultivar\n\ttier := row.tier\n\tnot row.from_year\n}\n\nrare_cultivar_tier[cultivar] := tier if {\n\trow := data.rare_cultivars[_]\n\tcultivar := row.cultivar\n\ttier := row.tier\n\trow.from_year <= input.farm.year\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rulelab-opa-smoke-20260920/tools/opa",
+            "fmt",
+            "tests/o6_1a_test.rego"
+          ],
+          "duration_ms": 13,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_1a_test\n\nimport data.oepul.o6_1a\nimport rego.v1\n\nbase := {\"farm\": {\"year\": 2026}, \"ubb\": {\"arable_area_ha\": 10, \"mown_grassland_area_ha\": 10, \"fodder_area_ha\": 10, \"rgve_total\": 3, \"cereal_maize_area_ha\": 7, \"arable_biodiversity_eligible_ha\": 0.7, \"mown_grassland_biodiversity_eligible_ha\": 0.7, \"crop_shares\": [{\"name\": \"wheat\", \"area_ha\": 5, \"exempt_55pct\": false}], \"training\": {\"biodiversity_hours\": 3}, \"parcels\": []}}\n\ntest_baseline_passes if {\n\tvs := o6_1a.violations with input as base\n\tcount(vs) == 0\n}\n\ntest_arable_threshold if {\n\tv := o6_1a.required_arable_biodiversity_ha with input as base\n\tv == 0.7\n}\n\ntest_cereal_limit_fails if {\n\ti := object.union(base, {\"ubb\": object.union(base.ubb, {\"cereal_maize_area_ha\": 7.6})})\n\tvs := o6_1a.violations with input as i\n\tsome v in vs\n\tv.rule_id == \"o6_1a.crop.cereal_maize_limit\"\n}\n\ntest_divrs_seed_rate_fails if {\n\tp := {\"biodiversity\": {\"code\": \"DIVRS\", \"species_count\": 30, \"family_count\": 7, \"seed_rate_kg_ha\": 19, \"is_arable\": true, \"drusch\": false, \"fertilized\": false}}\n\ti := object.union(base, {\"ubb\": object.union(base.ubb, {\"parcels\": [p]})})\n\tvs := o6_1a.violations with input as i\n\tsome v in vs\n\tv.rule_id == \"o6_1a.biodiv.regional_seed\"\n}\n\ntest_2026_divnfz_exception if {\n\tp := {\"biodiversity\": {\"code\": \"DIVNFZ\", \"rest_days\": 49, \"op_ubb_or_bio\": true, \"is_arable\": false, \"is_grassland\": true, \"pesticide_non_bio\": false}}\n\ti := object.union(base, {\"ubb\": object.union(base.ubb, {\"parcels\": [p]})})\n\tvs := o6_1a.violations with input as i\n\tcount(vs) == 0\n}\n\ntest_rare_cultivar_data if {\n\tv := o6_1a.rare_cultivar_tier.Soblus with input as base\n\tv == \"A\"\n}\n\ntest_rgve_factor_from_annex_table if {\n\tv := o6_1a.rgve_factor(\"Rinder unter ½ Jahr\") with input as base\n\tv == 0.4\n}\n\ntest_land_access_cap_from_2026 if {\n\ti := object.union(base, {\"ubb\": object.union(base.ubb, {\"access\": {\"year\": 2026, \"added_area_ha\": 12, \"measure_area_ha_2025\": 20, \"previously_under_same_measure\": false}})})\n\tv := o6_1a.premium_eligible_access_ha with input as i\n\tv == 10\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rulelab-opa-smoke-20260920/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 19,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 8/8\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rulelab-opa-smoke-20260920/tools/opa",
+          "version"
+        ],
+        "duration_ms": 132,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/Development/oepul-rule-lab/runs/v2-o6_1a-terra-20260920/workspace"
+}
