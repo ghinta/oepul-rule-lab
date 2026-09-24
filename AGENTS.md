@@ -3,6 +3,12 @@
 Dieses Repository dient der möglichst vollständigen Extraktion ausführbarer
 Regeln aus den bereitgestellten ÖPUL-Quellen.
 
+## Codex-Nutzungsgrenze
+
+Ein neuer Codex-Run darf nur mit mindestens 50 % Restbudget in jedem
+Quotenfenster starten. Bei 5 % Restbudget ist er kontrolliert zu beenden; ein
+harter Limitfehler darf nicht als normaler Abschluss behandelt werden.
+
 ## Prioritäten
 
 1. Lies die bereitgestellten Quelldokumente vollständig, einschließlich

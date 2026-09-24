@@ -7,10 +7,12 @@ import json
 import os
 import platform
 import re
+import select
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import urllib.request
 from pathlib import Path
 from typing import Any
@@ -27,6 +29,144 @@ OPA_VERSION_FILE = OPA_RUNNER.parent / "opa-version.txt"
 OPA_CHECKSUMS_FILE = OPA_RUNNER.parent / "opa-checksums.json"
 OPA_VALIDATION_TARGETS = ("policy", "data", "tests")
 GENERATOR_CONTRACTS = tuple(GENERATOR_CONTRACT_MODELS)
+MIN_START_REMAINING_PERCENT = 50.0
+STOP_REMAINING_PERCENT = 5.0
+USAGE_POLL_SECONDS = 30.0
+USAGE_GUARD_EXIT_CODE = 75
+
+
+class UsageGuardError(ValueError):
+    """Raised when Codex usage cannot safely satisfy the configured guard."""
+
+
+class CodexRateLimitClient:
+    """Small JSON-RPC client for Codex App Server rate-limit reads."""
+
+    def __init__(self, executable: str) -> None:
+        self.executable = executable
+        self.process: subprocess.Popen[str] | None = None
+        self.next_request_id = 1
+
+    def __enter__(self) -> "CodexRateLimitClient":
+        self.process = subprocess.Popen(
+            [self.executable, "app-server"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            bufsize=1,
+        )
+        self.request(
+            "initialize",
+            {
+                "clientInfo": {
+                    "name": "oepul-rule-lab",
+                    "title": "ÖPUL Rule Lab usage guard",
+                    "version": "1.0",
+                }
+            },
+        )
+        self.notify("initialized", {})
+        return self
+
+    def __exit__(self, *_: Any) -> None:
+        if self.process is None:
+            return
+        if self.process.poll() is None:
+            self.process.terminate()
+            try:
+                self.process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+                self.process.wait(timeout=5)
+
+    def notify(self, method: str, params: dict[str, Any]) -> None:
+        self._send({"method": method, "params": params})
+
+    def request(self, method: str, params: dict[str, Any]) -> dict[str, Any]:
+        request_id = self.next_request_id
+        self.next_request_id += 1
+        self._send({"method": method, "id": request_id, "params": params})
+        deadline = time.monotonic() + 15
+        while True:
+            message = self._read_message(deadline)
+            if message.get("id") != request_id:
+                continue
+            if "error" in message:
+                raise UsageGuardError(
+                    f"Codex usage read failed: {message['error']}"
+                )
+            result = message.get("result")
+            if not isinstance(result, dict):
+                raise UsageGuardError("Codex usage read returned no result object")
+            return result
+
+    def remaining_percent(self) -> float:
+        return rate_limit_remaining_percent(
+            self.request("account/rateLimits/read", {})
+        )
+
+    def _send(self, message: dict[str, Any]) -> None:
+        if self.process is None or self.process.stdin is None:
+            raise UsageGuardError("Codex usage client is not running")
+        if self.process.poll() is not None:
+            raise UsageGuardError("Codex usage client stopped unexpectedly")
+        self.process.stdin.write(json.dumps(message) + "\n")
+        self.process.stdin.flush()
+
+    def _read_message(self, deadline: float) -> dict[str, Any]:
+        if self.process is None or self.process.stdout is None:
+            raise UsageGuardError("Codex usage client is not running")
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise UsageGuardError("Timed out while reading Codex usage")
+        readable, _, _ = select.select([self.process.stdout], [], [], remaining)
+        if not readable:
+            raise UsageGuardError("Timed out while reading Codex usage")
+        line = self.process.stdout.readline()
+        if not line:
+            raise UsageGuardError("Codex usage client closed its output")
+        try:
+            message = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise UsageGuardError("Codex usage client returned invalid JSON") from exc
+        if not isinstance(message, dict):
+            raise UsageGuardError("Codex usage client returned a non-object message")
+        return message
+
+
+def rate_limit_remaining_percent(result: dict[str, Any]) -> float:
+    """Return the smallest remaining percentage across all quota windows."""
+
+    by_limit = result.get("rateLimitsByLimitId")
+    if isinstance(by_limit, dict) and by_limit:
+        buckets = list(by_limit.values())
+    else:
+        legacy = result.get("rateLimits")
+        buckets = [legacy] if isinstance(legacy, dict) else []
+
+    remaining: list[float] = []
+    for bucket in buckets:
+        if not isinstance(bucket, dict):
+            continue
+        for window_name in ("primary", "secondary"):
+            window = bucket.get(window_name)
+            if not isinstance(window, dict):
+                continue
+            used = window.get("usedPercent")
+            if isinstance(used, bool) or not isinstance(used, (int, float)):
+                continue
+            if not 0 <= float(used) <= 100:
+                raise UsageGuardError(
+                    f"Codex usage returned invalid usedPercent: {used!r}"
+                )
+            remaining.append(100.0 - float(used))
+
+    if not remaining:
+        raise UsageGuardError("Codex usage returned no readable rate-limit window")
+    return min(remaining)
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -498,6 +638,45 @@ def run_agent(args: argparse.Namespace) -> int:
         print(json.dumps(command, ensure_ascii=False, indent=2))
         return 0
 
+    usage_guard = {
+        "minimum_start_remaining_percent": MIN_START_REMAINING_PERCENT,
+        "stop_remaining_percent": STOP_REMAINING_PERCENT,
+        "poll_seconds": USAGE_POLL_SECONDS,
+        "adapter": adapter,
+    }
+    metadata["usage_guard"] = usage_guard
+    usage_client: CodexRateLimitClient | None = None
+    if adapter == "codex-cli":
+        try:
+            usage_client = CodexRateLimitClient(
+                str(config.get("executable", "codex"))
+            )
+            usage_client.__enter__()
+            start_remaining = usage_client.remaining_percent()
+        except (OSError, UsageGuardError) as exc:
+            if usage_client is not None:
+                usage_client.__exit__()
+            metadata["status"] = "not_started_usage_guard"
+            usage_guard["status"] = "unavailable"
+            usage_guard["reason"] = str(exc)
+            write_json(run_dir / "run.json", metadata)
+            print(f"Rule Lab usage guard: {exc}", file=sys.stderr)
+            return USAGE_GUARD_EXIT_CODE
+        usage_guard["start_remaining_percent"] = start_remaining
+        if start_remaining < MIN_START_REMAINING_PERCENT:
+            usage_client.__exit__()
+            metadata["status"] = "not_started_usage_guard"
+            usage_guard["status"] = "blocked_start"
+            usage_guard["reason"] = (
+                f"remaining quota {start_remaining:.1f}% is below the required "
+                f"{MIN_START_REMAINING_PERCENT:.0f}%"
+            )
+            write_json(run_dir / "run.json", metadata)
+            print(f"Rule Lab usage guard: {usage_guard['reason']}", file=sys.stderr)
+            return USAGE_GUARD_EXIT_CODE
+    else:
+        usage_guard["status"] = "not_applicable"
+
     workspace = run_dir / "workspace"
     if OPA_RUNNER.is_file():
         shutil.copy2(OPA_RUNNER, workspace / "tools" / "opa_validate.py")
@@ -521,26 +700,74 @@ def run_agent(args: argparse.Namespace) -> int:
     write_json(run_dir / "run.json", metadata)
 
     timeout = int(config.get("timeout_seconds", 3600))
-    with (run_dir / "raw" / "events.jsonl").open("w", encoding="utf-8") as out:
-        completed = subprocess.run(
-            command,
-            input=prompt,
-            text=True,
-            stdout=out,
-            stderr=subprocess.PIPE,
-            cwd=run_dir / "workspace",
-            timeout=timeout,
-            check=False,
-            env=model_environment,
-        )
-    (run_dir / "raw" / "stderr.log").write_text(
-        completed.stderr or "", encoding="utf-8"
+    usage_aborted = False
+    try:
+        with (
+            (run_dir / "raw" / "events.jsonl").open("w", encoding="utf-8") as out,
+            (run_dir / "raw" / "stderr.log").open("w", encoding="utf-8") as err,
+        ):
+            process = subprocess.Popen(
+                command,
+                stdin=subprocess.PIPE,
+                stdout=out,
+                stderr=err,
+                text=True,
+                cwd=run_dir / "workspace",
+                env=model_environment,
+            )
+            assert process.stdin is not None
+            process.stdin.write(prompt)
+            process.stdin.close()
+            deadline = time.monotonic() + timeout
+            while process.poll() is None:
+                remaining_timeout = deadline - time.monotonic()
+                if remaining_timeout <= 0:
+                    process.terminate()
+                    raise subprocess.TimeoutExpired(command, timeout)
+                try:
+                    process.wait(timeout=min(USAGE_POLL_SECONDS, remaining_timeout))
+                except subprocess.TimeoutExpired:
+                    if usage_client is None:
+                        continue
+                    try:
+                        remaining = usage_client.remaining_percent()
+                    except UsageGuardError as exc:
+                        usage_guard["status"] = "aborted_unavailable"
+                        usage_guard["reason"] = str(exc)
+                        usage_aborted = True
+                    else:
+                        usage_guard["last_remaining_percent"] = remaining
+                        if remaining <= STOP_REMAINING_PERCENT:
+                            usage_guard["status"] = "aborted_low_remaining"
+                            usage_guard["reason"] = (
+                                f"remaining quota {remaining:.1f}% reached the "
+                                f"{STOP_REMAINING_PERCENT:.0f}% stop threshold"
+                            )
+                            usage_aborted = True
+                    if usage_aborted:
+                        process.terminate()
+                        try:
+                            process.wait(timeout=30)
+                        except subprocess.TimeoutExpired:
+                            process.kill()
+                            process.wait(timeout=5)
+                        break
+            completed_returncode = process.wait()
+    finally:
+        if usage_client is not None:
+            usage_client.__exit__()
+
+    metadata["status"] = (
+        "aborted_usage_guard"
+        if usage_aborted
+        else "generated"
+        if completed_returncode == 0
+        else "failed"
     )
-    metadata["status"] = "generated" if completed.returncode == 0 else "failed"
     metadata["finished_at"] = utc_now()
-    metadata["generator_exit_code"] = completed.returncode
+    metadata["generator_exit_code"] = completed_returncode
     write_json(run_dir / "run.json", metadata)
-    return completed.returncode
+    return USAGE_GUARD_EXIT_CODE if usage_aborted else completed_returncode
 
 
 def flatten(value: Any, prefix: str = "") -> dict[str, Any]:
