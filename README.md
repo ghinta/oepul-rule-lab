@@ -31,6 +31,17 @@ für `gpt-5.5`, `gpt-5.6-luna`, `gpt-5.6-terra`, `gpt-5.6-sol` und
 `gpt-6-astra`; ein externer
 Command-Adapter ist ebenfalls dokumentiert.
 
+## Nutzungsgrenzen für Codex-Läufe
+
+Rule Lab prüft vor jedem `codex-cli`-Run die von Codex gemeldeten ChatGPT-
+Rate-Limits. Ein neuer Run startet nur, wenn in **jedem** gemeldeten
+Quotenfenster mindestens **50 %** verfügbar sind. Während eines Runs wird der
+kleinste verbleibende Wert alle 30 Sekunden geprüft. Bei **5 % oder weniger**
+wird der Generator kontrolliert beendet und der Run als
+`aborted_usage_guard` protokolliert, statt bis zu einem harten Limitfehler zu
+laufen. Sind die Limits nicht lesbar, startet der Run aus Sicherheitsgründen
+nicht.
+
 ## Quellen aktualisieren
 
 ```bash

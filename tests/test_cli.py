@@ -172,6 +172,27 @@ class CodexCommandTests(unittest.TestCase):
                 "warning\n",
             )
 
+
+class UsageGuardTests(unittest.TestCase):
+    def test_uses_lowest_remaining_window_across_rate_limit_buckets(self) -> None:
+        remaining = cli.rate_limit_remaining_percent(
+            {
+                "rateLimitsByLimitId": {
+                    "codex": {
+                        "primary": {"usedPercent": 25},
+                        "secondary": {"usedPercent": 75},
+                    },
+                    "codex_other": {"primary": {"usedPercent": 60}},
+                }
+            }
+        )
+
+        self.assertEqual(remaining, 25.0)
+
+    def test_rejects_missing_rate_limit_windows(self) -> None:
+        with self.assertRaises(cli.UsageGuardError):
+            cli.rate_limit_remaining_percent({"rateLimits": {}})
+
 class PrepareTests(unittest.TestCase):
     def test_prepare_creates_an_isolated_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
