@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 64,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-9-terra-high/runs/v2-o6_9-terra-high-20260925/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_9.rego",
+    "tests/o6_9_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-9-terra-high/runs/v2-o6_9-terra-high-20260925/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 13,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_9.rego",
+        "tests/o6_9_test.rego"
+      ],
+      "duration_ms": 24,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-9-terra-high/runs/v2-o6_9-terra-high-20260925/workspace/tools/opa",
+            "fmt",
+            "policy/o6_9.rego"
+          ],
+          "duration_ms": 12,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_9\n\nimport rego.v1\n\n# The input extension o6_9 is proposed in rules/profile_changes.json. Missing\n# facts are never silently converted into eligibility.\nallowed_techniques := {\"trailing_hose\", \"trailing_shoe\", \"injection\"}\nallowed_manure_types := {\"slurry\", \"liquid_manure\", \"biogas_slurry\"}\n\napplication_cap_m3 := object.get(input.o6_9, \"dungungswuerdige_area_ha\", 0) * data.application_cap_m3_per_dungungswuerdige_ha\nseparation_cap_m3 := object.get(input.o6_9, \"cattle_gve_annual_average\", 0) * data.separation_cap_m3_per_cattle_gve\n\neligible_application_records contains record if {\n\trecord := input.o6_9.applications[_]\n\trecord.manure_type in allowed_manure_types\n\trecord.technique in allowed_techniques\n\trecord.land_use in {\"arable\", \"grassland\"}\n\trecord.on_farm_land\n\trecord.record_complete\n\tnot record.external_device\n}\n\neligible_application_records contains record if {\n\trecord := input.o6_9.applications[_]\n\trecord.manure_type in allowed_manure_types\n\trecord.technique in allowed_techniques\n\trecord.land_use in {\"arable\", \"grassland\"}\n\trecord.on_farm_land\n\trecord.record_complete\n\trecord.external_device\n\trecord.external_service_evidence\n}\n\napplication_ineligible_reasons contains reason if {\n\trecord := input.o6_9.applications[_]\n\tnot record.technique in allowed_techniques\n\treason := {\"parcel_id\": record.parcel_id, \"reason\": \"unzulässiges_ausbringungsverfahren\"}\n}\n\napplication_ineligible_reasons contains reason if {\n\trecord := input.o6_9.applications[_]\n\tnot record.manure_type in allowed_manure_types\n\treason := {\"parcel_id\": record.parcel_id, \"reason\": \"nicht_foerderfaehiger_wirtschaftsduenger\"}\n}\n\napplication_ineligible_reasons contains reason if {\n\trecord := input.o6_9.applications[_]\n\trecord.external_device\n\tnot record.external_service_evidence\n\treason := {\"parcel_id\": record.parcel_id, \"reason\": \"nachweis_fremdgeraet_fehlt\"}\n}\n\napplication_ineligible_reasons contains reason if {\n\trecord := input.o6_9.applications[_]\n\tnot record.record_complete\n\treason := {\"parcel_id\": record.parcel_id, \"reason\": \"schlagbezogene_aufzeichnung_unvollstaendig\"}\n}\n\nclaimed_eligible_application_m3 := sum([record.volume_m3 | record := eligible_application_records[_]])\napplication_volume_within_cap if claimed_eligible_application_m3 <= application_cap_m3\napplication_volume_excess_m3 := max([0, claimed_eligible_application_m3 - application_cap_m3])\nclaimed_application_premium_eur := sum([premium |\n\trecord := eligible_application_records[_]\n\trate := data.application_rates_eur_per_m3[record.technique]\n\tpremium := record.volume_m3 * rate\n])\n\neligible_separation_records contains record if {\n\trecord := input.o6_9.separations[_]\n\trecord.origin == \"own_cattle\"\n\trecord.mechanical_separation\n\trecord.record_complete\n\tnot record.external_device\n}\n\neligible_separation_records contains record if {\n\trecord := input.o6_9.separations[_]\n\trecord.origin == \"own_cattle\"\n\trecord.mechanical_separation\n\trecord.record_complete\n\trecord.external_device\n\trecord.external_service_evidence\n}\n\nseparation_ineligible_reasons contains reason if {\n\trecord := input.o6_9.separations[_]\n\trecord.origin != \"own_cattle\"\n\treason := {\"date\": record.date, \"reason\": \"betriebsfremde_rinderguelle_nicht_foerderfaehig\"}\n}\n\nseparation_ineligible_reasons contains reason if {\n\trecord := input.o6_9.separations[_]\n\tnot record.mechanical_separation\n\treason := {\"date\": record.date, \"reason\": \"mechanische_trennung_in_feste_und_fluessige_phase_fehlend\"}\n}\n\nclaimed_eligible_separation_m3 := sum([record.volume_m3 | record := eligible_separation_records[_]])\nseparation_volume_within_cap if claimed_eligible_separation_m3 <= separation_cap_m3\nseparation_volume_excess_m3 := max([0, claimed_eligible_separation_m3 - separation_cap_m3])\nclaimed_separation_premium_eur := claimed_eligible_separation_m3 * data.separation_rate_eur_per_m3\n\npig_density_gve_per_arable_ha := object.get(input.o6_9, \"pig_gve_annual_average\", 0) / object.get(input.o6_9, \"arable_area_ha\", 0) if {\n\tobject.get(input.o6_9, \"arable_area_ha\", 0) > 0\n}\n\npig_feeding_density_eligible if {\n\tpig_density_gve_per_arable_ha >= data.minimum_pig_gve_per_arable_ha\n}\n\npig_protein_violations contains violation if {\n\tration := input.o6_9.pig_rations[_]\n\tlimit := data.protein_limits_g_per_kg_at_88pct_dm[_]\n\tration.category == limit.category\n\tration.method == limit.method\n\tration.protein_g_per_kg_88pct_dm > limit.maximum_g\n\tviolation := {\"category\": ration.category, \"method\": ration.method, \"maximum_g\": limit.maximum_g, \"actual_g\": ration.protein_g_per_kg_88pct_dm}\n}\n\npig_protein_compliant if {\n\tcount(input.o6_9.pig_rations) > 0\n\tcount(pig_protein_violations) == 0\n\tinput.o6_9.pig_feeding_evidence_available\n\tinput.o6_9.all_held_pigs_covered\n}\n\npig_feeding_eligible if {\n\tinput.farm.year >= 2025\n\tpig_feeding_density_eligible\n\tpig_protein_compliant\n\tnot input.o6_9.gw_acker_same_named_pig_option\n}\n\npig_feeding_premium_eur := object.get(input.o6_9, \"arable_area_ha\", 0) * data.pig_feeding_rate_eur_per_ha if {\n\tpig_feeding_eligible\n}\n\nannual_participation_satisfied if count(eligible_application_records) > 0\nannual_participation_satisfied if count(eligible_separation_records) > 0\nannual_participation_satisfied if pig_feeding_eligible\ncontract_continues if annual_participation_satisfied\ncontract_ends if not annual_participation_satisfied\n\npremium_result := {\n\t\"application_claimed_eur_before_volume_cap\": claimed_application_premium_eur,\n\t\"application_cap_m3\": application_cap_m3,\n\t\"application_claimed_m3\": claimed_eligible_application_m3,\n\t\"application_volume_within_cap\": application_volume_within_cap,\n\t\"separation_claimed_eur_before_volume_cap\": claimed_separation_premium_eur,\n\t\"separation_cap_m3\": separation_cap_m3,\n\t\"separation_claimed_m3\": claimed_eligible_separation_m3,\n\t\"separation_volume_within_cap\": separation_volume_within_cap,\n\t\"pig_feeding_premium_eur\": object.get({\"value\": pig_feeding_premium_eur}, \"value\", 0),\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-9-terra-high/runs/v2-o6_9-terra-high-20260925/workspace/tools/opa",
+            "fmt",
+            "tests/o6_9_test.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_9_test\n\nimport data.oepul.o6_9\nimport rego.v1\n\nbase_input := {\n\t\"farm\": {\"year\": 2026},\n\t\"o6_9\": {\n\t\t\"dungungswuerdige_area_ha\": 2,\n\t\t\"cattle_gve_annual_average\": 3,\n\t\t\"arable_area_ha\": 2,\n\t\t\"pig_gve_annual_average\": 2,\n\t\t\"gw_acker_same_named_pig_option\": false,\n\t\t\"pig_feeding_evidence_available\": true,\n\t\t\"all_held_pigs_covered\": true,\n\t\t\"applications\": [{\"parcel_id\": \"A1\", \"volume_m3\": 50, \"manure_type\": \"slurry\", \"technique\": \"trailing_hose\", \"land_use\": \"arable\", \"on_farm_land\": true, \"record_complete\": true, \"external_device\": false}],\n\t\t\"separations\": [{\"date\": \"2026-05-05\", \"volume_m3\": 30, \"origin\": \"own_cattle\", \"mechanical_separation\": true, \"record_complete\": true, \"external_device\": false}],\n\t\t\"pig_rations\": [{\"category\": \"piglet_8_to_32_kg\", \"method\": \"average\", \"protein_g_per_kg_88pct_dm\": 160}, {\"category\": \"grower_finisher_32kg_to_finish\", \"method\": \"average\", \"protein_g_per_kg_88pct_dm\": 157}, {\"category\": \"pregnant_sow\", \"method\": \"maximum\", \"protein_g_per_kg_88pct_dm\": 120}],\n\t},\n}\n\ntest_eligible_records_and_caps if {\n\tapplication_cap := o6_9.application_cap_m3 with input as base_input\n\tapplication_cap == 100\n\tseparation_cap := o6_9.separation_cap_m3 with input as base_input\n\tseparation_cap == 60\n\tapplication_premium := o6_9.claimed_application_premium_eur with input as base_input\n\tapplication_premium == 55\n\tseparation_premium := o6_9.claimed_separation_premium_eur with input as base_input\n\tseparation_premium == 45\n\to6_9.contract_continues with input as base_input\n}\n\ntest_external_device_requires_evidence if {\n\tchanged := object.union(base_input, {\"o6_9\": object.union(base_input.o6_9, {\"applications\": [{\"parcel_id\": \"A1\", \"volume_m3\": 20, \"manure_type\": \"slurry\", \"technique\": \"trailing_shoe\", \"land_use\": \"arable\", \"on_farm_land\": true, \"record_complete\": true, \"external_device\": true, \"external_service_evidence\": false}], \"separations\": [], \"pig_gve_annual_average\": 0})})\n\trecords := o6_9.eligible_application_records with input as changed\n\tcount(records) == 0\n\to6_9.contract_ends with input as changed\n}\n\ntest_pig_feeding_rules_and_noncombination if {\n\to6_9.pig_feeding_eligible with input as base_input\n\tpig_premium := o6_9.pig_feeding_premium_eur with input as base_input\n\tpig_premium == 108\n\texcluded := object.union(base_input, {\"o6_9\": object.union(base_input.o6_9, {\"gw_acker_same_named_pig_option\": true})})\n\tnot o6_9.pig_feeding_eligible with input as excluded\n}\n\ntest_protein_limit_violation if {\n\tchanged := object.union(base_input, {\"o6_9\": object.union(base_input.o6_9, {\"pig_rations\": [{\"category\": \"pregnant_sow\", \"method\": \"maximum\", \"protein_g_per_kg_88pct_dm\": 126}]})})\n\tviolations := o6_9.pig_protein_violations with input as changed\n\tcount(violations) == 1\n\tnot o6_9.pig_protein_compliant with input as changed\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-9-terra-high/runs/v2-o6_9-terra-high-20260925/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 16,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 4/4\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-9-terra-high/runs/v2-o6_9-terra-high-20260925/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 11,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-9-terra-high/runs/v2-o6_9-terra-high-20260925/workspace"
+}
