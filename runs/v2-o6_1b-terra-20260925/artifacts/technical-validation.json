@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 159,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-1b-terra/runs/v2-o6_1b-terra-20260925/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_1b.rego",
+    "tests/o6_1b_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-1b-terra/runs/v2-o6_1b-terra-20260925/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 15,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_1b.rego",
+        "tests/o6_1b_test.rego"
+      ],
+      "duration_ms": 27,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-1b-terra/runs/v2-o6_1b-terra-20260925/workspace/tools/opa",
+            "fmt",
+            "policy/o6_1b.rego"
+          ],
+          "duration_ms": 13,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_1b\n\nimport rego.v1\n\n# Executable checks deliberately consume the oepul extension proposed in\n# profile_changes.json; absent observations produce \"unknown\", not approval.\ndefault decision := {\"eligible\": false, \"violations\": [\"missing_oepul_observations\"]}\n\nrequired_arable_biodiversity := input.land.arable_area_ha * 0.07 if {\n\tinput.land.arable_area_ha > 2\n}\n\nrequired_arable_biodiversity := 0 if {\n\tinput.land.arable_area_ha <= 2\n}\n\nrequired_grassland_biodiversity := input.oepul.mown_grassland_ha * 0.07 if {\n\tinput.oepul.mown_grassland_ha > 2\n}\n\nrequired_grassland_biodiversity := 0 if {\n\tinput.oepul.mown_grassland_ha <= 2\n}\n\nis_livestock_holder if {\n\tinput.oepul.rgve_total / input.oepul.fodder_area_ha >= 0.30\n}\n\n# Closed tables are data, rather than hard-coded rule text.  Callers can use\n# these helpers when translating declared animal and variety records.\nrgve_per_head(class) := data.rgve_per_head[class] if {\n\tdata.rgve_per_head[class]\n}\n\nrare_variety_tier(variety) := entry.tier if {\n\tsome entry in data.rare_varieties\n\tentry.variety == variety\n}\n\nregional_seed_species(kind) := data.regional_seed_species[kind] if {\n\tdata.regional_seed_species[kind]\n}\n\nviolations contains \"organic_registration_or_control_contract_missing\" if {\n\tnot input.farm.certifications.organic.is_certified\n}\n\nviolations contains \"arable_cereal_maize_share_over_75_percent\" if {\n\tinput.land.arable_area_ha > 5\n\tinput.oepul.cereal_maize_ha / input.land.arable_area_ha > 0.75\n}\n\nviolations contains \"arable_single_crop_share_over_55_percent\" if {\n\tinput.land.arable_area_ha > 5\n\tsome crop in input.oepul.crop_shares\n\tnot crop.exempt_from_55_percent\n\tcrop.area_ha / input.land.arable_area_ha > 0.55\n}\n\nviolations contains \"arable_biodiversity_under_7_percent\" if {\n\tinput.oepul.arable_biodiversity_credit_ha < required_arable_biodiversity\n}\n\nviolations contains \"grassland_biodiversity_under_7_percent\" if {\n\tinput.oepul.grassland_biodiversity_credit_ha < required_grassland_biodiversity\n}\n\nviolations contains \"arable_div_seed_mixture_invalid\" if {\n\tsome p in input.oepul.biodiversity_parcels\n\tp.kind == \"arable_div\"\n\tp.new_sowing\n\tp.insect_flowering_partners < 7\n}\n\nviolations contains \"arable_div_seed_families_invalid\" if {\n\tsome p in input.oepul.biodiversity_parcels\n\tp.kind == \"arable_div\"\n\tp.new_sowing\n\tp.plant_families < 3\n}\n\nviolations contains \"arable_div_non_insect_partners_over_10_percent\" if {\n\tsome p in input.oepul.biodiversity_parcels\n\tp.kind == \"arable_div\"\n\tp.new_sowing\n\tp.non_insect_percent > 10\n}\n\nviolations contains \"arable_divrs_seed_mixture_invalid\" if {\n\tsome p in input.oepul.biodiversity_parcels\n\tp.kind == \"arable_divrs\"\n\tp.species_count < 30\n}\n\nviolations contains \"regional_seed_family_count_invalid\" if {\n\tsome p in input.oepul.biodiversity_parcels\n\tp.kind in {\"arable_divrs\", \"grassland_divrs\"}\n\tp.plant_families < 7\n}\n\nviolations contains \"regional_seed_rate_invalid\" if {\n\tsome p in input.oepul.biodiversity_parcels\n\tp.kind in {\"arable_divrs\", \"grassland_divrs\"}\n\tp.seed_rate_kg_ha < 20\n}\n\nviolations contains \"regional_seed_single_species_over_5_percent\" if {\n\tsome p in input.oepul.biodiversity_parcels\n\tp.kind in {\"arable_divrs\", \"grassland_divrs\"}\n\tnot p.uses_ecotype_seed\n\tp.max_species_weight_percent > 5\n}\n\nviolations contains \"grassland_divrs_site_invalid\" if {\n\tsome p in input.oepul.biodiversity_parcels\n\tp.kind == \"grassland_divrs\"\n\tp.grassland_number < 30\n}\n\nviolations contains \"grassland_divrs_slope_invalid\" if {\n\tsome p in input.oepul.biodiversity_parcels\n\tp.kind == \"grassland_divrs\"\n\tp.slope_percent >= 18\n}\n\nviolations contains \"wild_herb_breeding_area_invalid\" if {\n\tsome p in input.oepul.wild_herb_parcels\n\tp.row_spacing_cm < 20\n}\n\nviolations contains \"wild_herb_breeding_area_undersowing\" if {\n\tsome p in input.oepul.wild_herb_parcels\n\tp.has_undersowing\n}\n\nviolations contains \"pheromone_traps_under_15_per_ha\" if {\n\tsome p in input.oepul.pheromone_parcels\n\tp.traps_per_ha < 15\n}\n\nviolations contains \"pheromone_traps_under_5_weeks\" if {\n\tsome p in input.oepul.pheromone_parcels\n\tp.weeks_at_field < 5\n}\n\nviolations contains \"pheromone_traps_not_emptied_twice\" if {\n\tsome p in input.oepul.pheromone_parcels\n\tp.emptying_count < 2\n}\n\nviolations contains \"education_biodiversity_under_3_hours\" if {\n\tinput.oepul.education.biodiversity_hours < 3\n}\n\nviolations contains \"education_organic_under_5_hours\" if {\n\tinput.oepul.education.organic_hours < 5\n}\n\ndecision := {\"eligible\": true, \"violations\": []} if {\n\tinput.oepul\n\tcount(violations) == 0\n}\n\npremium_rates_2026 := {\n\t\"arable_base_eur_ha\": 235,\n\t\"grassland_non_livestock_eur_ha\": 75.6,\n\t\"grassland_livestock_under_1_4_eur_ha\": 232.2,\n\t\"grassland_livestock_1_4_or_more_eur_ha\": 221.4,\n\t\"arable_biodiversity_extra_eur_ha\": 324,\n\t\"arable_number_50_eur_ha\": 140,\n\t\"grassland_number_30_eur_ha\": 100,\n\t\"regional_arable_mown_eur_ha\": 424,\n\t\"regional_arable_mulched_eur_ha\": 324,\n\t\"regional_grassland_eur_ha\": 424,\n\t\"rare_variety_a_eur_ha\": 129.6,\n\t\"rare_variety_b_eur_ha\": 270,\n\t\"pheromone_traps_eur_ha\": 150,\n\t\"transaction_cost_eur_farm\": 400,\n\t\"circular_economy_eur_ha\": 40,\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-1b-terra/runs/v2-o6_1b-terra-20260925/workspace/tools/opa",
+            "fmt",
+            "tests/o6_1b_test.rego"
+          ],
+          "duration_ms": 14,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_1b_test\n\nimport rego.v1\n\ntest_compliant_organic_farm if {\n\tdecision := data.oepul.o6_1b.decision with input as {\n\t\t\"farm\": {\"certifications\": {\"organic\": {\"is_certified\": true}}},\n\t\t\"land\": {\"arable_area_ha\": 10},\n\t\t\"oepul\": {\"mown_grassland_ha\": 0, \"fodder_area_ha\": 10, \"rgve_total\": 0, \"cereal_maize_ha\": 7, \"crop_shares\": [{\"area_ha\": 5, \"exempt_from_55_percent\": false}], \"arable_biodiversity_credit_ha\": 0.7, \"grassland_biodiversity_credit_ha\": 0, \"biodiversity_parcels\": [{\"kind\": \"arable_div\", \"new_sowing\": true, \"insect_flowering_partners\": 7, \"plant_families\": 3, \"non_insect_percent\": 10}], \"wild_herb_parcels\": [], \"pheromone_parcels\": [], \"education\": {\"biodiversity_hours\": 3, \"organic_hours\": 5}},\n\t}\n\tdecision.eligible\n}\n\ntest_detects_diversification_and_biodiversity_failure if {\n\tviolations := data.oepul.o6_1b.violations with input as {\"farm\": {\"certifications\": {\"organic\": {\"is_certified\": false}}}, \"land\": {\"arable_area_ha\": 10}, \"oepul\": {\"mown_grassland_ha\": 0, \"cereal_maize_ha\": 8, \"crop_shares\": [{\"area_ha\": 6, \"exempt_from_55_percent\": false}], \"arable_biodiversity_credit_ha\": 0, \"grassland_biodiversity_credit_ha\": 0, \"biodiversity_parcels\": [], \"wild_herb_parcels\": [], \"pheromone_parcels\": [], \"education\": {\"biodiversity_hours\": 0, \"organic_hours\": 0}}}\n\t\"arable_cereal_maize_share_over_75_percent\" in violations\n\t\"arable_biodiversity_under_7_percent\" in violations\n\t\"organic_registration_or_control_contract_missing\" in violations\n}\n\ntest_regional_seed_and_trap_checks if {\n\tviolations := data.oepul.o6_1b.violations with input as {\"farm\": {\"certifications\": {\"organic\": {\"is_certified\": true}}}, \"land\": {\"arable_area_ha\": 0}, \"oepul\": {\"mown_grassland_ha\": 0, \"cereal_maize_ha\": 0, \"crop_shares\": [], \"arable_biodiversity_credit_ha\": 0, \"grassland_biodiversity_credit_ha\": 0, \"biodiversity_parcels\": [{\"kind\": \"grassland_divrs\", \"species_count\": 29, \"plant_families\": 6, \"seed_rate_kg_ha\": 19, \"max_species_weight_percent\": 6, \"uses_ecotype_seed\": false, \"grassland_number\": 29, \"slope_percent\": 18}], \"wild_herb_parcels\": [{\"row_spacing_cm\": 19, \"has_undersowing\": true}], \"pheromone_parcels\": [{\"traps_per_ha\": 14, \"weeks_at_field\": 4, \"emptying_count\": 1}], \"education\": {\"biodiversity_hours\": 3, \"organic_hours\": 5}}}\n\t\"grassland_divrs_site_invalid\" in violations\n\t\"pheromone_traps_under_15_per_ha\" in violations\n}\n\ntest_closed_reference_tables_are_queryable if {\n\tdata.oepul.o6_1b.rgve_per_head(\"cattle_2_plus\") == 1\n\tdata.oepul.o6_1b.rare_variety_tier(\"Soblus\") == \"A\"\n\t\"Valeriana officinalis subsp. officinalis\" in data.oepul.o6_1b.regional_seed_species(\"arable\")\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-1b-terra/runs/v2-o6_1b-terra-20260925/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 17,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 4/4\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-1b-terra/runs/v2-o6_1b-terra-20260925/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 99,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-1b-terra/runs/v2-o6_1b-terra-20260925/workspace"
+}
