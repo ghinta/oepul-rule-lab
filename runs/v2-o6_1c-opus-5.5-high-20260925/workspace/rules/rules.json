@@ -1,0 +1,2981 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_1c",
+  "rules": [
+    {
+      "id": "O61C-CAT-001",
+      "rule_type": "scope",
+      "statement": "Die Maßnahme 1C umfasst die zwei Maßnahmenkategorien 'Nichtproduktive Ackerflächen' (NPA) und 'Agroforststreifen' (AFS); gefördert werden Kosten und Einkommensverluste aus Neuansaat/Belassen und Pflege von NPA sowie Neuanlage/Belassen und Pflege von AFS; die Teilnahme erfolgt je Kategorie.",
+      "conditions": [
+        {
+          "expression": "participation.measure_code == '1C' and participation.category in {'npa','afs'}",
+          "description": "Teilnahme wird je Kategorie im Maßnahmenantrag erfasst",
+          "input_paths": [
+            "farm.oepul.measure_participations[].measure_code",
+            "farm.oepul.measure_participations[].category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "category_scope",
+        "description": "Vertragsgültigkeit und Prämie werden getrennt je Kategorie beurteilt.",
+        "value": {
+          "categories": [
+            "npa",
+            "afs"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "MB-P2-KATEGORIEN",
+        "MB-P1-UEBERSICHT",
+        "MB-P1-UEBERSICHT-AFS",
+        "SRL-P46-UNTERSTUETZUNG",
+        "MB-P2-WAHL",
+        "SRL-P46-WAHL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.contract_valid_for_category",
+        "data.o6_1c.measure_categories"
+      ]
+    },
+    {
+      "id": "O61C-CONTRACT-001",
+      "rule_type": "eligibility",
+      "statement": "Die Maßnahme 1C wird ab dem Antragsjahr 2025 angeboten (Öko-Regelung, mit 1b gekennzeichnete Änderung ab 01.01.2025) und ist an die Laufzeit der Sonderrichtlinie (bis 31.12.2028) gebunden.",
+      "conditions": [
+        {
+          "expression": "farm.year >= 2025 and farm.year <= 2028",
+          "description": "Antragsjahr innerhalb des Angebotszeitraums",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "measure_available",
+        "description": "Außerhalb 2025–2028 kommt keine 1C-Verpflichtung zustande.",
+        "value": {
+          "offered_from_year": 2025,
+          "programme_last_year": 2028
+        }
+      },
+      "source_reference_ids": [
+        "MB-P1-ANGEBOT",
+        "SRL-P46-UNTERSTUETZUNG",
+        "SRL-P4-OEKOREGELUNG",
+        "SRL-P27-ANWENDUNG-1B",
+        "SRL-P5-ZEITRAUM"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.measure_offered_in_year",
+        "data.oepul.o6_1c.participation_violations",
+        "data.o6_1c.measure_parameters.offered_from_year",
+        "data.o6_1c.measure_parameters.programme_last_year"
+      ]
+    },
+    {
+      "id": "O61C-CONTRACT-002",
+      "rule_type": "commitment_period",
+      "statement": "Verpflichtungs- und Vertragszeitraum der Maßnahme 1C beträgt ein Kalenderjahr (1. Jänner bis 31. Dezember); 1C ist eine einjährige Maßnahme. Förderfähig sind nur Flächen, auf denen die Verpflichtungen während der gesamten Verpflichtungsdauer erfüllt werden.",
+      "conditions": [
+        {
+          "expression": "measure_code == '1C'",
+          "description": "Maßnahme ist in der Liste der einjährigen Maßnahmen",
+          "input_paths": [
+            "farm.oepul.measure_participations[].measure_code"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "one_year_commitment",
+        "description": "Verpflichtungszeitraum 01.01.–31.12. des Antragsjahres.",
+        "value": {
+          "start": "01-01",
+          "end": "12-31"
+        }
+      },
+      "source_reference_ids": [
+        "MB-P1-KALENDERJAHR",
+        "AT-P12-EINJAEHRIG",
+        "AT-P12-EINJAEHRIG-1C",
+        "SRL-P12-EINJAEHRIG",
+        "AT-P10-VERPFLICHTUNGSDAUER",
+        "SRL-P12-VERPFLICHTUNGSDAUER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.is_one_year_measure",
+        "data.oepul.o6_1c.commitment_period",
+        "data.o6_1c.measure_lists.one_year_measures"
+      ]
+    },
+    {
+      "id": "O61C-CONTRACT-003",
+      "rule_type": "procedure",
+      "statement": "Die beantragte Maßnahme (Kategorie) verlängert sich automatisch um ein weiteres Förderjahr, wenn sie nicht abgemeldet wird; die erstmalige Beantragung gilt als Vorbeantragung für alle Folgejahre bis Programmende, die Weiterführung erfolgt durch Abgabe des Mehrfachantrages mit förderrelevanten Flächen.",
+      "conditions": [
+        {
+          "expression": "deregistration_date == null and mfa_submitted == true",
+          "description": "keine Abmeldung und Mehrfachantrag abgegeben",
+          "input_paths": [
+            "farm.oepul.measure_participations[].deregistration_date",
+            "farm.oepul.mfa_submitted"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_renewed",
+        "description": "Vertrag gilt für das Folgejahr weiter.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P1-VERLAENGERUNG",
+        "AT-P13-VERLAENGERUNG",
+        "AT-P13-WEITERFUEHRUNG",
+        "SRL-P21-VORBEANTRAGUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.mfa_submitted",
+        "data.oepul.o6_1c.category_contract_valid"
+      ]
+    },
+    {
+      "id": "O61C-APPL-001",
+      "rule_type": "deadline",
+      "statement": "Die Kategorien 'Nichtproduktive Ackerflächen' und 'Agroforststreifen' müssen jeweils vor Vertragsbeginn im Maßnahmenantrag des Mehrfachantrages bis spätestens 31. Dezember beantragt werden, um einen gültigen Vertrag ab dem Folgejahr zu begründen.",
+      "conditions": [
+        {
+          "expression": "application_date <= (first_contract_year - 1) + '-12-31'",
+          "description": "Maßnahmenantrag spätestens am 31.12. vor dem ersten Vertragsjahr",
+          "input_paths": [
+            "farm.oepul.measure_participations[].application_date",
+            "farm.oepul.measure_participations[].first_contract_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_formation",
+        "description": "Bei verspätetem Antrag kein gültiger Vertrag für das betreffende Jahr.",
+        "value": {
+          "deadline_month_day": "12-31",
+          "relative_year": -1
+        }
+      },
+      "source_reference_ids": [
+        "MB-P4-ANTRAG",
+        "AT-P12-ANTRAG",
+        "SRL-P21-MASSNAHMENANTRAG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.application_deadline_for",
+        "data.oepul.o6_1c.application_in_time",
+        "data.oepul.o6_1c.participation_violations",
+        "data.o6_1c.measure_parameters.application_deadline_month_day"
+      ]
+    },
+    {
+      "id": "O61C-APPL-002",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg in die Kategorien NPA und AFS ist mit dem Förderjahr 2027 möglich (Beantragung bis spätestens 31. Dezember 2026); spätester Vertragsbeginn einjähriger Maßnahmen ist der 01.01.2027.",
+      "conditions": [
+        {
+          "expression": "2025 <= first_contract_year <= 2027",
+          "description": "Einstiegsjahr im zulässigen Fenster",
+          "input_paths": [
+            "farm.oepul.measure_participations[].first_contract_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "entry_allowed",
+        "description": "Einstieg ab Förderjahr 2028 ist nicht mehr möglich.",
+        "value": {
+          "last_contract_start_year": 2027,
+          "last_application_date": "2026-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "MB-P4-LETZTER-EINSTIEG",
+        "AT-P12-LETZTER-EINSTIEG",
+        "SRL-P12-SPAETESTER-BEGINN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.entry_year_allowed",
+        "data.oepul.o6_1c.participation_violations",
+        "data.o6_1c.measure_parameters.last_contract_start_year",
+        "data.o6_1c.measure_lists.one_year_rules"
+      ]
+    },
+    {
+      "id": "O61C-APPL-003",
+      "rule_type": "combination_exclusion",
+      "statement": "Betriebe, die an 'Umweltgerechte und biodiversitätsfördernde Bewirtschaftung' (UBB, 1A) oder 'Biologische Wirtschaftsweise' (BIO, 1B) teilnehmen, können nicht gleichzeitig an der Kategorie 'Nichtproduktive Ackerflächen' teilnehmen; ausgenommen ist BIO – Teilbetrieb mit dem Kulturbereich Wein, Obst und Hopfen. Die Kategorie 'Agroforststreifen' ist davon nicht betroffen.",
+      "conditions": [
+        {
+          "expression": "participates('1A') or (participates('1B') and option != 'teilbetrieb_wein_obst_hopfen')",
+          "description": "Betrieb nimmt an UBB oder Voll-BIO teil",
+          "input_paths": [
+            "farm.oepul.measure_participations[].measure_code",
+            "farm.oepul.measure_participations[].option"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "category_blocked",
+        "description": "Keine gültige Teilnahme an der Kategorie NPA; keine NPA-Prämie.",
+        "value": {
+          "blocked_category": "npa",
+          "blocking_measures": [
+            "1A",
+            "1B"
+          ],
+          "exception_option": "teilbetrieb_wein_obst_hopfen"
+        }
+      },
+      "source_reference_ids": [
+        "MB-P4-UBB-BIO",
+        "MB-P4-UBB-BIO-AUSNAHME",
+        "SRL-P18-NPA-UBB-BIO"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.ubb_or_bio_conflict",
+        "data.oepul.o6_1c.category_blocked",
+        "data.oepul.o6_1c.participation_violations"
+      ]
+    },
+    {
+      "id": "O61C-APPL-004",
+      "rule_type": "application_requirement",
+      "statement": "Nichtproduktive Ackerflächen sind in der Feldstücksliste des Mehrfachantrages mit der Schlagnutzungsart 'Grünbrache' zu beantragen und mit dem Code NPA zu kennzeichnen.",
+      "conditions": [
+        {
+          "expression": "parcel.schlagnutzungsart == 'Grünbrache' and 'NPA' in parcel.oepul_codes",
+          "description": "korrekte Beantragung des NPA-Schlages",
+          "input_paths": [
+            "land.parcels[].schlagnutzungsart",
+            "land.parcels[].oepul_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_declaration",
+        "description": "Nicht korrekt beantragte Schläge sind für NPA nicht prämienfähig.",
+        "value": {
+          "schlagnutzungsart": "Grünbrache",
+          "code": "NPA"
+        }
+      },
+      "source_reference_ids": [
+        "MB-P4-NPA-CODE",
+        "AT-P7-NICHT-BEANTRAGT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.npa_violations",
+        "data.oepul.o6_1c.npa_parcel_eligible",
+        "data.o6_1c.measure_parameters.npa_schlagnutzungsart",
+        "data.o6_1c.measure_parameters.npa_code"
+      ]
+    },
+    {
+      "id": "O61C-APPL-005",
+      "rule_type": "application_requirement",
+      "statement": "Agroforststreifen sind im Jahr der Teilnahme mit der Schlagnutzungsart 'LSE Agroforststreifen' zu beantragen.",
+      "conditions": [
+        {
+          "expression": "strip.schlagnutzungsart == 'LSE Agroforststreifen'",
+          "description": "korrekte Schlagnutzungsart",
+          "input_paths": [
+            "land.agroforestry_strips[].schlagnutzungsart"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "strip_declaration",
+        "description": "Nicht korrekt beantragte Streifen sind nicht prämienfähig.",
+        "value": {
+          "schlagnutzungsart": "LSE Agroforststreifen"
+        }
+      },
+      "source_reference_ids": [
+        "MB-P4-AFS-SNA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.afs_violations",
+        "data.oepul.o6_1c.afs_strip_eligible",
+        "data.o6_1c.measure_parameters.afs_schlagnutzungsart"
+      ]
+    },
+    {
+      "id": "O61C-APPL-006",
+      "rule_type": "obligation",
+      "statement": "Wird an der Kategorie 'Agroforststreifen' teilgenommen, müssen alle beantragten Agroforststreifen nach den Förderverpflichtungen der Maßnahme bewirtschaftet werden.",
+      "conditions": [
+        {
+          "expression": "participates_in_category('1C','afs')",
+          "description": "Teilnahme an der Kategorie AFS",
+          "input_paths": [
+            "farm.oepul.measure_participations[].category"
+          ]
+        },
+        {
+          "expression": "every strip in land.agroforestry_strips: no violation",
+          "description": "alle beantragten Streifen erfüllen die Verpflichtungen",
+          "input_paths": [
+            "land.agroforestry_strips[].strip_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "all_strips_bound",
+        "description": "Verstoß auf einem Streifen ist ein Verstoß gegen die Kategorieverpflichtung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P4-AFS-ALLE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.afs_all_strips_compliant"
+      ]
+    },
+    {
+      "id": "O61C-APPL-007",
+      "rule_type": "crediting",
+      "statement": "Dem Feldstück zugeordnete Agroforststreifen der Maßnahme 1C werden ab 2025 bei UBB/BIO zur Erreichung der zumindest 0,15 ha (15 a) Biodiversitätsflächen auf Ackerfeldstücken größer 5 ha angerechnet (Verpflichtung erst ab 10 ha Ackerfläche); sie zählen nicht für die 7 %-Grenze.",
+      "conditions": [
+        {
+          "expression": "participates('1A') or participates('1B')",
+          "description": "Betrieb nimmt an UBB oder BIO teil",
+          "input_paths": [
+            "farm.oepul.measure_participations[].measure_code"
+          ]
+        },
+        {
+          "expression": "land.arable_area_ha >= 10 and feldstueck.arable_area_ha > 5",
+          "description": "Feldstücksregel anwendbar",
+          "input_paths": [
+            "land.arable_area_ha",
+            "land.feldstuecke[].arable_area_ha"
+          ]
+        },
+        {
+          "expression": "strip.assigned_feldstueck_id == feldstueck.feldstueck_id",
+          "description": "Streifen ist dem Feldstück zugeordnet",
+          "input_paths": [
+            "land.agroforestry_strips[].assigned_feldstueck_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "credited_area",
+        "description": "Fläche der zugeordneten Agroforststreifen wird auf die 15 a angerechnet, nicht auf die 7 %.",
+        "value": {
+          "min_area_ha": 0.15,
+          "feldstueck_threshold_ha": 5,
+          "min_farm_arable_ha": 10,
+          "counts_toward_7_percent": false
+        }
+      },
+      "source_reference_ids": [
+        "MB-P4-AFS-15A",
+        "SRL-P29-UBB-15A",
+        "SRL-P29-UBB-7PROZENT",
+        "SRL-P29-UBB-10HA",
+        "SRL-P38-BIO-15A"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.afs_credit_15a_by_feldstueck",
+        "data.oepul.o6_1c.afs_counts_toward_7_percent",
+        "data.o6_1c.measure_parameters.ubb_bio_feldstueck_threshold_ha",
+        "data.o6_1c.measure_parameters.ubb_bio_feldstueck_min_biodiversity_area_ha",
+        "data.o6_1c.measure_parameters.ubb_bio_feldstueck_rule_min_arable_area_ha"
+      ]
+    },
+    {
+      "id": "O61C-DEF-AFS-001",
+      "rule_type": "definition",
+      "statement": "Agroforststreifen sind Elemente, die direkt an Ackerflächen angrenzen und mit Gehölzen bestockt sind.",
+      "conditions": [
+        {
+          "expression": "strip.adjacent_to_arable == true",
+          "description": "direkt an Ackerfläche angrenzend",
+          "input_paths": [
+            "land.agroforestry_strips[].adjacent_to_arable"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "definition_met",
+        "description": "Nicht angrenzende Streifen sind keine förderfähigen Agroforststreifen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P2-AFS-DEF",
+        "SRL-P46-AFS-DEF"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.afs_defect",
+        "data.oepul.o6_1c.afs_definition_defects",
+        "data.oepul.o6_1c.afs_meets_definition"
+      ]
+    },
+    {
+      "id": "O61C-DEF-AFS-002",
+      "rule_type": "definition",
+      "statement": "Agroforststreifen müssen ab dem Jahr (Antragsjahr) 2020 neu angelegt worden sein.",
+      "conditions": [
+        {
+          "expression": "strip.establishment_year >= 2020",
+          "description": "Anlagejahr ab 2020",
+          "input_paths": [
+            "land.agroforestry_strips[].establishment_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "definition_met",
+        "description": "Vor 2020 angelegte Streifen sind nicht förderfähig.",
+        "value": {
+          "min_establishment_year": 2020
+        }
+      },
+      "source_reference_ids": [
+        "MB-P2-AFS-DEF",
+        "SRL-P46-AFS-DEF",
+        "MB-P1-UEBERSICHT-AFS",
+        "SRL-P46-UNTERSTUETZUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.afs_defect",
+        "data.oepul.o6_1c.afs_meets_definition",
+        "data.o6_1c.measure_parameters.afs_min_establishment_year"
+      ]
+    },
+    {
+      "id": "O61C-DEF-AFS-003",
+      "rule_type": "threshold",
+      "statement": "Agroforststreifen müssen eine durchschnittliche Breite von mindestens 2 m und maximal 10 m aufweisen.",
+      "conditions": [
+        {
+          "expression": "2 <= strip.average_width_m <= 10",
+          "description": "durchschnittliche Breite im Bereich",
+          "input_paths": [
+            "land.agroforestry_strips[].average_width_m"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "definition_met",
+        "description": "Außerhalb des Bereichs keine Förderfähigkeit.",
+        "value": {
+          "min_m": 2,
+          "max_m": 10
+        }
+      },
+      "source_reference_ids": [
+        "MB-P2-AFS-BREITE",
+        "SRL-P46-AFS-BREITE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.afs_defect",
+        "data.oepul.o6_1c.afs_meets_definition",
+        "data.o6_1c.measure_parameters.afs_min_average_width_m",
+        "data.o6_1c.measure_parameters.afs_max_average_width_m"
+      ]
+    },
+    {
+      "id": "O61C-DEF-AFS-004",
+      "rule_type": "threshold",
+      "statement": "Agroforststreifen müssen mit einer Dichte von mindestens 10 bis maximal 25 Bäumen pro 100 Laufmeter bepflanzt sein.",
+      "conditions": [
+        {
+          "expression": "10 <= strip.tree_count * 100 / strip.length_m <= 25",
+          "description": "Baumdichte je 100 Laufmeter",
+          "input_paths": [
+            "land.agroforestry_strips[].tree_count",
+            "land.agroforestry_strips[].length_m"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "definition_met",
+        "description": "Außerhalb des Bereichs keine Förderfähigkeit.",
+        "value": {
+          "min_trees_per_100_m": 10,
+          "max_trees_per_100_m": 25
+        }
+      },
+      "source_reference_ids": [
+        "MB-P2-AFS-DICHTE",
+        "SRL-P46-AFS-DICHTE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.trees_per_100_m",
+        "data.oepul.o6_1c.afs_defect",
+        "data.o6_1c.measure_parameters.afs_min_trees_per_100_m",
+        "data.o6_1c.measure_parameters.afs_max_trees_per_100_m"
+      ]
+    },
+    {
+      "id": "O61C-DEF-AFS-005",
+      "rule_type": "threshold",
+      "statement": "Der maximale Baumabstand im Agroforststreifen beträgt 15 m.",
+      "conditions": [
+        {
+          "expression": "strip.max_tree_spacing_m <= 15",
+          "description": "maximaler Baumabstand",
+          "input_paths": [
+            "land.agroforestry_strips[].max_tree_spacing_m"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "definition_met",
+        "description": "Größerer Abstand: keine Förderfähigkeit.",
+        "value": {
+          "max_tree_spacing_m": 15
+        }
+      },
+      "source_reference_ids": [
+        "MB-P2-AFS-ABSTAND",
+        "SRL-P46-AFS-ABSTAND"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.afs_defect",
+        "data.o6_1c.measure_parameters.afs_max_tree_spacing_m"
+      ]
+    },
+    {
+      "id": "O61C-DEF-AFS-006",
+      "rule_type": "definition",
+      "statement": "Der Agroforststreifen darf keiner Spezialkultur gemäß § 25 Abs. 4 GSP-AV entsprechen.",
+      "conditions": [
+        {
+          "expression": "strip.is_special_crop_gspav_25_4 == false",
+          "description": "keine Spezialkultur",
+          "input_paths": [
+            "land.agroforestry_strips[].is_special_crop_gspav_25_4"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "definition_met",
+        "description": "Spezialkulturen sind keine Agroforststreifen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P2-AFS-SPEZIAL",
+        "SRL-P46-AFS-ABSTAND"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.afs_defect"
+      ]
+    },
+    {
+      "id": "O61C-DEF-AFS-007",
+      "rule_type": "prohibition",
+      "statement": "Gehölze der Negativliste (14 Einträge, u. a. Robinie, Götterbaum, Ölweiden) dürfen in Agroforststreifen nicht vorkommen; sie dürfen nicht gepflanzt werden und müssen bei natürlichem Anflug entfernt werden.",
+      "conditions": [
+        {
+          "expression": "no species in strip.species is on afs_negative_list (species or genus)",
+          "description": "keine Negativlisten-Gehölze vorhanden",
+          "input_paths": [
+            "land.agroforestry_strips[].species[].scientific_name",
+            "land.agroforestry_strips[].species[].count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "definition_met",
+        "description": "Vorkommen von Negativlisten-Gehölzen: Definition nicht erfüllt / Entfernungspflicht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P2-NEGATIVLISTE",
+        "MB-P2-NEGATIVLISTE-ENDE",
+        "MB-P2-NEGATIVLISTE-ENTFERNEN",
+        "SRL-P46-AFS-NEGATIV",
+        "SRL-P46-NEGATIVLISTE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.on_negative_list",
+        "data.oepul.o6_1c.negative_species_present",
+        "data.oepul.o6_1c.afs_defect",
+        "data.o6_1c.afs_negative_list"
+      ]
+    },
+    {
+      "id": "O61C-DEF-AFS-008",
+      "rule_type": "definition",
+      "statement": "Agroforststreifen dürfen entlang der Längsseite nicht an Wald oder ein flächiges Landschaftselement angrenzen.",
+      "conditions": [
+        {
+          "expression": "strip.long_side_adjacent_to_forest_or_area_landscape_element == false",
+          "description": "keine Angrenzung an Wald/flächiges LSE an der Längsseite",
+          "input_paths": [
+            "land.agroforestry_strips[].long_side_adjacent_to_forest_or_area_landscape_element"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "definition_met",
+        "description": "Angrenzung: keine Förderfähigkeit.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P2-AFS-WALD"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.afs_defect"
+      ]
+    },
+    {
+      "id": "O61C-DEF-AFS-009",
+      "rule_type": "permission",
+      "statement": "Die Pflanzung von Sträuchern zwischen den Bäumen des Agroforststreifens ist zulässig.",
+      "conditions": [
+        {
+          "expression": "strip.species contains shrubs between trees",
+          "description": "Sträucher zwischen den Bäumen",
+          "input_paths": [
+            "land.agroforestry_strips[].species[].scientific_name"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "permitted",
+        "description": "Sträucher sind kein Hindernis für die Definition (sofern nicht auf der Negativliste).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P2-AFS-STRAEUCHER"
+      ]
+    },
+    {
+      "id": "O61C-NPA-001",
+      "rule_type": "eligibility",
+      "statement": "Nichtproduktive Ackerflächen müssen Ackerflächen sein; die Prämie wird für nichtproduktive Ackerflächen gewährt.",
+      "conditions": [
+        {
+          "expression": "parcel.land_use == 'arable'",
+          "description": "Nutzungsart Acker",
+          "input_paths": [
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_eligible",
+        "description": "Nicht-Ackerflächen sind nicht als NPA förderbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P1-UEBERSICHT",
+        "MB-P4-PRAEMIE-NPA",
+        "SRL-P47-PRAEMIE-NPA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.npa_violations",
+        "data.oepul.o6_1c.npa_parcel_eligible"
+      ]
+    },
+    {
+      "id": "O61C-NPA-002",
+      "rule_type": "obligation",
+      "statement": "Auf NPA hat eine Neuansaat oder ein Belassen von bestehenden Grünbrachen oder dauerhaft begrünten Ackerflächen zu erfolgen; die Selbstbegrünung der Fläche ist zulässig.",
+      "conditions": [
+        {
+          "expression": "parcel.npa.establishment_type in {'new_sowing','self_greening','retained_green_fallow','retained_permanently_greened_arable'}",
+          "description": "zulässige Anlage-/Belassensvariante",
+          "input_paths": [
+            "land.parcels[].npa.establishment_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_met",
+        "description": "Andere Varianten erfüllen die Förderverpflichtung nicht.",
+        "value": {
+          "options": [
+            "new_sowing",
+            "self_greening",
+            "retained_green_fallow",
+            "retained_permanently_greened_arable"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "MB-P2-WAHL",
+        "MB-P2-NPA-ANLAGE",
+        "MB-P2-NPA-SELBST",
+        "SRL-P46-WAHL",
+        "SRL-P46-NPA-ANLAGE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.npa_establishment_options",
+        "data.oepul.o6_1c.npa_violations",
+        "data.o6_1c.measure_categories"
+      ]
+    },
+    {
+      "id": "O61C-NPA-003",
+      "rule_type": "deadline",
+      "statement": "Eine Neuansaat der NPA hat bis spätestens 15. Mai des Antragsjahres zu erfolgen (Herbstansaat im Vorjahr ist zulässig).",
+      "conditions": [
+        {
+          "expression": "parcel.npa.establishment_type == 'new_sowing' and first year",
+          "description": "Neuansaat im ersten Antragsjahr",
+          "input_paths": [
+            "land.parcels[].npa.establishment_type",
+            "land.parcels[].npa.first_npa_declaration_year"
+          ]
+        },
+        {
+          "expression": "parcel.npa.sowing_date <= farm.year + '-05-15'",
+          "description": "Ansaatdatum spätestens 15.05.",
+          "input_paths": [
+            "land.parcels[].npa.sowing_date",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "deadline_met",
+        "description": "Spätere Ansaat ist ein Verstoß gegen die Förderverpflichtung.",
+        "value": {
+          "deadline_month_day": "05-15"
+        }
+      },
+      "source_reference_ids": [
+        "MB-P2-NPA-ANSAAT",
+        "SRL-P46-NPA-TERMINE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.npa_violations",
+        "data.o6_1c.measure_parameters.npa_new_sowing_deadline_month_day"
+      ]
+    },
+    {
+      "id": "O61C-NPA-004",
+      "rule_type": "deadline",
+      "statement": "Ein Umbruch der NPA ist frühestens am 15. September erlaubt; im Falle des Anbaues einer nachfolgenden Winterung oder Zwischenfrucht ist der Umbruch bereits ab dem 1. August (SRL: nach dem 31.07.) möglich.",
+      "conditions": [
+        {
+          "expression": "parcel.npa.breaking_date >= (follow_up_crop in {'winter_crop','catch_crop'} ? year+'-08-01' : year+'-09-15')",
+          "description": "Umbruchtermin",
+          "input_paths": [
+            "land.parcels[].npa.breaking_date",
+            "land.parcels[].npa.follow_up_crop"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "deadline_met",
+        "description": "Früherer Umbruch ist ein Verstoß.",
+        "value": {
+          "earliest": "09-15",
+          "earliest_with_winter_or_catch_crop": "08-01"
+        }
+      },
+      "source_reference_ids": [
+        "MB-P2-NPA-UMBRUCH",
+        "MB-P2-NPA-UMBRUCH-AUG",
+        "SRL-P46-NPA-TERMINE",
+        "SRL-P46-NPA-UMBRUCH-JULI"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.npa_breaking_earliest",
+        "data.oepul.o6_1c.npa_violations",
+        "data.o6_1c.measure_parameters.npa_breaking_earliest_month_day",
+        "data.o6_1c.measure_parameters.npa_breaking_earliest_after_winter_or_catch_crop_month_day"
+      ]
+    },
+    {
+      "id": "O61C-NPA-005",
+      "rule_type": "prohibition",
+      "statement": "Im Falle eines Umbruchs der NPA gilt bis einschließlich 31. Dezember ein Nutzungsverbot auf diesen Flächen.",
+      "conditions": [
+        {
+          "expression": "parcel.npa.breaking_date != null and parcel.npa.used_after_breaking == true",
+          "description": "Nutzung nach Umbruch im selben Jahr",
+          "input_paths": [
+            "land.parcels[].npa.breaking_date",
+            "land.parcels[].npa.used_after_breaking"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Nutzung nach Umbruch vor Jahresende ist ein Verstoß.",
+        "value": {
+          "ban_until": "12-31"
+        }
+      },
+      "source_reference_ids": [
+        "MB-P3-NPA-NUTZUNGSVERBOT",
+        "SRL-P46-NPA-NUTZUNGSVERBOT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.npa_violations",
+        "data.o6_1c.measure_parameters.npa_usage_ban_after_breaking_until_month_day"
+      ]
+    },
+    {
+      "id": "O61C-NPA-006",
+      "rule_type": "prohibition",
+      "statement": "Der Einsatz von Pflanzenschutzmitteln auf NPA ist vom 1. Jänner des ersten Antragsjahres (Jahr der ersten Angabe als NPA) bis zum Umbruch oder zur anderweitigen Deklaration verboten; zulässig sind nur Pflanzenschutzmittel, die ausschließlich nach Verordnung (EU) 2018/848 zulässige Wirkstoffe enthalten.",
+      "conditions": [
+        {
+          "expression": "parcel.operations.psm_used == true and parcel.npa.psm_only_bio_active_substances != true",
+          "description": "Einsatz nicht bio-konformer PSM",
+          "input_paths": [
+            "land.parcels[].operations.psm_used",
+            "land.parcels[].npa.psm_only_bio_active_substances"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Einsatz nicht zulässiger PSM ist ein Verstoß (Düngeverbot/PSM-Verbot als inhaltliche Förderverpflichtung).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P3-NPA-VERBOT",
+        "MB-P3-NPA-VERBOT-ZEIT",
+        "MB-P3-NPA-BIO-PSM",
+        "SRL-P46-NPA-VERBOT",
+        "SRL-P46-NPA-BIO-PSM"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.npa_psm_violation",
+        "data.oepul.o6_1c.npa_violations"
+      ]
+    },
+    {
+      "id": "O61C-NPA-007",
+      "rule_type": "prohibition",
+      "statement": "Jegliche Düngung auf NPA ist vom 1. Jänner des ersten Antragsjahres bis zum Umbruch oder zur anderweitigen Deklaration der Fläche verboten.",
+      "conditions": [
+        {
+          "expression": "parcel.npa.any_fertilization == true or mineral_n > 0 or organic_n > 0",
+          "description": "Düngung festgestellt",
+          "input_paths": [
+            "land.parcels[].npa.any_fertilization",
+            "land.parcels[].operations.fertilizer.mineral_n_kg_per_ha",
+            "land.parcels[].operations.fertilizer.organic_n_kg_per_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Düngung ist ein Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P3-NPA-VERBOT",
+        "MB-P3-NPA-VERBOT-ZEIT",
+        "SRL-P46-NPA-VERBOT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.npa_fertilized",
+        "data.oepul.o6_1c.npa_violations"
+      ]
+    },
+    {
+      "id": "O61C-NPA-008",
+      "rule_type": "obligation",
+      "statement": "Die Beseitigung von NPA darf nur mit mechanischen Methoden (Häckseln oder Einarbeiten) erfolgen; darunter fällt der Einsatz von Bodenbearbeitungsgeräten wie Pflug, Grubber, Kreiselegge, Scheibenegge oder Messerwalze.",
+      "conditions": [
+        {
+          "expression": "parcel.npa.removal_method in {'mulching','incorporation'}",
+          "description": "mechanische Beseitigung",
+          "input_paths": [
+            "land.parcels[].npa.removal_method",
+            "land.parcels[].npa.removal_device"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_not_met",
+        "description": "Chemische oder sonstige Beseitigung ist ein Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P3-NPA-BESEITIGUNG",
+        "MB-P3-NPA-GERAETE",
+        "SRL-P46-NPA-BESEITIGUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.allowed_removal_method_codes",
+        "data.oepul.o6_1c.npa_violations",
+        "data.o6_1c.npa_removal_methods.allowed_methods",
+        "data.o6_1c.npa_removal_methods.mechanical_devices_examples"
+      ]
+    },
+    {
+      "id": "O61C-NPA-009",
+      "rule_type": "threshold",
+      "statement": "Mähen/Häckseln der NPA ist maximal zweimal pro Jahr erlaubt; ein zulässiger Reinigungsschnitt zählt nicht zur Maximalanzahl.",
+      "conditions": [
+        {
+          "expression": "count(cuts in year excluding valid cleaning cuts) <= 2",
+          "description": "Anzahl zählender Schnitte",
+          "input_paths": [
+            "land.parcels[].npa.maintenance_events[].date",
+            "land.parcels[].npa.maintenance_events[].type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_exceeded",
+        "description": "Mehr als zwei Schnitte sind ein Verstoß.",
+        "value": {
+          "max_cuts_per_year": 2
+        }
+      },
+      "source_reference_ids": [
+        "MB-P3-NPA-PFLEGE-MAX",
+        "MB-P3-NPA-REINIGUNG-ZAEHLT",
+        "SRL-P46-NPA-PFLEGE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.counted_cuts",
+        "data.oepul.o6_1c.npa_violations",
+        "data.o6_1c.measure_parameters.npa_max_cuts_per_year"
+      ]
+    },
+    {
+      "id": "O61C-NPA-010",
+      "rule_type": "obligation",
+      "statement": "Eine Pflegemahd (Mahd ohne Abtransport) oder ein Häckseln der NPA ist mindestens einmal jedes zweite Jahr vorzunehmen (auch Mindestbewirtschaftungskriterium für aus der Produktion genommene Flächen).",
+      "conditions": [
+        {
+          "expression": "not first year and no cut in year and maintenance_in_previous_year == false",
+          "description": "zwei Jahre ohne Pflege",
+          "input_paths": [
+            "land.parcels[].npa.maintenance_events[].date",
+            "land.parcels[].npa.maintenance_in_previous_year",
+            "land.parcels[].npa.first_npa_declaration_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Fehlende Pflege in zwei aufeinanderfolgenden Jahren ist ein Verstoß.",
+        "value": {
+          "interval_years": 2
+        }
+      },
+      "source_reference_ids": [
+        "MB-P3-NPA-PFLEGE-MIN",
+        "SRL-P46-NPA-PFLEGE",
+        "AT-P6-HAECKSELN",
+        "SRL-P11-HAECKSELN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.all_cuts_in_year",
+        "data.oepul.o6_1c.npa_violations",
+        "data.o6_1c.measure_parameters.npa_min_maintenance_interval_years"
+      ]
+    },
+    {
+      "id": "O61C-NPA-011",
+      "rule_type": "exception",
+      "statement": "Ein Reinigungsschnitt zur Bekämpfung von Beikräutern ist im ersten Antragsjahr auch vor dem 1. August zulässig und zählt weder zur Maximalanzahl noch zur 50 %-Grenze; er bezieht sich nur auf Flächen mit Neuansaat (Herbst- oder Frühjahrsansaat), auch nach Umbruch und Neueinsaat bestehender Grünbrachen, ist aber auf bestehenden (belassenen) Grünbrachen nicht zulässig.",
+      "conditions": [
+        {
+          "expression": "event.type == 'cleaning_cut' and first year and (establishment_type == 'new_sowing' or resown_after_breaking_existing_fallow)",
+          "description": "zulässiger Reinigungsschnitt",
+          "input_paths": [
+            "land.parcels[].npa.maintenance_events[].type",
+            "land.parcels[].npa.establishment_type",
+            "land.parcels[].npa.resown_after_breaking_existing_fallow",
+            "land.parcels[].npa.first_npa_declaration_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exception_applies",
+        "description": "Zulässiger Reinigungsschnitt wird nicht gezählt; unzulässiger Reinigungsschnitt ist ein Verstoß und zählt als regulärer Schnitt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P3-NPA-REINIGUNG",
+        "MB-P3-NPA-REINIGUNG-ZAEHLT",
+        "MB-P3-NPA-REINIGUNG-NEU",
+        "MB-P3-NPA-REINIGUNG-BESTAND",
+        "MB-P3-NPA-REINIGUNG-NEUEINSAAT",
+        "SRL-P46-NPA-REINIGUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.cleaning_cut_permitted",
+        "data.oepul.o6_1c.valid_cleaning_cut",
+        "data.oepul.o6_1c.npa_violations"
+      ]
+    },
+    {
+      "id": "O61C-NPA-012",
+      "rule_type": "threshold",
+      "statement": "Auf 50 % der nichtproduktiven Ackerflächen ist je Kalenderjahr Mähen/Häckseln frühestens am 1. August erlaubt; auf den anderen 50 % ist dies ohne zeitliche Einschränkung möglich (betriebsbezogene Flächenbetrachtung).",
+      "conditions": [
+        {
+          "expression": "sum(area of NPA parcels with counted cut before Aug 1) <= 0.5 * sum(area of NPA parcels)",
+          "description": "Anteil früh gemähter NPA-Fläche",
+          "input_paths": [
+            "land.parcels[].area_ha",
+            "land.parcels[].npa.maintenance_events[].date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_exceeded",
+        "description": "Mehr als 50 % vor dem 1. August gemäht/gehäckselt ist ein Verstoß.",
+        "value": {
+          "late_share": 0.5,
+          "earliest": "08-01"
+        }
+      },
+      "source_reference_ids": [
+        "MB-P3-NPA-50",
+        "MB-P3-NPA-50-REST",
+        "SRL-P46-NPA-50"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.npa_early_cut_area_ha",
+        "data.oepul.o6_1c.npa_total_area_ha",
+        "data.oepul.o6_1c.npa_early_cut_share_exceeded",
+        "data.oepul.o6_1c.npa_violations",
+        "data.o6_1c.measure_parameters.npa_late_cut_share",
+        "data.o6_1c.measure_parameters.npa_late_cut_earliest_month_day"
+      ]
+    },
+    {
+      "id": "O61C-NPA-013",
+      "rule_type": "prohibition",
+      "statement": "Die Pflege der NPA erfolgt als Pflegemahd ohne Abtransport oder Häckseln; das Mähgut darf von der Fläche nicht verbracht und nicht genutzt werden.",
+      "conditions": [
+        {
+          "expression": "event.biomass_removed == true or event.biomass_used == true",
+          "description": "Mähgut verbracht oder genutzt",
+          "input_paths": [
+            "land.parcels[].npa.maintenance_events[].biomass_removed",
+            "land.parcels[].npa.maintenance_events[].biomass_used"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verbringung/Nutzung des Mähguts ist ein Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P3-NPA-PFLEGE-MIN",
+        "MB-P3-NPA-MAEHGUT",
+        "SRL-P46-NPA-PFLEGE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.npa_violations"
+      ]
+    },
+    {
+      "id": "O61C-NPA-014",
+      "rule_type": "prohibition",
+      "statement": "Eine Beweidung der NPA ist nicht erlaubt.",
+      "conditions": [
+        {
+          "expression": "parcel.npa.grazed == true",
+          "description": "Beweidung",
+          "input_paths": [
+            "land.parcels[].npa.grazed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Beweidung ist ein Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P3-NPA-MAEHGUT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.npa_violations"
+      ]
+    },
+    {
+      "id": "O61C-AFS-001",
+      "rule_type": "deadline",
+      "statement": "Agroforststreifen sind bis spätestens 15. Mai des jeweiligen Antragsjahres neu anzulegen oder bestehende Agroforststreifen zu belassen.",
+      "conditions": [
+        {
+          "expression": "strip.establishment_year == farm.year implies strip.planting_date <= farm.year + '-05-15'",
+          "description": "Neuanlage bis 15.05.",
+          "input_paths": [
+            "land.agroforestry_strips[].establishment_year",
+            "land.agroforestry_strips[].planting_date",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "deadline_met",
+        "description": "Spätere Neuanlage ist ein Verstoß.",
+        "value": {
+          "deadline_month_day": "05-15"
+        }
+      },
+      "source_reference_ids": [
+        "MB-P3-AFS-ANLAGE",
+        "SRL-P47-AFS-ANLAGE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.afs_violations",
+        "data.o6_1c.measure_parameters.afs_new_planting_deadline_month_day"
+      ]
+    },
+    {
+      "id": "O61C-AFS-002",
+      "rule_type": "obligation",
+      "statement": "Eine Entnahme von Gehölzen aus Agroforststreifen ist zulässig, wenn die Mindestkriterien weiter eingehalten werden oder eine Nachpflanzung bis spätestens 15. Mai des jeweiligen Antragsjahres erfolgt.",
+      "conditions": [
+        {
+          "expression": "strip.trees_removed == true and not afs_meets_definition and (replanting_date == null or replanting_date > year+'-05-15')",
+          "description": "unzulässige Entnahme",
+          "input_paths": [
+            "land.agroforestry_strips[].trees_removed",
+            "land.agroforestry_strips[].replanting_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Entnahme ohne Einhaltung der Kriterien bzw. verspätete Nachpflanzung ist ein Verstoß.",
+        "value": {
+          "replanting_deadline_month_day": "05-15"
+        }
+      },
+      "source_reference_ids": [
+        "MB-P3-AFS-ENTNAHME",
+        "SRL-P47-AFS-ENTNAHME"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.afs_violations",
+        "data.oepul.o6_1c.afs_meets_definition",
+        "data.o6_1c.measure_parameters.afs_replanting_deadline_month_day"
+      ]
+    },
+    {
+      "id": "O61C-AFS-003",
+      "rule_type": "obligation",
+      "statement": "Die Gehölze sind so zu pflegen, dass sie anwachsen und sich zu einem Agroforststreifen entwickeln; unbedingt erforderlich sind die Stabilisierung nach der Pflanzung mittels Pflanzpfahl, Verbissschutz sowie bedarfsgerechte Pflegeschnitte.",
+      "conditions": [
+        {
+          "expression": "strip.care.stake_stabilization and strip.care.browsing_protection and strip.care.pruning_as_needed",
+          "description": "Pflegemaßnahmen erfüllt",
+          "input_paths": [
+            "land.agroforestry_strips[].care.stake_stabilization",
+            "land.agroforestry_strips[].care.browsing_protection",
+            "land.agroforestry_strips[].care.pruning_as_needed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_not_met",
+        "description": "Fehlende Pflegemaßnahme ist ein Verstoß.",
+        "value": {
+          "required": [
+            "stake_stabilization",
+            "browsing_protection",
+            "pruning_as_needed"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "MB-P3-AFS-PFLEGE",
+        "MB-P3-AFS-PFLEGE-MASSN",
+        "SRL-P47-AFS-PFLEGE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.required_care_measures",
+        "data.oepul.o6_1c.afs_violations"
+      ]
+    },
+    {
+      "id": "O61C-AFS-004",
+      "rule_type": "obligation",
+      "statement": "Der krautige Bereich des Agroforststreifens ist dauerhaft zu begrünen.",
+      "conditions": [
+        {
+          "expression": "strip.herbaceous_permanently_green == true",
+          "description": "dauerhafte Begrünung",
+          "input_paths": [
+            "land.agroforestry_strips[].herbaceous_permanently_green"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_not_met",
+        "description": "Fehlende Begrünung ist ein Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P3-AFS-KRAUT",
+        "SRL-P47-AFS-KRAUT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.afs_violations"
+      ]
+    },
+    {
+      "id": "O61C-AFS-005",
+      "rule_type": "prohibition",
+      "statement": "Eine Nutzung des krautigen Bereichs (Mahd mit Nutzung oder Weide) ist nicht zulässig; eine Pflegemahd (Mahd ohne Abtransport) oder Häckseln ist erlaubt.",
+      "conditions": [
+        {
+          "expression": "strip.herbaceous_use in {'none','maintenance_mowing','mulching'}",
+          "description": "nur zulässige Pflege",
+          "input_paths": [
+            "land.agroforestry_strips[].herbaceous_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_not_met",
+        "description": "Nutzung ist ein Verstoß.",
+        "value": {
+          "permitted": [
+            "none",
+            "maintenance_mowing",
+            "mulching"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "MB-P3-AFS-KRAUT",
+        "MB-P3-AFS-KRAUT-PFLEGE",
+        "SRL-P47-AFS-KRAUT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.permitted_herbaceous_treatments",
+        "data.oepul.o6_1c.afs_violations"
+      ]
+    },
+    {
+      "id": "O61C-AFS-006",
+      "rule_type": "prohibition",
+      "statement": "Auf der gesamten Fläche des Agroforststreifens ist der Einsatz von Dünge- und Pflanzenschutzmitteln im Vertragszeitraum verboten; zulässig ist nur gemäß Verordnung (EU) 2018/848 zugelassener Verbissschutz bei Bäumen und Sträuchern.",
+      "conditions": [
+        {
+          "expression": "strip.fertilizer_used or strip.psm_used or (browsing_protection_agent_used and not browsing_protection_agent_bio_approved)",
+          "description": "unzulässige Betriebsmittel",
+          "input_paths": [
+            "land.agroforestry_strips[].fertilizer_used",
+            "land.agroforestry_strips[].psm_used",
+            "land.agroforestry_strips[].browsing_protection_agent_used",
+            "land.agroforestry_strips[].browsing_protection_agent_bio_approved"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Einsatz ist ein Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P3-AFS-BETRIEBSMITTEL",
+        "MB-P3-AFS-VERBISS",
+        "SRL-P47-AFS-BETRIEBSMITTEL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.afs_violations"
+      ]
+    },
+    {
+      "id": "O61C-PREM-001",
+      "rule_type": "premium_calculation",
+      "statement": "Prämie für nichtproduktive Ackerflächen ab 2025: 350,0 bis 450,0 €/ha (Prämienband), gewährt bis maximal 4 % der Ackerfläche des Betriebes.",
+      "conditions": [
+        {
+          "expression": "contract_valid('npa')",
+          "description": "gültige Teilnahme an der Kategorie NPA",
+          "input_paths": [
+            "farm.oepul.measure_participations[].category"
+          ]
+        },
+        {
+          "expression": "premium_area = min(sum(eligible NPA area - GLÖZ 4 area), 0.04 * land.arable_area_ha)",
+          "description": "prämienfähige NPA-Fläche",
+          "input_paths": [
+            "land.parcels[].area_ha",
+            "land.arable_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_band",
+        "description": "Prämie = prämienfähige Fläche × 350 €/ha (garantiert) bis × 450 €/ha.",
+        "value": {
+          "rate_min_eur_per_ha": 350.0,
+          "rate_max_eur_per_ha": 450.0,
+          "max_share_of_arable_area": 0.04
+        }
+      },
+      "source_reference_ids": [
+        "MB-P4-PRAEMIE-NPA",
+        "SRL-P47-PRAEMIE-NPA",
+        "MB-P1-UEBERSICHT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.npa_area_cap_ha",
+        "data.oepul.o6_1c.npa_premium_area_ha",
+        "data.oepul.o6_1c.npa_premium_band",
+        "data.oepul.o6_1c.npa_eligible_area_ha",
+        "data.o6_1c.premium_rates",
+        "data.o6_1c.measure_parameters.npa_max_share_of_arable_area"
+      ]
+    },
+    {
+      "id": "O61C-PREM-002",
+      "rule_type": "premium_calculation",
+      "statement": "Prämie für Agroforststreifen ab 2025: 600,0 bis 800,0 €/ha (Prämienband) für förderfähige, korrekt beantragte Agroforststreifen.",
+      "conditions": [
+        {
+          "expression": "contract_valid('afs') and afs_strip_eligible(strip)",
+          "description": "förderfähiger Streifen",
+          "input_paths": [
+            "land.agroforestry_strips[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_band",
+        "description": "Prämie = Streifenfläche × 600 €/ha (garantiert) bis × 800 €/ha.",
+        "value": {
+          "rate_min_eur_per_ha": 600.0,
+          "rate_max_eur_per_ha": 800.0
+        }
+      },
+      "source_reference_ids": [
+        "MB-P4-PRAEMIE-AFS",
+        "SRL-P47-PRAEMIE-AFS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.afs_premium_area_ha",
+        "data.oepul.o6_1c.afs_premium_band",
+        "data.oepul.o6_1c.afs_strip_eligible",
+        "data.o6_1c.premium_rates"
+      ]
+    },
+    {
+      "id": "O61C-PREM-003",
+      "rule_type": "premium_calculation",
+      "statement": "Die angeführten Beträge sind Prämienbänder: 1C wird als Öko-Regelung (Art. 31 VO (EU) 2021/2115) ab 2025 ausschließlich aus EGFL-Mitteln finanziert; die Mittel werden abhängig von den beantragten Flächen aliquot aufgeteilt, garantiert ist der Mindestbetrag. Bei Unterschreitung werden Mittel anderer Öko-Regelungen herangezogen (prioritär jener mit höchster prozentueller Überschreitung des Mindestbetrags), bei Überschreitung des Höchstbetrags werden nicht ausbezahlte Mittel für andere Öko-Regelungen verwendet.",
+      "conditions": [
+        {
+          "expression": "premium_rate in [rate_min, rate_max]",
+          "description": "tatsächlicher Satz liegt im Band",
+          "input_paths": [
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_band",
+        "description": "Mindestbetrag garantiert; tatsächlicher Satz abhängig von Budget und Gesamtfläche.",
+        "value": {
+          "guaranteed": "rate_min_eur_per_ha"
+        }
+      },
+      "source_reference_ids": [
+        "MB-P5-PRAEMIENBAND",
+        "MB-P5-MINDESTBETRAG",
+        "SRL-P17-EGFL",
+        "SRL-P17-PRAEMIENBAND",
+        "SRL-P17-UNTERSCHREITUNG",
+        "SRL-P17-UEBERSCHREITUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.premium_estimate",
+        "data.o6_1c.premium_rates"
+      ]
+    },
+    {
+      "id": "O61C-PREM-004",
+      "rule_type": "combination_exclusion",
+      "statement": "Nichtproduktive Ackerflächen sind prämienmäßig mit keiner anderen Maßnahme auf der Einzelfläche kombinierbar und können nicht auf andere Verpflichtungen im Rahmen der Sonderrichtlinie ÖPUL 2023 angerechnet werden.",
+      "conditions": [
+        {
+          "expression": "parcel.oepul_status.other_measure_premium_codes is empty",
+          "description": "keine weitere Maßnahmenprämie auf dem NPA-Schlag",
+          "input_paths": [
+            "land.parcels[].oepul_status.other_measure_premium_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_combinable",
+        "description": "Weitere Maßnahmenprämie auf NPA-Fläche ist unzulässig; keine Anrechnung auf andere Verpflichtungen.",
+        "value": {
+          "creditable_to_other_obligations": false
+        }
+      },
+      "source_reference_ids": [
+        "MB-P4-KOMBINATION",
+        "MB-P4-ANRECHNUNG",
+        "SRL-P47-KOMBINATION"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.npa_creditable_to_other_obligations",
+        "data.oepul.o6_1c.npa_violations"
+      ]
+    },
+    {
+      "id": "O61C-PREM-005",
+      "rule_type": "eligibility",
+      "statement": "Nichtproduktive Ackerflächen, die als Flächen gemäß GLÖZ 4 (Pufferstreifen entlang von Wasserläufen) ausgewiesen sind, sind auf dem betroffenen Flächenteil nicht förderbar.",
+      "conditions": [
+        {
+          "expression": "eligible_area = parcel.area_ha - parcel.constraints.gloez4_buffer_area_ha",
+          "description": "Abzug des GLÖZ 4-Flächenteils",
+          "input_paths": [
+            "land.parcels[].constraints.gloez4_buffer_area_ha",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "area_reduced",
+        "description": "GLÖZ 4-Flächenteil erhält keine NPA-Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P4-GLOEZ4",
+        "SRL-P47-GLOEZ4"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.npa_gloez4_area_ha",
+        "data.oepul.o6_1c.npa_eligible_parcel_area_ha"
+      ]
+    },
+    {
+      "id": "O61C-COMB-001",
+      "rule_type": "combination",
+      "statement": "Grundsätzlich ist eine Teilnahme und Prämiengewährung an mehreren ÖPUL-Maßnahmen möglich, sofern die Kombination nicht ausgeschlossen ist; eine betriebliche Teilnahme an mehreren, nicht auf der Einzelfläche kombinierbaren Maßnahmen ist möglich. Unmögliche Kombinationen dürfen bis zum Erhalt der Auszahlungsmitteilung korrigiert werden, sofern keine Beanstandung bei einer Vor-Ort-Kontrolle vorliegt; bis zur Abmeldung sind alle Verpflichtungen einzuhalten.",
+      "conditions": [
+        {
+          "expression": "combinable_on_single_area(a, b)",
+          "description": "Kombinierbarkeit laut Anhang L",
+          "input_paths": [
+            "farm.oepul.measure_participations[].measure_code"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combination_check",
+        "description": "Nicht kombinierbare Einzelflächen-Kombinationen erhalten keine Doppelprämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P13-KOMBINATION",
+        "AT-P13-KOMBINATION-KORREKTUR",
+        "SRL-P18-KOMBINATION",
+        "SRL-P18-ANHANG-L"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.combinable_on_single_area",
+        "data.o6_1c.anhang_l_combination.cells"
+      ]
+    },
+    {
+      "id": "O61C-COMB-002",
+      "rule_type": "combination_exclusion",
+      "statement": "Laut Kombinationstabelle (Anhang L) ist die Maßnahme 1C (Nichtproduktive Ackerflächen und Agroforststreifen, ab 2025) mit keiner anderen Maßnahme prämienmäßig auf der Einzelfläche kombinierbar (Zeile und Spalte 1C ohne Eintrag); dies betrifft auch die Agroforststreifen-Fläche.",
+      "conditions": [
+        {
+          "expression": "combinable_measures_1c == {}",
+          "description": "keine kombinierbare Maßnahme für 1C",
+          "input_paths": [
+            "land.agroforestry_strips[].oepul_status.other_measure_premium_codes",
+            "land.parcels[].oepul_status.other_measure_premium_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_combinable",
+        "description": "Weitere Maßnahmenprämien auf 1C-Flächen sind unzulässig.",
+        "value": {
+          "combinable_measures": []
+        }
+      },
+      "source_reference_ids": [
+        "ANH-P103-ANHANG-L",
+        "ANH-P103-LEGENDE",
+        "ANH-P103-ZEILE-1C",
+        "ANH-P103-FN1",
+        "SRL-P18-ANHANG-L"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.combinable_measures_1c",
+        "data.oepul.o6_1c.combinable_on_single_area",
+        "data.oepul.o6_1c.afs_violations",
+        "data.o6_1c.anhang_l_combination"
+      ]
+    },
+    {
+      "id": "O61C-GEN-LEGAL-001",
+      "rule_type": "legal_basis",
+      "statement": "Zusätzlich zur Sonderrichtlinie ÖPUL 2023 sind die Bestimmungen des Marktordnungsgesetzes 2021 (MOG 2021) und der GAP-Strategieplan-Anwendungsverordnung (GSP-AV) einzuhalten.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "gilt für alle Teilnehmenden"
+        }
+      ],
+      "result": {
+        "outcome": "applicable_law",
+        "description": "MOG 2021 und GSP-AV gelten ergänzend.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P2-RECHTSGRUNDLAGEN"
+      ]
+    },
+    {
+      "id": "O61C-GEN-COND-001",
+      "rule_type": "obligation",
+      "statement": "Alle am ÖPUL 2023 teilnehmenden Betriebe müssen die Konditionalität (Klima/Umwelt, öffentliche Gesundheit, Pflanzengesundheit, Tierwohl) sowie die soziale Konditionalität gemäß § 6e und § 6f MOG 2021 einhalten, um die Förderung in voller Höhe zu erhalten.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.conditionality_compliant == false",
+          "description": "Konditionalitätsverstoß",
+          "input_paths": [
+            "farm.oepul.conditionality_compliant"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_possible",
+        "description": "Kürzung gemäß Art. 83–89 VO (EU) 2021/2116.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P4-KONDITIONALITAET"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.conditionality_reduction_possible"
+      ]
+    },
+    {
+      "id": "O61C-GEN-APPL-010",
+      "rule_type": "eligibility",
+      "statement": "Förderwerbende Personen sind natürliche Personen, im Firmenbuch eingetragene Personengesellschaften, juristische Personen und Personenvereinigungen, die aktive Landwirte sind, eine landwirtschaftliche Tätigkeit ausüben und einen Betrieb im eigenen Namen und auf eigene Rechnung mit Verfügungsgewalt über die Flächen bewirtschaften. Gebietskörperschaften und Einrichtungen mit bestimmendem Einfluss (> 25 %) sind grundsätzlich ausgeschlossen, bei der Maßnahme 1C ab dem Antragsjahr 2025 jedoch zugelassen.",
+      "conditions": [
+        {
+          "expression": "legal_form in eligible_legal_forms or (legal_form == 'public_body' and year >= 2025)",
+          "description": "zulässige Rechtsform",
+          "input_paths": [
+            "farm.applicant.legal_form",
+            "farm.year"
+          ]
+        },
+        {
+          "expression": "is_active_farmer and carries_out_agricultural_activity and manages_farm_in_own_name_and_account",
+          "description": "aktiver Landwirt, landwirtschaftliche Tätigkeit, eigener Name/Rechnung",
+          "input_paths": [
+            "farm.applicant.is_active_farmer",
+            "farm.applicant.carries_out_agricultural_activity",
+            "farm.applicant.manages_farm_in_own_name_and_account"
+          ]
+        },
+        {
+          "expression": "public_body_share_percent <= 25 unless measure 1C from 2025",
+          "description": "Beteiligungsgrenze der Gebietskörperschaften",
+          "input_paths": [
+            "farm.applicant.public_body_share_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "applicant_eligible",
+        "description": "Nicht zulässige Förderwerbende: kein Vertrag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P4-FOERDERWERBER",
+        "AT-P4-JURISTISCHE-25",
+        "AT-P4-EIGENER-NAME",
+        "AT-P4-AKTIVER-LANDWIRT",
+        "AT-P5-GEBIETSKOERPERSCHAFT",
+        "AT-P5-GEBIETSKOERPERSCHAFT-1C",
+        "SRL-P8-LANDW-TAETIGKEIT",
+        "SRL-P8-GEBIETSKOERPERSCHAFT-1C",
+        "SRL-P8-BESTIMMENDER-EINFLUSS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.applicant_eligible",
+        "data.oepul.o6_1c.legal_form_eligible",
+        "data.oepul.o6_1c.public_body_allowed_for_1c",
+        "data.oepul.o6_1c.public_share_ok",
+        "data.oepul.o6_1c.participation_violations",
+        "data.o6_1c.applicant_rules.eligible_legal_forms",
+        "data.o6_1c.applicant_rules.public_body_exception_measures"
+      ]
+    },
+    {
+      "id": "O61C-GEN-APPL-011",
+      "rule_type": "eligibility",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr muss der Betrieb mindestens 0,50 ha Flächen im geschützten Anbau oder 1,50 ha landwirtschaftliche Fläche (inkl. GA, K20, GLÖZ-Landschaftselemente, Mehrnutzenhecken und ab 2025 Agroforststreifen) bewirtschaften; ab dem zweiten Teilnahmejahr ist keine Betriebsmindestgröße erforderlich.",
+      "conditions": [
+        {
+          "expression": "first_participation_year == farm.year",
+          "description": "erstes ÖPUL-Teilnahmejahr",
+          "input_paths": [
+            "farm.oepul.first_participation_year",
+            "farm.year"
+          ]
+        },
+        {
+          "expression": "total_area_ha + agroforestry strip area + landscape_elements_area_ha >= 1.5 or protected_cultivation_area_ha >= 0.5",
+          "description": "Mindestfläche",
+          "input_paths": [
+            "land.total_area_ha",
+            "land.agroforestry_strips[].area_ha",
+            "land.landscape_elements_area_ha",
+            "land.protected_cultivation_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "min_size_met",
+        "description": "Unterschreitung im ersten Jahr: kein Vertrag.",
+        "value": {
+          "agricultural_area_min_ha": 1.5,
+          "protected_cultivation_min_ha": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "AT-P5-MINDESTGROESSE",
+        "AT-P5-MINDESTGROESSE-150",
+        "AT-P5-MINDESTGROESSE-050",
+        "AT-P5-MINDESTGROESSE-AFS",
+        "AT-P5-MINDESTGROESSE-JAHR2",
+        "SRL-P10-MINDESTGROESSE-AFS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.min_farm_size_met",
+        "data.oepul.o6_1c.min_size_area_ha",
+        "data.oepul.o6_1c.first_oepul_year",
+        "data.oepul.o6_1c.participation_violations",
+        "data.o6_1c.applicant_rules.min_farm_size_first_year"
+      ]
+    },
+    {
+      "id": "O61C-GEN-APPL-003",
+      "rule_type": "procedure",
+      "statement": "Als Zahlungsantrag gilt die Beantragung der Flächen und sonstigen förderrelevanten Angaben im Mehrfachantrag; die Weiterführung einjähriger Maßnahmen wird durch Abgabe des Mehrfachantrages mit förderrelevanten Flächen beantragt.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.mfa_submitted == true",
+          "description": "Mehrfachantrag abgegeben",
+          "input_paths": [
+            "farm.oepul.mfa_submitted"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "payment_claim",
+        "description": "Ohne Mehrfachantrag keine Weiterführung/Zahlung im betreffenden Jahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P22-ZAHLUNGSANTRAG",
+        "AT-P13-WEITERFUEHRUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.mfa_submitted",
+        "data.oepul.o6_1c.category_contract_valid"
+      ]
+    },
+    {
+      "id": "O61C-GEN-APPL-004",
+      "rule_type": "procedure",
+      "statement": "Der Ausstieg ist der AMA online im Rahmen des Mehrfachantrages bekanntzugeben; wird die Abmeldung im Zeitraum 1. Jänner bis 31. Dezember durchgeführt, ist die Maßnahme im betroffenen Förderjahr nicht mehr gültig. Werden die Auflagen bis 31. Dezember erfüllt, darf erst ab 1. Jänner des Folgejahres abgemeldet werden; bis zum Ausstieg sind die Verpflichtungen einzuhalten; ein Ausstieg ist nach Erfüllung der jährlichen Verpflichtungsdauer möglich.",
+      "conditions": [
+        {
+          "expression": "deregistration_date within [year-01-01, year-12-31]",
+          "description": "Abmeldung im Förderjahr",
+          "input_paths": [
+            "farm.oepul.measure_participations[].deregistration_date",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "year_invalid",
+        "description": "Keine gültige Teilnahme im Förderjahr der Abmeldung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P13-AUSSTIEG-MELDUNG",
+        "AT-P13-ABMELDUNG",
+        "AT-P13-ABMELDUNG-FOLGEJAHR",
+        "AT-P13-BIS-AUSSTIEG",
+        "SRL-P21-AUSSTIEG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.deregistered_in_year",
+        "data.oepul.o6_1c.deregistration_invalidates_year",
+        "data.oepul.o6_1c.participation_violations"
+      ]
+    },
+    {
+      "id": "O61C-GEN-APPL-005",
+      "rule_type": "procedure",
+      "statement": "Nach einem Ausstieg, Ausschluss oder einer einjährigen Nichtabgabe des Mehrfachantrages ist ein Wiedereinstieg nur mit einem neuerlichen Maßnahmenantrag möglich.",
+      "conditions": [
+        {
+          "expression": "deregistration_date < year-01-01",
+          "description": "Ausstieg in einem Vorjahr",
+          "input_paths": [
+            "farm.oepul.measure_participations[].deregistration_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "new_application_required",
+        "description": "Ohne neuen Maßnahmenantrag keine gültige Teilnahme.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P13-WIEDEREINSTIEG",
+        "SRL-P22-WIEDEREINSTIEG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.deregistered_before_year",
+        "data.oepul.o6_1c.reentry_requires_new_application",
+        "data.oepul.o6_1c.participation_violations"
+      ]
+    },
+    {
+      "id": "O61C-GEN-APPL-006",
+      "rule_type": "procedure",
+      "statement": "Ein Maßnahmenausstieg ist grundsätzlich bis zum Zeitpunkt der Durchführung oder Ankündigung einer Vor-Ort-Kontrolle oder bis zur Mitteilung des Ergebnisses einer Verwaltungskontrolle möglich.",
+      "conditions": [
+        {
+          "expression": "exit_date < onsite_control_announced_date and exit_date < admin_control_result_notified_date",
+          "description": "Ausstieg vor Kontrolle",
+          "input_paths": [
+            "farm.oepul.onsite_control_announced_date",
+            "farm.oepul.admin_control_result_notified_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exit_possible",
+        "description": "Nach Kontrollankündigung ist ein sanktionsfreier Ausstieg nicht mehr möglich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P13-AUSSTIEG-KONTROLLE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.exit_possible",
+        "data.oepul.o6_1c.exit_blocked_by_control"
+      ]
+    },
+    {
+      "id": "O61C-GEN-APPL-007",
+      "rule_type": "procedure",
+      "statement": "Der Vertrag kommt mit der Verständigung der förderwerbenden Person über die Genehmigung des Antrages durch die AMA zustande; bei mehreren Maßnahmen entsteht ein einziger Vertrag, die Maßnahmen können aber ein unterschiedliches rechtliches Schicksal haben.",
+      "conditions": [
+        {
+          "expression": "AMA approval notified",
+          "description": "Genehmigung mitgeteilt"
+        }
+      ],
+      "result": {
+        "outcome": "contract_concluded",
+        "description": "Vertragsabschluss mit Genehmigung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P22-VERTRAG"
+      ]
+    },
+    {
+      "id": "O61C-GEN-ELIG-001",
+      "rule_type": "eligibility",
+      "statement": "Nichtproduktive Ackerflächen und Agroforststreifen im Rahmen der Maßnahme 1C sind von den Mindestbewirtschaftungskriterien (z. B. Ernte auf 85 % des Schlages) ausgenommen und förderfähig; für sie gelten die maßnahmenspezifischen Förderbedingungen.",
+      "conditions": [
+        {
+          "expression": "area in 1C category",
+          "description": "NPA- oder AFS-Fläche der Maßnahme 1C",
+          "input_paths": [
+            "land.parcels[].oepul_codes",
+            "land.agroforestry_strips[].strip_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exempt",
+        "description": "Keine Ernte-/Anbaupflicht; es gelten die 1C-Verpflichtungen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P6-AUSNAHME",
+        "AT-P6-AUSNAHME-1C",
+        "AT-P6-MASSNAHMENBED",
+        "SRL-P10-FOERDERFAEHIG",
+        "SRL-P10-AUSNAHME-1C",
+        "AT-P5-MINDESTBEWIRTSCHAFTUNG",
+        "AT-P6-ERNTE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.exempt_from_min_management",
+        "data.o6_1c.area_eligibility.min_management_exempt_areas",
+        "data.o6_1c.area_eligibility.min_management_criteria"
+      ]
+    },
+    {
+      "id": "O61C-GEN-ELIG-009",
+      "rule_type": "exception",
+      "statement": "Auf aus der Produktion genommenen Flächen ist grundsätzlich eine ordnungsgemäße Gründecke anzulegen und zumindest jedes zweite Jahr zu häckseln oder zu mähen; die Selbstbegrünung bei nichtproduktiven Ackerflächen der Maßnahme 1C ist davon ausgenommen (zulässig).",
+      "conditions": [
+        {
+          "expression": "parcel.npa.establishment_type == 'self_greening'",
+          "description": "Selbstbegrünung",
+          "input_paths": [
+            "land.parcels[].npa.establishment_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "permitted",
+        "description": "Selbstbegrünung erfüllt die Anforderung für NPA.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P6-GRUENDECKE",
+        "SRL-P11-GRUENDECKE",
+        "AT-P6-HAECKSELN",
+        "SRL-P11-HAECKSELN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.self_greening_allowed_for_npa",
+        "data.oepul.o6_1c.npa_establishment_options"
+      ]
+    },
+    {
+      "id": "O61C-GEN-ELIG-002",
+      "rule_type": "eligibility",
+      "statement": "GLÖZ-Landschaftselemente (GLÖZ 8-Landschaftselemente gemäß Anlage 2 GSP-AV) sind nicht förderfähig.",
+      "conditions": [
+        {
+          "expression": "area.oepul_status.is_gloez_landscape_element == true",
+          "description": "GLÖZ-Landschaftselement",
+          "input_paths": [
+            "land.parcels[].oepul_status.is_gloez_landscape_element",
+            "land.agroforestry_strips[].oepul_status.is_gloez_landscape_element"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P7-GLOEZ-LSE",
+        "SRL-P11-GLOEZ8"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.area_exclusion",
+        "data.oepul.o6_1c.area_exclusions"
+      ]
+    },
+    {
+      "id": "O61C-GEN-ELIG-003",
+      "rule_type": "eligibility",
+      "statement": "Flächen in Nationalparks: In den Nationalparks Neusiedlersee und Donau-Auen werden außer für 'Natura 2000 und andere Schutzgebiete – Landwirtschaft' und 'Wasserrahmenrichtlinie – Landwirtschaft' keine flächenbezogenen ÖPUL-Prämien gewährt (automatischer Abgleich mit dem Nationalpark-Layer); in den anderen Nationalparks ist eine Prämiengewährung möglich (Kalkalpen: Almbewirtschaftung ausgenommen). Gesamtbetriebliche Verpflichtungen gelten auch auf Nationalparkflächen.",
+      "conditions": [
+        {
+          "expression": "area.oepul_status.national_park in {'Neusiedlersee','Donau-Auen'}",
+          "description": "Lage im Nationalpark ohne 1C-Prämie",
+          "input_paths": [
+            "land.parcels[].oepul_status.national_park",
+            "land.agroforestry_strips[].oepul_status.national_park"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Keine 1C-Prämie für diese Flächen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P7-NATIONALPARK",
+        "AT-P7-NATIONALPARK-ANDERE",
+        "SRL-P11-NATIONALPARK"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.national_park_premium_rule",
+        "data.oepul.o6_1c.area_exclusion",
+        "data.o6_1c.area_eligibility.national_parks"
+      ]
+    },
+    {
+      "id": "O61C-GEN-ELIG-004",
+      "rule_type": "eligibility",
+      "statement": "Für Flächen mit dem Code OP (bzw. maßnahmenbezogenem OP-Code) wird im jeweiligen Förderjahr keine ÖPUL-Prämie gewährt; die OP-Codierung ist u. a. verpflichtend bei Leistungsüberschneidung mit anderen öffentlichen Mitteln, behördlich vorgeschriebenen Ausgleichsflächen, nicht ganzjährig oder nicht über den Vertragszeitraum erfüllbaren Verpflichtungen und bei reinem Fremdverschulden.",
+      "conditions": [
+        {
+          "expression": "'OP' in area.oepul_codes",
+          "description": "OP-Code gesetzt",
+          "input_paths": [
+            "land.parcels[].oepul_codes",
+            "land.agroforestry_strips[].oepul_codes"
+          ]
+        },
+        {
+          "expression": "op_code_required(area) and not has_op_code(area)",
+          "description": "verpflichtende OP-Codierung fehlt",
+          "input_paths": [
+            "land.parcels[].oepul_status.overlapping_public_funding",
+            "land.parcels[].oepul_status.authority_mandated_compensation_area",
+            "land.parcels[].oepul_status.commitment_not_fulfillable_full_year",
+            "land.parcels[].oepul_status.noncompliance_third_party_fault"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Keine Prämie; fehlende Pflichtcodierung ist ein Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P7-OP",
+        "AT-P8-OP-PFLICHT",
+        "AT-P8-LEISTUNGSUEBERSCHNEIDUNG",
+        "AT-P8-AUSGLEICHSFLAECHE",
+        "AT-P8-GANZJAEHRIG",
+        "AT-P8-VERTRAGSZEITRAUM"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.area_exclusion",
+        "data.oepul.o6_1c.op_code_required",
+        "data.oepul.o6_1c.has_op_code",
+        "data.oepul.o6_1c.eligibility_violations",
+        "data.o6_1c.area_eligibility.op_mandatory_cases",
+        "data.o6_1c.area_eligibility.no_premium_codes"
+      ]
+    },
+    {
+      "id": "O61C-GEN-ELIG-005",
+      "rule_type": "eligibility",
+      "statement": "Flächen, auf denen Verpflichtungen im Rahmen genehmigter wissenschaftlicher Versuche nicht eingehalten werden können, sind mit Code VF zu kennzeichnen (Genehmigung verfügbar halten, Art/Ausmaß/Lage dokumentieren) und erhalten im laufenden Antragsjahr keine Prämie.",
+      "conditions": [
+        {
+          "expression": "'VF' in area.oepul_codes or area.oepul_status.scientific_trial_area",
+          "description": "Versuchsfläche",
+          "input_paths": [
+            "land.parcels[].oepul_codes",
+            "land.parcels[].oepul_status.scientific_trial_area"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Keine Prämie im laufenden Jahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P7-VERSUCH",
+        "SRL-P16-VERSUCH"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.area_exclusion"
+      ]
+    },
+    {
+      "id": "O61C-GEN-ELIG-006",
+      "rule_type": "eligibility",
+      "statement": "Die geförderten Flächen müssen in Österreich liegen; Flächen außerhalb Österreichs werden nicht gefördert und bei Begrenzungen nicht berücksichtigt.",
+      "conditions": [
+        {
+          "expression": "area.oepul_status.in_austria == false",
+          "description": "Fläche außerhalb Österreichs",
+          "input_paths": [
+            "land.parcels[].oepul_status.in_austria"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P9-OESTERREICH",
+        "SRL-P9-OESTERREICH"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.area_exclusion"
+      ]
+    },
+    {
+      "id": "O61C-GEN-ELIG-007",
+      "rule_type": "eligibility",
+      "statement": "Werden Leistungen aus einem anderen Titel mit Geldern der öffentlichen Hand oder auf Grund von Vereinbarungen mit der öffentlichen Hand gefördert, oder handelt es sich um gesetzlich oder behördlich vorgeschriebene Maßnahmen (z. B. Ausgleichsflächen), ist dieselbe Leistung im ÖPUL nicht förderbar.",
+      "conditions": [
+        {
+          "expression": "overlapping_public_funding or authority_mandated_compensation_area",
+          "description": "Leistungsüberschneidung",
+          "input_paths": [
+            "land.parcels[].oepul_status.overlapping_public_funding",
+            "land.parcels[].oepul_status.authority_mandated_compensation_area"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Keine 1C-Prämie; OP-Codierung erforderlich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P11-DOPPELFOERDERUNG",
+        "AT-P8-LEISTUNGSUEBERSCHNEIDUNG",
+        "AT-P8-AUSGLEICHSFLAECHE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.area_exclusion",
+        "data.oepul.o6_1c.op_code_required"
+      ]
+    },
+    {
+      "id": "O61C-GEN-ELIG-008",
+      "rule_type": "procedure",
+      "statement": "Ist die Nichterfüllung von Förderverpflichtungen auf reines Fremdverschulden zurückzuführen, ist die Fläche mit dem maßnahmenbezogenen OP-Code zu versehen (keine Prämie für die Maßnahme, Nachweise aufbewahren); ohne Fremdverschulden ist der Code mittels Korrektur zu löschen oder eine Selbstanzeige an die AMA zu richten (geringere Sanktion als bei VOK-Feststellung).",
+      "conditions": [
+        {
+          "expression": "area.oepul_status.noncompliance_third_party_fault == true",
+          "description": "Fremdverschulden",
+          "input_paths": [
+            "land.parcels[].oepul_status.noncompliance_third_party_fault"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Keine 1C-Prämie auf der Fläche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P8-FREMDVERSCHULDEN",
+        "AT-P9-SELBSTANZEIGE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.area_exclusion",
+        "data.oepul.o6_1c.op_code_required"
+      ]
+    },
+    {
+      "id": "O61C-GEN-ELIG-011",
+      "rule_type": "eligibility",
+      "statement": "Nicht förderfähig sind u. a. Energieholz/Kurzumtrieb, Palmkätzchen, Reb- und Baumschulflächen, nicht aktiv bewirtschaftete Flächen (z. B. Grünbrachen – ausgenommen NPA der Maßnahme 1C), sonstige Flächen, nicht für die Maßnahme angegebene oder falsch identifizierte Flächen und nicht hauptsächlich landwirtschaftlich genutzte Flächen (§ 31 GSP-AV).",
+      "conditions": [
+        {
+          "expression": "parcel declared with code NPA and Schlagnutzungsart Grünbrache",
+          "description": "Grünbrache nur als NPA förderfähig",
+          "input_paths": [
+            "land.parcels[].oepul_codes",
+            "land.parcels[].schlagnutzungsart"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Solche Flächen erhalten keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P7-NICHT-FOERDERFAEHIG",
+        "AT-P7-ENERGIEHOLZ",
+        "AT-P7-GRUENBRACHE",
+        "AT-P7-SONSTIGE",
+        "AT-P7-NICHT-BEANTRAGT",
+        "AT-P7-PARAGRAPH31",
+        "SRL-P11-NICHT-AKTIV"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.npa_parcel_eligible",
+        "data.o6_1c.area_eligibility.non_eligible_area_types"
+      ]
+    },
+    {
+      "id": "O61C-GEN-DUR-001",
+      "rule_type": "obligation",
+      "statement": "Förderfähig sind nur Flächen, auf denen die Verpflichtungen während der gesamten Verpflichtungsdauer erfüllt werden; unterjährige Weitergabe ist zulässig, wenn der übernehmende Betrieb die Auflagen bis zum Ende der Verpflichtungsdauer einhält, andernfalls ist die Fläche mit OP zu codieren und für das unvollendete Verpflichtungsjahr keine Prämie zu gewähren.",
+      "conditions": [
+        {
+          "expression": "area.oepul_status.commitment_not_fulfillable_full_year == true",
+          "description": "Verpflichtung nicht ganzjährig erfüllt",
+          "input_paths": [
+            "land.parcels[].oepul_status.commitment_not_fulfillable_full_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Keine Prämie für das unvollendete Jahr; OP-Codierung erforderlich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P10-GESAMTE-DAUER",
+        "AT-P10-WEITERGABE",
+        "SRL-P12-WEITERGABE",
+        "AT-P8-GANZJAEHRIG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.area_exclusion",
+        "data.oepul.o6_1c.op_code_required"
+      ]
+    },
+    {
+      "id": "O61C-GEN-DUR-002",
+      "rule_type": "procedure",
+      "statement": "Im Falle eines Wechsels der bewirtschaftenden Person (Betriebsübertragung) sind die mit einer Maßnahme belegten Flächen weiterzuführen; die nachfolgende Person tritt dem Fördervertrag bei.",
+      "conditions": [
+        {
+          "expression": "farm handover",
+          "description": "Bewirtschafterwechsel"
+        }
+      ],
+      "result": {
+        "outcome": "contract_continues",
+        "description": "Kein Verlust der Verfügungsgewalt; Vertrag läuft weiter.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P16-BEWIRTSCHAFTERWECHSEL"
+      ]
+    },
+    {
+      "id": "O61C-GEN-TAKE-001",
+      "rule_type": "deadline",
+      "statement": "Flächenbezogene Maßnahmen (auch 1C) können nach der Abgabefrist des Maßnahmenantrages bis spätestens 15. April (2023 und 2028: 17. April) von einem bisher nicht teilnehmenden Betrieb für die Restlaufzeit mit der Fläche übernommen werden; die Übernahme darf die Maßnahmenfläche nicht um mehr als 50 % auf andere Flächen ausweiten, ist online einzureichen und von der AMA zu genehmigen. 1C gehört nicht zu den Maßnahmen, bei denen eine Übernahme nur in Einzelfällen möglich ist.",
+      "conditions": [
+        {
+          "expression": "takeover.date <= takeover_deadline(year)",
+          "description": "Übernahmefrist",
+          "input_paths": [
+            "farm.oepul.takeovers[].date"
+          ]
+        },
+        {
+          "expression": "takeover.extension_to_other_area_ha <= 0.5 * takeover.taken_over_area_ha",
+          "description": "Ausweitung max. 50 %",
+          "input_paths": [
+            "farm.oepul.takeovers[].extension_to_other_area_ha",
+            "farm.oepul.takeovers[].taken_over_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "takeover_valid",
+        "description": "Verspätete oder zu große Übernahme ist unzulässig.",
+        "value": {
+          "deadline": "04-15",
+          "deadline_2023_2028": "04-17",
+          "max_extension_share": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "AT-P14-UEBERNAHME",
+        "AT-P14-UEBERNAHME-50",
+        "AT-P14-UEBERNAHME-AMA",
+        "AT-P15-UEBERNAHME-EINZELFALL",
+        "SRL-P14-UEBERNAHME"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.takeover_deadline",
+        "data.oepul.o6_1c.takeover_violations",
+        "data.oepul.o6_1c.takeover_individual_case_only",
+        "data.o6_1c.measure_lists.takeover_rules",
+        "data.o6_1c.measure_lists.takeover_individual_case_only"
+      ]
+    },
+    {
+      "id": "O61C-GEN-CONV-001",
+      "rule_type": "procedure",
+      "statement": "Eine Umwandlung (Maßnahmenwechsel) in eine höherwertige Maßnahme ist nur für die in der Wechseltabelle angeführten Maßnahmen und spätestens mit Vertragswechsel am 31.12.2025 möglich; die Maßnahme 1C ist darin weder als Ausgangs- noch als Zielmaßnahme enthalten.",
+      "conditions": [
+        {
+          "expression": "'1C' not in measure_conversions[].from",
+          "description": "keine Umwandlung für 1C",
+          "input_paths": [
+            "farm.oepul.measure_participations[].measure_code"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_convertible",
+        "description": "Für 1C ist keine Umwandlung vorgesehen.",
+        "value": {
+          "last_change_date": "2025-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "AT-P13-WECHSEL",
+        "AT-P14-WECHSEL-TABELLE",
+        "SRL-P15-UMWANDLUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.conversion_targets_1c",
+        "data.oepul.o6_1c.measure_conversion_possible",
+        "data.o6_1c.measure_lists.measure_conversions"
+      ]
+    },
+    {
+      "id": "O61C-GEN-AREA-001",
+      "rule_type": "premium_calculation",
+      "statement": "Die Beschränkung der Prämienfähigkeit von Flächenzugängen (ab 2026 max. 50 % auf Basis 2025, jedenfalls 5 ha) gilt nur für die gelisteten mehrjährigen Maßnahmen; die Maßnahme 1C unterliegt keiner solchen Prämienbeschränkung.",
+      "conditions": [
+        {
+          "expression": "'1C' not in area_increase_restricted_measures",
+          "description": "keine Zugangsbeschränkung",
+          "input_paths": [
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_restriction",
+        "description": "Flächenzugänge sind in 1C voll prämienfähig (vorbehaltlich 4 %-Grenze).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P16-FLAECHENZUGANG",
+        "AT-P17-FLAECHENZUGANG-FREI"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.area_increase_restricted",
+        "data.o6_1c.measure_lists.area_increase_restricted_measures",
+        "data.o6_1c.measure_lists.area_increase_rules"
+      ]
+    },
+    {
+      "id": "O61C-GEN-AREA-002",
+      "rule_type": "threshold",
+      "statement": "Bei mehrjährigen Maßnahmen ist eine Verringerung der Maßnahmenfläche jährlich bis zu 5 %, höchstens 5 ha, in jedem Fall aber 0,50 ha (Bezugsbasis Vorjahresfläche) ohne Rückzahlung zulässig; bei Überschreitung besteht Rückzahlungspflicht für die gesamte Differenzfläche.",
+      "conditions": [
+        {
+          "expression": "reduction_ha <= max(0.5, min(0.05 * previous_year_area_ha, 5))",
+          "description": "Toleranzgrenze"
+        }
+      ],
+      "result": {
+        "outcome": "tolerance",
+        "description": "Rückzahlungsfreie Verringerung bis zur Toleranz.",
+        "value": {
+          "share": 0.05,
+          "max_ha": 5,
+          "min_ha": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "AT-P15-RUECKZAHLUNG",
+        "AT-P16-TOLERANZ",
+        "AT-P16-TOLERANZ-050"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.area_reduction_tolerance_ha",
+        "data.o6_1c.measure_lists.area_reduction_tolerance"
+      ]
+    },
+    {
+      "id": "O61C-GEN-AREA-003",
+      "rule_type": "exception",
+      "statement": "Die Umwandlung von Maßnahmenflächen (mehrjähriger Maßnahmen) in LSE Agroforststreifen im Rahmen der Maßnahme 1C ist ein zulässiger Flächenabgang ohne Rückzahlung.",
+      "conditions": [
+        {
+          "expression": "converted_to == 'LSE Agroforststreifen'",
+          "description": "Umwandlung in Agroforststreifen",
+          "input_paths": [
+            "land.agroforestry_strips[].schlagnutzungsart"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "allowed_reduction",
+        "description": "Keine Rückforderung für die umgewandelte Fläche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P16-UMWANDLUNG-AFS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.conversion_to_afs_is_allowed_reduction",
+        "data.o6_1c.measure_lists.allowed_land_use_conversions"
+      ]
+    },
+    {
+      "id": "O61C-GEN-SANC-001",
+      "rule_type": "sanction",
+      "statement": "Verstöße (Zugangsvoraussetzungen, Flächenabweichungen, inhaltliche Förderverpflichtungen, Konditionalität, mehrjähriger Vertragszeitraum) führen zu Kürzung, Einbehalt oder Rückforderung; inhaltliche Verstöße werden nach Schwere, Ausmaß, Dauer und Häufigkeit maßnahmenbezogen in den Stufen Verwarnung (ab 2027: Einbehalt 1 %), 2 %, 5 %, 10 %, 25 %, 50 %, 100 % bewertet.",
+      "conditions": [
+        {
+          "expression": "violation_level in sanction_levels",
+          "description": "festgestellte Kürzungsstufe",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction",
+        "description": "Kürzung der Maßnahmenprämie um den Stufenanteil.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P17-VERSTOESSE",
+        "AT-P18-STUFEN",
+        "AT-P18-EINBEHALT-2027"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.sanction_share",
+        "data.o6_1c.sanction_levels",
+        "data.o6_1c.violation_categories"
+      ]
+    },
+    {
+      "id": "O61C-GEN-SANC-002",
+      "rule_type": "sanction",
+      "statement": "Bei zweimaliger 100 %-Kürzung im Vertragszeitraum erfolgt der Ausschluss aus der Maßnahme und die Rückforderung der im Vertragszeitraum bisher gewährten Maßnahmenprämie.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.full_reductions_in_contract_period >= 2",
+          "description": "zwei 100 %-Kürzungen",
+          "input_paths": [
+            "farm.oepul.full_reductions_in_contract_period"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exclusion",
+        "description": "Ausschluss und Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P18-AUSSCHLUSS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.excluded_from_measure",
+        "data.o6_1c.sanction_levels"
+      ]
+    },
+    {
+      "id": "O61C-GEN-SANC-003",
+      "rule_type": "sanction",
+      "statement": "Mehrfachkürzungen erfolgen in der Reihenfolge: Übererklärung, Förder-/Zugangsvoraussetzungen, Fristversäumnis, Untererklärung, inhaltliche Kürzungen, Förderobergrenze je Maßnahme, Modulation, Obergrenze Flächenzahlungen, Vertragszeitraumüberprüfung, Zugangskürzung, Konditionalität.",
+      "conditions": [
+        {
+          "expression": "multiple reductions apply",
+          "description": "mehrere Kürzungen"
+        }
+      ],
+      "result": {
+        "outcome": "reduction_order",
+        "description": "Anwendung in der festgelegten Reihenfolge.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P25-MEHRFACHKUERZUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.reduction_order",
+        "data.o6_1c.multiple_reduction_order"
+      ]
+    },
+    {
+      "id": "O61C-GEN-SANC-004",
+      "rule_type": "sanction",
+      "statement": "Bei einjährigen Maßnahmen (wie 1C) kommt bei Nichterfüllung von Förder- bzw. Zugangsvoraussetzungen keine gültige Verpflichtung und damit kein Vertrag zustande.",
+      "conditions": [
+        {
+          "expression": "not applicant_eligible or not min_farm_size_met",
+          "description": "Zugangsvoraussetzung nicht erfüllt",
+          "input_paths": [
+            "farm.applicant.is_active_farmer",
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_contract",
+        "description": "Kein Vertrag, keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P24-EINJAEHRIG-ZUGANG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.no_contract_due_to_access_conditions"
+      ]
+    },
+    {
+      "id": "O61C-GEN-SANC-005",
+      "rule_type": "sanction",
+      "statement": "Kürzungen bei Verletzung inhaltlicher Bewirtschaftungsauflagen erfolgen gemäß § 48 GSP-AV automatisiert nach festgelegtem Schema; die Angabe zur Verwendung von Pflanzenschutzmitteln (§ 34 Abs. 2 Z 12 lit. f GSP-AV) gilt als inhaltliche Bewirtschaftungsauflage.",
+      "conditions": [
+        {
+          "expression": "content obligation violated",
+          "description": "inhaltlicher Verstoß",
+          "input_paths": [
+            "land.parcels[].operations.psm_used"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction",
+        "description": "Kürzung nach Schema.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P24-SANKTIONEN",
+        "SRL-P25-PSM-ANGABE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.npa_psm_violation"
+      ]
+    },
+    {
+      "id": "O61C-GEN-CTRL-001",
+      "rule_type": "sanction",
+      "statement": "Verweigert die förderwerbende Person die Auskunft oder verhindert sie die Vor-Ort-Kontrolle (außer bei höherer Gewalt/außergewöhnlichen Umständen), ist der Antrag abzulehnen: keine Prämie für das laufende Jahr, bestehende Verträge werden beendet und rückabgewickelt.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.onsite_control_refused and not onsite_control_refusal_force_majeure",
+          "description": "Kontrollverweigerung",
+          "input_paths": [
+            "farm.oepul.onsite_control_refused",
+            "farm.oepul.onsite_control_refusal_force_majeure"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "application_rejected",
+        "description": "Ablehnung und Rückabwicklung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P23-VERWEIGERUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.application_rejected_control_refused"
+      ]
+    },
+    {
+      "id": "O61C-GEN-CTRL-002",
+      "rule_type": "obligation",
+      "statement": "Die Einhaltung wird durch Verwaltungs-, Vor-Ort- und nachgängige Kontrollen geprüft; schriftliche Pacht-/Bewirtschaftungsverträge und sonstige förderrelevante Unterlagen sind am Betrieb aufzubewahren und auf Verlangen vorzulegen.",
+      "conditions": [
+        {
+          "expression": "documentation available",
+          "description": "Unterlagen verfügbar",
+          "input_paths": [
+            "documentation.field_records_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "documentation_required",
+        "description": "Nicht vorgelegte Unterlagen gelten als nicht vorgefunden.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P23-UNTERLAGEN",
+        "AT-P17-KONTROLLEN"
+      ]
+    },
+    {
+      "id": "O61C-GEN-FM-001",
+      "rule_type": "exception",
+      "statement": "Für Fälle höherer Gewalt oder außergewöhnlicher Umstände gelten die Bestimmungen gemäß § 6 GSP-AV.",
+      "conditions": [
+        {
+          "expression": "force majeure recognised",
+          "description": "höhere Gewalt anerkannt"
+        }
+      ],
+      "result": {
+        "outcome": "exception",
+        "description": "Keine Sanktion/Rückforderung im Umfang der Anerkennung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P15-HOEHERE-GEWALT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.force_majeure_channel"
+      ]
+    },
+    {
+      "id": "O61C-GEN-FM-002",
+      "rule_type": "exception",
+      "statement": "Bei dauerhaften, nicht beeinflussbaren flächen- oder bewirtschaftungsverändernden Umständen kann die AMA die Verpflichtung vorzeitig beenden und von einer Rückforderung absehen (Meldung im Mehrfachantrag); im Eintrittsjahr wird grundsätzlich keine Prämie gewährt, außer bei höherer Gewalt oder wenn der Umstand nach dem 15.04. (bzw. nach Almauftrieb/Anlage der Begrünungskultur) eintritt.",
+      "conditions": [
+        {
+          "expression": "force_majeure or occurrence_date > year+'-04-15'",
+          "description": "Prämie im Eintrittsjahr möglich"
+        }
+      ],
+      "result": {
+        "outcome": "premium_possible",
+        "description": "Prämiengewährung im Eintrittsjahr möglich.",
+        "value": {
+          "cutoff_month_day": "04-15"
+        }
+      },
+      "source_reference_ids": [
+        "SRL-P15-DAUERHAFT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.premium_possible_in_year_of_permanent_circumstance"
+      ]
+    },
+    {
+      "id": "O61C-GEN-FM-003",
+      "rule_type": "exception",
+      "statement": "Bei vorübergehenden, nicht beeinflussbaren Umständen (z. B. Bodenordnungsverfahren, verordnete Schädlingsbekämpfung) kann die AMA von Rückforderung absehen; im Jahr der Nichteinhaltung wird grundsätzlich keine Prämie gewährt, außer bei höherer Gewalt oder wenn alle Bedingungen auf den geänderten Flächen eingehalten werden.",
+      "conditions": [
+        {
+          "expression": "force_majeure or conditions_met_on_changed_areas",
+          "description": "Prämie im Jahr der Nichteinhaltung möglich"
+        }
+      ],
+      "result": {
+        "outcome": "premium_possible",
+        "description": "Prämiengewährung möglich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P15-VORUEBERGEHEND"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.premium_possible_in_year_of_temporary_circumstance"
+      ]
+    },
+    {
+      "id": "O61C-GEN-FM-004",
+      "rule_type": "legal_basis",
+      "statement": "Das BML kann bei flächen- oder bewirtschaftungsverändernden Umständen spezielle Festlegungen treffen (z. B. die 2026-Dürreerleichterungen); genehmigte EU-Ausnahmeregelungen können durch BML-Festlegung an die AMA umgesetzt werden.",
+      "conditions": [
+        {
+          "expression": "BML special provision issued",
+          "description": "BML-Festlegung vorhanden"
+        }
+      ],
+      "result": {
+        "outcome": "special_provision",
+        "description": "Abweichende Verpflichtungen gemäß Festlegung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P16-BML-FESTLEGUNG"
+      ]
+    },
+    {
+      "id": "O61C-GEN-REV-001",
+      "rule_type": "procedure",
+      "statement": "Revisionsklausel: Erfordern Änderungen des verbindlichen Rechtsrahmens eine Vertragsanpassung, kann die förderwerbende Person die Zustimmung verweigern; der Vertrag endet dann ohne Rückforderung wegen Nichteinhaltung des Vertragszeitraumes.",
+      "conditions": [
+        {
+          "expression": "consent to contract adjustment refused",
+          "description": "Zustimmung verweigert"
+        }
+      ],
+      "result": {
+        "outcome": "contract_ends",
+        "description": "Vertragsende ohne Rückforderung für die Vergangenheit.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P16-REVISION"
+      ]
+    },
+    {
+      "id": "O61C-GEN-CAP-001",
+      "rule_type": "premium_calculation",
+      "statement": "Prämienobergrenzen für flächenbezogene Zahlungen: ab 2025 1.300 €/ha ohne Einrechnung von 'Begrünung – Zwischenfruchtanbau', 'Begrünung – System Immergrün' sowie 'Nichtproduktive Ackerflächen und Agroforststreifen'; 1C-Zahlungen (Öko-Regelung) werden daher nicht in die Obergrenze eingerechnet.",
+      "conditions": [
+        {
+          "expression": "farm.year >= 2025",
+          "description": "Obergrenze ab 2025",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "cap_excluded",
+        "description": "1C-Zahlungen unterliegen nicht der 1.300 €/ha-Obergrenze.",
+        "value": {
+          "cap_eur_per_ha": 1300.0,
+          "excluded_measures": [
+            "6",
+            "7",
+            "1C"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "AT-P19-OBERGRENZEN",
+        "AT-P19-OBERGRENZE-2025",
+        "AT-P19-OBERGRENZE-1C",
+        "SRL-P17-OBERGRENZE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.applicable_general_cap",
+        "data.oepul.o6_1c.included_in_area_payment_cap",
+        "data.o6_1c.area_payment_caps"
+      ]
+    },
+    {
+      "id": "O61C-GEN-MOD-001",
+      "rule_type": "premium_calculation",
+      "statement": "Das Prämienausmaß aller Maßnahmen wird abhängig von der Gesamtfläche des Betriebes moduliert: bis 200 ha 100 %, über 200 bis 300 ha 90 %, über 300 bis 1.000 ha 85 %, über 1.000 ha 75 % (z. B. 220 ha: 99,09 %); Basis sind die Angaben im Mehrfachantrag.",
+      "conditions": [
+        {
+          "expression": "factor = sum(tier_portion * payout_share) / land.total_area_ha",
+          "description": "Modulationsfaktor",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_factor",
+        "description": "Prämie × Modulationsfaktor.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P19-MODULATION",
+        "AT-P19-MODULATION-STUFE",
+        "AT-P19-MODULATION-BSP",
+        "SRL-P17-MODULATION",
+        "SRL-P9-BETRIEB"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.modulation_factor",
+        "data.oepul.o6_1c.modulated_amount_ha",
+        "data.oepul.o6_1c.farm_modulation_factor",
+        "data.o6_1c.modulation_tiers"
+      ]
+    },
+    {
+      "id": "O61C-GEN-PAY-001",
+      "rule_type": "deadline",
+      "statement": "Die Förderung wird als jährliche Prämie gewährt; die Auszahlung erfolgt durch die AMA bis zum 30. Juni des auf das Antragsjahr folgenden Jahres.",
+      "conditions": [
+        {
+          "expression": "payment_deadline = (farm.year + 1) + '-06-30'",
+          "description": "Auszahlungsfrist",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "payment_deadline",
+        "description": "Auszahlung bis 30.06. des Folgejahres.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P18-JAEHRLICH",
+        "AT-P18-AUSZAHLUNG",
+        "SRL-P22-AUSZAHLUNG",
+        "SRL-P16-JAEHRLICH"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.payment_deadline",
+        "data.o6_1c.measure_parameters.payment_deadline_month_day_following_year"
+      ]
+    },
+    {
+      "id": "O61C-GEN-PAY-002",
+      "rule_type": "premium_calculation",
+      "statement": "Nach abgeschlossener Verwaltungskontrolle kann vorab eine Teilzahlung von maximal 75 % (des voraussichtlichen Prämienvolumens) erfolgen; nachträglich hervorkommende Umstände können zu Rückforderung oder Nachzahlung führen.",
+      "conditions": [
+        {
+          "expression": "admin controls completed",
+          "description": "Verwaltungskontrolle abgeschlossen"
+        }
+      ],
+      "result": {
+        "outcome": "advance_payment",
+        "description": "Teilzahlung ≤ 75 %.",
+        "value": {
+          "max_share": 0.75
+        }
+      },
+      "source_reference_ids": [
+        "AT-P18-TEILZAHLUNG",
+        "SRL-P22-TEILZAHLUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.max_advance_payment_eur",
+        "data.o6_1c.measure_parameters.max_advance_payment_share"
+      ]
+    },
+    {
+      "id": "O61C-GEN-PAY-003",
+      "rule_type": "threshold",
+      "statement": "Von der Gewährung einer Förderung kann abgesehen werden, wenn der sich ergebende Auszahlungsbetrag 50 Euro nicht überschreitet.",
+      "conditions": [
+        {
+          "expression": "premium_estimate.total_min_eur <= 50",
+          "description": "Bagatellgrenze",
+          "input_paths": [
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "payment_may_be_waived",
+        "description": "Keine Auszahlung möglich.",
+        "value": {
+          "threshold_eur": 50
+        }
+      },
+      "source_reference_ids": [
+        "SRL-P22-BAGATELLE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.payment_may_be_waived",
+        "data.o6_1c.measure_parameters.min_payout_eur"
+      ]
+    },
+    {
+      "id": "O61C-GEN-DEF-001",
+      "rule_type": "definition",
+      "statement": "ÖPUL-Definitionen: Getreide (Dinkel, Durum, Einkorn, Emmer, Gerste, Grünschnittroggen, Hafer, Reis, Roggen, Triticale, Weizen; nicht: Amaranth, Buchweizen, Hirse, Sorghum, Kanariensaat, Quinoa, Sudangras, Gemenge < 50 % Getreide), Ackerfutterflächen, Feldgemüse und Obstflächen (ab 2025 zusätzlich Felsenbirne, Maulbeere, Papau) als geschlossene Listen.",
+      "conditions": [
+        {
+          "expression": "crop in list",
+          "description": "Kulturzuordnung",
+          "input_paths": [
+            "land.parcels[].crop.crop_name",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "classification",
+        "description": "Kultur wird der Gruppe zugeordnet.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P3-GETREIDE",
+        "AT-P3-KEIN-GETREIDE",
+        "AT-P3-ACKERFUTTER",
+        "AT-P3-FELDGEMUESE",
+        "AT-P4-FELDGEMUESE-ENDE",
+        "AT-P4-OBST",
+        "AT-P4-OBST-2025"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.crop_groups",
+        "data.oepul.o6_1c.crop_in_group",
+        "data.oepul.o6_1c.is_not_cereal",
+        "data.oepul.o6_1c.cereal_mixture_is_cereal",
+        "data.o6_1c.oepul_definitions"
+      ]
+    },
+    {
+      "id": "O61C-GEN-DEF-002",
+      "rule_type": "definition",
+      "statement": "Förderfähige landwirtschaftliche Flächen umfassen Ackerland, Grünland, Dauer- und Spezialkulturen, Weinflächen, Alm sowie darauf befindliche oder in höchstens 5 m Abstand angrenzende Landschaftselemente (§ 25 GSP-AV); zusätzlich prämienfähig sind Flächen im geschützten Anbau (GA) und bis 2024 K20-Flächen.",
+      "conditions": [
+        {
+          "expression": "area type in eligible land types",
+          "description": "Flächenart",
+          "input_paths": [
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "classification",
+        "description": "Flächenart ist grundsätzlich förderfähig.",
+        "value": {
+          "landscape_element_max_distance_m": 5
+        }
+      },
+      "source_reference_ids": [
+        "AT-P3-FLAECHEN",
+        "AT-P3-ZUSATZFLAECHEN"
+      ],
+      "rego_symbols": [
+        "data.o6_1c.oepul_definitions.additional_eligible_areas"
+      ]
+    },
+    {
+      "id": "O61C-N2026-001",
+      "rule_type": "applicability",
+      "statement": "Die trockenheitsbedingten Erleichterungen 2026 für Acker-Biodiversitätsflächen (vorzeitige Nutzung vor dem 1. August und dritte Nutzung, jeweils nur mit Codierung OPUBB/OPBIO und ohne UBB/BIO-Prämie) betreffen ausschließlich Biodiversitätsflächen der Maßnahmen UBB und BIO; für nichtproduktive Ackerflächen der Maßnahme 1C bleiben die 1C-Auflagen (50 %-Regel ab 1. August, max. zwei Schnitte) unverändert.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026 and measure == '1C'",
+          "description": "NPA im Antragsjahr 2026",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_applicable",
+        "description": "Keine Lockerung der NPA-Nutzungsauflagen durch die 2026-Hinweise.",
+        "value": {
+          "relief_measures": [
+            "1A",
+            "1B"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "N0522-VORZEITIG",
+        "N0812-DRITTE-NUTZUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.biodiversity_relief_2026_applies_to_npa",
+        "data.o6_1c.notices_2026.biodiversity_relief_measures"
+      ]
+    },
+    {
+      "id": "O61C-N2026-002",
+      "rule_type": "procedure",
+      "statement": "Sind Förderverpflichtungen aufgrund der Trockenheit 2026 nicht einhaltbar, kann ein Antrag auf höhere Gewalt gestellt werden; einzelbetriebliche Ansuchen auf Anerkennung höherer Gewalt oder besonderer flächen- und bewirtschaftungsverändernder Umstände sind über eAMA (Register 'Eingaben') einzubringen.",
+      "conditions": [
+        {
+          "expression": "obligation not feasible due to drought",
+          "description": "Verpflichtung dürrebedingt nicht einhaltbar",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "force_majeure_application",
+        "description": "Anerkennung höherer Gewalt nach Einzelansuchen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "N0522-HOEHERE-GEWALT",
+        "N0522-EAMA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.force_majeure_channel",
+        "data.o6_1c.notices_2026.force_majeure_channel"
+      ]
+    },
+    {
+      "id": "O61C-N2026-003",
+      "rule_type": "exception",
+      "statement": "Dürre 2026: In den gelisteten Gebieten (Burgenland und Wien alle Bezirke, 22 Bezirke Niederösterreich, 11 Bezirke Oberösterreich, ab 12.08.2026 zusätzlich 6 Bezirke der Steiermark) wird die Wettersituation automatisch als höhere Gewalt anerkannt: Ernte/Verbringen auf 85 % des Schlages ist bei Ackerkulturen mit Ernte im Spätsommer/Herbst nicht erforderlich, wenn dürrebedingt kein erntbarer Bestand vorliegt; die Prämie wird gewährt, eine Einzelmeldung ist nicht nötig. NPA und Agroforststreifen unterliegen keiner Ernteverpflichtung.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026 and (farm.region.federal_state, farm.region.district) in drought_harvest_relief_districts",
+          "description": "Betrieb in der Gebietskulisse",
+          "input_paths": [
+            "farm.region.federal_state",
+            "farm.region.district",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exception_applies",
+        "description": "Automatische Anerkennung höherer Gewalt für die Ernteverpflichtung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "N0805-ERNTE",
+        "N0805-KULTUREN",
+        "N0805-BEZIRKE-NOE",
+        "N0805-BEZIRKE-OOE",
+        "N0805-BEZIRKE-BGLD",
+        "N0805-BEZIRKE-WIEN",
+        "N0812-STEIERMARK"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.drought_2026_harvest_relief_district",
+        "data.oepul.o6_1c.farm_in_drought_2026_relief_area",
+        "data.o6_1c.notices_2026.drought_harvest_relief_districts"
+      ]
+    },
+    {
+      "id": "O61C-GEN-MULTI-001",
+      "rule_type": "applicability",
+      "statement": "Die Bestimmungen für mehrjährige Maßnahmen (Vertragszeitraum bis 31.12.2028 mit 6/5/4 Jahren je nach Beginn, letzter Einstieg mit Förderjahr 2025, Bindung der Flächen des ersten Vertragsjahres) sowie die Bindung an jährlich verfügbare Flächen gelten nur für die gelisteten Maßnahmen; die Maßnahme 1C ist in keiner dieser Listen enthalten und wird als einjährige Maßnahme abgewickelt.",
+      "conditions": [
+        {
+          "expression": "'1C' not in multi_year_measures and '1C' not in annually_variable_area_measures",
+          "description": "1C ist weder mehrjährig noch an jährlich variable Flächen gebunden",
+          "input_paths": [
+            "farm.oepul.measure_participations[].measure_code"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_applicable",
+        "description": "Keine mehrjährige Flächenbindung, keine Rückforderung wegen Nichteinhaltung eines mehrjährigen Vertragszeitraums.",
+        "value": {
+          "multi_year_last_entry_year": 2025,
+          "multi_year_contract_end": "2028-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "AT-P10-MEHRJAEHRIG-LISTE",
+        "AT-P11-MEHRJAEHRIG-TABELLE",
+        "AT-P12-MEHRJAEHRIG-EINSTIEG",
+        "AT-P11-JAEHRLICH-VERFUEGBAR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.is_multi_year_measure",
+        "data.oepul.o6_1c.is_annually_variable_area_measure",
+        "data.o6_1c.measure_lists.multi_year_measures",
+        "data.o6_1c.measure_lists.multi_year_rules",
+        "data.o6_1c.measure_lists.multi_year_contract_periods",
+        "data.o6_1c.measure_lists.annually_variable_area_measures"
+      ]
+    },
+    {
+      "id": "O61C-GEN-OPT-001",
+      "rule_type": "deadline",
+      "statement": "Eine Beantragung von Optionen oder Zuschlägen bei einjährigen Maßnahmen ist bis inklusive Förderjahr 2028 möglich; über den Maßnahmenantrag abzuwickelnde Optionen/Zuschläge müssen bis spätestens 31.12.2027 beantragt werden. Die Maßnahme 1C sieht keine Optionen oder Zuschläge vor.",
+      "conditions": [
+        {
+          "expression": "farm.year <= 2028",
+          "description": "Förderjahr für Optionen/Zuschläge",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "deadline",
+        "description": "Optionen/Zuschläge einjähriger Maßnahmen nach 2028 nicht beantragbar.",
+        "value": {
+          "options_until_year": 2028,
+          "options_via_measure_application_deadline": "2027-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "AT-P12-OPTIONEN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1c.one_year_options_until_year",
+        "data.o6_1c.measure_lists.one_year_rules"
+      ]
+    }
+  ]
+}
