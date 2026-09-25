@@ -1,0 +1,685 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_17",
+  "rules": [
+    {
+      "id": "O6_17.CONTRACT",
+      "rule_type": "contract_term",
+      "statement": "Die mehrjährige Maßnahme endet für Einstiege 2023, 2024 und 2025 jeweils am 31.12.2028; Laufzeiten sind 6, 5 bzw. 4 Jahre.",
+      "conditions": [
+        {
+          "expression": "first_commitment_year in {2023,2024,2025}",
+          "description": "Zeitpunkt des Vertragseinstiegs.",
+          "input_paths": [
+            "o6_17.first_commitment_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "commitment_required",
+        "description": "Verpflichtungen bis Vertragsende erfüllen."
+      },
+      "source_reference_ids": [
+        "CIT.INFO.2.Contract",
+        "CIT.SRL.13.Contract"
+      ],
+      "rego_symbols": [
+        "evaluation"
+      ]
+    },
+    {
+      "id": "O6_17.COMBINATION",
+      "rule_type": "eligibility",
+      "statement": "Zeitgleiche Teilnahme an UBB oder biologischer Wirtschaftsweise (einschließlich Teilbetrieb laut Informationsblatt) ist verpflichtend.",
+      "conditions": [
+        {
+          "expression": "participates_ubb or participates_bio",
+          "description": "Mindestens eine Kombinationsmaßnahme aktiv.",
+          "input_paths": [
+            "o6_17.participates_ubb",
+            "o6_17.participates_bio"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_if_true",
+        "description": "Fehlt beides, ist die Zugangsvoraussetzung verletzt."
+      },
+      "source_reference_ids": [
+        "CIT.SRL.78.Access"
+      ],
+      "rego_symbols": [
+        "violations"
+      ]
+    },
+    {
+      "id": "O6_17.MIN_AREA",
+      "rule_type": "eligibility",
+      "statement": "Im ersten Verpflichtungsjahr sind mindestens 2 ha Grünland zu bewirtschaften.",
+      "conditions": [
+        {
+          "expression": "first_year_grassland_ha >= 2",
+          "description": "Grünlandfläche im ersten Teilnahmejahr.",
+          "input_paths": [
+            "o6_17.first_year_grassland_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_if_true",
+        "description": "Spätere Unterschreitung ist laut Informationsblatt zulässig."
+      },
+      "source_reference_ids": [
+        "CIT.SRL.78.Access"
+      ],
+      "rego_symbols": [
+        "violations"
+      ]
+    },
+    {
+      "id": "O6_17.MIN_SHARE",
+      "rule_type": "eligibility",
+      "statement": "Im ersten Verpflichtungsjahr muss der Grünlandanteil ohne Almweide mindestens 40 % der landwirtschaftlichen Nutzfläche betragen.",
+      "conditions": [
+        {
+          "expression": "first_year_grassland_ha / first_year_agricultural_area_excl_alpine_ha >= 0.40",
+          "description": "Anteil im ersten Verpflichtungsjahr.",
+          "input_paths": [
+            "o6_17.first_year_grassland_ha",
+            "o6_17.first_year_agricultural_area_excl_alpine_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_if_true",
+        "description": "Zugangsvoraussetzung erfüllt."
+      },
+      "source_reference_ids": [
+        "CIT.SRL.78.Access"
+      ],
+      "rego_symbols": [
+        "violations"
+      ]
+    },
+    {
+      "id": "O6_17.TIERHALTUNG",
+      "rule_type": "eligibility",
+      "statement": "Im ersten Jahr muss der Betrieb tierhaltend sein; dies erfordert mindestens 0,30 RGVE je ha Futterfläche aus Grünland und Ackerfutter.",
+      "conditions": [
+        {
+          "expression": "sum(animal.count*RGVE_factor)/fodder_area_ha >= 0.30",
+          "description": "RGVE-Dichte auf allen Futterflächen.",
+          "input_paths": [
+            "o6_17.animals[]",
+            "o6_17.fodder_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_if_true",
+        "description": "Tierhaltereigenschaft erfüllt."
+      },
+      "source_reference_ids": [
+        "CIT.SRL.78.Access",
+        "CIT.SRL.10.Tier",
+        "CIT.ANNEX.A.3"
+      ],
+      "rego_symbols": [
+        "total_rgve",
+        "is_tierhalter"
+      ]
+    },
+    {
+      "id": "O6_17.DEFINITION.UMBRUCH",
+      "rule_type": "definition",
+      "statement": "Jedes technische Verfahren, das die Grasnarbe zerstört, ist Grünlandumbruch; geringfügige Abweichungen bis 300 m² je Einzelfläche sind kein Umbruch.",
+      "conditions": [
+        {
+          "expression": "operation destroys grass sward and affected_area_m2 > 300",
+          "description": "Technisches Verfahren und Fläche.",
+          "input_paths": [
+            "o6_17.parcels[].operations[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "classify_as_umbruch",
+        "description": "Grundsatzverbot wird ausgelöst."
+      },
+      "source_reference_ids": [
+        "CIT.SRL.78.Definition"
+      ],
+      "rego_symbols": [
+        "violations"
+      ]
+    },
+    {
+      "id": "O6_17.UMBRUCHVERBOT",
+      "rule_type": "obligation",
+      "statement": "Auf sämtlichen Grünlandflächen des Betriebs ist während des Vertragszeitraums Umbruch einschließlich Grünlanderneuerung durch Umbruch verboten; Acker-Grünland-Flächentausch ist ausgeschlossen.",
+      "conditions": [
+        {
+          "expression": "parcel.is_grassland",
+          "description": "Alle betrieblichen Grünlandflächen, nicht nur prämienfähige.",
+          "input_paths": [
+            "o6_17.parcels[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "must_not_plough",
+        "description": "Nicht ausgenommener Umbruch ist ein Verstoß."
+      },
+      "source_reference_ids": [
+        "CIT.SRL.78.Commitments"
+      ],
+      "rego_symbols": [
+        "violations"
+      ]
+    },
+    {
+      "id": "O6_17.UMBRUCH.AUSNAHME",
+      "rule_type": "exception",
+      "statement": "Umbruch zur dokumentierten Grünlandsanierung nach Schädlings- oder Wildschaden sowie zur Neueinsaat einer dauerhaften regionalen Grünlandsaatgutmischung für UBB/BIO-Biodiversitätsflächen ist zulässig.",
+      "conditions": [
+        {
+          "expression": "pest_sanitation_documented or regional_biodiversity_seed_mix",
+          "description": "Engerlinge, Maulwurfsgrillen, Schwarzkopfregenwurm oder Wildschaden bzw. regionale Saatgutmischung.",
+          "input_paths": [
+            "o6_17.parcels[].operations[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "ploughing_exception",
+        "description": "Nachweise sind am Betrieb aufzubewahren."
+      },
+      "source_reference_ids": [
+        "CIT.SRL.78.Commitments"
+      ],
+      "rego_symbols": [
+        "violations"
+      ]
+    },
+    {
+      "id": "O6_17.RENEWAL.EQUIPMENT",
+      "rule_type": "permission",
+      "statement": "Umbruchslose Grünlanderneuerung darf mit Saatstriegel, Schlitzdrillgerät, Walze oder Wiesenegge erfolgen.",
+      "conditions": [
+        {
+          "expression": "renewal_without_ploughing",
+          "description": "Keine Zerstörung der Grasnarbe.",
+          "input_paths": [
+            "o6_17.parcels[].operations[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "permitted",
+        "description": "Aufgezählte Geräte sind zulässig."
+      },
+      "source_reference_ids": [
+        "CIT.SRL.78.Commitments"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_17.TRAINING",
+      "rule_type": "obligation",
+      "statement": "Bis 31.12.2025 sind mindestens fünf Stunden anerkannte Grünland-Weiterbildung zu absolvieren; Kurse ab 01.01.2022 sind anrechenbar und dürfen nicht doppelt angerechnet werden.",
+      "conditions": [
+        {
+          "expression": "training.hours >= 5 and training.provider_recognized and training.completed_by_2025_12_31",
+          "description": "Frist, Umfang und Anerkennung.",
+          "input_paths": [
+            "o6_17.training"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "training_compliant_if_true",
+        "description": "Nachweis auf Aufforderung an AMA; geschulte Person bei Ausscheiden vor Frist ersetzen."
+      },
+      "source_reference_ids": [
+        "CIT.SRL.78.Commitments",
+        "CIT.INFO.4.Training"
+      ],
+      "rego_symbols": [
+        "violations"
+      ]
+    },
+    {
+      "id": "O6_17.SOIL",
+      "rule_type": "obligation",
+      "statement": "Bis 31.12.2025 ist je angefangene fünf ha förderfähiges Grünland unter 18 % gemäß MFA 2025 mindestens eine Probe für pH, P, K und Humus von akkreditiertem Labor untersuchen und in AMA-Datenbank erfassen zu lassen.",
+      "conditions": [
+        {
+          "expression": "valid_sample_count >= ceil(eligible_grassland_under_18_ha_maa_2025/5)",
+          "description": "MFA-2025-Basis; GLÖZ-2/4/9-Flächen zählen nicht.",
+          "input_paths": [
+            "o6_17.eligible_grassland_under_18_ha_maa_2025",
+            "o6_17.soil_samples"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "soil_obligation_compliant_if_true",
+        "description": "Proben ab 01.01.2022 sind anrechenbar; Übertragende können anrechnen, Übernehmende ggf. neu beproben."
+      },
+      "source_reference_ids": [
+        "CIT.SRL.79.Soil",
+        "CIT.INFO.5.Soil"
+      ],
+      "rego_symbols": [
+        "required_soil_samples",
+        "violations",
+        "incomplete_evidence"
+      ]
+    },
+    {
+      "id": "O6_17.AGL.ELIGIBILITY",
+      "rule_type": "option_eligibility",
+      "statement": "AGL ist jährlich für gemähtes Grünland ohne Bergmähder möglich: einmähdige Wiesen/Streuwiesen automatisch, andere Schläge nur mit mindestens fünf regelmäßig verteilten Kennarten, erster Nutzung als Mahd und Dokumentation.",
+      "conditions": [
+        {
+          "expression": "agl_requested and mowed and not is_bergmaehder and (annual_cuts==1 or (indicator_species_count>=5 and first_use_type=='mowing' and field_visit_documented))",
+          "description": "Optionale jährliche Zuschlagsvoraussetzungen.",
+          "input_paths": [
+            "o6_17.parcels[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "agl_eligible_if_true",
+        "description": "Einmähdige und Streuwiesen benötigen keine Begehung/Kennarten-Dokumentation."
+      },
+      "source_reference_ids": [
+        "CIT.SRL.79.AGL",
+        "CIT.INFO.6.AGL",
+        "CIT.ANNEX.H.60",
+        "CIT.ANNEX.H.61"
+      ],
+      "rego_symbols": [
+        "agl_qualified",
+        "agl_species_count"
+      ]
+    },
+    {
+      "id": "O6_17.AGL.METHOD",
+      "rule_type": "documentation",
+      "statement": "Kennarten sind jährlich je beantragtem Schlag zu erfassen, regelmäßig in jedem Abschnitt, mindestens 5 m vom Rand und im etwa 2 m breiten Streifen; Ergebnisse und Skizze sind zu dokumentieren.",
+      "conditions": [
+        {
+          "expression": "annual AGL observation for each non-one-cut parcel",
+          "description": "Erfassung nach Anhang H.",
+          "input_paths": [
+            "o6_17.parcels[].field_visit_documented"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "documentation_required",
+        "description": "Nur eindeutig identifizierte Kennarten erfassen; ungleich verteilte Fläche teilen."
+      },
+      "source_reference_ids": [
+        "CIT.ANNEX.H.60"
+      ],
+      "rego_symbols": [
+        "incomplete_evidence"
+      ]
+    },
+    {
+      "id": "O6_17.AGL.RATES",
+      "rule_type": "payment_rate",
+      "statement": "AGL beträgt 2023 bei Hangneigung unter 18 % 150 €/ha, ab 2024 dort 262 €/ha und ab 2025 bei mindestens 18 % 162 €/ha.",
+      "conditions": [
+        {
+          "expression": "agl_qualified(parcel) and applicable year/slope band",
+          "description": "Hangneigung gemäß INVEKOS-GIS.",
+          "input_paths": [
+            "o6_17.application_year",
+            "o6_17.parcels[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_rate",
+        "description": "Jahres- und Hangneigungsabhängiger Satz."
+      },
+      "source_reference_ids": [
+        "CIT.SRL.79.Rates",
+        "CIT.INFO.7.Rates"
+      ],
+      "rego_symbols": [
+        "agl_rate"
+      ]
+    },
+    {
+      "id": "O6_17.AGL.CAP",
+      "rule_type": "payment_cap",
+      "statement": "AGL ist nur bis 15 % des gemähten Grünlands bis 2024 bzw. ab 2025 bis 25 % förderbar, jedenfalls aber mindestens bis 2 ha.",
+      "conditions": [
+        {
+          "expression": "eligible_agl_ha <= max(2, mowed_grassland_ha * percentage)",
+          "description": "Flächenobergrenze nach Antragsjahr.",
+          "input_paths": [
+            "o6_17.application_year",
+            "o6_17.mowed_grassland_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "capped_payment_area",
+        "description": "Übersteigende qualifizierte Fläche braucht eine AMA-konforme Zuteilung."
+      },
+      "source_reference_ids": [
+        "CIT.SRL.79.Rates",
+        "CIT.INFO.8.AGLcap"
+      ],
+      "rego_symbols": [
+        "agl_cap_ha",
+        "agl_requested_ha"
+      ]
+    },
+    {
+      "id": "O6_17.BASE.RATES",
+      "rule_type": "payment_rate",
+      "statement": "Für förderfähiges Grünland unter 18 % gelten 2023 je Grünlandzahl 30/50/70/100 €/ha und ab 2024 32,4 (<20), 54,0 (20–<30), 75,6 (30–<40) und 108,0 €/ha (>=40).",
+      "conditions": [
+        {
+          "expression": "parcel.slope_percent < 18 and not parcel.gloez_umbrechungsverbot",
+          "description": "Basispremium je Schlag.",
+          "input_paths": [
+            "o6_17.parcels[]",
+            "o6_17.application_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_rate",
+        "description": "GLÖZ-2/4/9-Umbruchsverbotsflächen sind für die Basis nicht förderfähig."
+      },
+      "source_reference_ids": [
+        "CIT.SRL.79.Rates",
+        "CIT.INFO.7.Rates"
+      ],
+      "rego_symbols": [
+        "base_eligible",
+        "base_rate",
+        "base_payment_eur"
+      ]
+    },
+    {
+      "id": "O6_17.APPLICATION",
+      "rule_type": "deadline",
+      "statement": "Maßnahme vor Vertragsbeginn bis 31. Dezember im Maßnahmenantrag beantragen; letzter Einstieg war Förderjahr 2025 mit Antrag bis 31.12.2024. AGL wird über Schlagkennzeichnung beantragt.",
+      "conditions": [
+        {
+          "expression": "application submitted before contract start",
+          "description": "Maßnahmenantrag und MFA-Angaben.",
+          "input_paths": [
+            "o6_17.measure_application_date",
+            "o6_17.parcels[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "valid_contract_if_true",
+        "description": "Zwei-/mehrnutzige Mähwiese/-weide mit Code AGL; Einmähdige/Streuwiese automatisch."
+      },
+      "source_reference_ids": [
+        "CIT.INFO.7.Application",
+        "CIT.GEN.12.Application"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_17.FLAECHENZUGANG",
+      "rule_type": "payment_limit",
+      "statement": "Flächenzugänge waren 2024/2025 vollständig prämienfähig; danach höchstens 50 % der Fläche 2025, jedenfalls zusätzlich 5 ha. Bereits gleich verpflichtete Flächen sind kein Zugang.",
+      "conditions": [
+        {
+          "expression": "year>=2026 and new_area_ha > 5 + 0.5*area_2025",
+          "description": "Zugangsbegrenzung.",
+          "input_paths": [
+            "o6_17.application_year",
+            "o6_17.measure_area_2025_ha",
+            "o6_17.new_measure_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "payment_limited",
+        "description": "Prämienfähigkeit der darüber hinausgehenden Ausweitung beschränkt."
+      },
+      "source_reference_ids": [
+        "CIT.SRL.14.Access",
+        "CIT.GEN.17.AreaAccess"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_17.FLAECHENABGANG",
+      "rule_type": "contract_consequence",
+      "statement": "Bei Nutzungsaufgabe/-änderung sind jährlich bis 5 %, maximal 5 ha, jedenfalls 0,5 ha Flächenreduktion zulässig; darüber Rückforderung für alle Differenzflächen. Verlust der Verfügungsgewalt ist ausgenommen.",
+      "conditions": [
+        {
+          "expression": "area_reduction_ha <= max(0.5,min(5,previous_area_ha*0.05))",
+          "description": "Bezugsbasis Vorjahr.",
+          "input_paths": [
+            "o6_17.previous_measure_area_ha",
+            "o6_17.area_reduction_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_recovery_if_true",
+        "description": "Betriebsübertragung verpflichtet Nachfolge zur Fortführung."
+      },
+      "source_reference_ids": [
+        "CIT.SRL.13.Contract",
+        "CIT.GEN.16.Reduction"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_17.GENERAL.CULTIVATION",
+      "rule_type": "general_obligation",
+      "statement": "Förderfähige Grünland- und Ackerfutterflächen müssen jährlich vollflächig gemäht und Mähgut verbracht oder vollflächig beweidet werden; Bergmähder mindestens alle zwei Jahre mähen.",
+      "conditions": [
+        {
+          "expression": "eligible grassland or fodder parcel",
+          "description": "Allgemeine ÖPUL-Mindestbewirtschaftung.",
+          "input_paths": [
+            "o6_17.parcels[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "minimum_cultivation_required",
+        "description": "Maßnahmenspezifische Auflagen gelten zusätzlich."
+      },
+      "source_reference_ids": [
+        "CIT.GEN.6.Cultivation"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_17.GENERAL.SANCTIONS",
+      "rule_type": "sanction",
+      "statement": "Verstöße können Verwarnung oder 2/5/10/25/50/100-%-Kürzung auslösen; nach zweimal 100 % im Vertragszeitraum Ausschluss und Rückforderung. Ab 2027 ersetzt 1 % die Verwarnung.",
+      "conditions": [
+        {
+          "expression": "control establishes non-compliance",
+          "description": "Bewertung nach Schwere, Ausmaß, Dauer und Häufigkeit.",
+          "input_paths": [
+            "o6_17.control_findings[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "sanction_assessment",
+        "description": "Behördliche Einzelfallbewertung."
+      },
+      "source_reference_ids": [
+        "CIT.GEN.18.Sanctions"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_17.GENERAL.APPLICANT",
+      "rule_type": "general_eligibility",
+      "statement": "Förderwerbende Personen müssen einen landwirtschaftlichen Betrieb in eigenem Namen und auf eigene Rechnung bewirtschaften, Verfügungsgewalt über beantragte Flächen haben sowie aktiver Landwirt sein; Gebietskörperschaften sind für O6_17 ausgeschlossen.",
+      "conditions": [
+        {
+          "expression": "applicant operates farm and controls claimed areas",
+          "description": "Allgemeine Personenvoraussetzungen.",
+          "input_paths": [
+            "farm.applicant"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "general_eligible_if_true",
+        "description": "Zusätzlich Konditionalität einhalten."
+      },
+      "source_reference_ids": [
+        "CIT.GEN.4.General"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_17.GENERAL.FARM_SIZE",
+      "rule_type": "general_eligibility",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr benötigt ein Betrieb grundsätzlich mindestens 1,50 ha landwirtschaftliche Fläche oder 0,50 ha geschützten Anbau; ab dem zweiten Jahr entfällt die allgemeine Betriebsmindestgröße.",
+      "conditions": [
+        {
+          "expression": "first OEPUL year",
+          "description": "Allgemeine Betriebsmindestgröße zusätzlich zu O6_17-Zugang.",
+          "input_paths": [
+            "farm.year",
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "general_eligible_if_true",
+        "description": "O6_17-spezifische 2-ha- und 40-%-Schwellen gelten zusätzlich."
+      },
+      "source_reference_ids": [
+        "CIT.GEN.5.Size"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_17.GENERAL.AREA_ELIGIBILITY",
+      "rule_type": "general_eligibility",
+      "statement": "Beantragte Flächen müssen aktiv landwirtschaftlich genutzt und korrekt im MFA angegeben sein; u.a. sonstige Flächen, nicht aktiv bewirtschaftete Flächen, GLÖZ-LSE und grundsätzlich Nationalparkflächen sind nicht prämienfähig.",
+      "conditions": [
+        {
+          "expression": "parcel actively farmed and correctly identified",
+          "description": "Allgemeine Flächenförderfähigkeit.",
+          "input_paths": [
+            "land.parcels[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "area_eligible_if_true",
+        "description": "Für Nationalpark- und Versuchsflächen gelten die genannten Sonderfolgen."
+      },
+      "source_reference_ids": [
+        "CIT.GEN.7.Eligibility"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_17.GENERAL.OP",
+      "rule_type": "payment_exclusion",
+      "statement": "Ein mit OP oder maßnahmenbezogenem OP-Code gekennzeichneter Schlag erhält im Förderjahr keine ÖPUL-Prämie; bei reinem Fremdverschulden sind Nachweise aufzubewahren.",
+      "conditions": [
+        {
+          "expression": "parcel has OP code",
+          "description": "Kennzeichnung von nicht prämienfähiger Fläche.",
+          "input_paths": [
+            "land.parcels[].oepul_code"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_oepul_premium_for_parcel",
+        "description": "Bei eigenem Verstoß Code löschen oder Selbstanzeige."
+      },
+      "source_reference_ids": [
+        "CIT.GEN.8.OP"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_17.GENERAL.DURATION",
+      "rule_type": "general_obligation",
+      "statement": "Förderfähig sind nur Einheiten, auf denen Auflagen über die ganze Verpflichtungsdauer 1. Jänner bis 31. Dezember erfüllt sind; geförderte Flächen liegen in Österreich.",
+      "conditions": [
+        {
+          "expression": "all commitments observed for full calendar year",
+          "description": "Allgemeine Dauer- und Ortsregel.",
+          "input_paths": [
+            "land.parcels[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_if_true",
+        "description": "Unterjährige Weitergabe nur bei Fortführung durch Übernehmenden; sonst OP-Code."
+      },
+      "source_reference_ids": [
+        "CIT.GEN.10.Duration"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_17.GENERAL.TRANSFER",
+      "rule_type": "transfer",
+      "statement": "O6_17 kann bis 15. April des Übernahmejahrs für die Restlaufzeit übernommen werden; die Übernahme darf die bisherige Maßnahmenfläche auf anderen Flächen nicht um mehr als 50 % erweitern und erfordert AMA-Genehmigung.",
+      "conditions": [
+        {
+          "expression": "transfer filing by 15 April and expansion <= 50 percent",
+          "description": "Übernahme eines flächenbezogenen Vertrags.",
+          "input_paths": [
+            "o6_17.transfer"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "transfer_possible_if_approved",
+        "description": "Neuer Vertrag bis Ende des ursprünglichen Vertragszeitraums."
+      },
+      "source_reference_ids": [
+        "CIT.GEN.15.Transfer"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_17.GENERAL.MODULATION",
+      "rule_type": "payment_adjustment",
+      "statement": "Alle Maßnahmenprämien werden nach Betriebsfläche mit 100 % bis 200 ha, 90 % über 200–300 ha, 85 % über 300–1.000 ha und 75 % über 1.000 ha moduliert.",
+      "conditions": [
+        {
+          "expression": "farm total area exceeds a modulation threshold",
+          "description": "Gesamtfläche des Betriebes.",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "weighted_payment_reduction",
+        "description": "Gewichteter Betriebsfaktor auf Maßnahmenprämien."
+      },
+      "source_reference_ids": [
+        "CIT.GEN.19.Modulation"
+      ],
+      "rego_symbols": []
+    }
+  ]
+}
