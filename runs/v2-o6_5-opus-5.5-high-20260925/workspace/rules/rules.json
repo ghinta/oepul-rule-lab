@@ -1,0 +1,2903 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_5",
+  "rules": [
+    {
+      "id": "O6_5-SCOPE-PREMIUM-PER-ANIMAL",
+      "rule_type": "scope",
+      "statement": "Die Prämie der Maßnahme o6_5 wird einzeltierbezogen je förderbarem Tier für die Zucht und Haltung gefährdeter, lokaler, von Nutzungsaufgabe bedrohter Landrassen gewährt; abgegolten werden Kosten (inkl. erhöhter Kosten besonderer Generhaltungsprogramme) und Einkommensverluste gegenüber verbreiteten Rassen.",
+      "conditions": [
+        {
+          "expression": "animal in livestock.endangered_breed_animals",
+          "description": "Förderung bezieht sich auf einzelne beantragte bzw. aus der Rinderdatenbank ermittelte Tiere.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].animal_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_unit_per_animal",
+        "description": "Fördereinheit ist das einzelne Tier (Euro/Tier).",
+        "value": {
+          "unit": "EUR/Tier"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P1-UEBERSICHT",
+        "CIT-SRL-P52-ART",
+        "CIT-SRL-P53-JE-TIER",
+        "CIT-MB-P1-ZIEL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.animal_premium",
+        "data.oepul.o6_5.slot_premium"
+      ]
+    },
+    {
+      "id": "O6_5-DEF-REPLACEMENT-ANIMAL",
+      "rule_type": "definition",
+      "statement": "Tiere zur Nachbesetzung (Ersatztiere) sind Tiere, die alle Förderverpflichtungen zum Zeitpunkt der Nachbesetzung erfüllen; nachbesetzte Tiere müssen ab dem Zeitpunkt der Nachbesetzung alle Förderverpflichtungen erfüllen.",
+      "conditions": [
+        {
+          "expression": "animal.replaces_animal_id != null",
+          "description": "Tier ersetzt ein abgegangenes beantragtes Tier.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].replaces_animal_id",
+            "livestock.endangered_breed_animals[].replacement_date"
+          ]
+        },
+        {
+          "expression": "reference_date = max(Stichtag bzw. 31.05., replacement_date)",
+          "description": "Kategorieanforderungen werden (spätestens) zum Nachbesetzungszeitpunkt geprüft.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].replacement_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "definition",
+        "description": "Ersatztiere werden nach denselben Tieranforderungen geprüft, bezogen auf den Nachbesetzungszeitpunkt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P52-ERSATZ",
+        "CIT-MB-P4-NACHBES-PFLICHT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.is_replacement",
+        "data.oepul.o6_5.requirement_ref_ns"
+      ]
+    },
+    {
+      "id": "O6_5-DEF-STICHTAG",
+      "rule_type": "definition",
+      "statement": "Stichtag ist – sofern nicht anders festgelegt – der 01.04. des Antragsjahres; für Stuten und Zuchthengste gilt für die Kategorieanforderungen der 31.05. des Antragsjahres.",
+      "conditions": [
+        {
+          "expression": "stichtag = date(farm.year, 04-01)",
+          "description": "Stichtag des Antragsjahres.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reference_date",
+        "description": "Bezugsdatum für Antrag, Tierermittlung und Kategorieanforderungen.",
+        "value": {
+          "stichtag": "04-01",
+          "horse_reference": "05-31"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P52-STICHTAG",
+        "CIT-MB-P6-RIND-AUTO",
+        "CIT-MB-P2-STUTE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.stichtag_ns",
+        "data.oepul.o6_5.requirement_ref_ns"
+      ]
+    },
+    {
+      "id": "O6_5-DEF-GEP",
+      "rule_type": "definition",
+      "statement": "Rassen mit besonderem Generhaltungsprogramm (GEP) sind die in Anhang D so gekennzeichneten Rassen, die gemäß Zuchtprogramm der verantwortlichen Zuchtorganisation umfassende zusätzliche Auflagen (z. B. vorgegebene Anpaarungen, Abstammungssicherung, Anpaarungsplan, Genbank/Arbeitskollektion, Erbfehlermanagement, Monitoring im Vatertiersektor) einzuhalten haben.",
+      "conditions": [
+        {
+          "expression": "data.o6_5.breeds[breed].special_gep == true",
+          "description": "Rasse ist in der Rassenliste mit besonderem GEP gekennzeichnet.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].breed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "definition",
+        "description": "Grundlage für den GEP-Zuschlag; die Programmauflagen richten sich an den Zuchtverband bzw. die Züchter.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P52-GEP",
+        "CIT-MB-P5-GEP",
+        "CIT-ANH-P9-GEP",
+        "CIT-ANH-P9-GEP-PAARUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.gep_surcharge"
+      ]
+    },
+    {
+      "id": "O6_5-DEF-PASTURE-NOT-DEPARTURE",
+      "rule_type": "definition",
+      "statement": "Der vorübergehende Aufenthalt von Tieren auf Zins-/Fremdweiden, Almweideflächen oder Gemeinschaftsweiden ist kein Abgang und nicht als Abgang zu melden, sofern die Verfügungsgewalt beim antragstellenden Heimbetrieb verbleibt oder die Tiere nur vorübergehend zur Betreuung an den Alm-/Gemeinschaftsweidebetrieb abgegeben werden.",
+      "conditions": [
+        {
+          "expression": "absence.type == 'alpine_or_common_pasture' and absence.control_retained_or_care_only == true",
+          "description": "Weideaufenthalt mit beim Heimbetrieb verbleibender Verfügungsgewalt bzw. bloßer Betreuung.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].temporary_absences[].type",
+            "livestock.endangered_breed_animals[].temporary_absences[].control_retained_or_care_only"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_departure",
+        "description": "Aufenthalt gilt nicht als Abgang und verletzt die Haltedauer nicht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P4-WEIDE",
+        "CIT-SRL-P53-C"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.absence_permitted"
+      ]
+    },
+    {
+      "id": "O6_5-ELIG-UNKNOWN-CATEGORY",
+      "rule_type": "eligibility",
+      "statement": "Förderbar sind ausschließlich die Tierkategorien Kuh, Zuchtstier, Stute, Zuchthengst, Mutterschaf, Zuchtwidder, Mutterziege, Zuchtbock, Zuchtsau und Zuchteber.",
+      "conditions": [
+        {
+          "expression": "animal.animal_category in data.o6_5.animal_categories[].category",
+          "description": "Tierkategorie ist eine der zehn geregelten Kategorien.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].animal_category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Andere Kategorien sind nicht förderbar.",
+        "value": {
+          "categories": [
+            "kuh",
+            "zuchtstier",
+            "stute",
+            "zuchthengst",
+            "mutterschaf",
+            "zuchtwidder",
+            "mutterziege",
+            "zuchtbock",
+            "zuchtsau",
+            "zuchteber"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P53-KUH",
+        "CIT-MB-P7-PRAEMIE-KUH",
+        "CIT-SRL-P52-FOERDERBAR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures",
+        "data.oepul.o6_5.category_meta"
+      ]
+    },
+    {
+      "id": "O6_5-ELIG-BREED-LIST",
+      "rule_type": "eligibility",
+      "statement": "Es kann nur mit reinrassigen Tieren der Rassenliste (Kapitel 8 des Informationsblatts / Anhang D der Sonderrichtlinie) teilgenommen werden; Rasse und Tierart müssen zur Liste passen.",
+      "conditions": [
+        {
+          "expression": "animal.breed in data.o6_5.breeds[].breed",
+          "description": "Rasse ist in der Rassenliste enthalten.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].breed"
+          ]
+        },
+        {
+          "expression": "breeds[breed].species == species(animal.animal_category)",
+          "description": "Tierart der Rasse entspricht der Tierkategorie.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].breed",
+            "livestock.endangered_breed_animals[].animal_category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Tiere nicht gelisteter Rassen sind nicht förderbar.",
+        "value": {
+          "breed_count": 27
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P2-RASSENLISTE",
+        "CIT-SRL-P53-ZUCHT",
+        "CIT-ANH-P9-D",
+        "CIT-ANH-P9-D-SCHWEIN",
+        "CIT-MB-P8-RASSENLISTE",
+        "CIT-MB-P9-RASSENLISTE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures",
+        "data.oepul.o6_5.breed_listed",
+        "data.oepul.o6_5.breed_meta"
+      ]
+    },
+    {
+      "id": "O6_5-ELIG-PUREBRED-HERDBOOK",
+      "rule_type": "eligibility",
+      "statement": "Förderbare Tiere sind reinrassige Zuchttiere gemäß den Tierzuchtgesetzen der Länder (im Sinne der Tierzuchtverordnung (EU) 2016/1012) und den genehmigten Zuchtprogrammen mit dem Zuchtziel Erhalt der Rasse.",
+      "conditions": [
+        {
+          "expression": "animal.is_purebred == true",
+          "description": "Tier ist reinrassig.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].is_purebred"
+          ]
+        },
+        {
+          "expression": "animal.herdbook_registered == true",
+          "description": "Eintragung im Zuchtbuch.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].herdbook_registered"
+          ]
+        },
+        {
+          "expression": "animal.approved_breeding_program == true",
+          "description": "Tier steht in einem genehmigten Zuchtprogramm mit Zuchtziel Erhalt der Rasse.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].approved_breeding_program"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Nicht reinrassige oder nicht eingetragene Tiere sind nicht förderbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P2-ZUCHTTIERE",
+        "CIT-SRL-P52-FOERDERBAR",
+        "CIT-SRL-P52-ART"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures",
+        "data.oepul.o6_5.purebred_breeding_animal"
+      ]
+    },
+    {
+      "id": "O6_5-ELIG-REGULAR-BREEDING",
+      "rule_type": "eligibility",
+      "statement": "Weibliche und männliche Tiere müssen regelmäßig im Rahmen eines genehmigten Zuchtprogramms zur Zucht eingesetzt werden.",
+      "conditions": [
+        {
+          "expression": "animal.regular_breeding_use == true",
+          "description": "Regelmäßiger Zuchteinsatz.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].regular_breeding_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Ohne regelmäßigen Zuchteinsatz keine Förderbarkeit.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P2-REGELM"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures"
+      ]
+    },
+    {
+      "id": "O6_5-ELIG-FEMALE-PUREBRED-MATING",
+      "rule_type": "eligibility",
+      "statement": "Weibliche Tiere dürfen nur reinrassig angepaart werden.",
+      "conditions": [
+        {
+          "expression": "sex(animal.animal_category) == 'female'",
+          "description": "Weibliche Tierkategorie.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].animal_category"
+          ]
+        },
+        {
+          "expression": "animal.purebred_mating_only == true",
+          "description": "Ausschließlich reinrassige Anpaarung.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].purebred_mating_only"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Kreuzungsanpaarung schließt Förderbarkeit aus.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P2-REINRASSIG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures"
+      ]
+    },
+    {
+      "id": "O6_5-ELIG-FIRST-BIRTH-STICHTAG",
+      "rule_type": "eligibility",
+      "statement": "Eine Kuh muss bis spätestens am Stichtag 01.04. einmal gekalbt, ein Mutterschaf einmal gelammt und eine Mutterziege einmal gekitzt haben.",
+      "conditions": [
+        {
+          "expression": "animal.animal_category in {kuh, mutterschaf, mutterziege}",
+          "description": "Betroffene Kategorien.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].animal_category"
+          ]
+        },
+        {
+          "expression": "animal.first_offspring_date <= reference_date (01.04.)",
+          "description": "Erste Geburt spätestens am Stichtag.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].first_offspring_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Ohne Geburt bis zum Stichtag ist das Tier nicht förderbar.",
+        "value": {
+          "reference_md": "04-01"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P2-KUH",
+        "CIT-MB-P2-SCHAF",
+        "CIT-MB-P2-ZIEGE",
+        "CIT-SRL-P52-STICHTAG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures",
+        "data.oepul.o6_5.offspring_by_reference"
+      ]
+    },
+    {
+      "id": "O6_5-ELIG-MARE-FOALING",
+      "rule_type": "eligibility",
+      "statement": "Eine Stute muss bis spätestens am 31.05. des Antragsjahres einmal gefohlt haben.",
+      "conditions": [
+        {
+          "expression": "animal.animal_category == 'stute'",
+          "description": "Stute.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].animal_category"
+          ]
+        },
+        {
+          "expression": "animal.first_offspring_date <= date(year, 05-31)",
+          "description": "Erste Abfohlung bis 31.05.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].first_offspring_date",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Ohne Abfohlung bis 31.05. nicht förderbar.",
+        "value": {
+          "reference_md": "05-31"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P2-STUTE",
+        "CIT-SRL-P52-STUTE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures",
+        "data.oepul.o6_5.offspring_by_reference"
+      ]
+    },
+    {
+      "id": "O6_5-ELIG-MARE-REFOALING",
+      "rule_type": "eligibility",
+      "statement": "Bei Stuten muss eine weitere Abfohlung spätestens innerhalb von 3,5 Jahren nach der letzten Abfohlung erfolgen.",
+      "conditions": [
+        {
+          "expression": "date(year, 05-31) <= last_foaling_date + 42 Monate",
+          "description": "Letzte Abfohlung liegt am Bezugsdatum höchstens 3,5 Jahre zurück.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].last_foaling_date",
+            "livestock.endangered_breed_animals[].first_offspring_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Überschreitung des Abfohlintervalls schließt Förderbarkeit aus.",
+        "value": {
+          "max_months": 42
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P2-ABFOHLUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures",
+        "data.oepul.o6_5.mare_refoaling_ok"
+      ]
+    },
+    {
+      "id": "O6_5-ELIG-SOW-PUREBRED-FARROWING",
+      "rule_type": "eligibility",
+      "statement": "Eine Zuchtsau muss bis spätestens am Stichtag 01.04. zumindest einmal reinrassig geferkelt haben.",
+      "conditions": [
+        {
+          "expression": "animal.first_purebred_farrowing_date <= reference_date (01.04.)",
+          "description": "Erster reinrassiger Wurf bis Stichtag.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].first_purebred_farrowing_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Ohne reinrassigen Wurf bis Stichtag nicht förderbar.",
+        "value": {
+          "reference_md": "04-01"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P2-SAU-FERKEL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures",
+        "data.oepul.o6_5.offspring_by_reference"
+      ]
+    },
+    {
+      "id": "O6_5-ELIG-SOW-LITTER-SHARE",
+      "rule_type": "eligibility",
+      "statement": "Bei Zuchtsauen muss mindestens jeder 2. Wurf reinrassig sein.",
+      "conditions": [
+        {
+          "expression": "animal.litters_purebred >= 0.5 * animal.litters_total",
+          "description": "Anteil reinrassiger Würfe mindestens 50 % (Auslegung, siehe notes/assumptions.md).",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].litters_total",
+            "livestock.endangered_breed_animals[].litters_purebred"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Zu geringer Anteil reinrassiger Würfe schließt Förderbarkeit aus.",
+        "value": {
+          "min_share": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P2-SAU-WURF"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures",
+        "data.oepul.o6_5.sow_litter_share_ok"
+      ]
+    },
+    {
+      "id": "O6_5-ELIG-MALE-ANNUAL-BREEDING",
+      "rule_type": "eligibility",
+      "statement": "Zuchtstier, Zuchtwidder, Zuchtbock und Zuchteber müssen jährlich im Rahmen des Zuchtprogramms zur Zucht eingesetzt werden, ausgenommen im Jahr der Zulassung zur Zucht.",
+      "conditions": [
+        {
+          "expression": "animal.breeding_use_in_year == true or animal.breeding_approval_year == farm.year",
+          "description": "Zuchteinsatz im Antragsjahr oder Zulassungsjahr.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].breeding_use_in_year",
+            "livestock.endangered_breed_animals[].breeding_approval_year",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Ohne jährlichen Zuchteinsatz (außer im Zulassungsjahr) nicht förderbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P2-MALE-ANNUAL",
+        "CIT-SRL-P52-MALE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures",
+        "data.oepul.o6_5.annual_breeding_ok"
+      ]
+    },
+    {
+      "id": "O6_5-ELIG-MALE-MIN-AGE",
+      "rule_type": "eligibility",
+      "statement": "Mindestalter am Stichtag 01.04.: Zuchtstier 10 Monate, Zuchtwidder und Zuchteber 6 Monate, Zuchtbock 5 Monate.",
+      "conditions": [
+        {
+          "expression": "birth_date + min_age_months(category) <= reference_date (01.04.)",
+          "description": "Mindestalter gemäß Tabelle data.o6_5.animal_categories.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].birth_date",
+            "livestock.endangered_breed_animals[].animal_category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Zu junge männliche Tiere sind nicht förderbar.",
+        "value": {
+          "zuchtstier": 10,
+          "zuchtwidder": 6,
+          "zuchteber": 6,
+          "zuchtbock": 5
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P2-STIER-ALTER",
+        "CIT-MB-P2-WIDDER-ALTER",
+        "CIT-MB-P2-BOCK-ALTER",
+        "CIT-SRL-P52-MALE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures",
+        "data.oepul.o6_5.min_age_ok"
+      ]
+    },
+    {
+      "id": "O6_5-ELIG-STALLION-MIN-AGE",
+      "rule_type": "eligibility",
+      "statement": "Ein Zuchthengst muss spätestens am 31.05. des Antragsjahres 2 Jahre alt sein.",
+      "conditions": [
+        {
+          "expression": "birth_date + 24 Monate <= date(year, 05-31)",
+          "description": "Hengst mindestens 2 Jahre alt am 31.05.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].birth_date",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Jüngere Hengste sind nicht förderbar.",
+        "value": {
+          "min_age_months": 24
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P2-HENGST",
+        "CIT-SRL-P52-HENGST"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures",
+        "data.oepul.o6_5.min_age_ok"
+      ]
+    },
+    {
+      "id": "O6_5-ELIG-STALLION-OFFSPRING",
+      "rule_type": "eligibility",
+      "statement": "Ist ein Zuchthengst am 31.05. älter als 5 Jahre, muss zum 31.05. des Antragsjahres zumindest ein lebend geborener Nachkomme in den letzten 2 Jahren im Zuchtbuch (Herdebuch) registriert sein.",
+      "conditions": [
+        {
+          "expression": "birth_date + 5 Jahre < date(year, 05-31)",
+          "description": "Hengst älter als 5 Jahre.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].birth_date"
+          ]
+        },
+        {
+          "expression": "animal.live_offspring_registered_last_2_years == true",
+          "description": "Nachkomme in den letzten 2 Jahren registriert.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].live_offspring_registered_last_2_years"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Ältere Hengste ohne registrierten Nachkommen sind nicht förderbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P2-HENGST-5J",
+        "CIT-MB-P2-HENGST-NACHK",
+        "CIT-SRL-P52-HERDEBUCH"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures",
+        "data.oepul.o6_5.stallion_older_than_limit"
+      ]
+    },
+    {
+      "id": "O6_5-GEN-ANIMALS-IN-AUSTRIA",
+      "rule_type": "eligibility",
+      "statement": "Die geförderten Tiere müssen in Österreich gehalten werden.",
+      "conditions": [
+        {
+          "expression": "animal.kept_in_austria == true",
+          "description": "Haltungsort in Österreich.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].kept_in_austria"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Außerhalb Österreichs gehaltene Tiere werden nicht gefördert.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AB-P9-TIERE",
+        "CIT-SRL-P9-TIERE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures"
+      ]
+    },
+    {
+      "id": "O6_5-OBL-HOLDING-PERIOD",
+      "rule_type": "obligation",
+      "statement": "Die beantragten Tiere müssen von 1. April bis einschließlich 31. Dezember des Antragsjahres am Betrieb gehalten werden (Haltedauer); nur Tiere, die während der gesamten Verpflichtungsdauer gemäß den Bestimmungen gehalten werden, sind förderfähig.",
+      "conditions": [
+        {
+          "expression": "animal.on_farm_from <= date(year, 04-01) and no departure before 01.04.",
+          "description": "Tier ist zu Beginn der Haltedauer am Betrieb.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].on_farm_from",
+            "livestock.endangered_breed_animals[].departure.date"
+          ]
+        },
+        {
+          "expression": "no departure in [01.04., holding_end] unless replaced or permitted",
+          "description": "Kein Abgang während der Haltedauer ohne zulässige Weitergabe oder fristgerechte Nachbesetzung.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].departure.date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Tier ohne vollständige Haltedauer ist nicht förderfähig.",
+        "value": {
+          "start_md": "04-01",
+          "end_md": "12-31"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P3-HALTEDAUER",
+        "CIT-SRL-P53-HALTE",
+        "CIT-AB-P10-VERPFL",
+        "CIT-SRL-P12-VERPFL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures",
+        "data.oepul.o6_5.on_farm_at_stichtag",
+        "data.oepul.o6_5.departure_in_holding_period",
+        "data.oepul.o6_5.holding_end_ns"
+      ]
+    },
+    {
+      "id": "O6_5-2026-HOLDING-PERIOD-AUG31",
+      "rule_type": "exception",
+      "statement": "Für das Antragsjahr 2026 (Dürre 2026) ist die Haltedauer nur bis einschließlich 31. August (statt 31. Dezember) einzuhalten; die Prämie wird auch gewährt, wenn der Abgang ab 1. September erfolgt.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026",
+          "description": "Antragsjahr 2026.",
+          "input_paths": [
+            "farm.year"
+          ]
+        },
+        {
+          "expression": "departure.date >= 2026-09-01",
+          "description": "Abgang nach dem 31.08.2026 verletzt die Haltedauer nicht.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].departure.date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "holding_period_shortened",
+        "description": "Haltedauer-Ende 31.08.2026.",
+        "value": {
+          "year": 2026,
+          "holding_period_end_md": "08-31"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-N0812-HALTE",
+        "CIT-N0812-PRAEMIE",
+        "CIT-SRL-P16-BML"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.holding_end_md",
+        "data.oepul.o6_5.year_override"
+      ]
+    },
+    {
+      "id": "O6_5-2026-REPLACEMENT-REPORT-WAIVER",
+      "rule_type": "exception",
+      "statement": "Im Antragsjahr 2026 müssen die vorgeschriebenen Meldungen zu Tierbewegungen bis Jahresende weiterhin erfolgen; die Meldung von Nachbesetzungen ist nach dem 31. August 2026 nicht mehr erforderlich.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026 and replacement_date > 2026-08-31",
+          "description": "Nachbesetzung nach dem 31.08.2026.",
+          "input_paths": [
+            "farm.year",
+            "livestock.endangered_breed_animals[].replacement_date"
+          ]
+        },
+        {
+          "expression": "departure.date <= 2026-12-31",
+          "description": "Abgangsmeldungen bleiben bis Jahresende verpflichtend.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].departure.date",
+            "livestock.endangered_breed_animals[].departure.reported_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reporting_adjusted",
+        "description": "Keine Nachbesetzungsmeldung nach 31.08.2026; Abgangsmeldungen weiterhin.",
+        "value": {
+          "replacement_report_not_required_after_md": "08-31",
+          "movement_reports_required_until_md": "12-31"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-N0812-MELD",
+        "CIT-N0812-NACHBES"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.replacement_report_waived",
+        "data.oepul.o6_5.movement_reports_until_ns"
+      ]
+    },
+    {
+      "id": "O6_5-OBL-BREEDING-ORG-CONFIRMATION",
+      "rule_type": "obligation",
+      "statement": "Die für die Rasse verantwortliche Zuchtorganisation (gemäß Anhang D) beurteilt die beantragten Tiere sowie die förderbaren Rinder bis spätestens 10. Februar des Folgejahres (Bestätigung oder Ablehnung) im eAMA; nur bestätigte Tiere sind förderbar.",
+      "conditions": [
+        {
+          "expression": "animal.breeding_org_confirmation.status == 'confirmed'",
+          "description": "Bestätigung liegt vor.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].breeding_org_confirmation.status"
+          ]
+        },
+        {
+          "expression": "animal.breeding_org_confirmation.date <= date(year+1, 02-10)",
+          "description": "Bestätigung spätestens am 10.02. des Folgejahres.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].breeding_org_confirmation.date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Abgelehnte oder nicht fristgerecht bestätigte Tiere sind nicht förderbar.",
+        "value": {
+          "deadline_md_following_year": "02-10"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P3-ZO",
+        "CIT-SRL-P53-ZO",
+        "CIT-SRL-P19-ZO"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures",
+        "data.oepul.o6_5.breeding_org_confirmed",
+        "data.oepul.o6_5.confirmation_late"
+      ]
+    },
+    {
+      "id": "O6_5-OBL-CONFIRMATION-SCOPE",
+      "rule_type": "obligation",
+      "statement": "Die Bestätigung der Zuchtorganisation umfasst die Eintragung in das Zuchtbuch, die Einhaltung der Anforderungen der Tierkategorien, die Einhaltung des von der Tierzuchtbehörde genehmigten Zuchtprogramms sowie für förderbare Kühe die Teilnahme an der Milchleistungskontrolle.",
+      "conditions": [
+        {
+          "expression": "confirmation covers herdbook, category requirements, breeding programme, MLK (cows)",
+          "description": "Inhalt der Bestätigung.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].herdbook_registered",
+            "livestock.endangered_breed_animals[].approved_breeding_program",
+            "livestock.endangered_breed_animals[].milk_recording"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "confirmation_content",
+        "description": "Die bestätigten Merkmale sind Grundlage der Tierprüfung und des MLK-Zuschlags.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P3-ZO-UMFANG",
+        "CIT-MB-P3-ZO-MLK",
+        "CIT-SRL-P53-ZO",
+        "CIT-SRL-P19-ZO"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.breeding_org_confirmed",
+        "data.oepul.o6_5.mlk_surcharge"
+      ]
+    },
+    {
+      "id": "O6_5-OBL-REPLACEMENT-5-WEEKS",
+      "rule_type": "obligation",
+      "statement": "Abgegangene Tiere (Pferde, Schafe, Ziegen, Schweine; bei Rindern automatisch über die Rinderdatenbank) müssen innerhalb von 5 Wochen (35 Tage) mit förderbaren Tieren der gleichen Rasse nachbesetzt werden; die Frist gilt auch über den 31. Dezember hinaus. Ohne fristgerechte Nachbesetzung ist die Haltedauer für den Förderplatz nicht erfüllt.",
+      "conditions": [
+        {
+          "expression": "departure_in_holding_period(animal)",
+          "description": "Abgang während der Haltedauer.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].departure.date"
+          ]
+        },
+        {
+          "expression": "exists r: r.replaces_animal_id == animal.animal_id and r.breed == animal.breed and 0 <= r.replacement_date - departure.date <= 35 Tage and r eligible",
+          "description": "Fristgerechte Nachbesetzung mit förderbarem Tier gleicher Rasse.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].replaces_animal_id",
+            "livestock.endangered_breed_animals[].replacement_date",
+            "livestock.endangered_breed_animals[].breed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Förderplatz verliert die Förderbarkeit ohne fristgerechte Nachbesetzung.",
+        "value": {
+          "replacement_window_days": 35
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P4-NACHBES",
+        "CIT-MB-P4-NACHBES-JAHR",
+        "CIT-MB-P4-BEISPIEL",
+        "CIT-SRL-P53-D",
+        "CIT-SRL-P53-D-FRIST"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.holding_failures",
+        "data.oepul.o6_5.slot_holding_ok",
+        "data.oepul.o6_5.timely_same_breed_replacement",
+        "data.oepul.o6_5.replacement_ok",
+        "data.oepul.o6_5.final_replacement_ok",
+        "data.oepul.o6_5.replacement_deadline"
+      ]
+    },
+    {
+      "id": "O6_5-OBL-TRANSFER-LIMITS",
+      "rule_type": "obligation",
+      "statement": "Eine Weitergabe von Tieren während der Haltedauer ist nur als vorübergehender Aufenthalt auf einer Zuchtstation (max. 6 Monate), als vorübergehender Zuchteinsatz männlicher Zuchttiere auf einem anderen Betrieb (max. 3 Monate), als Weideaufenthalt ohne Abgang oder als belegter Aufenthalt bis 10 Tage zulässig.",
+      "conditions": [
+        {
+          "expression": "every temporary absence is permitted",
+          "description": "Jede Abwesenheit fällt unter einen zulässigen Tatbestand.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].temporary_absences[].type",
+            "livestock.endangered_breed_animals[].temporary_absences[].start_date",
+            "livestock.endangered_breed_animals[].temporary_absences[].end_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Unzulässige Weitergabe verletzt die Haltedauer.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P53-B",
+        "CIT-MB-P5-ZUCHTSTATION",
+        "CIT-MB-P5-MAENNL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures",
+        "data.oepul.o6_5.absence_permitted"
+      ]
+    },
+    {
+      "id": "O6_5-OBL-TRANSFER-BREEDING-STATION-6M",
+      "rule_type": "obligation",
+      "statement": "Der vorübergehende Aufenthalt auf einer Zuchtstation für Züchtungszwecke ist während der Haltedauer für maximal 6 Monate zulässig.",
+      "conditions": [
+        {
+          "expression": "absence.type == 'breeding_station' and end_date <= start_date + 6 Monate",
+          "description": "Aufenthalt auf Zuchtstation höchstens 6 Monate.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].temporary_absences[].start_date",
+            "livestock.endangered_breed_animals[].temporary_absences[].end_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "permitted_transfer",
+        "description": "Zulässige Weitergabe ohne Verletzung der Haltedauer.",
+        "value": {
+          "max_months": 6
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P5-ZUCHTSTATION",
+        "CIT-SRL-P53-B"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.absence_permitted"
+      ]
+    },
+    {
+      "id": "O6_5-OBL-TRANSFER-MALE-BREEDING-3M",
+      "rule_type": "obligation",
+      "statement": "Männliche Zuchttiere dürfen für einen vorübergehenden Zuchteinsatz auf einen anderen landwirtschaftlichen Betrieb für maximal 3 Monate verbracht werden.",
+      "conditions": [
+        {
+          "expression": "absence.type == 'male_breeding_use_other_farm' and sex == 'male' and end_date <= start_date + 3 Monate",
+          "description": "Zuchteinsatz männlicher Tiere höchstens 3 Monate.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].animal_category",
+            "livestock.endangered_breed_animals[].temporary_absences[].start_date",
+            "livestock.endangered_breed_animals[].temporary_absences[].end_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "permitted_transfer",
+        "description": "Zulässige Weitergabe männlicher Zuchttiere.",
+        "value": {
+          "max_months": 3
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P5-MAENNL",
+        "CIT-SRL-P53-B-MAENNL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.absence_permitted"
+      ]
+    },
+    {
+      "id": "O6_5-OBL-SHORT-ABSENCE-10-DAYS",
+      "rule_type": "exception",
+      "statement": "Bei einem vorübergehenden Aufenthalt (z. B. Zuchtstation, Leistungsprüfung, Tierzucht- oder Sportveranstaltung) von maximal 10 (Kalender-)Tagen ist keine Meldung an die AMA erforderlich, wenn der Aufenthalt vom Betrieb belegt werden kann.",
+      "conditions": [
+        {
+          "expression": "end_date - start_date <= 10 Tage and absence.documented == true",
+          "description": "Kurzaufenthalt belegt.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].temporary_absences[].start_date",
+            "livestock.endangered_breed_animals[].temporary_absences[].end_date",
+            "livestock.endangered_breed_animals[].temporary_absences[].documented"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_report_required",
+        "description": "Kein Meldeerfordernis, Haltedauer nicht verletzt.",
+        "value": {
+          "max_days": 10
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P5-10TAGE",
+        "CIT-SRL-P53-B-RIND"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.short_documented_absence",
+        "data.oepul.o6_5.absence_permitted"
+      ]
+    },
+    {
+      "id": "O6_5-OBL-CATTLE-TRANSFER-AFTER-0930",
+      "rule_type": "exception",
+      "statement": "Bei Rindern ist die Weitergabe nach dem 30. September an andere Betriebe zulässig, sofern die Tiere nicht vor dem 1. Jänner des Folgejahres ins Ausland verbracht oder geschlachtet werden oder verenden; der übernehmende Betrieb muss nicht an der Maßnahme teilnehmen.",
+      "conditions": [
+        {
+          "expression": "species == cattle and departure.date > date(year, 09-30) and departure.reason in {sale, transfer}",
+          "description": "Weitergabe eines Rindes nach dem 30.09.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].departure.date",
+            "livestock.endangered_breed_animals[].departure.reason"
+          ]
+        },
+        {
+          "expression": "departure.exported_slaughtered_or_died_before_next_jan1 == false",
+          "description": "Kein Export, keine Schlachtung, kein Verenden vor 01.01. des Folgejahres.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].departure.exported_slaughtered_or_died_before_next_jan1"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "permitted_transfer",
+        "description": "Weitergabe verletzt die Haltedauer nicht.",
+        "value": {
+          "after_md": "09-30"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P5-RIND-0930",
+        "CIT-MB-P5-RIND-UEBERN",
+        "CIT-SRL-P53-B-RIND"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.cattle_transfer_permitted"
+      ]
+    },
+    {
+      "id": "O6_5-OBL-VIS-SHEEP-GOATS",
+      "rule_type": "obligation",
+      "statement": "Alle Personen, die Schafe und Ziegen halten, müssen gemäß TKZVO 2009 Ereignisse (Ab- und Zugang lebender Tiere) an das Verbrauchergesundheitsinformationssystem (VIS) melden.",
+      "conditions": [
+        {
+          "expression": "species in {sheep, goats} implies documentation.vis_reports_complete == true",
+          "description": "VIS-Meldungen vollständig.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].animal_category",
+            "documentation.vis_reports_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "finding_if_violated",
+        "description": "Fehlende VIS-Meldungen werden als Befund ausgegeben (Tierkennzeichnungsrecht; Abgleich durch AMA).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P3-VIS",
+        "CIT-MB-P6-KENNZ"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.findings"
+      ]
+    },
+    {
+      "id": "O6_5-OBL-EQUIDE-UELN",
+      "rule_type": "obligation",
+      "statement": "Alle Equiden sind gemäß VO (EU) 2015/262 mit einer UELN zu identifizieren und gemäß VO (EU) 2021/963 an die Österreichische Equidendatenbank sowie an das VIS zu melden.",
+      "conditions": [
+        {
+          "expression": "species == horses implies identification != null and equine_database_and_vis_reported == true",
+          "description": "UELN vorhanden und gemeldet.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].identification",
+            "livestock.endangered_breed_animals[].equine_database_and_vis_reported"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "finding_if_violated",
+        "description": "Fehlende Identifikation/Meldung wird als Befund ausgegeben.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P3-UELN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.findings",
+        "data.oepul.o6_5.equide_identified"
+      ]
+    },
+    {
+      "id": "O6_5-OBL-DATA-RESPONSIBILITY",
+      "rule_type": "obligation",
+      "statement": "Die tierhaltenden Personen sind für die Richtigkeit und Vollständigkeit der an die AMA und das VIS gemeldeten Tierinformationen verantwortlich; die AMA gleicht mit den VIS-Daten ab und prüft auf Plausibilität.",
+      "conditions": [
+        {
+          "expression": "reported animal data == VIS data",
+          "description": "Übereinstimmung der Tiermeldungen.",
+          "input_paths": [
+            "documentation.vis_reports_complete",
+            "documentation.livestock_records_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "administrative_check",
+        "description": "Abweichungen führen zu Beanstandungen bzw. Abweichungskürzungen (O6_5-GEN-ANIMAL-DEVIATIONS).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P3-VERANTW"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-OBL-ID-REPORTING-INDEPENDENT",
+      "rule_type": "obligation",
+      "statement": "Die Meldungen nach den Tierkennzeichnungsvorschriften (Rinderdatenbank, VIS) sind unabhängig von der Förderbeantragung durchzuführen.",
+      "conditions": [
+        {
+          "expression": "identification reports performed independent of o6_5 application",
+          "description": "Tierkennzeichnungsmeldungen erfolgen unabhängig.",
+          "input_paths": [
+            "documentation.vis_reports_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Förderbezogene Meldungen ersetzen die Kennzeichnungsmeldungen (außer Rinder-Förder-Meldungen) nicht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P6-KENNZ"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-REP-DEPARTURE-7-DAYS",
+      "rule_type": "reporting",
+      "statement": "Ein Abgang (Verkauf, Verendung, Schlachtung) beantragter Pferde, Schafe, Ziegen oder Schweine während der Haltedauer ist binnen 7 Tagen ab dem Tag des Abgangs online an die AMA zu melden (Korrektur zum Mehrfachantrag, Beilage 'Gefährdete Nutztierrassen'); nicht fristgerechte Meldungen können bei Vor-Ort-Kontrollen zu Beanstandungen führen.",
+      "conditions": [
+        {
+          "expression": "species != cattle and departure.date within reporting period",
+          "description": "Abgang eines Nicht-Rindes.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].departure.date"
+          ]
+        },
+        {
+          "expression": "departure.reported_date - departure.date <= 7 Tage",
+          "description": "Meldung binnen 7 Tagen.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].departure.reported_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "finding_if_violated",
+        "description": "Verspätete/fehlende Meldung wird als Befund ausgegeben.",
+        "value": {
+          "deadline_days": 7
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P3-ABGANG",
+        "CIT-MB-P4-ABGANG-VOK",
+        "CIT-N0812-TEASER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.findings",
+        "data.oepul.o6_5.reported_within"
+      ]
+    },
+    {
+      "id": "O6_5-REP-CHANNEL-MFA-CORRECTION",
+      "rule_type": "procedure",
+      "statement": "Abgangs- und Nachbesetzungsmeldungen sind als Korrektur zum Mehrfachantrag in der Beilage 'Gefährdete Nutztierrassen' unter www.eama.at vorzunehmen.",
+      "conditions": [
+        {
+          "expression": "report channel == MFA correction (Beilage Gefährdete Nutztierrassen)",
+          "description": "Meldeweg.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].departure.reported_date",
+            "livestock.endangered_breed_animals[].replacement_reported_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "procedure",
+        "description": "Meldeweg für Nicht-Rinder.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P4-ABGANG-VOK",
+        "CIT-MB-P4-NACHBES-MELD"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-REP-ALM-SHEEP-GOATS-AUTO",
+      "rule_type": "procedure",
+      "statement": "Befinden sich Schafe und Ziegen auf Almen oder Gemeinschaftsweiden, bewirkt eine Abgangsmeldung am Heimbetrieb automatisch die Meldung des tatsächlichen Abtriebs in der Beilage 'Alm/Gemeinschaftsweide-Auftriebsliste'.",
+      "conditions": [
+        {
+          "expression": "species in {sheep, goats} and on alpine/common pasture and departure reported",
+          "description": "Abgangsmeldung von Schafen/Ziegen auf der Alm.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].departure.reported_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "automatic_effect",
+        "description": "Abtriebsmeldung in der Auftriebsliste erfolgt automatisch.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P4-ALM-AUTO"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-REP-CATTLE-AUTO",
+      "rule_type": "exception",
+      "statement": "Bei Rindern werden alle erforderlichen Meldepflichten (Abgang, Nachbesetzung, Weitergabe zwecks Zuchteinsatz) durch die Meldung an die Rinderdatenbank ersetzt; Ersatztiere werden automatisch aus der Rinderdatenbank entnommen.",
+      "conditions": [
+        {
+          "expression": "species == cattle",
+          "description": "Rind.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].animal_category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_ama_report_required",
+        "description": "Keine gesonderte AMA-Meldung für Rinder.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P4-RIND-ABGANG",
+        "CIT-MB-P4-NACHBES-RIND",
+        "CIT-MB-P5-RIND-MELD",
+        "CIT-SRL-P53-E"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.findings",
+        "data.oepul.o6_5.is_cattle"
+      ]
+    },
+    {
+      "id": "O6_5-REP-REPLACEMENT-7-DAYS",
+      "rule_type": "reporting",
+      "statement": "Die Nachbesetzung (Pferde, Schafe, Ziegen, Schweine) ist innerhalb von 7 (Kalender-)Tagen ab Nachbesetzung unter Bezug auf die Maßnahme online an die AMA zu melden; die Frist gilt auch über den 31.12. hinaus.",
+      "conditions": [
+        {
+          "expression": "replacement.species != cattle",
+          "description": "Ersatztier ist kein Rind.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].animal_category"
+          ]
+        },
+        {
+          "expression": "replacement_reported_date - replacement_date <= 7 Tage",
+          "description": "Meldung binnen 7 Tagen.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].replacement_date",
+            "livestock.endangered_breed_animals[].replacement_reported_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "finding_if_violated",
+        "description": "Verspätete/fehlende Nachbesetzungsmeldung wird als Befund ausgegeben.",
+        "value": {
+          "deadline_days": 7
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P4-NACHBES-MELD",
+        "CIT-SRL-P53-D",
+        "CIT-SRL-P53-D-FRIST"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.findings",
+        "data.oepul.o6_5.reported_within"
+      ]
+    },
+    {
+      "id": "O6_5-REP-PRIOR-TRANSFER-REPORT",
+      "rule_type": "reporting",
+      "statement": "Vor der Weitergabe von Pferden, Schafen, Ziegen oder Schweinen (Zuchtstation, Zuchteinsatz) hat online unter www.eama.at (Register 'Eingaben', Menüpunkt 'Andere Eingaben') eine Meldung des Zuchteinsatzes an die AMA zu erfolgen; ausgenommen belegte Aufenthalte bis 10 Tage.",
+      "conditions": [
+        {
+          "expression": "absence.type in {breeding_station, male_breeding_use_other_farm} and species != cattle and not short_documented",
+          "description": "Meldepflichtige Weitergabe.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].temporary_absences[].type"
+          ]
+        },
+        {
+          "expression": "absence.reported_before_transfer == true",
+          "description": "Meldung vor der Weitergabe.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].temporary_absences[].reported_before_transfer"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "finding_if_violated",
+        "description": "Fehlende Vorabmeldung wird als Befund ausgegeben.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P5-VORMELD",
+        "CIT-SRL-P53-B"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.findings"
+      ]
+    },
+    {
+      "id": "O6_5-PREM-RATES",
+      "rule_type": "calculation",
+      "statement": "Prämiensätze je Tier (Euro/Tier) nach Tierkategorie und Prämienstufe gemäß Tabelle (2023 bzw. ab 2024): z. B. Kuh ab 2024 Stufe A 226,8 / Stufe B 334,8; Zuchtstier 453,6 / 669,6; Stute 226,8; Zuchthengst 453,6; Mutterschaf/-ziege 54,0 / 64,8; Zuchtwidder/-bock 108,0 / 129,6; Zuchtsau B 162,0; Zuchteber B 324,0.",
+      "conditions": [
+        {
+          "expression": "rate = data.o6_5.premium_rates[category, rate_period][stage_field(breed.premium_stage)]",
+          "description": "Tabellenwert je Kategorie, Periode und Prämienstufe.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].animal_category",
+            "livestock.endangered_breed_animals[].breed",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_amount",
+        "description": "Grundprämie je förderbarem Tier.",
+        "value": {
+          "table": "data/o6_5/premium_rates.json#/premium_rates"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P7-PRAEMIE-KUH",
+        "CIT-MB-P7-PRAEMIE-2023",
+        "CIT-MB-P8-PRAEMIE-SAU",
+        "CIT-SRL-P53-KUH",
+        "CIT-SRL-P53-JE-TIER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_rate",
+        "data.oepul.o6_5.rate_row",
+        "data.oepul.o6_5.animal_premium",
+        "data.oepul.o6_5.base_failures"
+      ]
+    },
+    {
+      "id": "O6_5-PREM-RATES-PERIOD",
+      "rule_type": "calculation",
+      "statement": "Für das Antragsjahr 2023 gelten die ursprünglichen Prämiensätze; ab 01.01.2024 (1. Änderung der Sonderrichtlinie, Impulsprogramm +8 %, gerundet auf eine Nachkommastelle) gelten die erhöhten Sätze.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2023 -> rate_period '2023' else 'ab_2024'",
+          "description": "Auswahl der Prämienperiode.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rate_period_selection",
+        "description": "Bestimmt die anzuwendende Tabellenzeile.",
+        "value": {
+          "2023": "2023",
+          ">=2024": "ab_2024"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P53-SAETZE-AB",
+        "CIT-SRL-P4-IMPULS",
+        "CIT-SRL-P27-INKRAFT",
+        "CIT-MB-P7-PRAEMIE-2023"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.rate_period"
+      ]
+    },
+    {
+      "id": "O6_5-PREM-STAGE-ASSIGNMENT",
+      "rule_type": "calculation",
+      "statement": "Die Zuordnung der Rassen zu Prämienstufe A oder B sowie die Gewährung des Zuschlags für besondere Generhaltungsprogramme erfolgt gemäß Rassenliste (Kapitel 8 / Anhang D).",
+      "conditions": [
+        {
+          "expression": "stage = data.o6_5.breeds[breed].premium_stage",
+          "description": "Prämienstufe laut Rassenliste.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].breed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "stage_lookup",
+        "description": "Prämienstufe und GEP-Kennzeichen je Rasse.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P8-ZUORDNUNG",
+        "CIT-SRL-P53-ZUORDNUNG",
+        "CIT-ANH-P9-D"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_rate",
+        "data.oepul.o6_5.stage_field",
+        "data.oepul.o6_5.breed_meta"
+      ]
+    },
+    {
+      "id": "O6_5-PREM-GEP-SURCHARGE",
+      "rule_type": "calculation",
+      "statement": "Für Tiere von Rassen mit besonderem Generhaltungsprogramm wird ein Zuschlag (2023: 20,0 €/Tier; ab 2024: 21,6 €/Tier) automatisch gewährt, falls das Programm vom Zuchtverband umgesetzt wird.",
+      "conditions": [
+        {
+          "expression": "breeds[breed].special_gep == true",
+          "description": "Rasse mit besonderem GEP.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].breed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_surcharge",
+        "description": "GEP-Zuschlag je Tier.",
+        "value": {
+          "2023": 20.0,
+          "ab_2024": 21.6
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P5-GEP-AUTO",
+        "CIT-MB-P7-PRAEMIE-KUH",
+        "CIT-SRL-P53-KUH"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.gep_surcharge"
+      ]
+    },
+    {
+      "id": "O6_5-PREM-MLK-SURCHARGE",
+      "rule_type": "calculation",
+      "statement": "Für Kühe mit Milchleistungskontrolle wird ein Zuschlag (2023: 80,0 €/Tier; ab 2024: 86,4 €/Tier) gewährt; für andere Kategorien gibt es keinen MLK-Zuschlag.",
+      "conditions": [
+        {
+          "expression": "animal.animal_category == 'kuh' and animal.milk_recording == true",
+          "description": "Kuh mit bestätigter Milchleistungskontrolle.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].animal_category",
+            "livestock.endangered_breed_animals[].milk_recording"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_surcharge",
+        "description": "MLK-Zuschlag je Kuh.",
+        "value": {
+          "2023": 80.0,
+          "ab_2024": 86.4
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P7-PRAEMIE-KUH",
+        "CIT-MB-P7-PRAEMIE-2023",
+        "CIT-SRL-P53-KUH",
+        "CIT-MB-P3-ZO-MLK"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.mlk_surcharge"
+      ]
+    },
+    {
+      "id": "O6_5-PREM-SURCHARGES-AUTOMATIC",
+      "rule_type": "procedure",
+      "statement": "Der Zuschlag für Tiere mit besonderem Generhaltungsprogramm und der Zuschlag für Tiere mit Milchleistungskontrolle werden automatisch ermittelt und müssen nicht gesondert beantragt werden.",
+      "conditions": [
+        {
+          "expression": "no separate application for surcharges",
+          "description": "Zuschläge ohne Antrag.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].breed",
+            "livestock.endangered_breed_animals[].milk_recording"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "automatic_effect",
+        "description": "Zuschläge werden ohne eigenen Antrag berechnet.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P6-ZUSCHLAG-AUTO",
+        "CIT-MB-P5-GEP-AUTO"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.gep_surcharge",
+        "data.oepul.o6_5.mlk_surcharge"
+      ]
+    },
+    {
+      "id": "O6_5-PREM-REPLACEMENT-LOWER-PREMIUM",
+      "rule_type": "calculation",
+      "statement": "Bei Nachbesetzung eines weiblichen Tieres mit einem männlichen Tier oder eines Tieres mit Milchleistungskontrolle durch eines ohne Milchleistungskontrolle wird immer das Tier mit der geringeren Prämie ausbezahlt (Umsetzung: Minimum der Prämien von beantragtem Tier und herangezogenen Ersatztieren).",
+      "conditions": [
+        {
+          "expression": "slot_premium = min(premium(original), premium(replacements))",
+          "description": "Geringere Prämie je Förderplatz.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].replaces_animal_id",
+            "livestock.endangered_breed_animals[].animal_category",
+            "livestock.endangered_breed_animals[].milk_recording"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_amount",
+        "description": "Auszahlung der geringeren Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P4-HINWEIS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.slot_premium",
+        "data.oepul.o6_5.used_replacements"
+      ]
+    },
+    {
+      "id": "O6_5-PREM-TOTAL",
+      "rule_type": "calculation",
+      "statement": "Die Maßnahmenprämie ergibt sich als Summe der Prämien (Grundprämie + Zuschläge) aller förderbaren Förderplätze des Antragsjahres.",
+      "conditions": [
+        {
+          "expression": "premium_total = sum(slot_premium(a) for a in eligible slots)",
+          "description": "Summierung.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].animal_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_total",
+        "description": "Prämie vor Kürzungen und Modulation.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P53-JE-TIER",
+        "CIT-MB-P1-UEBERSICHT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.premium_total_eur",
+        "data.oepul.o6_5.eligible_slot_ids"
+      ]
+    },
+    {
+      "id": "O6_5-MIN-PARTICIPATION",
+      "rule_type": "access_requirement",
+      "statement": "In jedem Förderjahr muss mit mindestens einem förderbaren Tier an der Maßnahme teilgenommen werden (Zugangsvoraussetzung).",
+      "conditions": [
+        {
+          "expression": "count(eligible slots) >= 1",
+          "description": "Mindestens ein förderbares Tier.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].animal_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_failure_if_violated",
+        "description": "Ohne förderbares Tier keine Prämie; der Vertrag erlischt.",
+        "value": {
+          "min_animals": 1
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P1-MINDEST",
+        "CIT-SRL-P52-ZUGANG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.minimum_participation_met",
+        "data.oepul.o6_5.eligible_animal_count",
+        "data.oepul.o6_5.contract_failures"
+      ]
+    },
+    {
+      "id": "O6_5-CON-LAPSE",
+      "rule_type": "consequence",
+      "statement": "Wird in einem Förderjahr die Mindestteilnahmebedingung (ein förderbares Tier) nicht eingehalten, erlischt der Vertrag für die Maßnahme.",
+      "conditions": [
+        {
+          "expression": "not minimum_participation_met",
+          "description": "Mindestteilnahme verfehlt.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].animal_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_lapses",
+        "description": "Vertrag endet; Wiedereinstieg nur mit neuem Antrag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P1-ERLOESCHEN",
+        "CIT-MB-P6-WIEDER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.contract_lapses"
+      ]
+    },
+    {
+      "id": "O6_5-CON-ONE-YEAR",
+      "rule_type": "contract",
+      "statement": "Der Verpflichtungs- und Vertragszeitraum der Maßnahme beträgt grundsätzlich ein Kalenderjahr (1. Jänner bis 31. Dezember); die Verpflichtungsdauer erstreckt sich über das gesamte Kalenderjahr.",
+      "conditions": [
+        {
+          "expression": "contract period == calendar year farm.year",
+          "description": "Einjährige Maßnahme.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_period",
+        "description": "Einjähriger Vertrag je Förderjahr.",
+        "value": {
+          "months": 12
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P1-VERTRAG",
+        "CIT-AB-P12-EINJ",
+        "CIT-SRL-P12-EINJ",
+        "CIT-AB-P10-VERPFL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.year"
+      ]
+    },
+    {
+      "id": "O6_5-CON-AUTO-RENEWAL",
+      "rule_type": "contract",
+      "statement": "Die Maßnahme verlängert sich automatisch um ein weiteres Förderjahr, wenn sie nicht abgemeldet wird; die Weiterführung wird durch Abgabe des Mehrfachantrages mit förderrelevanten Tieren beantragt (Vorbeantragung für alle Folgejahre bis Programmende).",
+      "conditions": [
+        {
+          "expression": "no deregistration and not contract_lapses",
+          "description": "Keine Abmeldung und Mindestteilnahme erfüllt.",
+          "input_paths": [
+            "oepul_participation.o6_5.deregistration_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_renews",
+        "description": "Vertrag verlängert sich um ein Förderjahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P1-VERTRAG",
+        "CIT-AB-P13-VERL",
+        "CIT-SRL-P21-VORBEANTR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.contract_renews_next_year"
+      ]
+    },
+    {
+      "id": "O6_5-APP-DEADLINE",
+      "rule_type": "deadline",
+      "statement": "Die Maßnahme muss vor Vertragsbeginn im Maßnahmenantrag des Mehrfachantrages bis spätestens 31. Dezember beantragt werden, um einen gültigen Vertrag ab dem Folgejahr zu begründen.",
+      "conditions": [
+        {
+          "expression": "measure_application_date <= date(participation_start_year - 1, 12-31)",
+          "description": "Fristgerechter Maßnahmenantrag.",
+          "input_paths": [
+            "oepul_participation.o6_5.measure_application_date",
+            "oepul_participation.o6_5.participation_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_failure_if_violated",
+        "description": "Ohne fristgerechten Antrag kein Vertrag.",
+        "value": {
+          "deadline_md": "12-31"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P5-ANTRAG",
+        "CIT-AB-P12-ANTRAG",
+        "CIT-SRL-P21-MA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.application_timely",
+        "data.oepul.o6_5.contract_failures"
+      ]
+    },
+    {
+      "id": "O6_5-APP-LAST-ENTRY",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg ist mit dem Förderjahr 2027 möglich (Beantragung bis spätestens 31. Dezember 2026); spätester Vertragsbeginn 01.01.2027.",
+      "conditions": [
+        {
+          "expression": "participation_start_year <= 2027",
+          "description": "Einstiegsjahr spätestens 2027.",
+          "input_paths": [
+            "oepul_participation.o6_5.participation_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_failure_if_violated",
+        "description": "Späterer Einstieg nicht möglich.",
+        "value": {
+          "last_entry_year": 2027
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P6-LETZTER",
+        "CIT-AB-P12-LETZTER",
+        "CIT-SRL-P12-SPAETEST"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.contract_failures"
+      ]
+    },
+    {
+      "id": "O6_5-CON-NOT-STARTED",
+      "rule_type": "contract",
+      "statement": "Ein Vertrag gilt erst ab dem Folgejahr der fristgerechten Beantragung; vor dem Vertragsbeginn besteht kein Prämienanspruch.",
+      "conditions": [
+        {
+          "expression": "participation_start_year <= farm.year",
+          "description": "Vertrag hat begonnen.",
+          "input_paths": [
+            "oepul_participation.o6_5.participation_start_year",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_failure_if_violated",
+        "description": "Vor Vertragsbeginn keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P5-ANTRAG",
+        "CIT-AB-P12-ANTRAG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.contract_failures"
+      ]
+    },
+    {
+      "id": "O6_5-APP-INDIVIDUAL-MFA",
+      "rule_type": "application",
+      "statement": "Die förderbaren Pferde, Schafe, Ziegen und Schweine sind im Teilnahmejahr einzeln im Mehrfachantrag in der Beilage 'Gefährdete Nutztierrassen' mit Stichtag 1. April tierbezogen zu beantragen.",
+      "conditions": [
+        {
+          "expression": "species != cattle and not replacement -> animal.applied_in_mfa == true",
+          "description": "Einzelbeantragung im Mehrfachantrag.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].applied_in_mfa"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_violated",
+        "description": "Nicht beantragte Tiere sind nicht förderbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P6-EINZELN",
+        "CIT-SRL-P53-A",
+        "CIT-SRL-P22-ZA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures"
+      ]
+    },
+    {
+      "id": "O6_5-APP-HORSE-UELN",
+      "rule_type": "application",
+      "statement": "Bei Pferden ist im Mehrfachantrag die UELN im Feld 'Kennzeichnung' anzugeben.",
+      "conditions": [
+        {
+          "expression": "species == horses -> animal.ueln_in_application == true",
+          "description": "UELN im Antrag.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].ueln_in_application"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "finding_if_violated",
+        "description": "Fehlende UELN-Angabe wird als Befund ausgegeben.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P6-UELN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.findings"
+      ]
+    },
+    {
+      "id": "O6_5-APP-NO-ADVANCE-REPLACEMENT",
+      "rule_type": "application",
+      "statement": "Ersatztiere für den unmittelbaren Ersatz abgegangener Tiere können im Mehrfachantrag nicht im Vorhinein beantragt werden, sondern sind im Fall einer tatsächlichen Nachbesetzung mittels Korrektur zum Mehrfachantrag zu melden.",
+      "conditions": [
+        {
+          "expression": "replacement animals are not part of the 01.04. application",
+          "description": "Ersatztiere werden als Nachbesetzung gemeldet.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].replaces_animal_id",
+            "livestock.endangered_breed_animals[].applied_in_mfa"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "procedure",
+        "description": "Ersatztiere werden nur über Nachbesetzungsmeldung berücksichtigt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P6-ERSATZ"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.is_replacement",
+        "data.oepul.o6_5.replacement_animals"
+      ]
+    },
+    {
+      "id": "O6_5-APP-CATTLE-AUTO",
+      "rule_type": "application",
+      "statement": "Bei der Teilnahme mit Rindern werden die förderbaren Tiere durch die AMA aus der Rinderdatenbank mit Stichtag 1. April automatisch ermittelt; Ersatztiere werden ebenfalls automatisch entnommen.",
+      "conditions": [
+        {
+          "expression": "species == cattle",
+          "description": "Rind.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].animal_category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "automatic_effect",
+        "description": "Keine Einzelbeantragung für Rinder erforderlich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P6-RIND-AUTO",
+        "CIT-SRL-P53-A-RIND"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.base_failures",
+        "data.oepul.o6_5.is_cattle"
+      ]
+    },
+    {
+      "id": "O6_5-CON-REENTRY-AFTER-LAPSE",
+      "rule_type": "procedure",
+      "statement": "Nach Erlöschen des Vertrags ist für eine erneute prämienfähige Teilnahme ein neuer fristgerechter Maßnahmenantrag erforderlich; ist die Antragsfrist für das unmittelbar folgende Jahr bereits abgelaufen, ist eine Korrektur zum vorhergehenden Maßnahmenantrag mit erneuter Beantragung und zusätzlich ein gesondertes schriftliches Ersuchen an die AMA notwendig.",
+      "conditions": [
+        {
+          "expression": "previous_year_contract_lapsed == true",
+          "description": "Vertrag im Vorjahr erloschen.",
+          "input_paths": [
+            "oepul_participation.o6_5.previous_year_contract_lapsed"
+          ]
+        },
+        {
+          "expression": "reapplication_date <= date(year-1, 12-31) or (late_reentry_correction and written_request_submitted)",
+          "description": "Neuer Antrag oder Korrektur plus schriftliches Ersuchen.",
+          "input_paths": [
+            "oepul_participation.o6_5.reapplication_date",
+            "oepul_participation.o6_5.late_reentry_correction",
+            "oepul_participation.o6_5.written_request_submitted"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_failure_if_violated",
+        "description": "Ohne neue Beantragung keine Teilnahme.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P6-WIEDER",
+        "CIT-MB-P6-ERSUCHEN",
+        "CIT-AB-P13-WIEDER",
+        "CIT-SRL-P22-WIEDER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.reentry_ok",
+        "data.oepul.o6_5.contract_failures"
+      ]
+    },
+    {
+      "id": "O6_5-EXIT-AFTER-ONE-YEAR",
+      "rule_type": "exit",
+      "statement": "Nach Erfüllung des einjährigen Vertragszeitraumes ist ein Ausstieg aus der Maßnahme möglich; ein Ausstieg kann auch nach zwei oder mehreren Teilnahmejahren erfolgen.",
+      "conditions": [
+        {
+          "expression": "contract year fulfilled",
+          "description": "Einjähriger Vertragszeitraum erfüllt.",
+          "input_paths": [
+            "oepul_participation.o6_5.deregistration_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exit_permitted",
+        "description": "Ausstieg ohne Rückforderung vergangener Jahre.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P6-AUSSTIEG"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-EXIT-NOTIFICATION",
+      "rule_type": "procedure",
+      "statement": "Der Ausstieg ist der AMA für das laufende Förderjahr online auf www.eama.at im Rahmen der Antragstellung des jeweils aktuellen Mehrfachantrages bekannt zu geben.",
+      "conditions": [
+        {
+          "expression": "deregistration via current MFA on eAMA",
+          "description": "Meldeweg des Ausstiegs.",
+          "input_paths": [
+            "oepul_participation.o6_5.deregistration_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "procedure",
+        "description": "Ausstiegsmeldung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P6-AUSSTIEG-MELD"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-EXIT-DEREGISTRATION-TIMING",
+      "rule_type": "exit",
+      "statement": "Wird die Abmeldung im Zeitraum 1. Jänner bis einschließlich 31. Dezember durchgeführt, ist die Maßnahme im betroffenen Förderjahr nicht mehr gültig; sollen die Auflagen bis 31. Dezember erfüllt werden, darf erst ab 1. Jänner des Folgejahres abgemeldet werden.",
+      "conditions": [
+        {
+          "expression": "deregistration_date <= date(farm.year, 12-31)",
+          "description": "Abmeldung im oder vor dem Förderjahr.",
+          "input_paths": [
+            "oepul_participation.o6_5.deregistration_date",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_failure_if_violated",
+        "description": "Keine Prämie für das Förderjahr der Abmeldung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P7-ABMELD",
+        "CIT-MB-P7-ABMELD-FOLGE",
+        "CIT-AB-P13-ABMELD"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.deregistered_for_year",
+        "data.oepul.o6_5.deregistration_effective",
+        "data.oepul.o6_5.contract_failures"
+      ]
+    },
+    {
+      "id": "O6_5-GEN-OBLIGATIONS-UNTIL-EXIT",
+      "rule_type": "obligation",
+      "statement": "Bis zum Ausstieg aus einer beantragten Maßnahme sind die entsprechenden Förderverpflichtungen einzuhalten.",
+      "conditions": [
+        {
+          "expression": "before deregistration: all obligations apply",
+          "description": "Verpflichtungen bis zum Ausstieg.",
+          "input_paths": [
+            "oepul_participation.o6_5.deregistration_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Verpflichtungen gelten bis zur Abmeldung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AB-P13-BIS-AUSSTIEG",
+        "CIT-SRL-P21-BINDUNG"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-GEN-EXIT-UNTIL-INSPECTION",
+      "rule_type": "exit",
+      "statement": "Ein Maßnahmenausstieg ist grundsätzlich nur bis zum Zeitpunkt der Durchführung oder Ankündigung einer Vor-Ort-Kontrolle bzw. bis zur Mitteilung des Ergebnisses einer Verwaltungskontrolle möglich.",
+      "conditions": [
+        {
+          "expression": "deregistration_date < inspection_notice_date",
+          "description": "Abmeldung vor Kontrollankündigung.",
+          "input_paths": [
+            "oepul_participation.o6_5.deregistration_date",
+            "oepul_participation.o6_5.inspection_notice_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "deregistration_ineffective_if_violated",
+        "description": "Spätere Abmeldung wird nicht wirksam (Befund).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AB-P13-VOK"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.deregistration_after_inspection_notice",
+        "data.oepul.o6_5.findings"
+      ]
+    },
+    {
+      "id": "O6_5-GEN-REENTRY-NEW-APPLICATION",
+      "rule_type": "procedure",
+      "statement": "Nach einem Ausstieg, Ausschluss oder einer einjährigen Nichtabgabe des Mehrfachantrages ist ein Wiedereinstieg nur mit einem neuerlichen Maßnahmenantrag möglich.",
+      "conditions": [
+        {
+          "expression": "exit or exclusion or no MFA in a year -> new measure application",
+          "description": "Wiedereinstieg.",
+          "input_paths": [
+            "oepul_participation.o6_5.reapplication_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "procedure",
+        "description": "Neuer Maßnahmenantrag notwendig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AB-P13-WIEDER",
+        "CIT-SRL-P22-WIEDER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.reentry_ok"
+      ]
+    },
+    {
+      "id": "O6_5-GEN-TAKEOVER",
+      "rule_type": "access_requirement",
+      "statement": "Eine Maßnahmenübernahme ist bei 'Erhaltung gefährdeter Nutztierrassen' nur in Einzelfällen möglich, wenn sie im Zuge einer Betriebsauflösung, -teilung oder -zusammenlegung erfolgt; bei tierbezogenen Maßnahmen müssen Tiere und Flächen vom selben Vorbetrieb stammen.",
+      "conditions": [
+        {
+          "expression": "takeover.is_takeover == true -> reason in {betriebsaufloesung, betriebsteilung, betriebszusammenlegung}",
+          "description": "Zulässiger Übernahmegrund.",
+          "input_paths": [
+            "oepul_participation.o6_5.takeover.is_takeover",
+            "oepul_participation.o6_5.takeover.reason"
+          ]
+        },
+        {
+          "expression": "takeover.animals_and_land_from_same_predecessor == true",
+          "description": "Tiere und Flächen vom selben Vorbetrieb.",
+          "input_paths": [
+            "oepul_participation.o6_5.takeover.animals_and_land_from_same_predecessor"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_failure_if_violated",
+        "description": "Unzulässige Übernahme begründet keinen Vertrag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AB-P15-UEBERN",
+        "CIT-AB-P15-UEBERN-TIERE",
+        "CIT-SRL-P14-UEBERN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.takeover_ok",
+        "data.oepul.o6_5.restricted_takeover_reasons",
+        "data.oepul.o6_5.contract_failures"
+      ]
+    },
+    {
+      "id": "O6_5-GEN-APPLICANT-LEGAL-FORM",
+      "rule_type": "access_requirement",
+      "statement": "Als förderwerbende Personen kommen natürliche Personen, im Firmenbuch eingetragene Personengesellschaften, juristische Personen und Personenvereinigungen in Betracht; es muss ein landwirtschaftlicher Betrieb im eigenen Namen und auf eigene Rechnung mit Verfügungsgewalt bewirtschaftet werden.",
+      "conditions": [
+        {
+          "expression": "farm.applicant.legal_form in data.o6_5.applicant_legal_forms",
+          "description": "Zulässige Rechtsform.",
+          "input_paths": [
+            "farm.applicant.legal_form"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "applicant_failure_if_violated",
+        "description": "Andere Rechtsträger sind nicht förderwerbend.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AB-P4-PERSONEN",
+        "CIT-AB-P4-EIGEN",
+        "CIT-SRL-P8-PERS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.applicant_failures",
+        "data.oepul.o6_5.allowed_legal_forms"
+      ]
+    },
+    {
+      "id": "O6_5-GEN-PUBLIC-BODY-EXCLUDED",
+      "rule_type": "access_requirement",
+      "statement": "Gebietskörperschaften (Bund, Länder, Gemeinden), deren Einrichtungen und Einrichtungen, an denen Gebietskörperschaften mit mehr als 25 % beteiligt sind bzw. bestimmenden Einfluss haben, sind bei o6_5 nicht förderwerbend (o6_5 ist nicht unter den Ausnahme-Maßnahmen).",
+      "conditions": [
+        {
+          "expression": "farm.applicant.is_public_body == true",
+          "description": "Gebietskörperschaft.",
+          "input_paths": [
+            "farm.applicant.is_public_body"
+          ]
+        },
+        {
+          "expression": "farm.applicant.public_body_share_percent > 25",
+          "description": "Beteiligung von Gebietskörperschaften über 25 %.",
+          "input_paths": [
+            "farm.applicant.public_body_share_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "applicant_failure_if_violated",
+        "description": "Ausschluss von der Förderung.",
+        "value": {
+          "max_share_percent": 25
+        }
+      },
+      "source_reference_ids": [
+        "CIT-AB-P5-GEBIETSK",
+        "CIT-AB-P4-PERSONEN",
+        "CIT-SRL-P8-GEBIETSK",
+        "CIT-SRL-P8-25PROZ"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.applicant_failures",
+        "data.oepul.o6_5.public_body_exempt_measure"
+      ]
+    },
+    {
+      "id": "O6_5-GEN-ACTIVE-FARMER",
+      "rule_type": "access_requirement",
+      "statement": "Die förderwerbende Person muss aktiver Landwirt gemäß § 6d Abs. 9 MOG 2021 iVm § 21 Abs. 3 GSP-AV sein und eine landwirtschaftliche Tätigkeit gemäß § 20 GSP-AV ausüben.",
+      "conditions": [
+        {
+          "expression": "farm.applicant.is_active_farmer == true",
+          "description": "Aktiver Landwirt.",
+          "input_paths": [
+            "farm.applicant.is_active_farmer"
+          ]
+        },
+        {
+          "expression": "farm.applicant.performs_agricultural_activity == true",
+          "description": "Landwirtschaftliche Tätigkeit.",
+          "input_paths": [
+            "farm.applicant.performs_agricultural_activity"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "applicant_failure_if_violated",
+        "description": "Ohne aktive Landwirtseigenschaft keine Förderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AB-P5-AKTIV",
+        "CIT-SRL-P8-PERS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.applicant_failures"
+      ]
+    },
+    {
+      "id": "O6_5-GEN-MIN-FARM-SIZE",
+      "rule_type": "access_requirement",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr muss der Betrieb mindestens 0,50 ha Flächen im geschützten Anbau oder mindestens 1,50 ha landwirtschaftliche Fläche (inkl. GA-Flächen, K20, GLÖZ-Landschaftselemente, Mehrnutzenhecken, Agroforststreifen) bewirtschaften; ab dem zweiten Teilnahmejahr ist keine Betriebsmindestgröße erforderlich.",
+      "conditions": [
+        {
+          "expression": "oepul_participation.first_oepul_year == farm.year",
+          "description": "Erstes ÖPUL-Teilnahmejahr.",
+          "input_paths": [
+            "oepul_participation.first_oepul_year",
+            "farm.year"
+          ]
+        },
+        {
+          "expression": "land.protected_cultivation_area_ha >= 0.5 or land.total_area_ha >= 1.5",
+          "description": "Mindestfläche.",
+          "input_paths": [
+            "land.protected_cultivation_area_ha",
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "applicant_failure_if_violated",
+        "description": "Kein Vertrag ohne Mindestgröße im ersten Jahr.",
+        "value": {
+          "min_total_ha": 1.5,
+          "min_protected_ha": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "CIT-AB-P5-MINDEST",
+        "CIT-AB-P5-MINDEST-2J",
+        "CIT-SRL-P10-MINDEST"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.applicant_failures",
+        "data.oepul.o6_5.min_farm_size_ok"
+      ]
+    },
+    {
+      "id": "O6_5-GEN-KONDITIONALITAET",
+      "rule_type": "obligation",
+      "statement": "Alle am ÖPUL 2023 teilnehmenden Betriebe müssen die Konditionalität (Klima und Umwelt, öffentliche Gesundheit, Pflanzengesundheit, Tierwohl) sowie die soziale Konditionalität gemäß §§ 6e und 6f MOG 2021 einhalten, um die Förderung in voller Höhe zu erhalten; Sanktionen nach Art. 83 bis 89 VO (EU) 2021/2116.",
+      "conditions": [
+        {
+          "expression": "conditionality complied",
+          "description": "Einhaltung der Konditionalität.",
+          "input_paths": [
+            "documentation.audit_last_year_noncompliance"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_if_violated",
+        "description": "Kürzung nach Konditionalitätsrecht (letzte Stufe der Mehrfachkürzungen).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AB-P4-KOND",
+        "CIT-SRL-P25-KOND"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-GEN-NO-DOUBLE-FUNDING",
+      "rule_type": "access_requirement",
+      "statement": "Werden Leistungen aus einem anderen Titel mit Geldern der öffentlichen Hand gefördert, ist dieselbe Leistung nach der Sonderrichtlinie nicht förderbar; gesetzlich oder behördlich vorgeschriebene Maßnahmen werden nicht abgegolten.",
+      "conditions": [
+        {
+          "expression": "same service not funded elsewhere by public funds",
+          "description": "Keine Leistungsüberschneidung.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].animal_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible_if_violated",
+        "description": "Keine Doppelförderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P11-ABGRENZ"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-GEN-COMBINATION",
+      "rule_type": "combination",
+      "statement": "Eine Teilnahme an mehreren ÖPUL-Maßnahmen ist möglich, sofern eine Kombination nicht ausgeschlossen ist; für 'Erhaltung gefährdeter Nutztierrassen' ist in den Quellen kein Kombinationsausschluss festgelegt. Unmögliche Kombinationen können bis zur Auszahlungsmitteilung korrigiert werden, sofern keine Beanstandung vorliegt.",
+      "conditions": [
+        {
+          "expression": "o6_5 not listed in combination exclusions (SRL 1.9.4, Anhang L)",
+          "description": "Keine Ausschlussregel für o6_5.",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "combination_permitted",
+        "description": "o6_5 ist mit anderen Maßnahmen kombinierbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AB-P13-KOMB",
+        "CIT-AB-P13-KOMB-KORR",
+        "CIT-SRL-P18-KOMB"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-GEN-ACCESS-NONCOMPLIANCE-NO-CONTRACT",
+      "rule_type": "consequence",
+      "statement": "Bei einjährigen Maßnahmen wie o6_5 kommt bei Nichterfüllung von Förder- bzw. Zugangsvoraussetzungen keine gültige Verpflichtung, d. h. kein Vertrag zustande.",
+      "conditions": [
+        {
+          "expression": "count(applicant_failures) > 0 or count(contract_failures) > 0",
+          "description": "Zugangs-/Fördervoraussetzung verletzt.",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "no_contract",
+        "description": "Keine Prämie für das Förderjahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P24-NICHT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.access_requirements_met",
+        "data.oepul.o6_5.payout_eur"
+      ]
+    },
+    {
+      "id": "O6_5-GEN-LEGAL-BASIS",
+      "rule_type": "legal_basis",
+      "statement": "Rechtsverbindlich sind die Sonderrichtlinie ÖPUL 2023 samt Anhängen, das MOG 2021 und die GSP-AV (zusätzlich einzuhalten); die Informationsblätter sind rechtlich unverbindlich; abweichende mündliche oder schriftliche Festlegungen sind unwirksam.",
+      "conditions": [
+        {
+          "expression": "rules derived from SRL + Anhänge + MOG 2021 + GSP-AV",
+          "description": "Rangfolge der Quellen.",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "legal_hierarchy",
+        "description": "Bei Abweichungen geht die Sonderrichtlinie dem Informationsblatt vor.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AB-P2-VERBINDL",
+        "CIT-AB-P2-RGL",
+        "CIT-SRL-P5-VERTRAG",
+        "CIT-SRL-P5-RGL",
+        "CIT-MB-P10-IMPRESSUM"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-GEN-ANNUAL-PREMIUM",
+      "rule_type": "calculation",
+      "statement": "Die Förderung wird in Form jährlicher Prämien gewährt (finanziert aus EU-, Bundes- und Landesmitteln); die Beantragung der Tiere im Mehrfachantrag gilt als Zahlungsantrag.",
+      "conditions": [
+        {
+          "expression": "annual payment per Förderjahr",
+          "description": "Jährliche Prämie.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "annual_payment",
+        "description": "Prämie je Förderjahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P16-ART",
+        "CIT-SRL-P22-ZA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.payout_eur"
+      ]
+    },
+    {
+      "id": "O6_5-GEN-APPROVAL-NOTICE",
+      "rule_type": "procedure",
+      "statement": "Die AMA teilt die Genehmigung oder Ablehnung des Förderantrages schriftlich (Post oder 'Mein Postkorb') mit; mit der Verständigung der Genehmigung kommt der Vertrag zustande.",
+      "conditions": [
+        {
+          "expression": "AMA approval notified",
+          "description": "Genehmigung.",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "contract_concluded",
+        "description": "Vertragsabschluss mit Genehmigung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AB-P18-GENEHM",
+        "CIT-SRL-P22-ENTSCH"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-GEN-PAYMENT-TIMING",
+      "rule_type": "deadline",
+      "statement": "Die Auszahlung erfolgt bis zum 30. Juni des auf das Antragsjahr folgenden Jahres; nach Abschluss der Verwaltungskontrollen kann eine Teilzahlung von maximal 75 % erfolgen.",
+      "conditions": [
+        {
+          "expression": "payment_deadline = date(year+1, 06-30)",
+          "description": "Auszahlungsfrist.",
+          "input_paths": [
+            "farm.year"
+          ]
+        },
+        {
+          "expression": "advance_payment <= 0.75 * payout",
+          "description": "Teilzahlungsobergrenze.",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "payment_schedule",
+        "description": "Auszahlungstermin und maximale Teilzahlung.",
+        "value": {
+          "payment_deadline_md": "06-30",
+          "advance_max_share": 0.75
+        }
+      },
+      "source_reference_ids": [
+        "CIT-AB-P18-AUSZ",
+        "CIT-AB-P18-TEILZ",
+        "CIT-SRL-P22-AUSZ",
+        "CIT-SRL-P22-TEILZ"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.payment_deadline",
+        "data.oepul.o6_5.max_advance_payment_eur"
+      ]
+    },
+    {
+      "id": "O6_5-GEN-SMALL-AMOUNT",
+      "rule_type": "calculation",
+      "statement": "Von der Gewährung einer Förderung kann abgesehen werden, wenn der sich ergebende Auszahlungsbetrag 50 Euro nicht überschreitet.",
+      "conditions": [
+        {
+          "expression": "0 < payout <= 50",
+          "description": "Kleinbetrag.",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "payout_may_be_waived",
+        "description": "Auszahlung kann entfallen (Ermessen der AMA; betrifft den Gesamtauszahlungsbetrag).",
+        "value": {
+          "threshold_eur": 50
+        }
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P22-50EUR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.payout_may_be_waived"
+      ]
+    },
+    {
+      "id": "O6_5-GEN-MODULATION",
+      "rule_type": "calculation",
+      "statement": "Das Prämienausmaß aller Maßnahmen wird in Abhängigkeit zur gesamten Fläche des Betriebes (laut Mehrfachantrag) moduliert: bis 200 ha 100 %, über 200 bis 300 ha 90 %, über 300 bis 1.000 ha 85 %, über 1.000 ha 75 %; der Faktor ergibt sich als flächengewichteter Mittelwert (z. B. 220 ha -> 99,09 %).",
+      "conditions": [
+        {
+          "expression": "factor = sum((min(upper, area) - lower) * factor_bracket) / area",
+          "description": "Gewichteter Modulationsfaktor.",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_factor",
+        "description": "Modulationsfaktor wird auf die Maßnahmenprämie angewandt.",
+        "value": {
+          "brackets": [
+            [
+              0,
+              200,
+              1.0
+            ],
+            [
+              200,
+              300,
+              0.9
+            ],
+            [
+              300,
+              1000,
+              0.85
+            ],
+            [
+              1000,
+              null,
+              0.75
+            ]
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "CIT-AB-P19-MOD",
+        "CIT-AB-P19-MOD-BSP",
+        "CIT-SRL-P17-MOD",
+        "CIT-SRL-P17-MOD-STUFE",
+        "CIT-SRL-P17-MOD-MFA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.modulation_factor",
+        "data.oepul.o6_5.modulated_area_ha",
+        "data.oepul.o6_5.bracket_upper"
+      ]
+    },
+    {
+      "id": "O6_5-GEN-SANCTION-STAGES",
+      "rule_type": "sanction",
+      "statement": "Verstöße gegen inhaltliche Förderverpflichtungen werden maßnahmenbezogen inklusive aller Zuschläge nach Schwere, Ausmaß, Dauer und Häufigkeit beurteilt: Verwarnung, Kürzung um 2 %, 5 %, 10 %, 25 %, 50 %, 100 %, Ausschluss; Sanktionen werden automatisiert vergeben und müssen wirksam, abschreckend und verhältnismäßig sein.",
+      "conditions": [
+        {
+          "expression": "reduction = data.o6_5.sanction_stages[stage].reduction_percent",
+          "description": "Kürzungsstufe laut Beurteilung.",
+          "input_paths": [
+            "oepul_participation.o6_5.content_violation_stage"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction",
+        "description": "Kürzung der Maßnahmenprämie in Prozent.",
+        "value": {
+          "stages": [
+            "warning",
+            "2",
+            "5",
+            "10",
+            "25",
+            "50",
+            "100",
+            "exclusion"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "CIT-AB-P18-STUFEN",
+        "CIT-SRL-P24-INHALT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.reduction_percent",
+        "data.oepul.o6_5.sanction_stage_row",
+        "data.oepul.o6_5.premium_after_reductions_eur"
+      ]
+    },
+    {
+      "id": "O6_5-GEN-SANCTION-2027-RETENTION",
+      "rule_type": "sanction",
+      "statement": "Ab dem Jahr 2027 wird statt einer Verwarnung ein Einbehalt der Förderung im Ausmaß von 1 % der Maßnahmenprämie ausgesprochen.",
+      "conditions": [
+        {
+          "expression": "farm.year >= 2027 and stage == 'warning'",
+          "description": "Verwarnungsstufe ab 2027.",
+          "input_paths": [
+            "farm.year",
+            "oepul_participation.o6_5.content_violation_stage"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction",
+        "description": "1 % Einbehalt.",
+        "value": {
+          "from_year": 2027,
+          "percent": 1
+        }
+      },
+      "source_reference_ids": [
+        "CIT-AB-P18-FN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.reduction_percent"
+      ]
+    },
+    {
+      "id": "O6_5-GEN-EXCLUSION-TWO-100",
+      "rule_type": "sanction",
+      "statement": "Bei zweimaliger 100 %-Kürzung im Vertragszeitraum erfolgt der Ausschluss aus der Maßnahme und die Rückforderung der im Vertragszeitraum bisher gewährten Maßnahmenprämie.",
+      "conditions": [
+        {
+          "expression": "full_reductions_in_contract_period >= 2",
+          "description": "Zweimalige 100 %-Kürzung.",
+          "input_paths": [
+            "oepul_participation.o6_5.full_reductions_in_contract_period"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exclusion",
+        "description": "Ausschluss und Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AB-P18-AUSSCHLUSS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.excluded_from_measure",
+        "data.oepul.o6_5.reduction_percent"
+      ]
+    },
+    {
+      "id": "O6_5-GEN-REDUCTION-GROUNDS",
+      "rule_type": "sanction",
+      "statement": "Prämienkürzungen, Einbehalt und Rückforderungen können aus der Nichteinhaltung von Zugangsvoraussetzungen, Abweichungen bei Angaben (z. B. Anzahl der Tiere), Nichteinhaltung inhaltlicher Förderverpflichtungen und der Konditionalität resultieren.",
+      "conditions": [
+        {
+          "expression": "any listed violation",
+          "description": "Kürzungsgründe.",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "reduction",
+        "description": "Kürzung/Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AB-P17-RUECKF"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-GEN-ANIMAL-DEVIATIONS",
+      "rule_type": "sanction",
+      "statement": "Für Abweichungen bei Tieren (z. B. beantragte vs. festgestellte Tiere) gelten die Bestimmungen der §§ 42 bis 47 GSP-AV.",
+      "conditions": [
+        {
+          "expression": "declared animals != determined animals",
+          "description": "Abweichung bei Tieren.",
+          "input_paths": [
+            "livestock.endangered_breed_animals[].animal_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction",
+        "description": "Kürzung nach GSP-AV (nicht in den Quellen quantifiziert).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P24-ABW",
+        "CIT-AB-P17-RUECKF"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-GEN-MULTIPLE-REDUCTION-ORDER",
+      "rule_type": "calculation",
+      "statement": "Bei Mehrfachkürzungen gilt die in Punkt 1.12.2 SRL festgelegte Reihenfolge (u. a. Zugangsvoraussetzungen, Fristversäumnis, inhaltliche Kürzungen, Modulation, Konditionalität).",
+      "conditions": [
+        {
+          "expression": "apply reductions in data.o6_5.multiple_reduction_order order",
+          "description": "Reihenfolge.",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "calculation_order",
+        "description": "Inhaltliche Kürzung vor Modulation.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P25-MEHRFACH"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.premium_after_reductions_eur"
+      ]
+    },
+    {
+      "id": "O6_5-CTRL-CHECKS",
+      "rule_type": "control",
+      "statement": "Die Einhaltung aller Bedingungen wird über Verwaltungskontrollen (für alle Anträge), Vor-Ort-Kontrollen (bei einem Anteil der Betriebe) und nachgängige Kontrollen überprüft; ab Vertragsbeginn sind Kontrollen zuzulassen und förderrelevante Unterlagen bereitzuhalten.",
+      "conditions": [
+        {
+          "expression": "controls tolerated",
+          "description": "Kontrollduldung.",
+          "input_paths": [
+            "documentation.inspection_refused"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "control",
+        "description": "Kontrollen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AB-P17-KONTR",
+        "CIT-SRL-P23-KONTR",
+        "CIT-SRL-P23-DULDUNG",
+        "CIT-SRL-P21-BINDUNG"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-CTRL-REFUSAL",
+      "rule_type": "consequence",
+      "statement": "Verweigert die förderwerbende Person die Auskunft oder verhindert sie die Vor-Ort-Kontrolle (außer bei höherer Gewalt oder außergewöhnlichen Umständen), ist der Antrag abzulehnen: keine Prämie für das laufende Jahr, Verträge werden beendet und rückabgewickelt.",
+      "conditions": [
+        {
+          "expression": "documentation.inspection_refused == true and not inspection_refusal_force_majeure",
+          "description": "Kontrollverweigerung ohne höhere Gewalt.",
+          "input_paths": [
+            "documentation.inspection_refused",
+            "documentation.inspection_refusal_force_majeure"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "applicant_failure_if_violated",
+        "description": "Ablehnung und Rückabwicklung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P23-VERWEIG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.applicant_failures"
+      ]
+    },
+    {
+      "id": "O6_5-GEN-FORCE-MAJEURE",
+      "rule_type": "exception",
+      "statement": "Für Fälle höherer Gewalt oder außergewöhnlicher Umstände gelten die Bestimmungen gemäß § 6 GSP-AV; bei dauerhaften oder vorübergehenden flächen- oder bewirtschaftungsverändernden Umständen ohne Einfluss der förderwerbenden Person kann die AMA bei vorgesehener Meldung von Rückforderungen absehen.",
+      "conditions": [
+        {
+          "expression": "force majeure recognised by AMA",
+          "description": "Anerkannte höhere Gewalt.",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "exception",
+        "description": "Keine Sanktion bzw. Rückforderung im anerkannten Umfang.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P15-HG",
+        "CIT-SRL-P15-DAUERH",
+        "CIT-SRL-P15-VORUEB"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-GEN-BML-SPECIAL-DETERMINATIONS",
+      "rule_type": "exception",
+      "statement": "Das BML kann bei flächen- oder bewirtschaftungsverändernden Umständen spezielle Festlegungen treffen (Grundlage z. B. der Dürre-Festlegungen 2026).",
+      "conditions": [
+        {
+          "expression": "BML determination for year",
+          "description": "Jahresspezifische Festlegung.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exception",
+        "description": "Abweichende Verpflichtungen gemäß Festlegung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P16-BML",
+        "CIT-N0812-HALTE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_5.year_override"
+      ]
+    },
+    {
+      "id": "O6_5-2026-DROUGHT-FORCE-MAJEURE-APPLICATION",
+      "rule_type": "procedure",
+      "statement": "Sofern Förderverpflichtungen aufgrund der Trockenheit 2026 nicht einhaltbar sind, kann ein Antrag auf höhere Gewalt gestellt werden; einzelbetriebliche Ansuchen sind über www.eama.at im Register 'Eingaben' einzubringen.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026 and obligation impossible due to drought",
+          "description": "Dürrebedingte Unmöglichkeit.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "procedure",
+        "description": "Ansuchen auf Anerkennung höherer Gewalt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-N0522-HG",
+        "CIT-N0522-HG-EAMA"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-GEN-REVISION-CLAUSE",
+      "rule_type": "contract",
+      "statement": "Bei Änderungen des verbindlichen Rechtsrahmens, die eine Vertragsanpassung erfordern, kann die förderwerbende Person die Zustimmung verweigern; der Vertrag endet dann ohne Rückforderungen für die Vergangenheit wegen Nichteinhaltung des Vertragszeitraumes.",
+      "conditions": [
+        {
+          "expression": "consent to contract adjustment refused",
+          "description": "Nichtzustimmung.",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "contract_ends",
+        "description": "Vertragsende ohne Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P16-REVISION"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-GEN-DATA-PROCESSING",
+      "rule_type": "information",
+      "statement": "Zuchtorganisationen, die VIS-Betreiberstelle und weitere Stellen übermitteln der AMA die zur Überprüfung der Förderbedingungen benötigten Daten; die AMA darf die Daten zu Abwicklungs- und Kontrollzwecken verarbeiten.",
+      "conditions": [
+        {
+          "expression": "data exchange with breeding organisations",
+          "description": "Datenübermittlung.",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "information",
+        "description": "Datenfluss für Kontrolle.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P26-DATEN"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-GEN-NO-LEGAL-CLAIM",
+      "rule_type": "legal_basis",
+      "statement": "Aus der Erlassung der Sonderrichtlinie entsteht kein subjektives Recht (Rechtsanspruch) auf Gewährung einer Förderung; Abtretung/Verpfändung von Förderforderungen ist gegenüber der Republik unwirksam; Gerichtsstand ist Wien.",
+      "conditions": [
+        {
+          "expression": "always",
+          "description": "Allgemeine Vertragsbestimmung.",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "legal_status",
+        "description": "Kein Rechtsanspruch; Abtretungsverbot; Gerichtsstand Wien.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P26-SUBJ",
+        "CIT-SRL-P26-ABTR",
+        "CIT-SRL-P27-GERICHT"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_5-GEN-AREA-CAPS-NOT-APPLICABLE",
+      "rule_type": "scope",
+      "statement": "Die Prämienobergrenzen (1.300 €/ha usw.) gelten für die Summe der flächenbezogenen Zahlungen je Schlag; die tierbezogene Prämie der Maßnahme o6_5 unterliegt diesen Flächenobergrenzen daher nicht (Förderobergrenze je Maßnahme ist im Maßnahmenteil für o6_5 nicht festgelegt).",
+      "conditions": [
+        {
+          "expression": "o6_5 premium is per animal, not per ha",
+          "description": "Tierbezogene Zahlung.",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "not_applicable",
+        "description": "Keine Flächenobergrenze auf o6_5-Prämien.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AB-P19-OBERGR",
+        "CIT-SRL-P53-JE-TIER"
+      ],
+      "rego_symbols": []
+    }
+  ]
+}
