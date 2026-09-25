@@ -819,6 +819,42 @@ def claude_result_summary(events_path: Path) -> dict[str, Any] | None:
     }
 
 
+def finalization_feedback(run_dir: Path, limit: int = 300) -> str:
+    """Render the last failed finalization gates for a resumed generator.
+
+    The generator workspace contains the OPA validator but not the grounding
+    gates, so a resumed session otherwise cannot see why ``finalize`` failed.
+    """
+
+    grounding_path = run_dir / "artifacts" / "grounding-validation.json"
+    metrics_path = run_dir / "artifacts" / "metrics.json"
+    lines: list[str] = []
+    if grounding_path.is_file():
+        grounding = read_json(grounding_path)
+        if grounding.get("status") == "failed":
+            for category, errors in sorted(grounding.get("errors", {}).items()):
+                lines.extend(f"- [{category}] {error}" for error in errors)
+    if metrics_path.is_file():
+        missing = [
+            item
+            for item in read_json(metrics_path).get("required_outputs_missing", [])
+            if item != "grounding_validation_failed"
+        ]
+        lines.extend(f"- [required_outputs_missing] {item}" for item in missing)
+    if not lines:
+        return ""
+    shown = lines[:limit]
+    if len(lines) > limit:
+        shown.append(f"- … {len(lines) - limit} weitere Fehler gleicher Art")
+    return (
+        "\nDie deterministische Rule-Lab-Finalisierung (`finalize`) hat den "
+        "bisherigen Stand abgelehnt. Behebe alle folgenden Fehler, ohne die "
+        "Anforderungen aus `AGENTS.md` und den Schemas aufzuweichen:\n\n"
+        + "\n".join(shown)
+        + "\n"
+    )
+
+
 def external_command(config: dict[str, Any], run_dir: Path) -> list[str]:
     raw = config.get("command")
     if not isinstance(raw, list) or not raw:
@@ -944,7 +980,9 @@ def run_agent(args: argparse.Namespace) -> int:
 
     generation_attempt = prepare_raw_attempt(run_dir / "raw")
     if resume:
-        prompt_path.write_text(CLAUDE_RESUME_PROMPT, encoding="utf-8")
+        prompt_path.write_text(
+            CLAUDE_RESUME_PROMPT + finalization_feedback(run_dir), encoding="utf-8"
+        )
     prompt = prompt_path.read_text(encoding="utf-8")
     metadata["status"] = "running"
     metadata["started_at"] = utc_now()
