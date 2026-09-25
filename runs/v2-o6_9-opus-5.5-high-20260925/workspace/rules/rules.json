@@ -1,0 +1,2650 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_9",
+  "rules": [
+    {
+      "id": "o6_9.scope.categories",
+      "rule_type": "definition",
+      "statement": "Die Maßnahme fördert (a) die bodennahe Ausbringung flüssiger Wirtschaftsdünger und Biogasgülle auf Acker- und Grünlandflächen, (b) die Separierung von Rindergülle und (c) ab dem Antragsjahr 2025 die stark stickstoffreduzierte Fütterung von Schweinen.",
+      "conditions": [
+        {
+          "expression": "category in {trailing_hose, trailing_shoe, injection, separation, n_reduced_pig_feeding}",
+          "description": "Förderbare Maßnahmenkategorien",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "defined",
+        "description": "Fünf Prämienkategorien (drei Ausbringungsverfahren, Separierung, N-reduzierte Fütterung).",
+        "value": [
+          "trailing_hose",
+          "trailing_shoe",
+          "injection",
+          "separation",
+          "n_reduced_pig_feeding"
+        ]
+      },
+      "source_reference_ids": [
+        "cit.mb.p1.overview",
+        "cit.mb.p1.overview_feeding",
+        "cit.srl.p61.support"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.params"
+      ]
+    },
+    {
+      "id": "o6_9.categories.choice_multiple",
+      "rule_type": "option",
+      "statement": "Es kann wahlweise bodennah ausgebracht, am Betrieb angefallene Rindergülle separiert oder (ab 2025) stark N-reduziert gefüttert werden; mehrere Kategorien können gleichzeitig angewendet und gefördert werden.",
+      "conditions": [
+        {
+          "expression": "count(categories_used) >= 1",
+          "description": "Mindestens eine Kategorie wird angewendet",
+          "input_paths": [
+            "manure_management.declared_volumes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "permitted",
+        "description": "Kombination mehrerer Kategorien am Betrieb zulässig; Prämien werden je Kategorie addiert.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p3.choice",
+        "cit.srl.p61.obligations"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.premium_components"
+      ]
+    },
+    {
+      "id": "o6_9.categories.feeding_standalone",
+      "rule_type": "option",
+      "statement": "Bei Teilnahme an der stark N-reduzierten Fütterung muss nicht zwingend auch bodennah ausgebracht oder separiert werden.",
+      "conditions": [
+        {
+          "expression": "participates_n_feeding == true",
+          "description": "Teilnahme an N-reduzierter Fütterung",
+          "input_paths": [
+            "oepul_applications[].component"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "permitted",
+        "description": "Die Fütterungskategorie allein erfüllt die Mindestteilnahme.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p3.feeding_no_other_needed"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.minimum_participation_met"
+      ]
+    },
+    {
+      "id": "o6_9.contract.one_year_period",
+      "rule_type": "contract_period",
+      "statement": "Verpflichtungs- und Vertragszeitraum der Maßnahme ist ein Kalenderjahr (1. Jänner bis 31. Dezember); o6_9 zählt zu den einjährigen Maßnahmen.",
+      "conditions": [
+        {
+          "expression": "measure_id == 'o6_9'",
+          "description": "Maßnahme o6_9",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "one_year_contract",
+        "description": "Vertrags- und Verpflichtungszeitraum 01.01.-31.12. des Förderjahres.",
+        "value": {
+          "start": "01-01",
+          "end": "12-31"
+        }
+      },
+      "source_reference_ids": [
+        "cit.mb.p1.contract_period",
+        "cit.at.p12.one_year_list",
+        "cit.srl.p12.one_year",
+        "cit.srl.p12.duration"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.is_one_year_measure",
+        "data.oepul.o6_9.params"
+      ]
+    },
+    {
+      "id": "o6_9.contract.auto_renewal",
+      "rule_type": "contract_period",
+      "statement": "Die Maßnahme (inkl. Kategorie N-reduzierte Fütterung) verlängert sich automatisch um ein weiteres Förderjahr, wenn sie nicht abgemeldet wird; die Weiterführung wird durch Abgabe des Mehrfachantrages mit förderrelevanten Angaben beantragt.",
+      "conditions": [
+        {
+          "expression": "not withdrawn",
+          "description": "Keine Abmeldung",
+          "input_paths": [
+            "oepul_applications[].withdrawn_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "renewed",
+        "description": "Vertrag läuft im Folgejahr weiter.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p1.auto_renewal",
+        "cit.at.p13.auto_renewal"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.application_active"
+      ]
+    },
+    {
+      "id": "o6_9.contract.application_deadline",
+      "rule_type": "deadline",
+      "statement": "Die Maßnahme und die Kategorie N-reduzierte Fütterung müssen vor Vertragsbeginn im Maßnahmenantrag des Mehrfachantrages bis spätestens 31. Dezember beantragt werden, um einen gültigen Vertrag ab dem Folgejahr zu begründen.",
+      "conditions": [
+        {
+          "expression": "applied_on <= (contract_start_year - 1) + '-12-31'",
+          "description": "Antrag spätestens am 31.12. vor Vertragsbeginn",
+          "input_paths": [
+            "oepul_applications[].applied_on",
+            "oepul_applications[].contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "valid_contract",
+        "description": "Fristgerechter Antrag begründet gültigen Vertrag ab dem Folgejahr; sonst kein Vertrag.",
+        "value": {
+          "deadline_mmdd": "12-31"
+        }
+      },
+      "source_reference_ids": [
+        "cit.mb.p6.application_deadline",
+        "cit.at.p12.application",
+        "cit.srl.p21.measure_application"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.measure_application_timely",
+        "data.oepul.o6_9.measure_contract_valid"
+      ]
+    },
+    {
+      "id": "o6_9.contract.last_entry_2027",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg in die Maßnahme ist mit dem Förderjahr 2027 möglich (Beantragung bis spätestens 31. Dezember 2026); spätester Vertragsbeginn 01.01.2027.",
+      "conditions": [
+        {
+          "expression": "contract_start_year <= 2027",
+          "description": "Vertragsbeginn spätestens 2027",
+          "input_paths": [
+            "oepul_applications[].contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "entry_possible",
+        "description": "Einstieg ab Förderjahr 2028 nicht mehr möglich.",
+        "value": {
+          "last_entry_year": 2027,
+          "last_application_date": "2026-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "cit.mb.p6.last_entry_measure",
+        "cit.at.p12.last_entry",
+        "cit.srl.p12.last_start"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.measure_application_timely"
+      ]
+    },
+    {
+      "id": "o6_9.contract.lapse_no_quantity",
+      "rule_type": "consequence",
+      "statement": "Wird in einem Förderjahr keine Menge für das bodennahe Ausbringungsverfahren oder die Gülleseparierung beantragt und nicht an der N-reduzierten Fütterung teilgenommen, erlischt der Vertrag für die Maßnahme.",
+      "conditions": [
+        {
+          "expression": "declared_slurry_total_m3 == 0 and declared_separation_m3 == 0 and not participates_n_feeding",
+          "description": "Keine Menge und keine Fütterungsteilnahme",
+          "input_paths": [
+            "manure_management.declared_volumes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_lapses",
+        "description": "Vertrag erlischt; kein Prämienanspruch.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p2.lapse",
+        "cit.mb.p6.lapse_warning"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.contract_lapses_this_year",
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.contract.reentry_new_application",
+      "rule_type": "procedure",
+      "statement": "Nach Erlöschen des Vertrags, Ausstieg, Ausschluss oder einjähriger Nichtabgabe des Mehrfachantrages ist für eine neuerliche Teilnahme ein neuer fristgerechter Maßnahmenantrag (bis 31.12. vor dem Teilnahmejahr) erforderlich.",
+      "conditions": [
+        {
+          "expression": "lapsed_in_year < year and no new timely application",
+          "description": "Vertrag in einem Vorjahr erloschen",
+          "input_paths": [
+            "oepul_applications[].lapsed_in_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "new_application_required",
+        "description": "Ohne neuen Maßnahmenantrag kein gültiger Vertrag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p6.new_application",
+        "cit.mb.p7.example",
+        "cit.at.p13.reentry",
+        "cit.srl.p22.reentry"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.lapsed_before",
+        "data.oepul.o6_9.measure_contract_valid"
+      ]
+    },
+    {
+      "id": "o6_9.contract.formation",
+      "rule_type": "procedure",
+      "statement": "Der Vertrag zwischen förderwerbender Person und Bund kommt durch Antrag (Anbot) und Genehmigung durch die AMA (Verständigung) zustande; Sonderrichtlinie samt Anhängen ist Vertragsbestandteil.",
+      "conditions": [
+        {
+          "expression": "approval_notified == true",
+          "description": "Genehmigung mitgeteilt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "contract_concluded",
+        "description": "Vertragsabschluss mit Verständigung über die Genehmigung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.srl.p5.contract",
+        "cit.srl.p22.contract_notification",
+        "cit.at.p18.notification"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.participation.minimum",
+      "rule_type": "eligibility",
+      "statement": "In jedem Teilnahmejahr muss flüssiger Wirtschaftsdünger bodennah ausgebracht oder Rindergülle separiert oder an der N-reduzierten Fütterung teilgenommen werden.",
+      "conditions": [
+        {
+          "expression": "declared_slurry_total_m3 > 0 or declared_separation_m3 > 0 or participates_n_feeding",
+          "description": "Mindestteilnahme",
+          "input_paths": [
+            "manure_management.declared_volumes",
+            "oepul_applications[].component"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "minimum_participation_met",
+        "description": "Mindestteilnahme erfüllt; andernfalls erlischt der Vertrag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p2.min_participation"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.minimum_participation_met"
+      ]
+    },
+    {
+      "id": "o6_9.definition.eligible_manure",
+      "rule_type": "definition",
+      "statement": "Als förderbarer Wirtschaftsdünger zählen Gülle, Jauche und Biogasgülle – auch mit zusätzlichem Wasser versetzt.",
+      "conditions": [
+        {
+          "expression": "manure_kind in data.o6_9.manure_definitions.eligible_manure_kinds",
+          "description": "Förderbare Wirtschaftsdüngerart",
+          "input_paths": [
+            "manure_management.applications[].manure_kind"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_manure",
+        "description": "Andere Stoffe sind nicht förderbar.",
+        "value": [
+          "guelle",
+          "jauche",
+          "biogasguelle"
+        ]
+      },
+      "source_reference_ids": [
+        "cit.mb.p2.manure_types"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.eligible_manure_kind",
+        "data.oepul.o6_9.defs"
+      ]
+    },
+    {
+      "id": "o6_9.definition.guelle",
+      "rule_type": "definition",
+      "statement": "Gülle ist ein Gemisch aus Kot und Harn, das darüber hinaus Wasser, Futterreste und Einstreuteile enthalten kann.",
+      "conditions": [
+        {
+          "expression": "manure_kind == 'guelle'",
+          "description": "Gülle",
+          "input_paths": [
+            "manure_management.applications[].manure_kind"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "defined",
+        "description": "Definition Gülle.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p2.guelle_def"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.eligible_manure_kind"
+      ]
+    },
+    {
+      "id": "o6_9.definition.water_admixture",
+      "rule_type": "definition",
+      "statement": "In die Güllegrube eingeleitetes Regenwasser ist nicht förderbar; ein unvermeidlicher Anteil an Stallwaschwasser bzw. ein geringer Anteil Regenwasser sowie ein Wasseranteil zur Vermeidung von Schäden an der Kultur (Stickstoff-Überschuss, Verbrennen) sind zulässig und förderbar.",
+      "conditions": [
+        {
+          "expression": "water_type in eligible_water_types",
+          "description": "Wasseranteil gemäß water_admixture_rules",
+          "input_paths": [
+            "manure_management.applications[].manure_kind"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_or_not",
+        "description": "Unzulässige Wasseranteile (eingeleitetes Regenwasser) zählen nicht zur förderbaren Menge.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p2.rainwater",
+        "cit.mb.p2.washwater",
+        "cit.mb.p2.dilution"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.defs"
+      ]
+    },
+    {
+      "id": "o6_9.definition.jauche",
+      "rule_type": "definition",
+      "statement": "Jauche besteht vorwiegend aus Harn, enthält aber auch Sickersaft von Festmiststapeln und geringe Mengen an Kot und Streubestandteilen.",
+      "conditions": [
+        {
+          "expression": "manure_kind == 'jauche'",
+          "description": "Jauche",
+          "input_paths": [
+            "manure_management.applications[].manure_kind"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "defined",
+        "description": "Definition Jauche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p2.jauche_def"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.eligible_manure_kind"
+      ]
+    },
+    {
+      "id": "o6_9.definition.biogas_inputs",
+      "rule_type": "definition",
+      "statement": "Biogasgülle ist ein Produkt aus der Vergärung der abschließend gelisteten Ausgangsstoffe (u. a. pflanzliche Erzeugnisse, Wirtschaftsdünger, Futtermittel, überlagerte Futtermittel ohne Tiermehl, ungebeiztes Saatgut, extraktionsmittelfreie Ölsaatenrückstände, Speisenzubereitungsabfälle ohne Speiseölreste und nicht aus Großküchen/Gastronomie, Maisquellwasser).",
+      "conditions": [
+        {
+          "expression": "every input in biogas_inputs: input in data.o6_9.manure_definitions.biogas_permitted_inputs",
+          "description": "Alle Ausgangsstoffe gelistet",
+          "input_paths": [
+            "manure_management.biogas_inputs"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "biogas_eligible",
+        "description": "Biogasgülle nur bei ausschließlich gelisteten Ausgangsstoffen förderbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p2.biogas_def",
+        "cit.mb.p2.biogas_food_waste",
+        "cit.mb.p2.biogas_maize_steep",
+        "cit.srl.p61.biogas"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.permitted_biogas_input",
+        "data.oepul.o6_9.biogas_ineligible"
+      ]
+    },
+    {
+      "id": "o6_9.definition.biogas_contamination",
+      "rule_type": "exclusion",
+      "statement": "Sobald ein nicht der Definition entsprechender Anteil in der Biogasgülle enthalten ist (z. B. Speiseölreste), scheidet die gesamte Biogasgülle von der Förderfähigkeit aus.",
+      "conditions": [
+        {
+          "expression": "count(biogas_excluded_components_present) > 0 or some input not permitted",
+          "description": "Unzulässige Bestandteile",
+          "input_paths": [
+            "manure_management.biogas_excluded_components_present",
+            "manure_management.biogas_inputs"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "biogas_ineligible",
+        "description": "Gesamte Biogasgülle nicht förderbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p3.biogas_contaminated"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.biogas_ineligible",
+        "data.oepul.o6_9.record_ineligibility_reasons"
+      ]
+    },
+    {
+      "id": "o6_9.definition.solid_manure_excluded",
+      "rule_type": "exclusion",
+      "statement": "Der flüssige Wirtschaftsdünger muss in der definierten Form anfallen; mit Wasser versetzter und aufgemischter Festmist ist nicht förderbar.",
+      "conditions": [
+        {
+          "expression": "manure_kind in {festmist, festmist_mit_wasser}",
+          "description": "Festmist bzw. verdünnter Festmist",
+          "input_paths": [
+            "manure_management.applications[].manure_kind"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Menge nicht förderbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p3.solid_manure"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.eligible_manure_kind",
+        "data.oepul.o6_9.record_ineligibility_reasons"
+      ]
+    },
+    {
+      "id": "o6_9.slurry.on_farm_arable_grassland",
+      "rule_type": "obligation",
+      "statement": "Die Ausbringung muss auf Acker- oder Grünlandflächen des Betriebes mit Geräten erfolgen, die den Dünger unmittelbar auf oder in den Boden ablegen.",
+      "conditions": [
+        {
+          "expression": "parcel_index[parcel_id].land_use in {arable, grassland}",
+          "description": "Schlag des Betriebes, Acker oder Grünland",
+          "input_paths": [
+            "manure_management.applications[].parcel_id",
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_record",
+        "description": "Ausbringung auf anderen Flächen ist nicht förderbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p3.application_on_farm",
+        "cit.srl.p61.devices"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.record_on_eligible_parcels"
+      ]
+    },
+    {
+      "id": "o6_9.slurry.eligible_techniques",
+      "rule_type": "definition",
+      "statement": "Förderbar sind Schleppschlauch (lose, flexible Schläuche ohne Anpressdruck), Schleppschuh (Ablageschar mit Anpressdruck) und Injektionsverfahren (Ablage in den Boden nach Öffnung mit Zinken/Scheiben in einem Arbeitsschritt).",
+      "conditions": [
+        {
+          "expression": "technique in {trailing_hose, trailing_shoe, injection}",
+          "description": "Förderbares Verfahren",
+          "input_paths": [
+            "manure_management.applications[].technique"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_technique",
+        "description": "Nur diese drei Verfahren sind förderbar.",
+        "value": [
+          "trailing_hose",
+          "trailing_shoe",
+          "injection"
+        ]
+      },
+      "source_reference_ids": [
+        "cit.mb.p3.trailing_hose",
+        "cit.mb.p3.trailing_shoe",
+        "cit.mb.p3.injection"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.eligible_technique"
+      ]
+    },
+    {
+      "id": "o6_9.slurry.excluded_techniques",
+      "rule_type": "exclusion",
+      "statement": "Die Ausbringung mittels Schwenkverteiler oder mittels auf einem Düsenbalken befestigter Prallteller ist nicht zulässig bzw. wird nicht anerkannt.",
+      "conditions": [
+        {
+          "expression": "technique in {swivel_distributor, impact_plate_boom}",
+          "description": "Ausgeschlossenes Verfahren",
+          "input_paths": [
+            "manure_management.applications[].technique"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Menge nicht förderbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p3.swivel",
+        "cit.mb.p3.impact_plate"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.excluded_technique",
+        "data.oepul.o6_9.record_ineligibility_reasons"
+      ]
+    },
+    {
+      "id": "o6_9.slurry.record_keeping",
+      "rule_type": "documentation",
+      "statement": "Über bodennah ausgebrachte Menge und Art des flüssigen Wirtschaftsdüngers (inkl. Biogasgülle), Ausbringungszeitpunkt und Ausbringungsverfahren sind chronologische, schlagbezogene Aufzeichnungen zu führen.",
+      "conditions": [
+        {
+          "expression": "every record has date, manure_kind, volume_m3, technique, parcel; records chronological; application_logs_complete",
+          "description": "Vollständige chronologische Aufzeichnungen",
+          "input_paths": [
+            "manure_management.applications[]",
+            "documentation.application_logs_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing",
+        "description": "Fehlende Aufzeichnungen sind ein Verstoß gegen Förderverpflichtungen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p3.records",
+        "cit.srl.p61.records"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.record_complete",
+        "data.oepul.o6_9.records_chronological",
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.slurry.record_grouping",
+      "rule_type": "option",
+      "statement": "Mehrere Schläge dürfen bei gleicher Kultur, gleicher Menge, gleichem Ausbringdatum und gleicher Ausbringungsart zusammengefasst werden; dabei sind die Schlaggrößen zu addieren.",
+      "conditions": [
+        {
+          "expression": "a.crop == b.crop and a.volume_m3_per_ha == b.volume_m3_per_ha and a.date == b.date and a.technique == b.technique",
+          "description": "Gruppierbare Aufzeichnungen",
+          "input_paths": [
+            "manure_management.applications[].parcel_ids",
+            "manure_management.applications[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "grouping_permitted",
+        "description": "Zusammengefasste Aufzeichnung mit Summe der Schlaggrößen zulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p3.grouping",
+        "cit.mb.p3.grouping_sum"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.records_groupable",
+        "data.oepul.o6_9.grouped_record_area_ok"
+      ]
+    },
+    {
+      "id": "o6_9.slurry.record_format",
+      "rule_type": "documentation",
+      "statement": "Eine Aufzeichnungsvorlage steht online zur Verfügung; andere Aufzeichnungen werden anerkannt, sofern sie die notwendigen Angaben enthalten.",
+      "conditions": [
+        {
+          "expression": "record contains required fields",
+          "description": "Pflichtangaben vorhanden",
+          "input_paths": [
+            "manure_management.applications[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "accepted",
+        "description": "Form der Aufzeichnung ist frei, Inhalt entscheidend.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p4.other_records"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.record_complete"
+      ]
+    },
+    {
+      "id": "o6_9.slurry.external_equipment_evidence",
+      "rule_type": "documentation",
+      "statement": "Bei Ausbringung durch betriebsfremde Geräte muss dies durch Rechnungen über die Dienstleistung oder gleichwertige geeignete Unterlagen nachgewiesen werden.",
+      "conditions": [
+        {
+          "expression": "equipment_source == 'external_service' implies external_service_invoices_available",
+          "description": "Nachweis Fremdgerät",
+          "input_paths": [
+            "manure_management.applications[].equipment_source",
+            "manure_management.evidence.external_service_invoices_available"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing",
+        "description": "Ohne Nachweis Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p4.external_devices",
+        "cit.srl.p62.external"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.slurry.shared_equipment",
+      "rule_type": "documentation",
+      "statement": "Bei gemeinschaftlich angeschafften Güllefässern muss das Gerät am Betrieb vorhanden oder auf einem anderen beteiligten Betrieb kontrollierbar sein; die Rechnung muss an die teilnehmenden Betriebe ausgestellt und vorweisbar sein; der Einsatz ist idealerweise über Kubikmeterzähler im Betriebsbuch zu dokumentieren.",
+      "conditions": [
+        {
+          "expression": "equipment_source == 'shared_purchase' implies shared_equipment_inspectable and shared_equipment_invoice_to_participants",
+          "description": "Gemeinschaftsgerät",
+          "input_paths": [
+            "manure_management.applications[].equipment_source",
+            "manure_management.evidence.shared_equipment_inspectable",
+            "manure_management.evidence.shared_equipment_invoice_to_participants"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing",
+        "description": "Nicht kontrollierbares Gerät oder fehlende Rechnung ist Verstoß; Kubikmeterzähler nur Empfehlung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p4.shared_tanker",
+        "cit.mb.p4.shared_tanker_invoice"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.shared_equipment_ok",
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.slurry.biogas_input_evidence",
+      "rule_type": "documentation",
+      "statement": "Bei Ausbringung von Biogasgülle sind geeignete Nachweise über die Ausgangsprodukte (z. B. Untersuchungszertifikate) vorzulegen.",
+      "conditions": [
+        {
+          "expression": "manure_kind == 'biogasguelle' implies biogas_input_evidence_available",
+          "description": "Nachweis Ausgangsprodukte",
+          "input_paths": [
+            "manure_management.evidence.biogas_input_evidence_available"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing",
+        "description": "Ohne Nachweis Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p4.biogas_evidence",
+        "cit.srl.p62.external"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.slurry.records_support_declaration",
+      "rule_type": "control",
+      "statement": "Die im Mehrfachantrag beantragte Menge je Verfahren muss durch förderfähige Aufzeichnungen gedeckt sein; Abweichungen bei der bodennah ausgebrachten Güllemenge führen zu Kürzungen.",
+      "conditions": [
+        {
+          "expression": "declared_m3(c) <= recorded_eligible_m3(c)",
+          "description": "Deckung der beantragten Menge",
+          "input_paths": [
+            "manure_management.declared_volumes",
+            "manure_management.applications[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_exceeded",
+        "description": "Übererklärung wird als Abweichung gewertet (Kürzung gemäß §§ 42-47 GSP-AV).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p17.grounds",
+        "cit.srl.p24.deviations",
+        "cit.mb.p3.records"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.recorded_eligible_m3",
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.separation.definition",
+      "rule_type": "obligation",
+      "statement": "Bei der Gülleseparierung muss der am Betrieb durch Rinderhaltung angefallene flüssige Wirtschaftsdünger mittels mechanischer Einrichtungen (z. B. Siebschnecke, Siebrolle, Zentrifuge) in eine feste und eine flüssige Phase getrennt werden; eigene oder überbetrieblich angeschaffte Technik ist zulässig.",
+      "conditions": [
+        {
+          "expression": "slurry_origin == 'own_cattle' and phases_separated_mechanically",
+          "description": "Mechanische Trennung eigener Rindergülle",
+          "input_paths": [
+            "manure_management.separations[].slurry_origin",
+            "manure_management.separations[].phases_separated_mechanically"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_separation",
+        "description": "Separierte Menge förderfähig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p4.separation_def",
+        "cit.mb.p4.separation_devices",
+        "cit.srl.p62.separation"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.separation_record_eligible"
+      ]
+    },
+    {
+      "id": "o6_9.separation.only_actual_quantities",
+      "rule_type": "calculation",
+      "statement": "Es muss nicht die gesamte Rindergülle separiert werden; förderbar sind nur die tatsächlich separierten Mengen.",
+      "conditions": [
+        {
+          "expression": "eligible = recorded own-cattle separated volume",
+          "description": "Nur tatsächlich separierte Mengen",
+          "input_paths": [
+            "manure_management.separations[].volume_m3"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "quantity_basis",
+        "description": "Förderbare Menge = tatsächlich separierte Menge.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p4.separation_partial"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.recorded_separation_m3"
+      ]
+    },
+    {
+      "id": "o6_9.separation.only_own_cattle_slurry",
+      "rule_type": "exclusion",
+      "statement": "Betriebsfremde Rindergülle ist nicht förderbar.",
+      "conditions": [
+        {
+          "expression": "slurry_origin != 'own_cattle'",
+          "description": "Fremde oder Nicht-Rindergülle",
+          "input_paths": [
+            "manure_management.separations[].slurry_origin"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Menge nicht förderbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p4.separation_external"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.separation_record_eligible",
+        "data.oepul.o6_9.ineligible_separation_records"
+      ]
+    },
+    {
+      "id": "o6_9.separation.independent_of_application",
+      "rule_type": "option",
+      "statement": "Die Gülleseparation ist nicht mit der bodennahen Ausbringung verknüpft; die Ausbringung kann auch mit herkömmlicher Technik erfolgen.",
+      "conditions": [
+        {
+          "expression": "separation declared",
+          "description": "Separierung beantragt",
+          "input_paths": [
+            "manure_management.declared_volumes.separation_m3"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "permitted",
+        "description": "Keine Pflicht zur bodennahen Ausbringung der separierten Gülle.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p4.separation_conventional"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.separation_premium"
+      ]
+    },
+    {
+      "id": "o6_9.separation.record_keeping",
+      "rule_type": "documentation",
+      "statement": "Über das Datum der Gülleseparierung und die Menge des separierten flüssigen Wirtschaftsdüngers sind Aufzeichnungen zu führen (Vorlage oder andere Aufzeichnungen mit den notwendigen Angaben).",
+      "conditions": [
+        {
+          "expression": "every separation record has date and volume_m3; separation_records_complete",
+          "description": "Vollständige Aufzeichnungen",
+          "input_paths": [
+            "manure_management.separations[]",
+            "documentation.separation_records_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing",
+        "description": "Fehlende Aufzeichnungen sind Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p4.separation_records",
+        "cit.srl.p62.separation_records"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.separation_record_complete",
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.separation.external_equipment_evidence",
+      "rule_type": "documentation",
+      "statement": "Beim Einsatz betriebsfremder Geräte am Betrieb ist der Nachweis durch Rechnungen oder andere geeignete Unterlagen erforderlich.",
+      "conditions": [
+        {
+          "expression": "equipment_source == 'external_service' implies external_separator_invoices_available",
+          "description": "Nachweis Fremdgerät",
+          "input_paths": [
+            "manure_management.separations[].equipment_source",
+            "manure_management.evidence.external_separator_invoices_available"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing",
+        "description": "Ohne Nachweis Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p4.separation_external_devices",
+        "cit.srl.p62.separation_records"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.separation.shared_equipment",
+      "rule_type": "documentation",
+      "statement": "Bei gemeinschaftlich angeschafften Geräten muss der Separator am Betrieb vorhanden oder auf einem anderen beteiligten Betrieb kontrollierbar sein; die Rechnung muss an die teilnehmenden Betriebe ausgestellt und vorweisbar sein; der Einsatz ist idealerweise über Einsatzstunden- oder Kubikmeterzähler zu dokumentieren.",
+      "conditions": [
+        {
+          "expression": "equipment_source == 'shared_purchase' implies shared_separator_inspectable and shared_separator_invoice_to_participants",
+          "description": "Gemeinschaftsseparator",
+          "input_paths": [
+            "manure_management.separations[].equipment_source",
+            "manure_management.evidence.shared_separator_inspectable",
+            "manure_management.evidence.shared_separator_invoice_to_participants"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing",
+        "description": "Nicht kontrollierbares Gerät oder fehlende Rechnung ist Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p4.shared_separator",
+        "cit.mb.p4.shared_separator_invoice"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.shared_separator_ok",
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.separation.records_support_declaration",
+      "rule_type": "control",
+      "statement": "Die beantragte separierte Menge muss durch Aufzeichnungen über tatsächlich separierte betriebseigene Rindergülle gedeckt sein.",
+      "conditions": [
+        {
+          "expression": "declared_separation_m3 <= recorded_separation_m3",
+          "description": "Deckung der beantragten Menge",
+          "input_paths": [
+            "manure_management.declared_volumes.separation_m3",
+            "manure_management.separations[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_exceeded",
+        "description": "Übererklärung ist Abweichung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p4.separation_partial",
+        "cit.srl.p24.deviations"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.recorded_separation_m3",
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.feeding.from_2025",
+      "rule_type": "eligibility",
+      "statement": "An der Kategorie 'Stark stickstoffreduzierte Fütterung von Schweinen' kann ab dem Antragsjahr 2025 teilgenommen werden.",
+      "conditions": [
+        {
+          "expression": "year >= 2025",
+          "description": "Antragsjahr ab 2025",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "available",
+        "description": "Vor 2025 keine Teilnahme/Prämie.",
+        "value": {
+          "first_year": 2025
+        }
+      },
+      "source_reference_ids": [
+        "cit.mb.p5.feeding_from_2025",
+        "cit.srl.p27.applicability"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.participates_n_feeding",
+        "data.oepul.o6_9.n_feeding_application_timely"
+      ]
+    },
+    {
+      "id": "o6_9.feeding.access_min_1_gve_per_ha",
+      "rule_type": "eligibility",
+      "statement": "Teilnahme an der N-reduzierten Fütterung nur, wenn im Teilnahmejahr mindestens 1,00 GVE Schweine im Jahresdurchschnitt je ha Ackerfläche (gesamte Ackerfläche ohne Abzüge) gehalten werden.",
+      "conditions": [
+        {
+          "expression": "pig_gve / arable_area_total_ha >= 1.0",
+          "description": "Viehdichte Schweine",
+          "input_paths": [
+            "livestock.species_groups[].gve_annual_average",
+            "land.arable_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_condition_met",
+        "description": "Bei Unterschreitung keine gültige Verpflichtung/keine Prämie für die Kategorie.",
+        "value": {
+          "min_pig_gve_per_arable_ha": 1.0
+        }
+      },
+      "source_reference_ids": [
+        "cit.mb.p2.feeding_min_gve",
+        "cit.mb.p5.feeding_arable_basis",
+        "cit.srl.p61.access",
+        "cit.srl.p63.rate_feeding"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.pig_gve_per_arable_ha",
+        "data.oepul.o6_9.n_feeding_density_met",
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.feeding.gve_key",
+      "rule_type": "calculation",
+      "statement": "Bei der Ermittlung der förderfähigen GVE sind die Umrechnungsfaktoren des GVE-Schlüssels (Anhang A der SRL) anzuwenden: Ferkel ab 8 kg 0,07; Jung- und Mastschweine ab 32 kg (inkl. ausgemerzte Zuchttiere) 0,3; Zucht- und Jungsauen ab 50 kg 0,5 GVE je Stück.",
+      "conditions": [
+        {
+          "expression": "gve = factor(category) * average_animal_count",
+          "description": "GVE aus Anhang A",
+          "input_paths": [
+            "livestock.species_groups[].gve_key_category",
+            "livestock.species_groups[].average_animal_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "gve_calculated",
+        "description": "Jahresdurchschnitts-GVE je Tiergruppe.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p2.gve_key",
+        "cit.srl.p10.gve",
+        "cit.anh.p3.gve_key",
+        "cit.anh.p3.gve_piglets",
+        "cit.anh.p3.gve_sows"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.gve_key_factor",
+        "data.oepul.o6_9.gve_of",
+        "data.oepul.o6_9.pig_gve"
+      ]
+    },
+    {
+      "id": "o6_9.general.gve_key_table",
+      "rule_type": "definition",
+      "statement": "GVE-Schlüssel Anhang A (vollständige Tabelle inkl. Rinder, Zwergrinder (Dahomey, Dexter, Kerry, Zwergzebu), Schafe, Ziegen, Pferde, Wildhuftiere, Lamas, Schweine) mit RGVE- bzw. GVE-Faktoren je Stück.",
+      "conditions": [
+        {
+          "expression": "row in data.o6_9.gve_key",
+          "description": "Tabellenzeile Anhang A",
+          "input_paths": [
+            "livestock.species_groups[].gve_key_category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "factor",
+        "description": "Umrechnungsfaktor je Tierkategorie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.anh.p3.gve_key",
+        "cit.anh.p3.gve_cattle",
+        "cit.anh.p3.dwarf",
+        "cit.anh.p3.game"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.gve_key_factor"
+      ]
+    },
+    {
+      "id": "o6_9.general.livestock_count_basis",
+      "rule_type": "calculation",
+      "statement": "Der Tierbestand wird für Rinder aus dem (taggenauen) Durchschnittsbestand der Rinderdatenbank, bei anderen Tierkategorien aus der Stichtagstierliste (1. April) bzw. bei eingereichter Durchschnittstierliste aus dieser ermittelt.",
+      "conditions": [
+        {
+          "expression": "species == 'cattle' -> cattle database average; else reference-date or average list",
+          "description": "Bestandsbasis",
+          "input_paths": [
+            "livestock.species_groups[].gve_annual_average"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "stock_basis",
+        "description": "Grundlage für GVE-Berechnung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.srl.p10.stock_basis",
+        "cit.at.p10.livestock_basis"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.gve_of"
+      ]
+    },
+    {
+      "id": "o6_9.feeding.all_pigs",
+      "rule_type": "obligation",
+      "statement": "Bei der Kategorie muss bei allen am Betrieb gehaltenen Schweinen eine Fütterung innerhalb der Rohproteingrenzen je kg Ration (bei 88 % TM) eingehalten werden.",
+      "conditions": [
+        {
+          "expression": "all_pigs_covered == true",
+          "description": "Alle Schweine erfasst",
+          "input_paths": [
+            "livestock.pig_feeding.all_pigs_covered"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_met",
+        "description": "Sonst Verstoß gegen Förderverpflichtung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p5.feeding_all_pigs",
+        "cit.srl.p62.feeding"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.protein_limits_met"
+      ]
+    },
+    {
+      "id": "o6_9.feeding.protein_limits",
+      "rule_type": "threshold",
+      "statement": "Rohproteingrenzen je kg Ration (88 % TM): Ferkel 8-32 kg ∅ max. 166 g; Jung-/Mastschweine und nicht gedeckte Jungsauen ab 32 kg ∅ max. 157 g oder Phasen 32-60 kg max. 170 g, 60-90 kg max. 155 g, ab 90 kg max. 150 g; Zuchtsauen tragend sowie gedeckte Jungsauen ab 50 kg max. 125 g; Zuchtsauen säugend max. 155 g; Eber ab 50 kg max. 170 g.",
+      "conditions": [
+        {
+          "expression": "crude_protein_g_per_kg_88dm <= protein_limit(animal_category)",
+          "description": "Grenzwert je Tierkategorie",
+          "input_paths": [
+            "livestock.pig_feeding.rations[].animal_category",
+            "livestock.pig_feeding.rations[].crude_protein_g_per_kg_88dm"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "compliant",
+        "description": "Überschreitung ist Verstoß; keine Prämie für die Kategorie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p5.table_piglets",
+        "cit.mb.p5.table_fattening_avg",
+        "cit.mb.p5.table_fattening_32_60",
+        "cit.mb.p5.table_fattening_60_90",
+        "cit.mb.p5.table_fattening_90",
+        "cit.mb.p5.table_sows_gestating",
+        "cit.mb.p5.table_sows_lactating",
+        "cit.mb.p5.table_boars",
+        "cit.srl.p62.feeding_fattening",
+        "cit.srl.p62.feeding_breeding"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.protein_limit",
+        "data.oepul.o6_9.ration_compliant",
+        "data.oepul.o6_9.protein_limits_met",
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.feeding.fattening_average_or_phase",
+      "rule_type": "option",
+      "statement": "Bei Jung- und Mastschweinen sowie nicht gedeckten Jungsauen ist entweder der Durchschnittswert oder die Phasenfütterung für die jeweilige Gewichtsklasse einzuhalten; es müssen nicht beide Bedingungen erfüllt werden.",
+      "conditions": [
+        {
+          "expression": "fattening_average <= 157 or every phase ration within limit",
+          "description": "Alternative Erfüllung",
+          "input_paths": [
+            "livestock.pig_feeding.rations[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "compliant_if_either",
+        "description": "Eine der beiden Varianten genügt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p5.average_or_phase",
+        "cit.srl.p62.feeding_fattening"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.fattening_compliant"
+      ]
+    },
+    {
+      "id": "o6_9.feeding.protein_value_source",
+      "rule_type": "calculation",
+      "statement": "Für die Berechnung der Rohproteingehalte sind Ergebnisse von Futtermitteluntersuchungen, für nicht untersuchte Futtermittel Standardwerte aus der Fachliteratur und bei Fertigfuttermischungen die Herstellerangaben heranzuziehen.",
+      "conditions": [
+        {
+          "expression": "protein_value_source in {lab_analysis, literature_standard, manufacturer_declaration}",
+          "description": "Zulässige Datengrundlage",
+          "input_paths": [
+            "livestock.pig_feeding.rations[].protein_value_source"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "valid_basis",
+        "description": "Andere Grundlagen sind unzulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p5.protein_sources",
+        "cit.srl.p62.feeding_sources"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.valid_protein_source",
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.feeding.recipe_evidence",
+      "rule_type": "documentation",
+      "statement": "Ein Nachweis der N-reduzierten Fütterung über Rezepturen mit ausgewiesenem Rohproteingehalt je kg Futtermittel (88 % TM), z. B. Ausdruck Fütterungscomputer, Berechnung Futtermittelfirma oder Offizialberatung, muss vorhanden sein.",
+      "conditions": [
+        {
+          "expression": "recipe_evidence_available == true",
+          "description": "Rezepturnachweis",
+          "input_paths": [
+            "livestock.pig_feeding.recipe_evidence_available"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing",
+        "description": "Fehlender Nachweis ist Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p5.recipe_evidence",
+        "cit.srl.p62.feeding_evidence"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.feeding.phase_feeding_plausibility",
+      "rule_type": "documentation",
+      "statement": "Im Falle einer Phasenfütterung muss bei einer Vor-Ort-Kontrolle plausibel gemacht werden können, dass diese technisch möglich ist und tatsächlich durchgeführt wird (z. B. Beschriftung von Silos, Fütterungstechnik).",
+      "conditions": [
+        {
+          "expression": "count(phase_rations) > 0 implies phase_feeding_plausible",
+          "description": "Plausibilisierung Phasenfütterung",
+          "input_paths": [
+            "livestock.pig_feeding.phase_feeding_plausible"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing",
+        "description": "Nicht plausibilisierbare Phasenfütterung ist Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p5.phase_plausible",
+        "cit.srl.p62.feeding_evidence"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.feeding.application_deadline",
+      "rule_type": "deadline",
+      "statement": "Die Kategorie N-reduzierte Fütterung ist im Maßnahmenantrag zu beantragen (bis 31.12. vor Vertragsbeginn); letzter Einstieg mit Förderjahr 2028 (Beantragung bis 31.12.2027), sofern gültige Teilnahme an der Maßnahme o6_9 besteht.",
+      "conditions": [
+        {
+          "expression": "contract_start_year in 2025..2028 and applied_on <= (contract_start_year-1)-12-31 and measure_contract_valid",
+          "description": "Fristgerechter Antrag und gültige Maßnahmenteilnahme",
+          "input_paths": [
+            "oepul_applications[].component",
+            "oepul_applications[].applied_on",
+            "oepul_applications[].contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "participation_valid",
+        "description": "Sonst keine Teilnahme an der Kategorie.",
+        "value": {
+          "last_entry_year": 2028,
+          "last_application_date": "2027-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "cit.mb.p6.last_entry_feeding",
+        "cit.mb.p6.application_deadline",
+        "cit.srl.p21.feeding_application",
+        "cit.at.p12.options_2027"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.n_feeding_application_timely",
+        "data.oepul.o6_9.participates_n_feeding",
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.combination.o6_16_n_feeding",
+      "rule_type": "combination",
+      "statement": "Eine gleichzeitige Teilnahme an der Kategorie N-reduzierte Fütterung (o6_9) und am gleichlautenden optionalen Zuschlag in 'Vorbeugender Grundwasserschutz – Acker' (o6_16) ist nicht möglich.",
+      "conditions": [
+        {
+          "expression": "participates_n_feeding and o6_16 n_reduced_pig_feeding_supplement active",
+          "description": "Doppelte Fütterungsförderung",
+          "input_paths": [
+            "oepul_applications[].measure_id",
+            "oepul_applications[].component"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "excluded",
+        "description": "Kombination unzulässig; keine Prämie für o6_9-Fütterung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p6.o6_16_exclusion",
+        "cit.srl.p18.o6_16_exclusion",
+        "cit.srl.p74.o6_16_access"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.n_feeding_combination_conflict",
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.declaration.volumes_by_technique",
+      "rule_type": "procedure",
+      "statement": "Die im Förderjahr bodennah ausgebrachte Menge an Gülle, Jauche oder Biogasgülle ist je Ausbringungsverfahren (Schleppschlauch, Schleppschuh, Injektion) in m³ in der Beilage 'MFA-Angaben' des Mehrfachantrages zu beantragen.",
+      "conditions": [
+        {
+          "expression": "declared_volumes.<technique>_m3 present",
+          "description": "Mengenangabe je Verfahren",
+          "input_paths": [
+            "manure_management.declared_volumes.trailing_hose_m3",
+            "manure_management.declared_volumes.trailing_shoe_m3",
+            "manure_management.declared_volumes.injection_m3"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "declared",
+        "description": "Grundlage der Prämienberechnung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p6.declare_by_technique",
+        "cit.srl.p22.payment_application"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.declared_m3"
+      ]
+    },
+    {
+      "id": "o6_9.declaration.separation_volume",
+      "rule_type": "procedure",
+      "statement": "Die im Förderjahr am Betrieb separierte Güllemenge ist in m³ in der Beilage 'MFA-Angaben' des Mehrfachantrages zu beantragen.",
+      "conditions": [
+        {
+          "expression": "declared_volumes.separation_m3 present",
+          "description": "Mengenangabe Separierung",
+          "input_paths": [
+            "manure_management.declared_volumes.separation_m3"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "declared",
+        "description": "Grundlage der Prämienberechnung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p6.declare_separation"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.declared_separation_m3"
+      ]
+    },
+    {
+      "id": "o6_9.declaration.deadline_30_november",
+      "rule_type": "deadline",
+      "statement": "Die prämienfähige Beantragung der bodennah ausgebrachten und separierten Mengen hat im Mehrfachantrag bis spätestens 30. November des Förderjahres zu erfolgen.",
+      "conditions": [
+        {
+          "expression": "declared_on <= year + '-11-30'",
+          "description": "Mengenbeantragung fristgerecht",
+          "input_paths": [
+            "manure_management.declared_volumes.declared_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_eligible_quantities",
+        "description": "Später beantragte Mengen sind nicht prämienfähig.",
+        "value": {
+          "deadline_mmdd": "11-30"
+        }
+      },
+      "source_reference_ids": [
+        "cit.mb.p6.deadline_30_nov",
+        "cit.mb.p7.example"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.volumes_declared_in_time",
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.declaration.mfa_deadline",
+      "rule_type": "deadline",
+      "statement": "Der Mehrfachantrag ist bis spätestens 15. April (2023 und 2028: 17. April) abzugeben; die Mengen können bis 30. November prämienfähig nachbeantragt werden.",
+      "conditions": [
+        {
+          "expression": "mfa_submitted_on <= mfa_deadline(year)",
+          "description": "MFA-Abgabefrist",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "deadline",
+        "description": "Abgabefrist Mehrfachantrag.",
+        "value": {
+          "default": "04-15",
+          "2023": "04-17",
+          "2028": "04-17"
+        }
+      },
+      "source_reference_ids": [
+        "cit.mb.p6.mfa_deadline"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.mfa_deadline"
+      ]
+    },
+    {
+      "id": "o6_9.declaration.premium_basis_declared",
+      "rule_type": "calculation",
+      "statement": "Die Prämiengewährung erfolgt gemäß der im Mehrfachantrag beantragten Menge bodennah ausgebrachter flüssiger Wirtschaftsdünger (inkl. Biogasgülle) bzw. am Betrieb angefallener und separierter Rindergülle in m³.",
+      "conditions": [
+        {
+          "expression": "premium basis = declared m³",
+          "description": "Beantragte Menge",
+          "input_paths": [
+            "manure_management.declared_volumes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "basis",
+        "description": "Beantragte Menge (nach Obergrenzen) × Satz.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.srl.p63.basis"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.eligible_slurry_m3",
+        "data.oepul.o6_9.eligible_separation_m3"
+      ]
+    },
+    {
+      "id": "o6_9.exit.after_one_year",
+      "rule_type": "option",
+      "statement": "Nach Erfüllung des einjährigen Vertragszeitraumes ist ein Ausstieg aus der Maßnahme (auch nach mehreren Teilnahmejahren) möglich; dasselbe gilt für die Kategorie N-reduzierte Fütterung.",
+      "conditions": [
+        {
+          "expression": "commitment year fulfilled",
+          "description": "Jahresverpflichtung erfüllt",
+          "input_paths": [
+            "oepul_applications[].withdrawn_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exit_possible",
+        "description": "Rückzahlungsfreier Ausstieg nach Ablauf des Jahres.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p7.exit",
+        "cit.srl.p21.pre_application"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.withdrawn_for_year"
+      ]
+    },
+    {
+      "id": "o6_9.exit.notification",
+      "rule_type": "procedure",
+      "statement": "Der Ausstieg ist der AMA für das laufende Förderjahr online auf www.eama.at im Rahmen der Antragstellung des aktuellen Mehrfachantrages bekannt zu geben.",
+      "conditions": [
+        {
+          "expression": "withdrawal via eama MFA",
+          "description": "Abmeldung online",
+          "input_paths": [
+            "oepul_applications[].withdrawn_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "procedure",
+        "description": "Formerfordernis der Abmeldung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p7.exit_online"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.exit.withdrawal_in_year",
+      "rule_type": "consequence",
+      "statement": "Wird die Abmeldung zwischen 1. Jänner und 31. Dezember durchgeführt, ist die Maßnahme im betroffenen Förderjahr nicht mehr gültig; wer die Auflagen bis 31. Dezember erfüllt, darf erst ab 1. Jänner des Folgejahres abmelden.",
+      "conditions": [
+        {
+          "expression": "withdrawn_on <= year + '-12-31'",
+          "description": "Abmeldung im Förderjahr",
+          "input_paths": [
+            "oepul_applications[].withdrawn_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "measure_invalid_for_year",
+        "description": "Keine Prämie im Jahr der Abmeldung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p7.exit_within_year",
+        "cit.at.p13.withdrawal"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.withdrawn_for_year",
+        "data.oepul.o6_9.measure_contract_valid"
+      ]
+    },
+    {
+      "id": "o6_9.exit.obligations_until_exit",
+      "rule_type": "obligation",
+      "statement": "Bis zum Ausstieg aus einer beantragten Maßnahme oder Option sind die Förderverpflichtungen einzuhalten; ein Ausstieg ist bis zur Durchführung/Ankündigung einer Vor-Ort-Kontrolle bzw. bis zur Mitteilung des Ergebnisses einer Verwaltungskontrolle möglich.",
+      "conditions": [
+        {
+          "expression": "exit before control announcement",
+          "description": "Zeitpunkt des Ausstiegs",
+          "input_paths": [
+            "oepul_applications[].withdrawn_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Verpflichtungen gelten bis zum Ausstieg.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p13.until_exit",
+        "cit.at.p13.exit_until_control"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.premium.rates",
+      "rule_type": "premium_rate",
+      "statement": "Prämiensätze: Schleppschlauch 1,0 €/m³ (2023) bzw. 1,1 €/m³ (ab 2024); Schleppschuh 1,4/1,5 €/m³; Injektion 1,6/1,7 €/m³; Gülleseparierung 1,4/1,5 €/m³ (max. 20 m³ je Rinder-GVE und Jahr); N-reduzierte Fütterung 54,0 €/ha Ackerfläche (ab 2025).",
+      "conditions": [
+        {
+          "expression": "rate(category, year)",
+          "description": "Satz je Kategorie und Jahr",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rate",
+        "description": "Prämiensatz gemäß data.o6_9.premium_rates.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p8.rates_hose",
+        "cit.mb.p8.rates_values",
+        "cit.mb.p8.rates_shoe",
+        "cit.mb.p8.rates_injection",
+        "cit.mb.p8.rates_separation",
+        "cit.mb.p8.rates_feeding",
+        "cit.srl.p63.rates",
+        "cit.srl.p63.rate_injection",
+        "cit.srl.p63.rate_separation",
+        "cit.srl.p63.rate_feeding",
+        "cit.srl.p63.rates_validity"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.rate",
+        "data.oepul.o6_9.slurry_premium_components",
+        "data.oepul.o6_9.separation_premium",
+        "data.oepul.o6_9.n_feeding_premium"
+      ]
+    },
+    {
+      "id": "o6_9.premium.slurry_cap_50_m3_per_ha",
+      "rule_type": "cap",
+      "statement": "Die Prämie für die bodennahe Ausbringung wird für maximal 50 m³ flüssigen Wirtschaftsdünger und Biogasgülle je ha düngungswürdiger Acker- und Grünlandfläche gewährt; maßgeblich ist die düngungswürdige, nicht die gedüngte Fläche.",
+      "conditions": [
+        {
+          "expression": "sum(declared slurry m³) <= 50 * fertilisable_area_ha",
+          "description": "Obergrenze",
+          "input_paths": [
+            "manure_management.declared_volumes",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "capped",
+        "description": "Darüber liegende Mengen erhalten keine Prämie (anteilige Kürzung, Annahme A-03).",
+        "value": {
+          "m3_per_ha": 50
+        }
+      },
+      "source_reference_ids": [
+        "cit.mb.p8.cap_50",
+        "cit.mb.p8.cap_basis",
+        "cit.srl.p63.cap50"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.slurry_cap_m3",
+        "data.oepul.o6_9.slurry_scale",
+        "data.oepul.o6_9.eligible_slurry_m3",
+        "data.oepul.o6_9.notices"
+      ]
+    },
+    {
+      "id": "o6_9.premium.fertilisable_area",
+      "rule_type": "definition",
+      "statement": "Die düngungswürdige Fläche ist die Summe der Acker- und Grünlandflächen mit Stickstoffdüngebedarf gemäß Nitrat-Aktionsprogramm-Verordnung; Leguminosenreinbestände (Sojabohnen, Erbsen, Ackerbohnen, Klee etc.) und Flächen mit gänzlichem Düngeverbot zählen nicht.",
+      "conditions": [
+        {
+          "expression": "land_use in {arable, grassland} and not pure legume and not total ban and has_n_fertilization_need",
+          "description": "Düngungswürdiger Schlag",
+          "input_paths": [
+            "land.parcels[].land_use",
+            "land.parcels[].crop.is_pure_legume_stand",
+            "land.parcels[].constraints.total_fertilization_ban",
+            "land.parcels[].constraints.has_n_fertilization_need"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "fertilisable_area_ha",
+        "description": "Summe der düngungswürdigen Schlagflächen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p8.fertilisable",
+        "cit.mb.p8.legumes",
+        "cit.mb.p8.ban",
+        "cit.srl.p63.legumes"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.fertilisable_parcel",
+        "data.oepul.o6_9.pure_legume_stand",
+        "data.oepul.o6_9.fertilisable_area_ha"
+      ]
+    },
+    {
+      "id": "o6_9.premium.separation_cap_20_m3_per_gve",
+      "rule_type": "cap",
+      "statement": "Die Prämie für die Gülleseparierung wird für maximal 20 m³ je Rinder-GVE und Jahr gewährt; die GVE werden aus der Rinderdatenbank unabhängig vom Aufstallungssystem ermittelt.",
+      "conditions": [
+        {
+          "expression": "declared_separation_m3 <= 20 * cattle_gve",
+          "description": "Obergrenze Separierung",
+          "input_paths": [
+            "manure_management.declared_volumes.separation_m3",
+            "livestock.species_groups[].gve_annual_average"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "capped",
+        "description": "Mengen über der Obergrenze erhalten keine Prämie.",
+        "value": {
+          "m3_per_cattle_gve": 20
+        }
+      },
+      "source_reference_ids": [
+        "cit.mb.p8.cap_20",
+        "cit.mb.p8.cattle_db",
+        "cit.mb.p8.rates_separation",
+        "cit.srl.p63.rate_separation"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.cattle_gve",
+        "data.oepul.o6_9.separation_cap_m3",
+        "data.oepul.o6_9.eligible_separation_m3",
+        "data.oepul.o6_9.notices"
+      ]
+    },
+    {
+      "id": "o6_9.premium.n_feeding_per_ha_arable",
+      "rule_type": "premium_rate",
+      "statement": "Für die N-reduzierte Fütterung werden 54,0 €/ha Ackerfläche gewährt, nur für Betriebe mit mindestens 1 GVE Schweine je ha Ackerfläche; prämienfähig sind nur förderfähige Ackerflächen (nicht in Nationalparks, nicht mit Code OP, Mindestbewirtschaftung erfüllt).",
+      "conditions": [
+        {
+          "expression": "n_feeding_eligible",
+          "description": "Kategorie erfüllt",
+          "input_paths": [
+            "land.parcels[].land_use",
+            "land.parcels[].oepul_codes",
+            "land.parcels[].constraints.in_national_park"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium",
+        "description": "54 € × prämienfähige Ackerfläche.",
+        "value": {
+          "eur_per_ha": 54.0
+        }
+      },
+      "source_reference_ids": [
+        "cit.mb.p8.rates_feeding",
+        "cit.srl.p63.rate_feeding",
+        "cit.at.p7.national_parks",
+        "cit.at.p7.op_code"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.n_feeding_premium_area_ha",
+        "data.oepul.o6_9.n_feeding_premium",
+        "data.oepul.o6_9.n_feeding_eligible"
+      ]
+    },
+    {
+      "id": "o6_9.premium.rate_validity",
+      "rule_type": "temporal",
+      "statement": "Die Prämiensätze der Sonderrichtlinie gelten ab 01.01.2024, sofern nicht mit 1b gekennzeichnet (dann ab 01.01.2025); für 2023 gelten die niedrigeren Sätze gemäß Informationsblatt.",
+      "conditions": [
+        {
+          "expression": "valid_from <= year <= valid_to",
+          "description": "Gültigkeitszeitraum des Satzes",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rate_by_year",
+        "description": "Jahresabhängige Sätze.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.srl.p63.rates_validity",
+        "cit.srl.p27.applicability",
+        "cit.mb.p8.rates_values"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.rate_row_valid"
+      ]
+    },
+    {
+      "id": "o6_9.premium.total",
+      "rule_type": "calculation",
+      "statement": "Die Gesamtprämie ist die Summe der Prämien aller angewendeten Kategorien; sie wird nur bei gültigem Vertrag, erfüllter Mindestteilnahme und erfüllten allgemeinen Fördervoraussetzungen gewährt.",
+      "conditions": [
+        {
+          "expression": "premium_basis_ok",
+          "description": "Gültige Teilnahme",
+          "input_paths": [
+            "oepul_applications[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_total_eur",
+        "description": "Summe der Komponenten.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p3.choice",
+        "cit.srl.p16.annual",
+        "cit.srl.p24.access_conditions"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.premium_basis_ok",
+        "data.oepul.o6_9.premium_components",
+        "data.oepul.o6_9.premium_total_eur",
+        "data.oepul.o6_9.decision"
+      ]
+    },
+    {
+      "id": "o6_9.general.legal_basis",
+      "rule_type": "information",
+      "statement": "Rechtlich verbindlich sind allein die Rechtsgrundlagen (Sonderrichtlinie ÖPUL 2023 samt Anhängen, MOG 2021, GSP-AV); die Informationsblätter enthalten rechtlich unverbindliche Aussagen.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Allgemein",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "information",
+        "description": "Bei Widersprüchen hat die SRL Vorrang (siehe notes/assumptions.md).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p2.legal_binding",
+        "cit.at.p2.legal_basis",
+        "cit.mb.p9.nonbinding"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.general.conditionality",
+      "rule_type": "obligation",
+      "statement": "Alle teilnehmenden Betriebe müssen die Konditionalität (inkl. sozialer Konditionalität gemäß §§ 6e, 6f MOG 2021) einhalten, um die Förderung in voller Höhe zu erhalten; Sanktionen gemäß Art. 83-89 VO (EU) 2021/2116.",
+      "conditions": [
+        {
+          "expression": "conditionality_compliant",
+          "description": "Konditionalität eingehalten",
+          "input_paths": [
+            "documentation.audit_last_year_noncompliance"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "full_payment",
+        "description": "Verstöße führen zu Kürzungen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p4.conditionality",
+        "cit.srl.p25.conditionality"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.general.applicant",
+      "rule_type": "eligibility",
+      "statement": "Förderwerbende Personen: natürliche Personen, im Firmenbuch eingetragene Personengesellschaften, juristische Personen und Personenvereinigungen mit Beteiligung von Gebietskörperschaften bis 25 %; aktiver Landwirt mit landwirtschaftlicher Tätigkeit, Bewirtschaftung im eigenen Namen und auf eigene Rechnung.",
+      "conditions": [
+        {
+          "expression": "legal_form eligible and public_body_share_percent <= 25 and is_active_farmer",
+          "description": "Antragsberechtigung",
+          "input_paths": [
+            "farm.applicant.legal_form",
+            "farm.applicant.public_body_share_percent",
+            "farm.applicant.is_active_farmer"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_applicant",
+        "description": "Sonst keine Förderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p4.applicants",
+        "cit.at.p4.own_account",
+        "cit.srl.p8.applicants"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.applicant_eligible",
+        "data.oepul.o6_9.public_body_share_ok",
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.general.public_body_exclusion",
+      "rule_type": "exclusion",
+      "statement": "Gebietskörperschaften und deren Einrichtungen (bzw. Einrichtungen mit bestimmendem Einfluss > 25 %) sind nicht förderwerbend, ausgenommen in den Maßnahmen Zwischenfruchtanbau, System Immergrün, Tierwohl – Weide, Erosionsschutz Wein/Obst/Hopfen (bis 2024) und Nichtproduktive Ackerflächen (ab 2025); o6_9 ist nicht ausgenommen.",
+      "conditions": [
+        {
+          "expression": "legal_form == 'public_body'",
+          "description": "Gebietskörperschaft",
+          "input_paths": [
+            "farm.applicant.legal_form"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Keine Teilnahme an o6_9.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p5.public_bodies",
+        "cit.srl.p8.public_bodies"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.applicant_eligible"
+      ]
+    },
+    {
+      "id": "o6_9.general.min_farm_size_first_year",
+      "rule_type": "eligibility",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr muss der Betrieb mindestens 0,50 ha Flächen im geschützten Anbau oder 1,50 ha landwirtschaftliche Fläche bewirtschaften; ab dem zweiten Teilnahmejahr entfällt die Betriebsmindestgröße.",
+      "conditions": [
+        {
+          "expression": "oepul_first_participation_year != year or total_area_ha >= 1.5 or protected_cultivation_area_ha >= 0.5",
+          "description": "Betriebsmindestgröße",
+          "input_paths": [
+            "farm.oepul_first_participation_year",
+            "land.total_area_ha",
+            "land.protected_cultivation_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible",
+        "description": "Sonst kommt kein Vertrag zustande.",
+        "value": {
+          "agricultural_min_ha": 1.5,
+          "protected_min_ha": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "cit.at.p5.min_size",
+        "cit.at.p5.min_size_second_year",
+        "cit.srl.p10.min_size"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.first_year_min_size_met",
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.general.min_management_harvest",
+      "rule_type": "obligation",
+      "statement": "Auf allen förderfähigen und in Maßnahmen eingebrachten Ackerflächen sind ordnungsgemäßer Anbau, Pflege sowie Ernte und Verbringen des Erntegutes auf zumindest 85 % des Schlages erforderlich (für o6_9 relevant für die Ackerfläche der N-reduzierten Fütterung); andernfalls ist der Schlag mit Code OP zu versehen.",
+      "conditions": [
+        {
+          "expression": "harvested_share_percent >= 85 or drought exemption",
+          "description": "Ernteverpflichtung",
+          "input_paths": [
+            "land.parcels[].operations.harvested_share_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_met",
+        "description": "Nicht erfüllte Schläge ohne OP-Code: Verstoß; keine Prämie auf dem Schlag.",
+        "value": {
+          "min_share_percent": 85
+        }
+      },
+      "source_reference_ids": [
+        "cit.at.p5.min_management",
+        "cit.at.p6.harvest_85",
+        "cit.srl.p11.harvest",
+        "cit.at.p8.op_cases"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.harvest_obligation_met",
+        "data.oepul.o6_9.n_feeding_premium_parcel",
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.general.non_eligible_areas",
+      "rule_type": "exclusion",
+      "statement": "Nicht förderfähig sind u. a. Energieholz/Kurzumtrieb, Reb- und Baumschulen, nicht aktiv bewirtschaftete Flächen, sonstige Flächen, nicht oder falsch beantragte Flächen, Flächen in Nationalparks (außer Maßnahmen 23/24; Neusiedlersee und Donau-Auen keine flächenbezogenen Prämien), GLÖZ-Landschaftselemente und Versuchsflächen (Code VF).",
+      "conditions": [
+        {
+          "expression": "parcel in non-eligible category",
+          "description": "Nicht förderfähige Fläche",
+          "input_paths": [
+            "land.parcels[].constraints.in_national_park",
+            "land.parcels[].oepul_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_area_premium",
+        "description": "Keine flächenbezogene Prämie (relevant für €/ha der Fütterungskategorie).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p7.non_eligible",
+        "cit.at.p7.national_parks",
+        "cit.srl.p11.non_eligible",
+        "cit.srl.p16.experiments"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.parcel_in_national_park",
+        "data.oepul.o6_9.n_feeding_premium_parcel"
+      ]
+    },
+    {
+      "id": "o6_9.general.op_code",
+      "rule_type": "exclusion",
+      "statement": "Für Flächen mit Code OP wird im jeweiligen Förderjahr keine ÖPUL-Prämie gewährt; OP ist u. a. bei nicht erfüllter Ernteverpflichtung, Leistungsüberschneidung, behördlichen Ausgleichsflächen oder nicht ganzjährig erfüllbarer Verpflichtung zu vergeben.",
+      "conditions": [
+        {
+          "expression": "'OP' in oepul_codes",
+          "description": "Code OP",
+          "input_paths": [
+            "land.parcels[].oepul_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_area_premium",
+        "description": "Keine Prämie auf dem Schlag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p7.op_code",
+        "cit.at.p8.op_cases"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.parcel_has_op_code",
+        "data.oepul.o6_9.n_feeding_premium_parcel"
+      ]
+    },
+    {
+      "id": "o6_9.general.third_party_fault",
+      "rule_type": "procedure",
+      "statement": "Bei Nichterfüllung durch reines Fremdverschulden ist das Flächenausmaß mit maßnahmenbezogenem OP-Code zu versehen (Nachweise aufbewahren); ohne Fremdverschulden ist der Code per Korrektur zu löschen oder eine Selbstanzeige zu erstatten (geringere Sanktion als bei Vor-Ort-Kontrolle).",
+      "conditions": [
+        {
+          "expression": "non_fulfilment",
+          "description": "Nichterfüllung von Verpflichtungen",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "procedure",
+        "description": "OP-Code bzw. Selbstanzeige.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p8.third_party",
+        "cit.at.p9.self_report"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.general.location_austria",
+      "rule_type": "eligibility",
+      "statement": "Geförderte bzw. maßgebliche Flächen müssen in Österreich liegen und Tiere in Österreich gehalten werden; im Ausland bewirtschaftete Flächen bzw. gehaltene Tiere werden nicht berücksichtigt.",
+      "conditions": [
+        {
+          "expression": "in_austria != false and kept_in_austria != false",
+          "description": "Lage in Österreich",
+          "input_paths": [
+            "land.parcels[].in_austria",
+            "livestock.species_groups[].kept_in_austria"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "counted",
+        "description": "Auslandsflächen/-tiere zählen weder für Prämie noch für Schwellenwerte.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p9.location",
+        "cit.at.p9.animals",
+        "cit.srl.p9.location"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.parcel_in_austria",
+        "data.oepul.o6_9.kept_in_austria"
+      ]
+    },
+    {
+      "id": "o6_9.general.commitment_whole_year",
+      "rule_type": "obligation",
+      "statement": "Förderfähig sind nur Flächen, Tiere oder Einheiten, für die während der gesamten Verpflichtungsdauer (Kalenderjahr) die Förderverpflichtungen erfüllt werden; bei unterjähriger Weitergabe ohne Weiterführung ist dies zu melden und es wird keine Prämie gewährt.",
+      "conditions": [
+        {
+          "expression": "obligations fulfilled 01.01.-31.12.",
+          "description": "Ganzjährige Erfüllung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "eligible_units",
+        "description": "Sonst keine Prämie für das unvollendete Jahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p10.commitment_duration",
+        "cit.srl.p12.duration",
+        "cit.srl.p12.transfer"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.general.takeover_individual_cases",
+      "rule_type": "procedure",
+      "statement": "Eine Maßnahmenübernahme von o6_9 (inkl. N-reduzierter Fütterung) ist nur in Einzelfällen im Zuge einer Betriebsauflösung, -teilung oder -zusammenlegung möglich; bei tierbezogenen Maßnahmen müssen Tiere und Flächen vom selben Vorbetrieb stammen.",
+      "conditions": [
+        {
+          "expression": "takeover_reason in {farm_dissolution, farm_division, farm_merger}",
+          "description": "Zulässiger Übernahmegrund",
+          "input_paths": [
+            "oepul_applications[].takeover_reason"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "takeover_allowed",
+        "description": "Andere Übernahmen nicht zulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p15.takeover_individual",
+        "cit.at.p15.takeover_o6_9",
+        "cit.at.p15.takeover_animals",
+        "cit.srl.p14.takeover",
+        "cit.at.p14.takeover"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.takeover_allowed"
+      ]
+    },
+    {
+      "id": "o6_9.general.no_area_increase_restriction",
+      "rule_type": "information",
+      "statement": "o6_9 ist nicht in der Liste der Maßnahmen mit beschränktem prämienfähigem Flächenzugang; nicht angeführte Maßnahmen unterliegen keiner Prämienbeschränkung. Die Rückzahlungsregeln bei Flächenabgängen betreffen mehrjährige Maßnahmen.",
+      "conditions": [
+        {
+          "expression": "measure_id == 'o6_9'",
+          "description": "Einjährige Maßnahme",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "not_applicable",
+        "description": "Keine Zugangs-/Abgangsbeschränkung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p17.no_access_limit",
+        "cit.at.p15.area_reduction"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.combination.general",
+      "rule_type": "combination",
+      "statement": "Teilnahme an mehreren Maßnahmen ist möglich, sofern nicht ausgeschlossen; Korrekturen unmöglicher Kombinationen sind bis zum Erhalt der Auszahlungsmitteilung zulässig (sofern keine Beanstandung bei Vor-Ort-Kontrolle).",
+      "conditions": [
+        {
+          "expression": "combination not excluded",
+          "description": "Zulässige Kombination",
+          "input_paths": [
+            "oepul_applications[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "permitted",
+        "description": "Kombination zulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p13.combination"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.combination.annex_l",
+      "rule_type": "combination",
+      "statement": "Gemäß Anhang L ist Maßnahme 9 auf der Einzelfläche kombinierbar mit 1A, 1B, 2, 3, 6, 7, 8, 16, 17 und 24; nicht mit 1C, 4, 10, 11, 12, 13, 14, 18, 19 und 23.",
+      "conditions": [
+        {
+          "expression": "single_area_combinable(measure_id)",
+          "description": "Tabellenzeile 9 Anhang L",
+          "input_paths": [
+            "oepul_applications[].measure_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combinable_or_not",
+        "description": "Kombinierbarkeit auf der Einzelfläche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.srl.p18.combination",
+        "cit.anh.p103.row9",
+        "cit.anh.p103.legend",
+        "cit.anh.p103.fn1"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.single_area_combinable"
+      ]
+    },
+    {
+      "id": "o6_9.general.no_double_funding",
+      "rule_type": "exclusion",
+      "statement": "Wird dieselbe Leistung aus einem anderen Titel der öffentlichen Hand gefördert oder ist sie gesetzlich/behördlich vorgeschrieben, ist sie nach der Sonderrichtlinie nicht förderbar (Leistungsüberschneidung, Code OP).",
+      "conditions": [
+        {
+          "expression": "service funded elsewhere",
+          "description": "Leistungsüberschneidung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Keine Förderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.srl.p11.double_funding"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.general.controls",
+      "rule_type": "control",
+      "statement": "Die Einhaltung wird über Verwaltungs-, Vor-Ort- und nachgängige Kontrollen geprüft; Kontrollorgane dürfen Betriebsräume und Flächen betreten und Aufzeichnungen einsehen; förderrelevante Unterlagen sind am Betrieb aufzubewahren und vorzulegen.",
+      "conditions": [
+        {
+          "expression": "controls permitted",
+          "description": "Kontrollduldung",
+          "input_paths": [
+            "documentation.application_logs_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Pflicht zur Duldung und Vorlage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p17.controls",
+        "cit.srl.p23.controls",
+        "cit.srl.p23.documents"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.general.control_refusal",
+      "rule_type": "sanction",
+      "statement": "Verweigert die förderwerbende Person die Auskunft oder verhindert die Vor-Ort-Kontrolle (außer höhere Gewalt), ist der Antrag abzulehnen; keine Prämie im laufenden Jahr, Verträge werden beendet und rückabgewickelt.",
+      "conditions": [
+        {
+          "expression": "control_refused",
+          "description": "Kontrollverweigerung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "rejection",
+        "description": "Keine Prämie; Vertragsbeendigung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.srl.p23.refusal"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.sanction.grounds",
+      "rule_type": "sanction",
+      "statement": "Kürzungen oder Einbehalt der Prämie resultieren aus Nichteinhaltung von Zugangsvoraussetzungen, Abweichungen bei Angaben (z. B. bodennah ausgebrachte Güllemenge), Nichteinhaltung inhaltlicher Förderverpflichtungen, der Konditionalität und des Vertragszeitraumes.",
+      "conditions": [
+        {
+          "expression": "breach",
+          "description": "Verstoß",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "reduction",
+        "description": "Kürzung bzw. Einbehalt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p17.grounds",
+        "cit.at.p17.grounds_list",
+        "cit.srl.p24.deviations",
+        "cit.srl.p24.content_sanctions"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.violations"
+      ]
+    },
+    {
+      "id": "o6_9.sanction.access_condition_no_contract",
+      "rule_type": "sanction",
+      "statement": "Bei einjährigen Maßnahmen und im Maßnahmenantrag zu beantragenden Optionen kommt bei Nichterfüllung von Förder- bzw. Zugangsvoraussetzungen keine gültige Verpflichtung (kein Vertrag) zustande.",
+      "conditions": [
+        {
+          "expression": "not access conditions met",
+          "description": "Zugangsvoraussetzung verfehlt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "no_contract",
+        "description": "Keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.srl.p24.access_conditions"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.premium_basis_ok",
+        "data.oepul.o6_9.n_feeding_eligible"
+      ]
+    },
+    {
+      "id": "o6_9.sanction.stages",
+      "rule_type": "sanction",
+      "statement": "Verstöße gegen inhaltliche Auflagen werden nach Schwere, Ausmaß, Dauer und Häufigkeit maßnahmenbezogen (inkl. Zuschläge) gestuft: Verwarnung (ab 2027 Einbehalt 1 %), 2 %, 5 %, 10 %, 25 %, 50 %, 100 %, Ausschluss mit Rückforderung bei zweimaliger 100 %-Kürzung im Vertragszeitraum.",
+      "conditions": [
+        {
+          "expression": "stage in 0..7",
+          "description": "Sanktionsstufe",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "reduction_share",
+        "description": "Kürzungsanteil gemäß data.o6_9.general_conditions.sanction_stages.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p18.stages",
+        "cit.at.p18.stage_exclusion",
+        "cit.at.p18.warning_2027"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.sanction_reduction_share"
+      ]
+    },
+    {
+      "id": "o6_9.sanction.multiple_reduction_order",
+      "rule_type": "calculation",
+      "statement": "Mehrfachkürzungen erfolgen in der Reihenfolge: Übererklärungen, Förder-/Zugangsvoraussetzungen, Fristversäumnis, Untererklärungen, inhaltliche Kürzungen, Förderobergrenze je Maßnahme, Modulation, Obergrenze Flächenzahlungen, Vertragszeitraumüberprüfung, Zugangskürzung, Konditionalität.",
+      "conditions": [
+        {
+          "expression": "multiple reductions",
+          "description": "Mehrere Kürzungen",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "order",
+        "description": "Reihenfolge gemäß data.o6_9.general_conditions.multiple_reduction_order.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.srl.p25.multiple"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.payment.modulation",
+      "rule_type": "calculation",
+      "statement": "Das Prämienausmaß aller Maßnahmen wird nach der Gesamtfläche des Betriebes (MFA) moduliert: bis 200 ha 100 %, über 200 bis 300 ha 90 %, über 300 bis 1.000 ha 85 %, über 1.000 ha 75 % (gewichteter Faktor, z. B. 220 ha = 99,09 %).",
+      "conditions": [
+        {
+          "expression": "modulation_factor(total_area_ha)",
+          "description": "Gesamtfläche",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "factor",
+        "description": "Gewichteter Modulationsfaktor.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p19.modulation",
+        "cit.at.p19.modulation_brackets",
+        "cit.at.p19.modulation_example",
+        "cit.srl.p17.modulation"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.modulation_factor",
+        "data.oepul.o6_9.premium_after_modulation_eur"
+      ]
+    },
+    {
+      "id": "o6_9.payment.area_payment_cap",
+      "rule_type": "cap",
+      "statement": "Für die Summe der flächenbezogenen ÖPUL-Zahlungen je Schlag gilt eine Obergrenze (allgemein 1.200 €/ha 2023, 1.300 €/ha ab 2024; Sonderwerte für Maßnahmen 13, 18/19 und K20); relevant für die flächenbezogene Fütterungsprämie.",
+      "conditions": [
+        {
+          "expression": "sum(area payments per parcel) <= cap(year)",
+          "description": "Obergrenze je Schlag",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "capped",
+        "description": "Zahlungen über der Obergrenze werden gekürzt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.at.p19.caps",
+        "cit.at.p19.caps_values",
+        "cit.srl.p17.cap"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.area_payment_cap_eur_per_ha"
+      ]
+    },
+    {
+      "id": "o6_9.payment.timing",
+      "rule_type": "procedure",
+      "statement": "Die Förderung wird als jährliche Prämie bis 30. Juni des Folgejahres auf das im Mehrfachantrag angegebene Konto ausbezahlt; nach Verwaltungskontrolle ist eine Teilzahlung von max. 75 % möglich; ein Abrechnungsreport steht auf eama.at zur Verfügung.",
+      "conditions": [
+        {
+          "expression": "payment",
+          "description": "Auszahlung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "payment",
+        "description": "Auszahlungsmodalitäten.",
+        "value": {
+          "deadline": "06-30 following year",
+          "advance_share_max": 0.75
+        }
+      },
+      "source_reference_ids": [
+        "cit.at.p18.payment",
+        "cit.at.p18.advance",
+        "cit.at.p18.report",
+        "cit.srl.p22.payment_deadline",
+        "cit.srl.p22.advance"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.advance_payment_max_eur"
+      ]
+    },
+    {
+      "id": "o6_9.payment.min_amount",
+      "rule_type": "threshold",
+      "statement": "Von der Gewährung einer Förderung kann abgesehen werden, wenn der Auszahlungsbetrag 50 Euro nicht überschreitet.",
+      "conditions": [
+        {
+          "expression": "premium_after_modulation_eur <= 50",
+          "description": "Bagatellgrenze",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "may_be_withheld",
+        "description": "Keine Auszahlung möglich.",
+        "value": {
+          "min_eur": 50
+        }
+      },
+      "source_reference_ids": [
+        "cit.srl.p22.min_payment"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.payment_may_be_withheld",
+        "data.oepul.o6_9.notices"
+      ]
+    },
+    {
+      "id": "o6_9.general.force_majeure",
+      "rule_type": "exception",
+      "statement": "Für Fälle höherer Gewalt bzw. außergewöhnlicher Umstände gilt § 6 GSP-AV; bei dauerhaften oder vorübergehenden, nicht beeinflussbaren Umständen kann die AMA bei fristgerechter Meldung von Rückforderungen absehen; das BML kann spezielle Festlegungen treffen. Einzelbetriebliche Ansuchen sind über eama.at (Eingaben) einzubringen.",
+      "conditions": [
+        {
+          "expression": "force_majeure_reported",
+          "description": "Meldung höherer Gewalt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "exception",
+        "description": "Keine Sanktion bei anerkannter höherer Gewalt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.srl.p15.force_majeure",
+        "cit.srl.p15.permanent",
+        "cit.srl.p16.bml",
+        "cit.n0522.force_majeure",
+        "cit.n0805.individual_report"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.general.drought_2026_harvest_exemption",
+      "rule_type": "exception",
+      "statement": "Im Antragsjahr 2026 gilt in den gelisteten Dürregebieten (Burgenland und Wien alle Bezirke, gelistete Bezirke in NÖ, OÖ, ab 12.08.2026 auch Stmk.) die Wettersituation automatisch als höhere Gewalt: Ernte auf 85 % des Schlages muss nicht erfolgen, wenn kein erntbarer Bestand vorliegt; die Prämie wird dennoch gewährt, keine Einzelmeldung nötig.",
+      "conditions": [
+        {
+          "expression": "year == 2026 and district listed and no_harvestable_crop_due_to_drought",
+          "description": "Dürre-Ausnahme",
+          "input_paths": [
+            "farm.region.federal_state",
+            "farm.region.district",
+            "land.parcels[].district",
+            "land.parcels[].operations.no_harvestable_crop_due_to_drought"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "harvest_obligation_waived",
+        "description": "Ernteverpflichtung gilt als erfüllt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.n0805.harvest",
+        "cit.n0805.districts_noe",
+        "cit.n0805.districts_ooe",
+        "cit.n0805.districts_bgld",
+        "cit.n0812.steiermark"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.drought_district_listed",
+        "data.oepul.o6_9.drought_harvest_exempt",
+        "data.oepul.o6_9.harvest_obligation_met"
+      ]
+    },
+    {
+      "id": "o6_9.general.revision_clause",
+      "rule_type": "exception",
+      "statement": "Bei Änderungen des verbindlichen Rechtsrahmens kann die förderwerbende Person die Zustimmung zur Vertragsanpassung verweigern; der Vertrag endet dann ohne Rückforderungen für die Vergangenheit.",
+      "conditions": [
+        {
+          "expression": "legal framework changed and consent refused",
+          "description": "Revisionsklausel",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "contract_ends",
+        "description": "Vertragsende ohne Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.srl.p16.revision"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.general.no_legal_entitlement",
+      "rule_type": "information",
+      "statement": "Aus der Sonderrichtlinie entsteht kein Rechtsanspruch auf Förderung; Abtretung, Anweisung oder Verpfändung von Förderforderungen ist gegenüber der Republik unwirksam.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Allgemein",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "information",
+        "description": "Kein subjektives Recht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.srl.p26.no_right",
+        "cit.srl.p26.assignment"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.slurry.ineligible_records",
+      "rule_type": "calculation",
+      "statement": "Aufzeichnungen, die eine Förderbedingung verfehlen (nicht förderbare Wirtschaftsdüngerart, nicht förderbares Verfahren, keine Acker-/Grünlandfläche des Betriebes, Biogasgülle außerhalb der Definition, keine Menge), zählen nicht zur förderfähigen aufgezeichneten Menge.",
+      "conditions": [
+        {
+          "expression": "count(record_ineligibility_reasons(r)) > 0",
+          "description": "Nicht förderfähige Aufzeichnung",
+          "input_paths": [
+            "manure_management.applications[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "excluded_from_recorded_volume",
+        "description": "Menge wird nicht als förderfähig gezählt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "cit.mb.p2.manure_types",
+        "cit.mb.p3.application_on_farm",
+        "cit.mb.p3.swivel",
+        "cit.mb.p3.biogas_contaminated"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_9.record_ineligibility_reasons",
+        "data.oepul.o6_9.record_eligible",
+        "data.oepul.o6_9.ineligible_application_records",
+        "data.oepul.o6_9.notices"
+      ]
+    }
+  ]
+}
