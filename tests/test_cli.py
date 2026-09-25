@@ -374,6 +374,41 @@ class ClaudeAdapterTests(unittest.TestCase):
             metadata["generator_session_id"],
         )
 
+    def test_finalization_feedback_lists_failed_gates_for_resume(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            run = Path(directory)
+            (run / "artifacts").mkdir()
+            self.assertEqual(cli.finalization_feedback(run), "")
+            (run / "artifacts" / "grounding-validation.json").write_text(
+                json.dumps(
+                    {
+                        "status": "failed",
+                        "errors": {
+                            "evidence": ["c01: evidence_text not found"],
+                            "data": [],
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            (run / "artifacts" / "metrics.json").write_text(
+                json.dumps(
+                    {
+                        "required_outputs_missing": [
+                            "grounding_validation_failed",
+                            "rego_tests",
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            feedback = cli.finalization_feedback(run)
+
+        self.assertIn("- [evidence] c01: evidence_text not found", feedback)
+        self.assertIn("- [required_outputs_missing] rego_tests", feedback)
+        self.assertNotIn("grounding_validation_failed", feedback)
+
     def test_resume_is_rejected_for_codex_runs(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             run = self._prepared_run(Path(directory), "")

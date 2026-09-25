@@ -76,6 +76,12 @@ python3 -m rulelab run runs/<run-id> --resume   # gleiche Claude-Sitzung fortset
 python3 -m rulelab finalize runs/<run-id>       # oder vorhandenen Stand prüfen
 ```
 
+`--resume` eignet sich auch nach einem fehlgeschlagenen `finalize`: Die
+Fortsetzungsanweisung enthält dann die abgelehnten Grounding-Prüfungen und
+fehlenden Ausgaben aus `artifacts/`, weil der Generator-Workspace diese
+Prüfungen selbst nicht enthält. Jede Fortsetzung zählt als neuer
+`generation_attempt` und steht in `resumed_attempts`.
+
 ## Quellen aktualisieren
 
 ```bash
