@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 61,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-4-terra-high/runs/v2-o6_4-terra-high-20260925/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_4.rego",
+    "tests/o6_4_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-4-terra-high/runs/v2-o6_4-terra-high-20260925/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 12,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_4.rego",
+        "tests/o6_4_test.rego"
+      ],
+      "duration_ms": 23,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-4-terra-high/runs/v2-o6_4-terra-high-20260925/workspace/tools/opa",
+            "fmt",
+            "policy/o6_4.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_4\n\nimport rego.v1\n\n# Rego input extends the canonical profile with the discover-mode proposals in\n# rules/profile_changes.json. Each participating parcel is represented in\n# input.land.parcels and has a mountain_meadow object.\n\npremium_rate(parcel) := rate if {\n\tsome rate in data.o6_4.premium_rates\n\trate.code == parcel.mountain_meadow.code\n\tinput.farm.year >= rate.year_from\n\trate.year_to == null\n}\n\npremium_rate(parcel) := rate if {\n\tsome rate in data.o6_4.premium_rates\n\trate.code == parcel.mountain_meadow.code\n\tinput.farm.year >= rate.year_from\n\trate.year_to != null\n\tinput.farm.year <= rate.year_to\n}\n\neligible_altitude(parcel) if {\n\tparcel.mountain_meadow.is_mountain_meadow\n\tparcel.mountain_meadow.area_above_1200m_ha > parcel.area_ha / 2\n}\n\ncompliant_mowing(parcel) if {\n\tparcel.mountain_meadow.mowing_count <= 1\n\tparcel.mountain_meadow.mowing_count_last_two_years >= 1\n\tparcel.mountain_meadow.mowing_count > 0\n\tparcel.mountain_meadow.mowed_area_ha == parcel.area_ha\n\tparcel.mountain_meadow.mowings[0].forage_removed\n}\n\ncompliant_no_mowing_year(parcel) if {\n\tparcel.mountain_meadow.mowing_count == 0\n\tparcel.mountain_meadow.code == \"BM0\"\n\tparcel.mountain_meadow.mowing_count_last_two_years >= 1\n}\n\ncompliant_grazing(parcel) if {\n\tnot parcel.mountain_meadow.grazing_occurred\n}\n\ncompliant_grazing(parcel) if {\n\tparcel.mountain_meadow.grazing_occurred\n\tparcel.mountain_meadow.grazing_start_date >= sprintf(\"%d-08-16\", [input.farm.year])\n}\n\ncompliant_fertilizer(parcel) if {\n\tevery application in parcel.mountain_meadow.fertilizer_applications {\n\t\tapplication.kind == \"farmyard_manure\"\n\t\tapplication.original_form\n\t}\n}\n\ncompliant_psm(parcel) if {\n\tevery application in parcel.mountain_meadow.psm_applications {\n\t\tapplication.bio_eu_2018_848_allowed\n\t}\n}\n\nviolations contains violation if {\n\tparcel := input.land.parcels[_]\n\tparcel.mountain_meadow.participates\n\tnot eligible_altitude(parcel)\n\tviolation := {\"parcel_id\": parcel.parcel_id, \"rule\": \"O64.ELIGIBILITY.ALTITUDE\", \"reason\": \"more than half of the parcel is not above 1,200 m\"}\n}\n\nviolations contains violation if {\n\tparcel := input.land.parcels[_]\n\tparcel.mountain_meadow.participates\n\tnot compliant_mowing(parcel)\n\tnot compliant_no_mowing_year(parcel)\n\tviolation := {\"parcel_id\": parcel.parcel_id, \"rule\": \"O64.MOWING\", \"reason\": \"mowing frequency, full-area mowing, forage removal, or BM0 coding is non-compliant\"}\n}\n\nviolations contains violation if {\n\tparcel := input.land.parcels[_]\n\tparcel.mountain_meadow.participates\n\tnot compliant_grazing(parcel)\n\tviolation := {\"parcel_id\": parcel.parcel_id, \"rule\": \"O64.GRAZING\", \"reason\": \"grazing is permitted only as after-grazing from 16 August\"}\n}\n\nviolations contains violation if {\n\tparcel := input.land.parcels[_]\n\tparcel.mountain_meadow.participates\n\tnot compliant_fertilizer(parcel)\n\tviolation := {\"parcel_id\": parcel.parcel_id, \"rule\": \"O64.FERTILIZER\", \"reason\": \"only farmyard manure in original form is permitted\"}\n}\n\nviolations contains violation if {\n\tparcel := input.land.parcels[_]\n\tparcel.mountain_meadow.participates\n\tnot compliant_psm(parcel)\n\tviolation := {\"parcel_id\": parcel.parcel_id, \"rule\": \"O64.PSM\", \"reason\": \"plant-protection product is not solely EU 2018/848-allowed\"}\n}\n\nannual_premium[parcel.parcel_id] := amount if {\n\tparcel := input.land.parcels[_]\n\tparcel.mountain_meadow.participates\n\trate := premium_rate(parcel)\n\tcompliant_mowing(parcel)\n\teligible_altitude(parcel)\n\tcompliant_grazing(parcel)\n\tcompliant_fertilizer(parcel)\n\tcompliant_psm(parcel)\n\tamount := parcel.area_ha * rate.eur_per_ha\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-4-terra-high/runs/v2-o6_4-terra-high-20260925/workspace/tools/opa",
+            "fmt",
+            "tests/o6_4_test.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_4_test\n\nimport data.oepul.o6_4\nimport rego.v1\n\nbase := {\n\t\"farm\": {\"year\": 2026},\n\t\"land\": {\"parcels\": [{\n\t\t\"parcel_id\": \"p1\", \"area_ha\": 2,\n\t\t\"mountain_meadow\": {\n\t\t\t\"participates\": true, \"is_mountain_meadow\": true, \"area_above_1200m_ha\": 1.1,\n\t\t\t\"code\": \"BM2\", \"mowing_count\": 1, \"mowing_count_last_two_years\": 1,\n\t\t\t\"mowed_area_ha\": 2, \"mowings\": [{\"forage_removed\": true}],\n\t\t\t\"grazing_occurred\": true, \"grazing_start_date\": \"2026-08-16\",\n\t\t\t\"fertilizer_applications\": [{\"kind\": \"farmyard_manure\", \"original_form\": true}],\n\t\t\t\"psm_applications\": [{\"bio_eu_2018_848_allowed\": true}],\n\t\t},\n\t}]},\n}\n\ntest_rate_and_premium if {\n\tpremiums := o6_4.annual_premium with input as base\n\tpremiums.p1 == 1188\n\tviolations := o6_4.violations with input as base\n\tcount(violations) == 0\n}\n\ntest_altitude_violation if {\n\tbad := object.union(base, {\"land\": {\"parcels\": [object.union(base.land.parcels[0], {\"mountain_meadow\": object.union(base.land.parcels[0].mountain_meadow, {\"area_above_1200m_ha\": 1})})]}})\n\tsome v in o6_4.violations with input as bad\n\tv.rule == \"O64.ELIGIBILITY.ALTITUDE\"\n}\n\ntest_bm0_not_paid if {\n\tidle := object.union(base, {\"land\": {\"parcels\": [object.union(base.land.parcels[0], {\"mountain_meadow\": object.union(base.land.parcels[0].mountain_meadow, {\"code\": \"BM0\", \"mowing_count\": 0, \"mowings\": []})})]}})\n\tnot o6_4.annual_premium.p1 with input as idle\n\tviolations := o6_4.violations with input as idle\n\tcount(violations) == 0\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-4-terra-high/runs/v2-o6_4-terra-high-20260925/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 14,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 3/3\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-4-terra-high/runs/v2-o6_4-terra-high-20260925/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 11,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-4-terra-high/runs/v2-o6_4-terra-high-20260925/workspace"
+}
