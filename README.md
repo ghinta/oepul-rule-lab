@@ -28,19 +28,53 @@ Alternativ enthält `.devcontainer/` Python und die gepinnte OPA-Version. Ein
 Modellwechsel benötigt beim gleichen Adapter nur eine zweite JSON-Datei unter
 `config/models/` mit einem anderen `model`-Wert. Vorbereitet sind Konfigurationen
 für `gpt-5.5`, `gpt-5.6-luna`, `gpt-5.6-terra`, `gpt-5.6-sol` und
-`gpt-6-astra`; ein externer
-Command-Adapter ist ebenfalls dokumentiert.
+`gpt-6-astra` (Adapter `codex-cli`) sowie für `claude-opus-5-5` mit Effort
+`high` (Adapter `claude-cli`, `config/models/claude-opus-5.5.json`); ein
+externer Command-Adapter ist ebenfalls dokumentiert.
 
-## Nutzungsgrenzen für Codex-Läufe
+Modell, Anbieter, Adapter und Reasoning-Effort stehen in jedem Run in
+`model.json` und `run.json` (`model`) sowie in der tatsächlichen
+`invocation`. Run-IDs benennen Maßnahme, Modell und Effort, z. B.
+`v2-o6_4-opus-5.5-high-20260925`.
 
-Rule Lab prüft vor jedem `codex-cli`-Run die von Codex gemeldeten ChatGPT-
-Rate-Limits. Ein neuer Run startet nur, wenn in **jedem** gemeldeten
-Quotenfenster mindestens **50 %** verfügbar sind. Während eines Runs wird der
-kleinste verbleibende Wert alle 30 Sekunden geprüft. Bei **5 % oder weniger**
-wird der Generator kontrolliert beendet und der Run als
-`aborted_usage_guard` protokolliert, statt bis zu einem harten Limitfehler zu
-laufen. Sind die Limits nicht lesbar, startet der Run aus Sicherheitsgründen
-nicht.
+### Claude-Adapter
+
+`claude-cli` startet Claude Code headless (`claude -p`) im Run-Workspace.
+Dateiänderungen werden nur innerhalb des Workspace automatisch akzeptiert;
+alles, was eine interaktive Freigabe bräuchte, wird verweigert. Web-Zugriff,
+`git`, `gh`, `curl`, `wget` und `docker` sind gesperrt, MCP-Server sowie
+Benutzer- und Projekteinstellungen werden nicht geladen. `CLAUDE*`-Variablen
+einer umgebenden Claude-Code-Sitzung sowie `GH_TOKEN`/`GITHUB_TOKEN` werden
+nicht an den Generator vererbt. Wo der Login der lokalen `claude`-Installation
+für Kindprozesse nicht sichtbar ist, kann `RULELAB_CLAUDE_OAUTH_TOKEN_FILE` auf
+eine Token-Datei zeigen; das Token landet nie in Run-Metadaten.
+
+`raw/events.jsonl` enthält den `stream-json`-Verlauf, `raw/final-message.md`
+die Abschlussnachricht und `run.json` unter `generator_result` Turns, Dauer,
+Token-Nutzung und Kosten. Die Sitzungs-ID steht in `generator_session_id`.
+
+## Nutzungsgrenzen für Codex- und Claude-Läufe
+
+Rule Lab prüft vor jedem `codex-cli`- und `claude-cli`-Run die gemeldeten
+Rate-Limits: bei Codex die ChatGPT-Limits des Codex App Servers, bei Claude die
+Fenster des Claude-Abos (`five_hour`, `seven_day` usw.), gelesen über einen
+minimalen werkzeuglosen `claude -p`-Aufruf mit einem kleinen Modell. Ein neuer
+Run startet nur, wenn in **jedem** gemeldeten Quotenfenster mindestens
+**50 %** verfügbar sind. Während eines Runs wird der kleinste verbleibende Wert
+alle 30 Sekunden geprüft. Bei **5 % oder weniger** wird der Generator
+kontrolliert beendet und der Run als `aborted_usage_guard` protokolliert, statt
+bis zu einem harten Limitfehler zu laufen. Sind die Limits nicht lesbar,
+startet der Run aus Sicherheitsgründen nicht.
+
+Ein Claude-Run wird dabei mit SIGINT wie eine Benutzerunterbrechung beendet.
+Workspace und Sitzungsverlauf bleiben erhalten; `run.json` nennt unter
+`usage_guard.resume` den Befehl zum Fortsetzen. Danach wird der Run entweder
+später fortgesetzt oder mit dem vorhandenen Stand finalisiert:
+
+```bash
+python3 -m rulelab run runs/<run-id> --resume   # gleiche Claude-Sitzung fortsetzen
+python3 -m rulelab finalize runs/<run-id>       # oder vorhandenen Stand prüfen
+```
 
 ## Quellen aktualisieren
 

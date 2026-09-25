@@ -4,6 +4,7 @@ import argparse
 import io
 import json
 import os
+import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
@@ -192,6 +193,198 @@ class UsageGuardTests(unittest.TestCase):
     def test_rejects_missing_rate_limit_windows(self) -> None:
         with self.assertRaises(cli.UsageGuardError):
             cli.rate_limit_remaining_percent({"rateLimits": {}})
+
+    def test_claude_uses_lowest_remaining_unified_window(self) -> None:
+        remaining = cli.claude_rate_limit_remaining_percent(
+            {
+                "status": "allowed",
+                "unifiedWindows": {
+                    "five_hour": {"utilization": 0.76},
+                    "seven_day": {"utilization": 0.09},
+                },
+            }
+        )
+
+        self.assertAlmostEqual(remaining, 24.0)
+
+    def test_claude_rejected_status_means_no_remaining_quota(self) -> None:
+        remaining = cli.claude_rate_limit_remaining_percent(
+            {
+                "status": "rejected",
+                "unifiedWindows": {"five_hour": {"utilization": 0.2}},
+            }
+        )
+
+        self.assertEqual(remaining, 0.0)
+
+    def test_claude_rejects_missing_unified_windows(self) -> None:
+        with self.assertRaises(cli.UsageGuardError):
+            cli.claude_rate_limit_remaining_percent({"status": "allowed"})
+
+
+class ClaudeAdapterTests(unittest.TestCase):
+    CONFIG = {
+        "adapter": "claude-cli",
+        "model": "claude-opus-5-5",
+        "executable": "claude",
+        "reasoning_effort": "high",
+        "args": [],
+    }
+
+    def test_claude_command_confines_tools_without_bypassing_permissions(
+        self,
+    ) -> None:
+        command = cli.claude_command(self.CONFIG, "session-1")
+
+        self.assertEqual(command[:2], ["claude", "-p"])
+        self.assertIn("claude-opus-5-5", command)
+        self.assertEqual(command[command.index("--effort") + 1], "high")
+        self.assertEqual(command[command.index("--permission-mode") + 1], "acceptEdits")
+        self.assertEqual(command[command.index("--permission-prompts") + 1], "none")
+        self.assertEqual(command[command.index("--session-id") + 1], "session-1")
+        self.assertNotIn("--dangerously-skip-permissions", command)
+        self.assertIn("WebFetch", command[command.index("--disallowedTools") + 1])
+        self.assertIn("--strict-mcp-config", command)
+
+    def test_claude_resume_command_reuses_the_recorded_session(self) -> None:
+        command = cli.claude_command(self.CONFIG, "session-1", resume=True)
+
+        self.assertEqual(command[command.index("--resume") + 1], "session-1")
+        self.assertNotIn("--session-id", command)
+
+    def test_claude_environment_detaches_host_session(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            token = Path(directory) / "token"
+            token.write_text("secret-token\n", encoding="utf-8")
+            environment = cli.claude_environment(
+                {
+                    "PATH": "/bin",
+                    "OPA_BIN": "tools/opa",
+                    "CLAUDECODE": "1",
+                    "CLAUDE_CODE_SESSION_ID": "host",
+                    "MAX_THINKING_TOKENS": "1",
+                    "GH_TOKEN": "forge",
+                    cli.CLAUDE_TOKEN_FILE_ENV: str(token),
+                }
+            )
+
+        self.assertEqual(environment["PATH"], "/bin")
+        self.assertEqual(environment["OPA_BIN"], "tools/opa")
+        self.assertEqual(environment["CLAUDE_CODE_OAUTH_TOKEN"], "secret-token")
+        for removed in (
+            "CLAUDECODE",
+            "CLAUDE_CODE_SESSION_ID",
+            "MAX_THINKING_TOKENS",
+            "GH_TOKEN",
+            cli.CLAUDE_TOKEN_FILE_ENV,
+        ):
+            self.assertNotIn(removed, environment)
+
+    def test_result_summary_reads_final_stream_event(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            events = Path(directory) / "events.jsonl"
+            events.write_text(
+                "\n".join(
+                    [
+                        json.dumps({"type": "system", "subtype": "init"}),
+                        "not json",
+                        json.dumps(
+                            {
+                                "type": "result",
+                                "subtype": "success",
+                                "num_turns": 3,
+                                "total_cost_usd": 1.5,
+                                "result": "done",
+                                "session_id": "ignored",
+                            }
+                        ),
+                    ]
+                ),
+                encoding="utf-8",
+            )
+
+            summary = cli.claude_result_summary(events)
+
+        self.assertEqual(
+            summary,
+            {"subtype": "success", "num_turns": 3, "total_cost_usd": 1.5, "result": "done"},
+        )
+
+    def _prepared_run(self, root: Path, script: str) -> Path:
+        run = root / "runs" / "claude-run"
+        (run / "workspace" / "tools").mkdir(parents=True)
+        (run / "raw").mkdir()
+        executable = root / "fake-claude"
+        executable.write_text(f"#!{sys.executable}\n{script}", encoding="utf-8")
+        executable.chmod(0o755)
+        (run / "model.json").write_text(
+            json.dumps({**self.CONFIG, "executable": str(executable)}),
+            encoding="utf-8",
+        )
+        (run / "run.json").write_text(
+            json.dumps({"run_id": "claude-run", "status": "prepared"}),
+            encoding="utf-8",
+        )
+        (run / "prompt.md").write_text("Auftrag\n", encoding="utf-8")
+        return run
+
+    def test_claude_run_does_not_start_below_minimum_quota(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            run = self._prepared_run(Path(directory), "raise SystemExit(0)\n")
+            with patch.object(
+                cli.ClaudeRateLimitProbe, "remaining_percent", return_value=24.0
+            ):
+                result = cli.run_agent(
+                    argparse.Namespace(run_dir=str(run), dry_run=False, resume=False)
+                )
+
+            metadata = json.loads((run / "run.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(result, cli.USAGE_GUARD_EXIT_CODE)
+        self.assertEqual(metadata["status"], "not_started_usage_guard")
+        self.assertEqual(metadata["usage_guard"]["status"], "blocked_start")
+
+    def test_claude_run_stops_resumably_at_stop_threshold(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            run = self._prepared_run(
+                Path(directory),
+                "import sys, time\nsys.stdin.read()\ntime.sleep(30)\n",
+            )
+            with (
+                patch.object(
+                    cli.ClaudeRateLimitProbe,
+                    "remaining_percent",
+                    side_effect=[80.0, 4.0],
+                ),
+                patch.object(cli, "USAGE_POLL_SECONDS", 0.2),
+                patch.object(cli, "stage_workspace_opa", return_value={}),
+            ):
+                result = cli.run_agent(
+                    argparse.Namespace(run_dir=str(run), dry_run=False, resume=False)
+                )
+
+            metadata = json.loads((run / "run.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(result, cli.USAGE_GUARD_EXIT_CODE)
+        self.assertEqual(metadata["status"], "aborted_usage_guard")
+        self.assertEqual(metadata["usage_guard"]["status"], "aborted_low_remaining")
+        self.assertTrue(metadata["usage_guard"]["resume"]["supported"])
+        self.assertEqual(
+            metadata["usage_guard"]["resume"]["session_id"],
+            metadata["generator_session_id"],
+        )
+
+    def test_resume_is_rejected_for_codex_runs(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            run = self._prepared_run(Path(directory), "")
+            (run / "model.json").write_text(
+                json.dumps({"adapter": "codex-cli", "model": "test-model"}),
+                encoding="utf-8",
+            )
+            with self.assertRaises(ValueError):
+                cli.run_agent(
+                    argparse.Namespace(run_dir=str(run), dry_run=False, resume=True)
+                )
 
 class PrepareTests(unittest.TestCase):
     def test_prepare_creates_an_isolated_workspace(self) -> None:

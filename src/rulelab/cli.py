@@ -9,11 +9,13 @@ import platform
 import re
 import select
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
 import time
 import urllib.request
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -33,10 +35,35 @@ MIN_START_REMAINING_PERCENT = 50.0
 STOP_REMAINING_PERCENT = 5.0
 USAGE_POLL_SECONDS = 30.0
 USAGE_GUARD_EXIT_CODE = 75
+USAGE_GUARDED_ADAPTERS = ("codex-cli", "claude-cli")
+CLAUDE_USAGE_PROBE_MODEL = "claude-haiku-4-5-20251001"
+CLAUDE_TOKEN_FILE_ENV = "RULELAB_CLAUDE_OAUTH_TOKEN_FILE"
+# Variables a nested Claude Code generator must not inherit: host-session
+# wiring (CLAUDE*), a host thinking budget that would override the configured
+# effort, and forge credentials the generator has no use for.
+CLAUDE_ENV_KEEP = frozenset({"CLAUDE_CODE_OAUTH_TOKEN", "CLAUDE_CONFIG_DIR"})
+CLAUDE_ENV_DROP = frozenset({"MAX_THINKING_TOKENS", "GH_TOKEN", "GITHUB_TOKEN"})
+CLAUDE_DISALLOWED_TOOLS = (
+    "WebFetch",
+    "WebSearch",
+    "Bash(git *)",
+    "Bash(gh *)",
+    "Bash(curl *)",
+    "Bash(wget *)",
+    "Bash(docker *)",
+)
+CLAUDE_RESUME_PROMPT = """\
+Der vorherige Generatorlauf wurde durch den Rule-Lab-Nutzungsguard oder eine
+Unterbrechung kontrolliert beendet. Setze den ursprünglichen Auftrag im
+aktuellen Run-Workspace fort: Prüfe zuerst den vorhandenen Stand aller
+Ausgaben, vervollständige fehlende Regeln, Belege, Coverage-Einträge, Daten,
+Rego-Module und Tests und führe die Validierung erneut aus. Bereits korrekte
+Ergebnisse bleiben erhalten.
+"""
 
 
 class UsageGuardError(ValueError):
-    """Raised when Codex usage cannot safely satisfy the configured guard."""
+    """Raised when provider usage cannot safely satisfy the configured guard."""
 
 
 class CodexRateLimitClient:
@@ -166,6 +193,113 @@ def rate_limit_remaining_percent(result: dict[str, Any]) -> float:
 
     if not remaining:
         raise UsageGuardError("Codex usage returned no readable rate-limit window")
+    return min(remaining)
+
+
+class ClaudeRateLimitProbe:
+    """Read Claude plan limits through a minimal tool-less ``claude -p`` call.
+
+    Claude Code emits a ``rate_limit_event`` with the unified subscription
+    windows after its first API response. A one-token reply from a small model
+    therefore reads the same limits the generator consumes, using whatever
+    authentication the local ``claude`` installation already has.
+    """
+
+    def __init__(
+        self,
+        executable: str,
+        environment: dict[str, str],
+        model: str = CLAUDE_USAGE_PROBE_MODEL,
+    ) -> None:
+        self.executable = executable
+        self.environment = environment
+        self.model = model
+
+    def __enter__(self) -> "ClaudeRateLimitProbe":
+        return self
+
+    def __exit__(self, *_: Any) -> None:
+        return None
+
+    def command(self) -> list[str]:
+        return [
+            self.executable,
+            "-p",
+            ".",
+            "--model",
+            self.model,
+            "--tools",
+            "",
+            "--system-prompt",
+            "Reply with a single dot.",
+            "--output-format",
+            "stream-json",
+            "--verbose",
+            "--no-session-persistence",
+            "--strict-mcp-config",
+            "--setting-sources",
+            "",
+            "--disable-slash-commands",
+        ]
+
+    def remaining_percent(self) -> float:
+        try:
+            completed = subprocess.run(
+                self.command(),
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=90,
+                check=False,
+                cwd=tempfile.gettempdir(),
+                env=self.environment,
+                stdin=subprocess.DEVNULL,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            raise UsageGuardError(f"Claude usage probe failed: {exc}") from exc
+        info: dict[str, Any] | None = None
+        for line in completed.stdout.splitlines():
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(event, dict) and event.get("type") == "rate_limit_event":
+                candidate = event.get("rate_limit_info")
+                if isinstance(candidate, dict):
+                    info = candidate
+        if info is None:
+            raise UsageGuardError(
+                "Claude usage probe returned no rate_limit_event "
+                f"(exit code {completed.returncode})"
+            )
+        return claude_rate_limit_remaining_percent(info)
+
+
+def claude_rate_limit_remaining_percent(info: dict[str, Any]) -> float:
+    """Return the smallest remaining percentage across Claude unified windows."""
+
+    if info.get("status") == "rejected":
+        return 0.0
+    windows = info.get("unifiedWindows")
+    remaining: list[float] = []
+    if isinstance(windows, dict):
+        for name, window in windows.items():
+            if not isinstance(window, dict):
+                continue
+            utilization = window.get("utilization")
+            if isinstance(utilization, bool) or not isinstance(
+                utilization, (int, float)
+            ):
+                continue
+            if utilization < 0:
+                raise UsageGuardError(
+                    f"Claude usage returned invalid utilization for {name}: "
+                    f"{utilization!r}"
+                )
+            remaining.append(100.0 * (1.0 - min(float(utilization), 1.0)))
+    if not remaining:
+        raise UsageGuardError("Claude usage returned no readable rate-limit window")
     return min(remaining)
 
 
@@ -357,6 +491,31 @@ def generator_environment(workspace: Path) -> dict[str, str]:
     )
     environment["RULELAB_OPA_RUNTIME"] = "local"
     environment["RULELAB_OPA_BIN"] = "tools/opa"
+    return environment
+
+
+def claude_environment(base: dict[str, str]) -> dict[str, str]:
+    """Return a generator environment detached from any host Claude session.
+
+    When Rule Lab itself runs inside Claude Code, the inherited ``CLAUDE*``
+    variables would wire the nested generator into the host session. An
+    optional ``RULELAB_CLAUDE_OAUTH_TOKEN_FILE`` supplies a token for hosts
+    whose own login is not visible to a child process; the token is passed via
+    the environment only and never written to run metadata.
+    """
+
+    environment = {
+        key: value
+        for key, value in base.items()
+        if key in CLAUDE_ENV_KEEP
+        or not (key.startswith("CLAUDE") or key in CLAUDE_ENV_DROP)
+    }
+    token_file = environment.pop(CLAUDE_TOKEN_FILE_ENV, None)
+    if token_file and "CLAUDE_CODE_OAUTH_TOKEN" not in environment:
+        token = Path(token_file).expanduser().read_text(encoding="utf-8").strip()
+        if not token:
+            raise ValueError(f"{CLAUDE_TOKEN_FILE_ENV} points to an empty file")
+        environment["CLAUDE_CODE_OAUTH_TOKEN"] = token
     return environment
 
 
@@ -587,6 +746,79 @@ def codex_command(config: dict[str, Any], run_dir: Path) -> list[str]:
     return command
 
 
+def claude_command(
+    config: dict[str, Any], session_id: str, *, resume: bool = False
+) -> list[str]:
+    """Build a headless Claude Code invocation confined to the run workspace.
+
+    File edits are auto-accepted only inside the working directory; anything
+    that would need an interactive approval is denied. Network, git and
+    container tools are removed. The prompt is read from stdin.
+    """
+
+    executable = str(config.get("executable", "claude"))
+    command = [
+        executable,
+        "-p",
+        "--model",
+        str(config["model"]),
+        "--output-format",
+        "stream-json",
+        "--verbose",
+        "--permission-mode",
+        "acceptEdits",
+        "--permission-prompts",
+        "none",
+        "--allowedTools",
+        "Bash",
+        "--disallowedTools",
+        ",".join(CLAUDE_DISALLOWED_TOOLS),
+        "--strict-mcp-config",
+        "--setting-sources",
+        "",
+        "--disable-slash-commands",
+    ]
+    command.extend(["--resume" if resume else "--session-id", session_id])
+    if effort := config.get("reasoning_effort"):
+        command.extend(["--effort", str(effort)])
+    for item in config.get("args", []):
+        command.append(str(item))
+    return command
+
+
+def claude_result_summary(events_path: Path) -> dict[str, Any] | None:
+    """Extract the final ``result`` event of a Claude stream-json log."""
+
+    if not events_path.is_file():
+        return None
+    result: dict[str, Any] | None = None
+    with events_path.open(encoding="utf-8", errors="replace") as handle:
+        for line in handle:
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(event, dict) and event.get("type") == "result":
+                result = event
+    if result is None:
+        return None
+    return {
+        key: result[key]
+        for key in (
+            "subtype",
+            "is_error",
+            "num_turns",
+            "duration_ms",
+            "duration_api_ms",
+            "total_cost_usd",
+            "usage",
+            "modelUsage",
+            "result",
+        )
+        if key in result
+    }
+
+
 def external_command(config: dict[str, Any], run_dir: Path) -> list[str]:
     raw = config.get("command")
     if not isinstance(raw, list) or not raw:
@@ -627,10 +859,30 @@ def run_agent(args: argparse.Namespace) -> int:
     metadata = read_json(run_dir / "run.json")
     config = read_json(run_dir / "model.json")
     adapter = config.get("adapter", "codex-cli")
+    workspace = run_dir / "workspace"
+    resume = bool(getattr(args, "resume", False))
+    if resume and adapter != "claude-cli":
+        raise ValueError(f"--resume is not supported by adapter {adapter}")
+
+    model_environment = generator_environment(workspace)
+    session_id: str | None = None
     if adapter == "codex-cli":
         command = codex_command(config, run_dir)
+        prompt_path = run_dir / "prompt.md"
+    elif adapter == "claude-cli":
+        model_environment = claude_environment(model_environment)
+        if resume:
+            session_id = metadata.get("generator_session_id")
+            if not isinstance(session_id, str) or not session_id:
+                raise ValueError("Cannot resume: run.json has no generator_session_id")
+            prompt_path = run_dir / "raw" / "resume-prompt.md"
+        else:
+            session_id = str(uuid.uuid4())
+            prompt_path = run_dir / "prompt.md"
+        command = claude_command(config, session_id, resume=resume)
     elif adapter == "external-command":
         command = external_command(config, run_dir)
+        prompt_path = run_dir / "prompt.md"
     else:
         raise ValueError(f"Unsupported adapter: {adapter}")
 
@@ -645,12 +897,19 @@ def run_agent(args: argparse.Namespace) -> int:
         "adapter": adapter,
     }
     metadata["usage_guard"] = usage_guard
-    usage_client: CodexRateLimitClient | None = None
-    if adapter == "codex-cli":
+    usage_client: CodexRateLimitClient | ClaudeRateLimitProbe | None = None
+    if adapter in USAGE_GUARDED_ADAPTERS:
         try:
-            usage_client = CodexRateLimitClient(
-                str(config.get("executable", "codex"))
-            )
+            if adapter == "codex-cli":
+                usage_client = CodexRateLimitClient(
+                    str(config.get("executable", "codex"))
+                )
+            else:
+                usage_client = ClaudeRateLimitProbe(
+                    str(config.get("executable", "claude")),
+                    model_environment,
+                    str(config.get("usage_probe_model", CLAUDE_USAGE_PROBE_MODEL)),
+                )
             usage_client.__enter__()
             start_remaining = usage_client.remaining_percent()
         except (OSError, UsageGuardError) as exc:
@@ -677,16 +936,16 @@ def run_agent(args: argparse.Namespace) -> int:
     else:
         usage_guard["status"] = "not_applicable"
 
-    workspace = run_dir / "workspace"
     if OPA_RUNNER.is_file():
         shutil.copy2(OPA_RUNNER, workspace / "tools" / "opa_validate.py")
     if OPA_VERSION_FILE.is_file():
         shutil.copy2(OPA_VERSION_FILE, workspace / "tools" / "opa-version.txt")
     opa_runtime = stage_workspace_opa(workspace)
-    model_environment = generator_environment(workspace)
 
-    prompt = (run_dir / "prompt.md").read_text(encoding="utf-8")
     generation_attempt = prepare_raw_attempt(run_dir / "raw")
+    if resume:
+        prompt_path.write_text(CLAUDE_RESUME_PROMPT, encoding="utf-8")
+    prompt = prompt_path.read_text(encoding="utf-8")
     metadata["status"] = "running"
     metadata["started_at"] = utc_now()
     metadata["invocation"] = command
@@ -697,6 +956,13 @@ def run_agent(args: argparse.Namespace) -> int:
         "opa_bin": model_environment["RULELAB_OPA_BIN"],
         "path_prefix": "tools",
     }
+    if session_id is not None:
+        metadata["generator_session_id"] = session_id
+    if resume:
+        metadata["resumed_attempts"] = [
+            *metadata.get("resumed_attempts", []),
+            generation_attempt,
+        ]
     write_json(run_dir / "run.json", metadata)
 
     timeout = int(config.get("timeout_seconds", 3600))
@@ -712,7 +978,7 @@ def run_agent(args: argparse.Namespace) -> int:
                 stdout=out,
                 stderr=err,
                 text=True,
-                cwd=run_dir / "workspace",
+                cwd=workspace,
                 env=model_environment,
             )
             assert process.stdin is not None
@@ -745,7 +1011,12 @@ def run_agent(args: argparse.Namespace) -> int:
                             )
                             usage_aborted = True
                     if usage_aborted:
-                        process.terminate()
+                        # Claude Code treats SIGINT like a user interrupt and
+                        # keeps the session transcript resumable.
+                        if adapter == "claude-cli":
+                            process.send_signal(signal.SIGINT)
+                        else:
+                            process.terminate()
                         try:
                             process.wait(timeout=30)
                         except subprocess.TimeoutExpired:
@@ -757,6 +1028,25 @@ def run_agent(args: argparse.Namespace) -> int:
         if usage_client is not None:
             usage_client.__exit__()
 
+    if adapter == "claude-cli":
+        summary = claude_result_summary(run_dir / "raw" / "events.jsonl")
+        if summary is not None:
+            final_message = summary.pop("result", None)
+            if isinstance(final_message, str):
+                (run_dir / "raw" / "final-message.md").write_text(
+                    final_message, encoding="utf-8"
+                )
+            metadata["generator_result"] = summary
+    if usage_aborted:
+        usage_guard["resume"] = {
+            "supported": session_id is not None,
+            "session_id": session_id,
+            "command": (
+                f"python3 -m rulelab run {display_path(run_dir, REPO_ROOT)} --resume"
+                if session_id is not None
+                else None
+            ),
+        }
     metadata["status"] = (
         "aborted_usage_guard"
         if usage_aborted
@@ -1294,6 +1584,11 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser = subparsers.add_parser("run")
     run_parser.add_argument("run_dir")
     run_parser.add_argument("--dry-run", action="store_true")
+    run_parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Continue the recorded generator session (claude-cli adapter only)",
+    )
     run_parser.set_defaults(func=run_agent)
 
     finalize_parser = subparsers.add_parser("finalize")

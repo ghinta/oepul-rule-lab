@@ -3,11 +3,14 @@
 Dieses Repository dient der möglichst vollständigen Extraktion ausführbarer
 Regeln aus den bereitgestellten ÖPUL-Quellen.
 
-## Codex-Nutzungsgrenze
+## Nutzungsgrenze (Codex und Claude)
 
-Ein neuer Codex-Run darf nur mit mindestens 50 % Restbudget in jedem
-Quotenfenster starten. Bei 5 % Restbudget ist er kontrolliert zu beenden; ein
-harter Limitfehler darf nicht als normaler Abschluss behandelt werden.
+Ein neuer Codex- oder Claude-Run darf nur mit mindestens 50 % Restbudget in
+jedem Quotenfenster starten. Bei 5 % Restbudget oder weniger ist er
+kontrolliert zu beenden und in einen sicheren, fortsetzbaren Zustand zu
+bringen; ein harter Limitfehler darf nicht als normaler Abschluss behandelt
+werden. Ein unterbrochener Run wird später fortgesetzt oder mit dem
+vorhandenen Stand finalisiert.
 
 ## Prioritäten
 
