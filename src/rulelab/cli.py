@@ -165,35 +165,27 @@ class CodexRateLimitClient:
 
 
 def rate_limit_remaining_percent(result: dict[str, Any]) -> float:
-    """Return the smallest remaining percentage across all quota windows."""
+    """Return remaining capacity of the Codex five-hour (primary) window only."""
 
     by_limit = result.get("rateLimitsByLimitId")
     if isinstance(by_limit, dict) and by_limit:
-        buckets = list(by_limit.values())
+        bucket = by_limit.get("codex")
+        if not isinstance(bucket, dict) and len(by_limit) == 1:
+            bucket = next(iter(by_limit.values()))
     else:
-        legacy = result.get("rateLimits")
-        buckets = [legacy] if isinstance(legacy, dict) else []
+        bucket = result.get("rateLimits")
 
-    remaining: list[float] = []
-    for bucket in buckets:
-        if not isinstance(bucket, dict):
-            continue
-        for window_name in ("primary", "secondary"):
-            window = bucket.get(window_name)
-            if not isinstance(window, dict):
-                continue
-            used = window.get("usedPercent")
-            if isinstance(used, bool) or not isinstance(used, (int, float)):
-                continue
-            if not 0 <= float(used) <= 100:
-                raise UsageGuardError(
-                    f"Codex usage returned invalid usedPercent: {used!r}"
-                )
-            remaining.append(100.0 - float(used))
-
-    if not remaining:
-        raise UsageGuardError("Codex usage returned no readable rate-limit window")
-    return min(remaining)
+    if not isinstance(bucket, dict):
+        raise UsageGuardError("Codex usage returned no readable primary rate-limit window")
+    primary = bucket.get("primary")
+    if not isinstance(primary, dict):
+        raise UsageGuardError("Codex usage returned no readable primary rate-limit window")
+    used = primary.get("usedPercent")
+    if isinstance(used, bool) or not isinstance(used, (int, float)):
+        raise UsageGuardError(f"Codex usage returned invalid usedPercent: {used!r}")
+    if not 0 <= float(used) <= 100:
+        raise UsageGuardError(f"Codex usage returned invalid usedPercent: {used!r}")
+    return 100.0 - float(used)
 
 
 class ClaudeRateLimitProbe:
