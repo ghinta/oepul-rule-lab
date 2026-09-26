@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 57,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-7-terra/runs/v2-o6_7-terra-20260926/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_7.rego",
+    "tests/o6_7_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-7-terra/runs/v2-o6_7-terra-20260926/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 11,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_7.rego",
+        "tests/o6_7_test.rego"
+      ],
+      "duration_ms": 21,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-7-terra/runs/v2-o6_7-terra-20260926/workspace/tools/opa",
+            "fmt",
+            "policy/o6_7.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_7\n\nimport rego.v1\n\n# Input extensions are intentionally kept below input.o6_7.  They are proposed in\n# rules/profile_changes.json because the canonical farm profile has no crop-history\n# or event-log model.\nminimum_arable_area_ha := 1.5\nminimum_green_cover_percent := 85\n\neligible if {\n\tinput.land.arable_area_ha >= minimum_arable_area_ha\n}\n\nviolations contains v if {\n\tinput.land.arable_area_ha < minimum_arable_area_ha\n\tv := {\"rule_id\": \"O67.eligibility.minimum-arable-area\", \"message\": \"At least 1.50 ha arable land is required in every participation year.\"}\n}\n\nviolations contains v if {\n\tinput.o6_7.minimum_green_cover_percent < minimum_green_cover_percent\n\tv := {\"rule_id\": \"O67.coverage.annual-85-percent\", \"message\": \"Green cover must reach 85 percent of arable area at every point in the year.\"}\n}\n\nviolations contains v if {\n\tgap := input.o6_7.gaps[_]\n\tgap.kind == \"harvest_to_intercrop\"\n\tgap.days > 30\n\tnot drought_gap_exception(gap)\n\tv := {\"rule_id\": \"O67.coverage.gap-harvest-to-intercrop\", \"message\": \"The interval from main-crop harvest to intercrop establishment exceeds 30 days.\"}\n}\n\nviolations contains v if {\n\tgap := input.o6_7.gaps[_]\n\tgap.kind == \"intercrop_termination_to_main_crop\"\n\tgap.days > 30\n\tnot drought_gap_exception(gap)\n\tv := {\"rule_id\": \"O67.coverage.gap-intercrop-to-main-crop\", \"message\": \"The interval from intercrop termination to main-crop establishment exceeds 30 days.\"}\n}\n\nviolations contains v if {\n\tgap := input.o6_7.gaps[_]\n\tgap.kind == \"harvest_to_main_crop\"\n\tgap.days > 50\n\tnot drought_gap_exception(gap)\n\tv := {\"rule_id\": \"O67.coverage.gap-harvest-to-main-crop\", \"message\": \"The interval from main-crop harvest to main-crop establishment exceeds 50 days.\"}\n}\n\nviolations contains v if {\n\tintercrop := input.o6_7.intercrops[_]\n\tintercrop.established_on > sprintf(\"%d-10-15\", [input.farm.year])\n\tv := {\"rule_id\": \"O67.intercrop.latest-establishment\", \"message\": \"An intercrop must be actively established by 15 October.\"}\n}\n\nviolations contains v if {\n\tintercrop := input.o6_7.intercrops[_]\n\tintercrop.duration_days < 42\n\tv := {\"rule_id\": \"O67.intercrop.minimum-duration\", \"message\": \"An intercrop must remain for at least 42 days.\"}\n}\n\nviolations contains v if {\n\tintercrop := input.o6_7.intercrops[_]\n\tintercrop.established_on <= sprintf(\"%d-09-20\", [input.farm.year])\n\tintercrop.mixture_partner_count < 3\n\tv := {\"rule_id\": \"O67.intercrop.mixture-before-20-september\", \"message\": \"Intercrops established by 20 September need at least three mixture partners from two plant families.\"}\n}\n\nviolations contains v if {\n\tintercrop := input.o6_7.intercrops[_]\n\tintercrop.established_on <= sprintf(\"%d-09-20\", [input.farm.year])\n\tintercrop.plant_family_count < 2\n\tv := {\"rule_id\": \"O67.intercrop.mixture-before-20-september\", \"message\": \"Intercrops established by 20 September need at least three mixture partners from two plant families.\"}\n}\n\nviolations contains v if {\n\tintercrop := input.o6_7.intercrops[_]\n\tintercrop.established_on > sprintf(\"%d-09-20\", [input.farm.year])\n\tnot intercrop.predominantly_winter_hardy\n\tv := {\"rule_id\": \"O67.intercrop.after-20-september\", \"message\": \"An intercrop established after 20 September must be predominantly winter hardy.\"}\n}\n\nviolations contains v if {\n\tintercrop := input.o6_7.intercrops[_]\n\tintercrop.established_on > sprintf(\"%d-09-20\", [input.farm.year])\n\tintercrop.terminated_on < sprintf(\"%d-02-15\", [input.farm.year + 1])\n\tv := {\"rule_id\": \"O67.intercrop.after-20-september\", \"message\": \"An intercrop established after 20 September may not be terminated before 15 February of the following year.\"}\n}\n\nviolations contains v if {\n\tintercrop := input.o6_7.intercrops[_]\n\tevent := intercrop.fertilizer_events[_]\n\tevent.kind == \"mineral_nitrogen\"\n\tevent.date >= intercrop.established_on\n\tevent.date <= intercrop.napv_prohibition_end\n\tv := {\"rule_id\": \"O67.intercrop.mineral-n-ban\", \"message\": \"Mineral nitrogen is prohibited from intercrop establishment through the following NAPV closed period.\"}\n}\n\nviolations contains v if {\n\tintercrop := input.o6_7.intercrops[_]\n\tevent := intercrop.plant_protection_events[_]\n\tevent.date >= intercrop.established_on\n\tevent.date <= intercrop.terminated_on\n\tv := {\"rule_id\": \"O67.intercrop.plant-protection-ban\", \"message\": \"Plant-protection products are prohibited from intercrop establishment until termination.\"}\n}\n\nviolations contains v if {\n\tintercrop := input.o6_7.intercrops[_]\n\tintercrop.removal_method == \"chemical\"\n\tv := {\"rule_id\": \"O67.intercrop.mechanical-removal\", \"message\": \"Intercrops must be removed mechanically, not chemically.\"}\n}\n\nviolations contains v if {\n\tintercrop := input.o6_7.intercrops[_]\n\tintercrop.used_for == \"threshing\"\n\tv := {\"rule_id\": \"O67.intercrop.use-no-threshing\", \"message\": \"An intercrop may not be threshed.\"}\n}\n\nviolations contains v if {\n\tnot input.o6_7.field_records.complete\n\tv := {\"rule_id\": \"O67.records.parcel-events\", \"message\": \"Continuous parcel-specific records are required for all arable land from 1 January through 31 December.\"}\n}\n\nviolations contains v if {\n\tinput.o6_7.selected_measures[_] == data.o6_7_operations.o6_7_incompatible_measure\n\tv := {\"rule_id\": \"O67.combination.no-simultaneous-intercrop-scheme\", \"message\": \"System Immergrün and the Zwischenfruchtanbau scheme cannot be joined simultaneously.\"}\n}\n\npremium_eur_per_ha := {\"minimum\": 70, \"maximum\": 90}\n\ndrought_gap_exception(gap) if {\n\tinput.farm.year == 2026\n\tgap.drought_2026_exception\n\tgap.prospective_management_credible\n\tgap.established_at_earliest_possible_date\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-7-terra/runs/v2-o6_7-terra-20260926/workspace/tools/opa",
+            "fmt",
+            "tests/o6_7_test.rego"
+          ],
+          "duration_ms": 10,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_7_test\n\nimport rego.v1\n\nimport data.oepul.o6_7\n\nbase_input := {\n\t\"farm\": {\"year\": 2026},\n\t\"land\": {\"arable_area_ha\": 2},\n\t\"o6_7\": {\n\t\t\"minimum_green_cover_percent\": 90,\n\t\t\"gaps\": [],\n\t\t\"intercrops\": [],\n\t\t\"field_records\": {\"complete\": true},\n\t\t\"selected_measures\": [],\n\t},\n}\n\ntest_eligible_farm_has_no_violations if {\n\to6_7.eligible with input as base_input\n\tviolations := o6_7.violations with input as base_input\n\tcount(violations) == 0\n}\n\ntest_rejects_late_intercrop_and_mineral_n if {\n\tcandidate := object.union(base_input, {\"o6_7\": object.union(base_input.o6_7, {\n\t\t\"intercrops\": [{\n\t\t\t\"established_on\": \"2026-10-16\",\n\t\t\t\"duration_days\": 41,\n\t\t\t\"mixture_partner_count\": 1,\n\t\t\t\"plant_family_count\": 1,\n\t\t\t\"predominantly_winter_hardy\": false,\n\t\t\t\"terminated_on\": \"2027-02-10\",\n\t\t\t\"napv_prohibition_end\": \"2027-02-15\",\n\t\t\t\"fertilizer_events\": [{\"kind\": \"mineral_nitrogen\", \"date\": \"2026-10-16\"}],\n\t\t\t\"plant_protection_events\": [],\n\t\t\t\"removal_method\": \"chemical\",\n\t\t\t\"used_for\": \"threshing\",\n\t\t}],\n\t})})\n\tviolations := o6_7.violations with input as candidate\n\tcount(violations) == 7\n}\n\ntest_drought_2026_excuses_only_gap_limit if {\n\tcandidate := object.union(base_input, {\"o6_7\": object.union(base_input.o6_7, {\n\t\t\"gaps\": [{\"kind\": \"harvest_to_main_crop\", \"days\": 65, \"drought_2026_exception\": true, \"prospective_management_credible\": true, \"established_at_earliest_possible_date\": true}],\n\t})})\n\tviolations := o6_7.violations with input as candidate\n\tcount(violations) == 0\n}\n\ntest_rejects_incompatible_scheme if {\n\tcandidate := {\n\t\t\"farm\": {\"year\": 2026},\n\t\t\"land\": {\"arable_area_ha\": 2},\n\t\t\"o6_7\": {\n\t\t\t\"minimum_green_cover_percent\": 90,\n\t\t\t\"gaps\": [],\n\t\t\t\"intercrops\": [],\n\t\t\t\"field_records\": {\"complete\": true},\n\t\t\t\"selected_measures\": [\"o6_6_begruenung_ackerflaechen_zwischenfruchtanbau\"],\n\t\t},\n\t}\n\tviolations := o6_7.violations with input as candidate\n\tviolations[_].rule_id == \"O67.combination.no-simultaneous-intercrop-scheme\"\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-7-terra/runs/v2-o6_7-terra-20260926/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 13,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 4/4\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-7-terra/runs/v2-o6_7-terra-20260926/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 11,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-7-terra/runs/v2-o6_7-terra-20260926/workspace"
+}
