@@ -56,12 +56,13 @@ Token-Nutzung und Kosten. Die Sitzungs-ID steht in `generator_session_id`.
 ## Nutzungsgrenzen für Codex- und Claude-Läufe
 
 Rule Lab prüft vor jedem `codex-cli`- und `claude-cli`-Run die gemeldeten
-Rate-Limits: bei Codex die ChatGPT-Limits des Codex App Servers, bei Claude die
-Fenster des Claude-Abos (`five_hour`, `seven_day` usw.), gelesen über einen
-minimalen werkzeuglosen `claude -p`-Aufruf mit einem kleinen Modell. Ein neuer
-Run startet nur, wenn in **jedem** gemeldeten Quotenfenster mindestens
-**50 %** verfügbar sind. Während eines Runs wird der kleinste verbleibende Wert
-alle 30 Sekunden geprüft. Bei **5 % oder weniger** wird der Generator
+Rate-Limits: bei Codex ausschließlich das primäre Fünf-Stunden-Fenster des
+Codex App Servers; das sekundäre/Wochenfenster ist ausdrücklich kein Gate. Bei
+Claude werden weiterhin die Fenster des Claude-Abos (`five_hour`, `seven_day`
+usw.) über einen minimalen werkzeuglosen `claude -p`-Aufruf mit einem kleinen
+Modell gelesen. Ein Codex-Run startet nur, wenn im primären Fenster mindestens
+**50 %** verfügbar sind. Während eines Codex-Runs wird nur dieser verbleibende
+Wert alle 30 Sekunden geprüft. Bei **5 % oder weniger** wird der Generator
 kontrolliert beendet und der Run als `aborted_usage_guard` protokolliert, statt
 bis zu einem harten Limitfehler zu laufen. Sind die Limits nicht lesbar,
 startet der Run aus Sicherheitsgründen nicht.
