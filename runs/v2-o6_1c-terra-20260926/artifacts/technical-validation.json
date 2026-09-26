@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 163,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-1c-terra/runs/v2-o6_1c-terra-20260926/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_1c.rego",
+    "tests/o6_1c_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-1c-terra/runs/v2-o6_1c-terra-20260926/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 20,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_1c.rego",
+        "tests/o6_1c_test.rego"
+      ],
+      "duration_ms": 31,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-1c-terra/runs/v2-o6_1c-terra-20260926/workspace/tools/opa",
+            "fmt",
+            "policy/o6_1c.rego"
+          ],
+          "duration_ms": 16,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_1c\n\nimport rego.v1\n\n# Executable checks use the discover-mode extension input.o6_1c.parcels.\n# An omitted field is reported as a missing fact rather than treated as compliant.\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"nonproductive_arable\"\n\tp.area_ha > input.land.arable_area_ha * 0.04\n\tviolation := {\"code\": \"npa_area_cap\", \"parcel_id\": p.parcel_id, \"message\": \"Nonproductive arable area exceeds 4% of arable area.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"nonproductive_arable\"\n\tp.is_gloez4_buffer\n\tviolation := {\"code\": \"npa_gloez4\", \"parcel_id\": p.parcel_id, \"message\": \"GLÖZ 4 buffer area is not eligible as nonproductive arable area.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"nonproductive_arable\"\n\tp.establishment == \"new_sowing\"\n\tp.sowing_date > sprintf(\"%d-05-15\", [input.farm.year])\n\tviolation := {\"code\": \"npa_sowing_deadline\", \"parcel_id\": p.parcel_id, \"message\": \"New sowing occurred after 15 May.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"nonproductive_arable\"\n\tp.tillage_date != null\n\tp.following_crop != \"winter_crop\"\n\tp.following_crop != \"cover_crop\"\n\tp.tillage_date < sprintf(\"%d-09-15\", [input.farm.year])\n\tviolation := {\"code\": \"npa_tillage_date\", \"parcel_id\": p.parcel_id, \"message\": \"Tillage before 15 September is not allowed without winter crop or cover crop.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"nonproductive_arable\"\n\tp.tillage_date != null\n\tfollowing_crop_tillage_allowed(p)\n\tp.tillage_date < sprintf(\"%d-08-01\", [input.farm.year])\n\tviolation := {\"code\": \"npa_early_tillage_date\", \"parcel_id\": p.parcel_id, \"message\": \"Tillage for a following winter crop or cover crop is allowed only from 1 August.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"nonproductive_arable\"\n\tp.fertilizer_used\n\tviolation := {\"code\": \"npa_fertilizer\", \"parcel_id\": p.parcel_id, \"message\": \"Fertilization is prohibited from first declaration until tillage or other declaration.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"nonproductive_arable\"\n\tp.psm_used\n\tnot p.psm_bio848_only\n\tviolation := {\"code\": \"npa_psm\", \"parcel_id\": p.parcel_id, \"message\": \"Plant-protection products must exclusively contain substances permitted under Regulation (EU) 2018/848.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"nonproductive_arable\"\n\tp.removal_method != null\n\tnot p.removal_method == \"mulching\"\n\tnot p.removal_method == \"incorporation\"\n\tviolation := {\"code\": \"npa_removal_method\", \"parcel_id\": p.parcel_id, \"message\": \"Removal must use mechanical mulching or incorporation.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"nonproductive_arable\"\n\tp.care_operations_this_year > 2\n\tviolation := {\"code\": \"npa_care_frequency\", \"parcel_id\": p.parcel_id, \"message\": \"No more than two mowing/mulching operations per year are allowed.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"nonproductive_arable\"\n\tp.biomass_removed\n\tviolation := {\"code\": \"npa_biomass_use\", \"parcel_id\": p.parcel_id, \"message\": \"Mown material may not be removed or used.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"nonproductive_arable\"\n\tp.grazed\n\tviolation := {\"code\": \"npa_grazing\", \"parcel_id\": p.parcel_id, \"message\": \"Grazing is not allowed.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"agroforestry_strip\"\n\tp.establishment_year < 2020\n\tviolation := {\"code\": \"af_establishment_year\", \"parcel_id\": p.parcel_id, \"message\": \"An agroforestry strip must have been newly established from 2020.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"agroforestry_strip\"\n\tnot p.adjacent_to_arable\n\tviolation := {\"code\": \"af_adjacency\", \"parcel_id\": p.parcel_id, \"message\": \"Agroforestry strip must directly adjoin arable land.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"agroforestry_strip\"\n\tp.average_width_m < 2\n\tviolation := {\"code\": \"af_width_min\", \"parcel_id\": p.parcel_id, \"message\": \"Average width must be at least 2 m.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"agroforestry_strip\"\n\tp.average_width_m > 10\n\tviolation := {\"code\": \"af_width_max\", \"parcel_id\": p.parcel_id, \"message\": \"Average width must be no more than 10 m.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"agroforestry_strip\"\n\tp.trees_per_100m < 10\n\tviolation := {\"code\": \"af_density_min\", \"parcel_id\": p.parcel_id, \"message\": \"At least 10 trees per 100 running metres are required.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"agroforestry_strip\"\n\tp.trees_per_100m > 25\n\tviolation := {\"code\": \"af_density_max\", \"parcel_id\": p.parcel_id, \"message\": \"No more than 25 trees per 100 running metres are allowed.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"agroforestry_strip\"\n\tp.max_tree_spacing_m > 15\n\tviolation := {\"code\": \"af_tree_spacing\", \"parcel_id\": p.parcel_id, \"message\": \"Tree spacing may not exceed 15 m.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"agroforestry_strip\"\n\tp.is_special_crop\n\tviolation := {\"code\": \"af_special_crop\", \"parcel_id\": p.parcel_id, \"message\": \"Agroforestry strip may not be a special crop.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"agroforestry_strip\"\n\tspecies := p.tree_species[_]\n\tdata.negative_tree_species[_].scientific_name == species\n\tviolation := {\"code\": \"af_negative_species\", \"parcel_id\": p.parcel_id, \"message\": sprintf(\"Prohibited tree species: %s.\", [species])}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"agroforestry_strip\"\n\tp.new_planting_date != null\n\tp.new_planting_date > sprintf(\"%d-05-15\", [input.farm.year])\n\tviolation := {\"code\": \"af_planting_deadline\", \"parcel_id\": p.parcel_id, \"message\": \"New establishment or replacement planting occurred after 15 May.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"agroforestry_strip\"\n\tnot p.herbaceous_permanently_green\n\tviolation := {\"code\": \"af_green_cover\", \"parcel_id\": p.parcel_id, \"message\": \"Herbaceous area must be permanently green.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"agroforestry_strip\"\n\tp.herbaceous_used\n\tviolation := {\"code\": \"af_herbaceous_use\", \"parcel_id\": p.parcel_id, \"message\": \"Use of the herbaceous area by mowing or grazing is prohibited.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"agroforestry_strip\"\n\tp.fertilizer_used\n\tviolation := {\"code\": \"af_fertilizer\", \"parcel_id\": p.parcel_id, \"message\": \"Fertilizer is prohibited throughout the agroforestry strip.\"}\n}\n\nviolations contains violation if {\n\tp := input.o6_1c.parcels[_]\n\tp.category == \"agroforestry_strip\"\n\tp.psm_used\n\tnot p.repellent_bio848_only\n\tviolation := {\"code\": \"af_psm\", \"parcel_id\": p.parcel_id, \"message\": \"Only animal repellent permitted under Regulation (EU) 2018/848 is allowed.\"}\n}\n\npremium_band(category) := band if {\n\tband := data.premium_bands_eur_per_ha[_]\n\tband.category == category\n}\n\nfollowing_crop_tillage_allowed(p) if {\n\tp.following_crop == \"winter_crop\"\n}\n\nfollowing_crop_tillage_allowed(p) if {\n\tp.following_crop == \"cover_crop\"\n}\n\nmodulation_factor(total_area_ha) := factor if {\n\tfirst := min([total_area_ha, 200])\n\tsecond := max([min([total_area_ha - 200, 100]), 0])\n\tthird := max([min([total_area_ha - 300, 700]), 0])\n\tfourth := max([total_area_ha - 1000, 0])\n\tfactor := (((first + (second * 0.9)) + (third * 0.85)) + (fourth * 0.75)) / total_area_ha\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-1c-terra/runs/v2-o6_1c-terra-20260926/workspace/tools/opa",
+            "fmt",
+            "tests/o6_1c_test.rego"
+          ],
+          "duration_ms": 14,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_1c_test\n\nimport data.oepul.o6_1c\nimport rego.v1\n\nvalid_input := {\n\t\"farm\": {\"year\": 2026},\n\t\"land\": {\"arable_area_ha\": 100},\n\t\"o6_1c\": {\"parcels\": [\n\t\t{\"parcel_id\": \"N1\", \"category\": \"nonproductive_arable\", \"area_ha\": 3, \"is_gloez4_buffer\": false, \"establishment\": \"existing\", \"tillage_date\": null, \"following_crop\": null, \"fertilizer_used\": false, \"psm_used\": false, \"psm_bio848_only\": false, \"removal_method\": null, \"care_operations_this_year\": 1, \"biomass_removed\": false, \"grazed\": false},\n\t\t{\"parcel_id\": \"A1\", \"category\": \"agroforestry_strip\", \"establishment_year\": 2020, \"adjacent_to_arable\": true, \"average_width_m\": 5, \"trees_per_100m\": 15, \"max_tree_spacing_m\": 10, \"is_special_crop\": false, \"tree_species\": [\"Quercus robur\"], \"new_planting_date\": null, \"herbaceous_permanently_green\": true, \"herbaceous_used\": false, \"fertilizer_used\": false, \"psm_used\": false, \"repellent_bio848_only\": false},\n\t]},\n}\n\ntest_valid_input_has_no_violations if {\n\tvs := o6_1c.violations with input as valid_input\n\tcount(vs) == 0\n}\n\ntest_nonproductive_area_cap if {\n\tbad := object.union(valid_input, {\"o6_1c\": {\"parcels\": [object.union(valid_input.o6_1c.parcels[0], {\"area_ha\": 5})]}})\n\tvs := o6_1c.violations with input as bad\n\tsome v in vs\n\tv.code == \"npa_area_cap\"\n}\n\ntest_prohibited_tree_is_detected if {\n\tbad_af := object.union(valid_input.o6_1c.parcels[1], {\"tree_species\": [\"Ailanthus altissima\"]})\n\tbad := object.union(valid_input, {\"o6_1c\": {\"parcels\": [bad_af]}})\n\tvs := o6_1c.violations with input as bad\n\tsome v in vs\n\tv.code == \"af_negative_species\"\n}\n\ntest_modulation_factor if {\n\to6_1c.modulation_factor(220) == 218 / 220\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-1c-terra/runs/v2-o6_1c-terra-20260926/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 21,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 4/4\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-1c-terra/runs/v2-o6_1c-terra-20260926/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 90,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-1c-terra/runs/v2-o6_1c-terra-20260926/workspace"
+}
