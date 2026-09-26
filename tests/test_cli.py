@@ -206,18 +206,18 @@ class UsageGuardTests(unittest.TestCase):
         with self.assertRaises(cli.UsageGuardError):
             cli.rate_limit_remaining_percent({"rateLimits": {}})
 
-    def test_claude_uses_lowest_remaining_unified_window(self) -> None:
+    def test_claude_gates_on_five_hour_window_only(self) -> None:
         remaining = cli.claude_rate_limit_remaining_percent(
             {
                 "status": "allowed",
                 "unifiedWindows": {
-                    "five_hour": {"utilization": 0.76},
-                    "seven_day": {"utilization": 0.09},
+                    "five_hour": {"utilization": 0.3},
+                    "seven_day": {"utilization": 0.9},
                 },
             }
         )
 
-        self.assertAlmostEqual(remaining, 24.0)
+        self.assertAlmostEqual(remaining, 70.0)
 
     def test_claude_rejected_status_means_no_remaining_quota(self) -> None:
         remaining = cli.claude_rate_limit_remaining_percent(
@@ -229,9 +229,16 @@ class UsageGuardTests(unittest.TestCase):
 
         self.assertEqual(remaining, 0.0)
 
-    def test_claude_rejects_missing_unified_windows(self) -> None:
+    def test_claude_rejects_missing_five_hour_window(self) -> None:
         with self.assertRaises(cli.UsageGuardError):
             cli.claude_rate_limit_remaining_percent({"status": "allowed"})
+        with self.assertRaises(cli.UsageGuardError):
+            cli.claude_rate_limit_remaining_percent(
+                {
+                    "status": "allowed",
+                    "unifiedWindows": {"seven_day": {"utilization": 0.1}},
+                }
+            )
 
 
 class ClaudeAdapterTests(unittest.TestCase):

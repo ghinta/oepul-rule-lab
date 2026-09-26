@@ -269,30 +269,29 @@ class ClaudeRateLimitProbe:
 
 
 def claude_rate_limit_remaining_percent(info: dict[str, Any]) -> float:
-    """Return the smallest remaining percentage across Claude unified windows."""
+    """Return remaining capacity of the Claude five-hour window only.
+
+    The weekly window is not a start or stop gate, matching the Codex guard. A
+    ``rejected`` status still means no capacity at all, whichever window caused
+    it, so the generator stops in a resumable state instead of failing hard.
+    """
 
     if info.get("status") == "rejected":
         return 0.0
     windows = info.get("unifiedWindows")
-    remaining: list[float] = []
-    if isinstance(windows, dict):
-        for name, window in windows.items():
-            if not isinstance(window, dict):
-                continue
-            utilization = window.get("utilization")
-            if isinstance(utilization, bool) or not isinstance(
-                utilization, (int, float)
-            ):
-                continue
-            if utilization < 0:
-                raise UsageGuardError(
-                    f"Claude usage returned invalid utilization for {name}: "
-                    f"{utilization!r}"
-                )
-            remaining.append(100.0 * (1.0 - min(float(utilization), 1.0)))
-    if not remaining:
-        raise UsageGuardError("Claude usage returned no readable rate-limit window")
-    return min(remaining)
+    window = windows.get("five_hour") if isinstance(windows, dict) else None
+    if not isinstance(window, dict):
+        raise UsageGuardError("Claude usage returned no readable five_hour window")
+    utilization = window.get("utilization")
+    if isinstance(utilization, bool) or not isinstance(utilization, (int, float)):
+        raise UsageGuardError(
+            f"Claude usage returned invalid five_hour utilization: {utilization!r}"
+        )
+    if utilization < 0:
+        raise UsageGuardError(
+            f"Claude usage returned invalid five_hour utilization: {utilization!r}"
+        )
+    return 100.0 * (1.0 - min(float(utilization), 1.0))
 
 
 def read_json(path: Path) -> dict[str, Any]:
