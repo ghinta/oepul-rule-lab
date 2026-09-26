@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 121,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-6-terra/runs/v2-o6_6-terra-20260926/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_6.rego",
+    "tests/o6_6_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-6-terra/runs/v2-o6_6-terra-20260926/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 12,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_6.rego",
+        "tests/o6_6_test.rego"
+      ],
+      "duration_ms": 23,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-6-terra/runs/v2-o6_6-terra-20260926/workspace/tools/opa",
+            "fmt",
+            "policy/o6_6.rego"
+          ],
+          "duration_ms": 12,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_6\n\nimport rego.v1\n\n# Expected supplement: input.o6_6.parcels is an array of declared greenings.\n# Dates are ISO-8601 strings; operation booleans describe the commitment period.\n\nvariant := data.variants\n\neligible_parcel(p) if {\n\tp.arable\n\tp.active_establishment\n\tp.cover_is_dense\n\tp.after_main_crop\n\tp.followed_by_active_main_crop\n\tnot p.volunteer_crop\n\tnot p.self_greening\n\tnot p.is_cereal\n\tnot p.is_maize\n\tnot p.cereal_or_maize_share_gt_50\n}\n\nvariant_mixture_ok(p) if {\n\tv := variant[object.get(p, \"variant\", \"\")]\n\tnot object.get(v, \"winter_hardy_only\", false)\n\tp.mixture_partners >= object.get(v, \"minimum_partners\", 0)\n\tp.plant_families >= object.get(v, \"minimum_families\", 0)\n\tnot object.get(v, \"insect_flowering\", false)\n}\n\nvariant_mixture_ok(p) if {\n\tv := variant[object.get(p, \"variant\", \"\")]\n\tnot object.get(v, \"winter_hardy_only\", false)\n\tp.mixture_partners >= object.get(v, \"minimum_partners\", 0)\n\tp.plant_families >= object.get(v, \"minimum_families\", 0)\n\tobject.get(v, \"insect_flowering\", false)\n\tp.insect_flowering_partners >= 5\n}\n\nvariant_mixture_ok(p) if {\n\tp.variant == \"6\"\n\tevery crop in p.crops { data.variants[\"6\"].allowed_crops[_] == crop }\n}\n\nmanagement_ok(p) if {\n\tnot p.mineral_n_during_period\n\tnot p.combined_n_at_sowing\n\tp.variant != \"7\"\n\tnot p.plant_protection_during_period\n\tp.mechanically_terminated\n}\n\nmanagement_ok(p) if {\n\tnot p.mineral_n_during_period\n\tnot p.combined_n_at_sowing\n\tp.variant == \"7\"\n\tnot p.herbicide_after_rape_four_leaf\n}\n\ncompliant[p.parcel_id] if {\n\tp := input.o6_6.parcels[_]\n\teligible_parcel(p)\n\tvariant_mixture_ok(p)\n\tmanagement_ok(p)\n}\n\nviolations contains {\"parcel_id\": p.parcel_id, \"reason\": \"minimum arable area of 1.50 ha is not met\"} if {\n\tinput.land.arable_area_ha < 1.5\n\tp := input.o6_6.parcels[_]\n}\n\nviolations contains {\"parcel_id\": p.parcel_id, \"reason\": \"not an eligible actively established cover crop\"} if {\n\tp := input.o6_6.parcels[_]\n\tnot eligible_parcel(p)\n}\n\nviolations contains {\"parcel_id\": p.parcel_id, \"reason\": \"variant mixture or permitted crop requirement is not met\"} if {\n\tp := input.o6_6.parcels[_]\n\tnot variant_mixture_ok(p)\n}\n\nviolations contains {\"parcel_id\": p.parcel_id, \"reason\": \"nitrogen, plant-protection, or mechanical-termination requirement is not met\"} if {\n\tp := input.o6_6.parcels[_]\n\tnot management_ok(p)\n}\n\npremium_band[band] if {\n\tp := input.o6_6.parcels[_]\n\tv := variant[p.variant]\n\tband := {\"parcel_id\": p.parcel_id, \"variant\": p.variant, \"eur_per_ha\": v.premium_eur_per_ha}\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-6-terra/runs/v2-o6_6-terra-20260926/workspace/tools/opa",
+            "fmt",
+            "tests/o6_6_test.rego"
+          ],
+          "duration_ms": 10,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_6_test\n\nimport data.oepul.o6_6\nimport rego.v1\n\nvalid := {\"land\": {\"arable_area_ha\": 3}, \"o6_6\": {\"parcels\": [{\"parcel_id\": \"p1\", \"variant\": \"2\", \"arable\": true, \"active_establishment\": true, \"cover_is_dense\": true, \"after_main_crop\": true, \"followed_by_active_main_crop\": true, \"volunteer_crop\": false, \"self_greening\": false, \"is_cereal\": false, \"is_maize\": false, \"cereal_or_maize_share_gt_50\": false, \"mixture_partners\": 7, \"plant_families\": 3, \"insect_flowering_partners\": 0, \"mineral_n_during_period\": false, \"combined_n_at_sowing\": false, \"plant_protection_during_period\": false, \"mechanically_terminated\": true}]}}\n\ntest_variant_2_complies if {\n\to6_6.compliant.p1 with input as valid\n\tviolations := o6_6.violations with input as valid\n\tcount(violations) == 0\n}\n\ntest_rejects_nitrogen if {\n\tbad := object.union(valid, {\"o6_6\": {\"parcels\": [object.union(valid.o6_6.parcels[0], {\"mineral_n_during_period\": true})]}})\n\to6_6.violations[_].reason == \"nitrogen, plant-protection, or mechanical-termination requirement is not met\" with input as bad\n}\n\ntest_variant_6_closed_list if {\n\tp := object.union(valid.o6_6.parcels[0], {\"variant\": \"6\", \"crops\": [\"wintererbse\", \"perko\"]})\n\to6_6.variant_mixture_ok(p)\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-6-terra/runs/v2-o6_6-terra-20260926/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 15,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 3/3\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-6-terra/runs/v2-o6_6-terra-20260926/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 71,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-6-terra/runs/v2-o6_6-terra-20260926/workspace"
+}
