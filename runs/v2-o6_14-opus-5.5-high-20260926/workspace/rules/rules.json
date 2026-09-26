@@ -1,0 +1,3562 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_14",
+  "rules": [
+    {
+      "id": "O614-SCOPE-001",
+      "rule_type": "scope",
+      "statement": "Die Prämie der Maßnahme Almbewirtschaftung wird für Almweideflächen gewährt, die mit Tieren bestoßen werden; gefördert werden Kosten und Einkommensverluste (Weidepflege, Verzicht auf Mineraldünger und chemischen Pflanzenschutz).",
+      "conditions": [
+        {
+          "expression": "count(alpine_farming.alms) > 0 and alm_occupied_days[alm] > 0",
+          "description": "Es existiert mindestens eine bestoßene Almweidefläche.",
+          "input_paths": [
+            "alpine_farming.alms[].alm_id",
+            "alpine_farming.animals[].stays[].alm_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_basis",
+        "description": "Almweideflächen mit Tierbesatz sind Fördergegenstand.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P1-OVERVIEW",
+        "SRL-P69-SUPPORT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.alm_occupied_days",
+        "data.oepul.o6_14.alm_premium_area_ha"
+      ]
+    },
+    {
+      "id": "O614-SCOPE-002",
+      "rule_type": "eligibility",
+      "statement": "Die Maßnahme ist von der almbewirtschaftenden Person zu beantragen; die Prämie wird an diese gewährt.",
+      "conditions": [
+        {
+          "expression": "alpine_farming.is_alm_manager == true",
+          "description": "Antragstellende Person ist Almbewirtschafterin bzw. Almbewirtschafter.",
+          "input_paths": [
+            "alpine_farming.is_alm_manager"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_false",
+        "description": "Ohne Eigenschaft als almbewirtschaftende Person keine Teilnahme.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P1-APPLICANT",
+        "SRL-P69-APPLICANT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.access_violations"
+      ]
+    },
+    {
+      "id": "O614-SCOPE-003",
+      "rule_type": "option",
+      "statement": "Optional kann ein Prämienzuschlag für naturschutzfachlich begründete Auflagen (Naturschutz auf der Alm) und ab dem Antragsjahr 2025 für die Erstellung eines Almweideplans gewährt werden.",
+      "conditions": [
+        {
+          "expression": "nature_conservation_supplement.applied or (grazing_plan_supplement.applied and year >= 2025)",
+          "description": "Optionaler Zuschlag beantragt.",
+          "input_paths": [
+            "alpine_farming.nature_conservation_supplement.applied",
+            "alpine_farming.grazing_plan_supplement.applied",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "supplement_available",
+        "description": "Zuschläge NATA bzw. Almweideplan werden zusätzlich zur Grundprämie berechnet.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P1-OPTIONAL",
+        "SRL-P69-SUPPORT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.alm_nata_premium",
+        "data.oepul.o6_14.alm_awp_premium"
+      ]
+    },
+    {
+      "id": "O614-CONTRACT-001",
+      "rule_type": "contract_period",
+      "statement": "Der Verpflichtungs- und Vertragszeitraum der Maßnahme inklusive Zuschlag Naturschutz auf der Alm beträgt mindestens 4 Jahre und endet am 31.12.2028: Beginn 2023 = 6 Jahre, 2024 = 5 Jahre, 2025 = 4 Jahre.",
+      "conditions": [
+        {
+          "expression": "contract_period.start_year == alpine_farming.measure.commitment_start_year",
+          "description": "Tabelle Vertragsbeginn/Dauer (data.o6_14.procedure.contract_periods).",
+          "input_paths": [
+            "alpine_farming.measure.commitment_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_end",
+        "description": "Vertragsende 31.12.2028; Dauer gemäß Tabelle.",
+        "value": {
+          "2023": 6,
+          "2024": 5,
+          "2025": 4,
+          "end_date": "2028-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "MB-P1-CONTRACT",
+        "MB-P2-CONTRACT-TABLE",
+        "AT-P11-MULTI",
+        "AT-P11-TABLE",
+        "SRL-P12-MULTI",
+        "SRL-P13-TABLE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.contract_period",
+        "data.oepul.o6_14.contract_end_date",
+        "data.oepul.o6_14.contract_duration_years"
+      ]
+    },
+    {
+      "id": "O614-CONTRACT-002",
+      "rule_type": "contract_period",
+      "statement": "Der Zuschlag Almweideplan hat grundsätzlich einen Verpflichtungs- und Vertragszeitraum von einem Kalenderjahr (1. Jänner bis 31. Dezember) und verlängert sich automatisch um ein weiteres Förderjahr, wenn er nicht abgemeldet wird.",
+      "conditions": [
+        {
+          "expression": "grazing_plan_supplement.applied and not grazing_plan_supplement.deregistered",
+          "description": "Zuschlag beantragt und nicht abgemeldet.",
+          "input_paths": [
+            "alpine_farming.grazing_plan_supplement.applied",
+            "alpine_farming.grazing_plan_supplement.deregistered"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "auto_renewal",
+        "description": "Zuschlag gilt im Folgejahr (bis max. 2028) weiter.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P2-AWP-CONTRACT",
+        "MB-P2-AWP-RENEWAL",
+        "SRL-P13-OPTIONAL",
+        "AT-P11-OPTIONS",
+        "SRL-P21-PREBOOK"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.awp_active_next_year",
+        "data.oepul.o6_14.last_entry"
+      ]
+    },
+    {
+      "id": "O614-CONTRACT-003",
+      "rule_type": "obligation",
+      "statement": "Die Verpflichtungsdauer erstreckt sich über das gesamte Kalenderjahr; förderfähig sind nur Flächen und Tiere, für die während der gesamten Verpflichtungsdauer die Förderverpflichtungen erfüllt werden.",
+      "conditions": [
+        {
+          "expression": "obligations fulfilled 01.01.-31.12.",
+          "description": "Einhaltung über das gesamte Kalenderjahr."
+        }
+      ],
+      "result": {
+        "outcome": "eligibility_condition",
+        "description": "Nichterfüllung über Teile des Jahres schließt die betroffenen Einheiten von der Förderung aus.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P10-DURATION",
+        "AT-P10-WHOLE",
+        "SRL-P12-WHOLE"
+      ]
+    },
+    {
+      "id": "O614-CONTRACT-004",
+      "rule_type": "contract_rule",
+      "statement": "Almbewirtschaftung ist an die jährlich für die Maßnahme verfügbaren Flächen bzw. Tiere gebunden; diese können jährlich unterschiedlich sein. Die Beschränkungen des Flächenzugangs (7.2) gelten für die Almbewirtschaftung nicht.",
+      "conditions": [
+        {
+          "expression": "measure == 'o6_14'",
+          "description": "Maßnahme in der Liste gemäß Punkt 1.7.2.5."
+        }
+      ],
+      "result": {
+        "outcome": "annual_variation_allowed",
+        "description": "Jährlich schwankende Almflächen/Tiere sind kein Flächenabgang/-zugang im Sinne der Vertragszeitraumüberprüfung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P11-ANNUAL",
+        "SRL-P14-ANNUAL",
+        "AT-P17-NOT-LISTED"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.area_bound_to_annual_availability"
+      ]
+    },
+    {
+      "id": "O614-CONTRACT-005",
+      "rule_type": "contract_rule",
+      "statement": "Mit der Maßnahme belegte Flächen des ersten Vertragsjahres sowie Flächenzugänge sind bis Ende des Vertragszeitraumes gemäß den Förderverpflichtungen zu bewirtschaften; bei Nichteinhaltung des Vertragszeitraumes sind die für die betroffenen Flächen gewährten Förderbeträge zurückzuerstatten.",
+      "conditions": [
+        {
+          "expression": "exit.exited and exit.exit_date < contract_end_date and exit.reason not in exempt_reasons",
+          "description": "Vorzeitiger Ausstieg ohne Ausnahmegrund.",
+          "input_paths": [
+            "alpine_farming.exit.exited",
+            "alpine_farming.exit.exit_date",
+            "alpine_farming.exit.reason"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "repayment",
+        "description": "Rückforderung der bereits gewährten Prämien.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P13-REPAY",
+        "AT-P15-REPAY",
+        "AT-P13-EXIT-REPAY"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.repayment_required"
+      ]
+    },
+    {
+      "id": "O614-CONTRACT-006",
+      "rule_type": "exception",
+      "statement": "Der Verlust der Verfügungsgewalt (Übertragung des Verfügungsrechts an eine andere Person, z. B. Pachtende, Verkauf) hat für den abgebenden Betrieb keine Rückzahlung zur Folge.",
+      "conditions": [
+        {
+          "expression": "exit.reason == 'loss_of_control'",
+          "description": "Verlust der Verfügungsgewalt gemäß § 28 Abs. 3 GSP-AV.",
+          "input_paths": [
+            "alpine_farming.exit.reason"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_repayment",
+        "description": "Keine Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P13-LOSS",
+        "AT-P15-CONTROL-LOSS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.repayment_required",
+        "data.oepul.o6_14.repayment_exempt_reasons"
+      ]
+    },
+    {
+      "id": "O614-CONTRACT-007",
+      "rule_type": "contract_rule",
+      "statement": "Bei Wechsel der bewirtschaftenden Person (Betriebsübertragung) ist die Verpflichtung weiterzuführen; die nachfolgende Person tritt dem Fördervertrag bei, beide haften solidarisch.",
+      "conditions": [
+        {
+          "expression": "exit.operator_change == true",
+          "description": "Wechsel der bewirtschaftenden Person.",
+          "input_paths": [
+            "alpine_farming.exit.operator_change"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_continues",
+        "description": "Kein Verlust der Verfügungsgewalt; Vertrag wird fortgeführt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P13-TRANSFER",
+        "AT-P16-OPERATOR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.operator_change_continues_contract"
+      ]
+    },
+    {
+      "id": "O614-CONTRACT-008",
+      "rule_type": "contract_rule",
+      "statement": "Die Umwandlung von Grünland oder Gemeinschaftsweide in Almweidefläche (Nutzungsart L) ist jedenfalls zulässig.",
+      "conditions": [
+        {
+          "expression": "land_use_change == 'G/D -> L'",
+          "description": "Nutzungsänderung Grünland/Gemeinschaftsweide zu Almweidefläche."
+        }
+      ],
+      "result": {
+        "outcome": "allowed",
+        "description": "Keine Rückforderung wegen Flächenabgangs.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P13-CONVERSION",
+        "AT-P16-CONVERSION"
+      ]
+    },
+    {
+      "id": "O614-CONTRACT-009",
+      "rule_type": "contract_rule",
+      "statement": "Allgemeine Flächenabgangstoleranz mehrjähriger Maßnahmen: jährlich bis 5 % (Basis Vorjahresfläche), höchstens 5 ha, jedenfalls 0,50 ha; darüber Rückzahlung der gesamten Differenzfläche. Für Almbewirtschaftung überlagert durch die jährliche Bindung an verfügbare Flächen (O614-CONTRACT-004).",
+      "conditions": [
+        {
+          "expression": "reduction_ha <= max(0.5, min(0.05 * prev_year_ha, 5.0))",
+          "description": "Toleranzgrenzen gemäß data.o6_14.procedure.area_reduction_tolerance."
+        }
+      ],
+      "result": {
+        "outcome": "tolerance",
+        "description": "Innerhalb der Toleranz keine Rückzahlung.",
+        "value": {
+          "max_share": 0.05,
+          "max_ha": 5.0,
+          "always_allowed_ha": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "SRL-P13-TOLERANCE",
+        "AT-P16-TOLERANCE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.area_reduction_allowed_ha"
+      ]
+    },
+    {
+      "id": "O614-CONTRACT-010",
+      "rule_type": "exception",
+      "statement": "Revisionsklausel: Bei Änderungen des verbindlichen Rechtsrahmens kann die förderwerbende Person der Vertragsanpassung nicht zustimmen; der Vertrag endet dann ohne Rückforderung für die Vergangenheit.",
+      "conditions": [
+        {
+          "expression": "exit.reason == 'revision_clause'",
+          "description": "Zustimmung zur Vertragsanpassung verweigert.",
+          "input_paths": [
+            "alpine_farming.exit.reason"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_repayment",
+        "description": "Vertragsende ohne Rückforderung wegen Nichteinhaltung des Vertragszeitraums.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P16-REVISION"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.repayment_exempt_reasons"
+      ]
+    },
+    {
+      "id": "O614-APPL-001",
+      "rule_type": "deadline",
+      "statement": "Die Maßnahme sowie die optionalen Zuschläge Naturschutz auf der Alm und (ab 2025) Almweideplan müssen vor Vertragsbeginn im Maßnahmenantrag des Mehrfachantrages bis spätestens 31. Dezember beantragt werden, um einen gültigen Vertrag ab dem Folgejahr zu begründen.",
+      "conditions": [
+        {
+          "expression": "measure.application_date <= (commitment_start_year - 1)-12-31",
+          "description": "Maßnahmenantrag fristgerecht.",
+          "input_paths": [
+            "alpine_farming.measure.application_date",
+            "alpine_farming.measure.commitment_start_year",
+            "alpine_farming.measure.applied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "valid_contract",
+        "description": "Fristgerechter Antrag begründet den Vertrag; sonst kein Vertrag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P11-APPL",
+        "AT-P12-APPL",
+        "SRL-P21-MA",
+        "SRL-P21-MA-AWP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.measure_application_timely",
+        "data.oepul.o6_14.valid_contract",
+        "data.oepul.o6_14.application_deadline_for",
+        "data.oepul.o6_14.deadline_violations"
+      ]
+    },
+    {
+      "id": "O614-APPL-002",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg in die Maßnahme Almbewirtschaftung und in den Zuschlag Naturschutz auf der Alm ist mit dem Förderjahr 2025 möglich (Beantragung bis 31.12.2024).",
+      "conditions": [
+        {
+          "expression": "commitment_start_year <= 2025",
+          "description": "Einstiegsjahr spätestens 2025.",
+          "input_paths": [
+            "alpine_farming.measure.commitment_start_year",
+            "alpine_farming.nature_conservation_supplement.commitment_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "entry_allowed",
+        "description": "Späterer Einstieg nicht möglich.",
+        "value": {
+          "last_commitment_year": 2025,
+          "application_deadline": "2024-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "MB-P11-LAST",
+        "AT-P12-LAST-MULTI"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.measure_entry_year_allowed",
+        "data.oepul.o6_14.deadline_violations",
+        "data.oepul.o6_14.last_entry"
+      ]
+    },
+    {
+      "id": "O614-APPL-003",
+      "rule_type": "deadline",
+      "statement": "Der Zuschlag Almweideplan ist ab dem Antragsjahr 2025 beantragbar; letzter Einstieg ist das Förderjahr 2028 (Beantragung bis 31.12.2027).",
+      "conditions": [
+        {
+          "expression": "2025 <= first_application_year <= 2028",
+          "description": "Zulässiges Einstiegsjahr.",
+          "input_paths": [
+            "alpine_farming.grazing_plan_supplement.first_application_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "entry_allowed",
+        "description": "Außerhalb 2025-2028 kein Zuschlag.",
+        "value": {
+          "first": 2025,
+          "last": 2028,
+          "application_deadline": "2027-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "MB-P11-LAST-AWP",
+        "MB-P10-AWP",
+        "AT-P12-OPT-DEADLINE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.awp_entry_year_allowed",
+        "data.oepul.o6_14.deadline_violations",
+        "data.oepul.o6_14.last_entry"
+      ]
+    },
+    {
+      "id": "O614-APPL-004",
+      "rule_type": "deadline",
+      "statement": "Die Almweideflächen mit dem jeweiligen Futterflächenanteil sind jährlich in der Feldstücksliste des Mehrfachantrages bis 15. April (2023 und 2028: 17. April) zu beantragen.",
+      "conditions": [
+        {
+          "expression": "alm.field_list_submission_date <= deadline('field_list_area_application', year)",
+          "description": "Feldstücksliste fristgerecht.",
+          "input_paths": [
+            "alpine_farming.alms[].field_list_submission_date",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "deadline_violation_if_late",
+        "description": "Verspätete Beantragung wird als Fristverletzung ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P11-FSL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.deadline_violations",
+        "data.oepul.o6_14.deadline_date"
+      ]
+    },
+    {
+      "id": "O614-APPL-005",
+      "rule_type": "deadline",
+      "statement": "Die Alm/Gemeinschaftsweide-Auftriebsliste gilt als Zahlungsantrag und ist bis 15. Juli (2023 und 2028: 17. Juli) einzureichen; für Rinder gilt die Alm-/Weidemeldung Rinder als Zahlungsantrag.",
+      "conditions": [
+        {
+          "expression": "drive_up_list_required(alm) and alm.drive_up_list_submission_date <= deadline('drive_up_list', year)",
+          "description": "Auftriebsliste vorhanden und fristgerecht.",
+          "input_paths": [
+            "alpine_farming.alms[].drive_up_list_submission_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "deadline_violation_if_missing_or_late",
+        "description": "Fehlende oder verspätete Auftriebsliste wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P11-AUFTRIEB",
+        "MB-P11-AUFTRIEB-DATE",
+        "SRL-P22-ZA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.deadline_violations",
+        "data.oepul.o6_14.drive_up_list_required"
+      ]
+    },
+    {
+      "id": "O614-APPL-006",
+      "rule_type": "exception",
+      "statement": "Bei nur mit Rindern bestoßenen Almen der Erschließungsstufe 1 kann auf die Abgabe der Alm/Gemeinschaftsweide-Auftriebsliste verzichtet werden, sofern nicht an Tierwohl – Behirtung oder am Zuschlag Almweideplan mit verstärkter Weideintensität (max. 2,40 RGVE/ha) teilgenommen wird.",
+      "conditions": [
+        {
+          "expression": "cattle_only_alm(alm) and access_level == 1 and not tierwohl_behirtung and not awp_increased_intensity(alm)",
+          "description": "Alle Ausnahmevoraussetzungen erfüllt.",
+          "input_paths": [
+            "alpine_farming.animals[].stays[].alm_id",
+            "alpine_farming.animals[].species",
+            "alpine_farming.alms[].access_level",
+            "farm.oepul.participating_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "drive_up_list_not_required",
+        "description": "Keine Auftriebsliste erforderlich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P11-EXCEPTION",
+        "MB-P11-EXCEPTION2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.drive_up_list_required",
+        "data.oepul.o6_14.cattle_only_alm"
+      ]
+    },
+    {
+      "id": "O614-APPL-007",
+      "rule_type": "deadline",
+      "statement": "Andernfalls sind der Erschließungszustand und ab 2025 der Almweideplan mit Auftrieb bis maximal 2,40 RGVE/ha bis zum Termin der Auftriebsliste in dieser zu beantragen (gesonderte Beantragung der verstärkten Weideintensität).",
+      "conditions": [
+        {
+          "expression": "awp_increased_intensity(alm) implies grazing_plan.increased_intensity_declared_in_drive_up_list",
+          "description": "Verstärkte Weideintensität in der Auftriebsliste beantragt.",
+          "input_paths": [
+            "alpine_farming.alms[].grazing_plan.increased_intensity_declared_in_drive_up_list"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "deadline_violation_if_missing",
+        "description": "Fehlende Beantragung wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P11-DECLARE",
+        "SRL-P71-AWP-B"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.deadline_violations"
+      ]
+    },
+    {
+      "id": "O614-APPL-008",
+      "rule_type": "procedure",
+      "statement": "Schafe, Ziegen, Equiden und Neuweltkamele sind mit der Alm/Gemeinschaftsweide-Auftriebsliste, Rinder über die Alm-/Weidemeldung Rinder zu beantragen.",
+      "conditions": [
+        {
+          "expression": "reporting_window(species).report_channel",
+          "description": "Meldekanal je Tierart (data.o6_14.procedure.reporting_windows).",
+          "input_paths": [
+            "alpine_farming.animals[].species"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "channel_assignment",
+        "description": "Zuordnung des Meldekanals.",
+        "value": {
+          "cattle": "alm_weidemeldung_rinder",
+          "other": "alm_gemeinschaftsweide_auftriebsliste"
+        }
+      },
+      "source_reference_ids": [
+        "MB-P11-CHANNELS",
+        "SRL-P22-ZA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.reporting_window"
+      ]
+    },
+    {
+      "id": "O614-APPL-009",
+      "rule_type": "calculation",
+      "statement": "Der Altersstichtag für die Angabe und Einstufung der Tierkategorien ist für alle Tierkategorien der 1. Juli des Antragsjahres.",
+      "conditions": [
+        {
+          "expression": "reference_date == year-07-01",
+          "description": "Alter zum 1. Juli bestimmt die RGVE-Kategorie.",
+          "input_paths": [
+            "alpine_farming.animals[].birth_date",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "age_reference",
+        "description": "RGVE-Kategorie wird zum 1. Juli ermittelt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P11-AGE",
+        "MB-P14-AGE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.reference_date",
+        "data.oepul.o6_14.age_months",
+        "data.oepul.o6_14.rgve_category"
+      ]
+    },
+    {
+      "id": "O614-APPL-010",
+      "rule_type": "eligibility",
+      "statement": "Für die Auszahlung können nur Tiere anerkannt werden, die bis spätestens 15. Juli aufgetrieben wurden.",
+      "conditions": [
+        {
+          "expression": "first_drive_up_date(animal) <= year-07-15",
+          "description": "Erster Auftrieb bis 15. Juli.",
+          "input_paths": [
+            "alpine_farming.animals[].stays[].drive_up_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_if_later",
+        "description": "Später aufgetriebene Tiere erhalten keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P11-JULY15"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.driven_up_in_time",
+        "data.oepul.o6_14.animal_premium_eligible",
+        "data.oepul.o6_14.animal_notices"
+      ]
+    },
+    {
+      "id": "O614-APPL-011",
+      "rule_type": "reporting",
+      "statement": "Bei Rindern ist der Almauftrieb einzeltierbezogen binnen 14 Tagen mit der Alm-/Weidemeldung Rinder zu melden; bei späterer Meldung gelten die Tiere maximal 14 Tage vor dem Meldedatum als gealpt; das Abtriebsdatum ist binnen 14 Tagen zu melden.",
+      "conditions": [
+        {
+          "expression": "days_between(drive_up_date, drive_up_report_date) <= 14",
+          "description": "Auftriebsmeldung fristgerecht.",
+          "input_paths": [
+            "alpine_farming.animals[].stays[].drive_up_report_date",
+            "alpine_farming.animals[].stays[].drive_up_date"
+          ]
+        },
+        {
+          "expression": "days_between(drive_down_date, drive_down_report_date) <= 14",
+          "description": "Abtriebsmeldung fristgerecht.",
+          "input_paths": [
+            "alpine_farming.animals[].stays[].drive_down_report_date",
+            "alpine_farming.animals[].stays[].drive_down_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "credited_days_limited",
+        "description": "Anrechnung frühestens 14 Tage vor Meldedatum; Fristverletzungen werden ausgewiesen.",
+        "value": {
+          "report_days": 14
+        }
+      },
+      "source_reference_ids": [
+        "MB-P11-CATTLE-REP",
+        "MB-P11-CATTLE-DOWN",
+        "MB-P5-CREDIT14"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.credited_start_ns",
+        "data.oepul.o6_14.credited_days",
+        "data.oepul.o6_14.reporting_violations"
+      ]
+    },
+    {
+      "id": "O614-APPL-012",
+      "rule_type": "reporting",
+      "statement": "Schafe und Ziegen sind einzeltierbezogen mit Ohrmarke zu beantragen; Meldefrist Auftrieb 7 Tage, Anrechnung maximal 7 Tage vor Meldedatum; Abtriebsmeldung binnen 7 Tagen.",
+      "conditions": [
+        {
+          "expression": "species in {sheep, goat} implies ear_tag present",
+          "description": "Ohrmarke angegeben.",
+          "input_paths": [
+            "alpine_farming.animals[].ear_tag",
+            "alpine_farming.animals[].species"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reporting_violation_if_missing",
+        "description": "Fehlende Ohrmarke bzw. verspätete Meldungen werden ausgewiesen.",
+        "value": {
+          "report_days": 7
+        }
+      },
+      "source_reference_ids": [
+        "MB-P12-SHEEP",
+        "MB-P12-SHEEP7",
+        "MB-P4-CREDIT7"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.reporting_violations",
+        "data.oepul.o6_14.credited_days"
+      ]
+    },
+    {
+      "id": "O614-APPL-013",
+      "rule_type": "reporting",
+      "statement": "Bei Schafen und Ziegen, die gleichzeitig an Tierwohl – Weide und/oder Erhaltung gefährdeter Nutztierrassen teilnehmen, bewirkt eine Abgangsmeldung am Heimbetrieb automatisch die Abtriebsmeldung; bei Verkauf ohne Abtrieb ist eine erneute Auftriebsmeldung mit der neuen Heimbetriebsnummer vorzunehmen.",
+      "conditions": [
+        {
+          "expression": "sold_without_drive_down and in_tierwohl_weide_or_rare_breeds implies new_drive_up_report_with_new_home_farm",
+          "description": "Neue Auftriebsmeldung erfolgt.",
+          "input_paths": [
+            "alpine_farming.animals[].sold_without_drive_down",
+            "alpine_farming.animals[].in_tierwohl_weide_or_rare_breeds",
+            "alpine_farming.animals[].new_drive_up_report_with_new_home_farm"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reporting_violation_if_missing",
+        "description": "Fehlende Neumeldung wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P12-ABGANG",
+        "MB-P12-RESALE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.reporting_violations"
+      ]
+    },
+    {
+      "id": "O614-APPL-014",
+      "rule_type": "reporting",
+      "statement": "Equiden und Neuweltkamele werden in Stück beantragt; Meldefrist 7 Tage, Anrechnung max. 7 Tage vor Meldedatum; ein beim Auftrieb angegebenes voraussichtliches Abtriebsdatum erfordert keine Nachmeldung, wenn es zutrifft, sonst Korrektur binnen 7 Tagen.",
+      "conditions": [
+        {
+          "expression": "planned_drive_down_date == drive_down_date or days_between(drive_down_date, drive_down_report_date) <= 7",
+          "description": "Abtrieb korrekt vorab angegeben oder rechtzeitig korrigiert.",
+          "input_paths": [
+            "alpine_farming.animals[].stays[].planned_drive_down_date",
+            "alpine_farming.animals[].stays[].drive_down_report_date",
+            "alpine_farming.animals[].count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reporting_violation_if_late",
+        "description": "Fehlende/verspätete Korrektur wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P12-EQUID",
+        "MB-P12-EQUID-DOWN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.planned_date_matches",
+        "data.oepul.o6_14.down_report_late",
+        "data.oepul.o6_14.reporting_violations",
+        "data.oepul.o6_14.animal_count"
+      ]
+    },
+    {
+      "id": "O614-APPL-015",
+      "rule_type": "deadline",
+      "statement": "Bei Teilnahme am Zuschlag Naturschutz auf der Alm sind sämtliche Schläge der Alm in der Feldstücksliste bis 15. April (2023/2028: 17. April) mit dem Code NATA zu kennzeichnen.",
+      "conditions": [
+        {
+          "expression": "every plot in alm.plots: 'NATA' in plot.codes and alm.nata_coding_date <= deadline('nata_coding', year)",
+          "description": "Alle Schläge fristgerecht NATA-codiert.",
+          "input_paths": [
+            "alpine_farming.alms[].plots[].codes",
+            "alpine_farming.alms[].nata_coding_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "deadline_violation_if_missing",
+        "description": "Fehlende/verspätete Codierung wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P12-NATA-CODE",
+        "MB-P12-NATA-CODE-DATE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.deadline_violations"
+      ]
+    },
+    {
+      "id": "O614-APPL-016",
+      "rule_type": "procedure",
+      "statement": "Die Meldungen nach den Tierkennzeichnungsvorschriften (Rinderdatenbank, VIS) sind unabhängig von der Förderbeantragung durchzuführen.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Gilt immer."
+        }
+      ],
+      "result": {
+        "outcome": "independent_obligation",
+        "description": "Förderrechtliche Meldungen ersetzen keine Tierkennzeichnungsmeldungen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P12-TKZ"
+      ]
+    },
+    {
+      "id": "O614-APPL-017",
+      "rule_type": "consequence",
+      "statement": "Wird bei der mehrjährigen Maßnahme ab dem 2. Jahr kein Zahlungsantrag gestellt, bleibt die Verpflichtung aufrecht, es erfolgt jedoch keine Zahlung; wird er nicht binnen 1 Jahr nachgereicht, endet die Verpflichtung und alle bisher gewährten Prämien sind zurückzuzahlen.",
+      "conditions": [
+        {
+          "expression": "measure.payment_claim_missing",
+          "description": "Zahlungsantrag fehlt.",
+          "input_paths": [
+            "alpine_farming.measure.payment_claim_missing",
+            "alpine_farming.measure.payment_claim_missing_over_one_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_payment_or_repayment",
+        "description": "Keine Zahlung bzw. Ende der Verpflichtung mit Rückzahlung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P22-MISSING",
+        "SRL-P22-1YEAR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.missing_payment_claim_consequence"
+      ]
+    },
+    {
+      "id": "O614-APPL-018",
+      "rule_type": "procedure",
+      "statement": "Einjährige Zuschläge (Almweideplan) verlängern sich automatisch; der Ausstieg ist im Rahmen des Mehrfachantrages bekanntzugeben. Erfolgt die Abmeldung im laufenden Jahr, ist der Zuschlag in diesem Förderjahr nicht mehr gültig; bis zum Ausstieg sind die Verpflichtungen einzuhalten.",
+      "conditions": [
+        {
+          "expression": "grazing_plan_supplement.deregistered",
+          "description": "Abmeldung erfolgt.",
+          "input_paths": [
+            "alpine_farming.grazing_plan_supplement.deregistered"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "invalid_in_year_of_deregistration",
+        "description": "Zuschlag im Abmeldejahr ungültig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P13-RENEW",
+        "AT-P13-DEREG",
+        "AT-P13-UNTIL-EXIT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.awp_active_next_year"
+      ]
+    },
+    {
+      "id": "O614-APPL-019",
+      "rule_type": "procedure",
+      "statement": "Ein Maßnahmenausstieg ist grundsätzlich bis zur Durchführung oder Ankündigung einer Vor-Ort-Kontrolle bzw. bis zur Mitteilung des Ergebnisses einer Verwaltungskontrolle möglich; nach Ausstieg, Ausschluss oder einjähriger Nichtabgabe des Mehrfachantrages ist ein Wiedereinstieg nur mit neuem Maßnahmenantrag möglich.",
+      "conditions": [
+        {
+          "expression": "exit_date < control_announcement_date",
+          "description": "Ausstieg vor Kontrollankündigung.",
+          "input_paths": [
+            "alpine_farming.exit.exit_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exit_possible",
+        "description": "Wiedereinstieg erfordert neuen Maßnahmenantrag (für 14 nur bis Einstiegsjahr 2025).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P13-EXIT-TIME",
+        "AT-P13-REENTRY"
+      ]
+    },
+    {
+      "id": "O614-ACCESS-001",
+      "rule_type": "access_condition",
+      "statement": "Im ersten Teilnahmejahr müssen zumindest 3,00 ha Almweideflächen bewirtschaftet werden, die mit mindestens 3,00 RGVE bestoßen werden; die Werte gelten betriebsbezogen und können mit mehreren Almen erreicht werden.",
+      "conditions": [
+        {
+          "expression": "sum(alm.alm_pasture_area_ha) >= 3.0",
+          "description": "Almweidefläche des Betriebes >= 3,00 ha.",
+          "input_paths": [
+            "alpine_farming.alms[].alm_pasture_area_ha"
+          ]
+        },
+        {
+          "expression": "sum(animal_rgve for premium-eligible animals) >= 3.0",
+          "description": "Bestoßung mit >= 3,00 RGVE.",
+          "input_paths": [
+            "alpine_farming.animals[].species",
+            "alpine_farming.animals[].birth_date",
+            "alpine_farming.animals[].count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_not_met",
+        "description": "Mindestteilnahme nicht erfüllt: kein Vertrag.",
+        "value": {
+          "min_ha": 3.0,
+          "min_rgve": 3.0
+        }
+      },
+      "source_reference_ids": [
+        "MB-P2-MIN",
+        "MB-P2-MIN-FARM",
+        "SRL-P69-MIN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.minimum_participation_met",
+        "data.oepul.o6_14.total_alm_area_ha",
+        "data.oepul.o6_14.total_participating_rgve",
+        "data.oepul.o6_14.access_violations"
+      ]
+    },
+    {
+      "id": "O614-ACCESS-002",
+      "rule_type": "exception",
+      "statement": "In den Folgejahren können weniger als 3,00 ha Almweideflächen bewirtschaftet und weniger als 3,00 RGVE aufgetrieben werden.",
+      "conditions": [
+        {
+          "expression": "year > commitment_start_year",
+          "description": "Nicht erstes Teilnahmejahr.",
+          "input_paths": [
+            "farm.year",
+            "alpine_farming.measure.commitment_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_minimum",
+        "description": "Keine Mindestteilnahme ab dem 2. Jahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P2-MIN-LATER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.first_commitment_year"
+      ]
+    },
+    {
+      "id": "O614-ACCESS-003",
+      "rule_type": "consequence",
+      "statement": "Bei Nichterfüllung von Förder- bzw. Zugangsvoraussetzungen kommt bei mehrjährigen Maßnahmen im 1. Jahr kein Vertrag zustande; ab dem 2. Verpflichtungsjahr wird im betroffenen Jahr keine Prämie gewährt.",
+      "conditions": [
+        {
+          "expression": "not access_conditions_met",
+          "description": "Zugangsvoraussetzung verletzt."
+        }
+      ],
+      "result": {
+        "outcome": "no_contract_or_no_premium",
+        "description": "1. Jahr: kein Vertrag; Folgejahre: keine Prämie im Jahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P24-ACCESS",
+        "SRL-P24-ACCESS1"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.access_consequence",
+        "data.oepul.o6_14.access_conditions_met",
+        "data.oepul.o6_14.premium_total"
+      ]
+    },
+    {
+      "id": "O614-ACCESS-004",
+      "rule_type": "access_condition",
+      "statement": "Voraussetzung für den Zuschlag Naturschutz auf der Alm ist eine Projektbestätigung der für Naturschutz zuständigen Stelle des Landes für alle Feldstücke einer Alm, die die Fördervoraussetzungen gemäß Anhang E festlegt.",
+      "conditions": [
+        {
+          "expression": "every plot in alm.plots: plot.project_confirmation",
+          "description": "Projektbestätigung für alle Feldstücke.",
+          "input_paths": [
+            "alpine_farming.alms[].plots[].project_confirmation"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "nata_not_eligible_if_missing",
+        "description": "Ohne vollständige Projektbestätigung kein NATA-Zuschlag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P2-NATA-PB",
+        "SRL-P69-NATA-PB"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.project_confirmation_all_plots",
+        "data.oepul.o6_14.nata_premium_eligible",
+        "data.oepul.o6_14.nata_violations"
+      ]
+    },
+    {
+      "id": "O614-ACCESS-005",
+      "rule_type": "eligibility",
+      "statement": "Förderwerbend sind natürliche Personen, eingetragene Personengesellschaften sowie juristische Personen und Personenvereinigungen, sofern die Beteiligung von Gebietskörperschaften 25 % nicht übersteigt; Gebietskörperschaften und deren Einrichtungen sind bei der Almbewirtschaftung ausgeschlossen.",
+      "conditions": [
+        {
+          "expression": "legal_form in eligible_applicant_types and public_body_share_pct <= 25",
+          "description": "Rechtsform zulässig, Beteiligung Gebietskörperschaften <= 25 %.",
+          "input_paths": [
+            "farm.applicant.legal_form",
+            "farm.applicant.public_body_share_pct"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_not_met",
+        "description": "Nicht förderwerbend.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P4-APPLICANT",
+        "AT-P5-GK",
+        "SRL-P8-GK",
+        "SRL-P8-GK25"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.applicant_type_eligible",
+        "data.oepul.o6_14.access_violations"
+      ]
+    },
+    {
+      "id": "O614-ACCESS-006",
+      "rule_type": "eligibility",
+      "statement": "Die förderwerbende Person muss aktiver Landwirt sein, eine landwirtschaftliche Tätigkeit ausüben und den Betrieb im eigenen Namen und auf eigene Rechnung mit Verfügungsgewalt über die beantragten Flächen bewirtschaften.",
+      "conditions": [
+        {
+          "expression": "applicant.is_active_farmer == true",
+          "description": "Aktiver Landwirt.",
+          "input_paths": [
+            "farm.applicant.is_active_farmer"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_not_met",
+        "description": "Nicht förderwerbend.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P4-OWN-NAME",
+        "SRL-P8-ACTIVE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.access_violations"
+      ]
+    },
+    {
+      "id": "O614-ACCESS-007",
+      "rule_type": "access_condition",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr muss der Betrieb mindestens 0,50 ha geschützten Anbau oder 1,50 ha landwirtschaftliche Fläche (inkl. Almweideflächen) bewirtschaften; ab dem 2. ÖPUL-Jahr entfällt die Betriebsmindestgröße.",
+      "conditions": [
+        {
+          "expression": "year == first_oepul_year implies (land.total_area_ha >= 1.5 or land.protected_cultivation_area_ha >= 0.5)",
+          "description": "Betriebsmindestgröße erfüllt.",
+          "input_paths": [
+            "farm.oepul.first_oepul_year",
+            "land.total_area_ha",
+            "land.protected_cultivation_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_not_met",
+        "description": "Kein Vertrag bei Unterschreitung im ersten ÖPUL-Jahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P5-MINSIZE",
+        "AT-P5-MINSIZE-LATER",
+        "SRL-P10-MINSIZE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.farm_min_size_met",
+        "data.oepul.o6_14.first_oepul_year",
+        "data.oepul.o6_14.access_violations"
+      ]
+    },
+    {
+      "id": "O614-AREA-001",
+      "rule_type": "scope",
+      "statement": "Die Förderverpflichtungen beziehen sich auf alle Almweideflächen des Almbetriebes.",
+      "conditions": [
+        {
+          "expression": "for all alm in alpine_farming.alms",
+          "description": "Alle Almweideflächen unterliegen den Verpflichtungen.",
+          "input_paths": [
+            "alpine_farming.alms[].alm_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligations_apply",
+        "description": "Verpflichtungen werden je Alm geprüft.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P2-AREAS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.obligation_violations"
+      ]
+    },
+    {
+      "id": "O614-AREA-002",
+      "rule_type": "definition",
+      "statement": "Eine Alm ist eine Bewirtschaftungseinheit aus beweideten Almweideflächen (Futterpflanzen, krautige Vegetation, auch Feuchtstandorte) auf einer im Almkataster eingetragenen oder im Almgebiet liegenden Alm, die nicht vom Heimgut aus bewirtschaftet wird; ein sichtbarer Bewirtschaftungsunterschied zu Grünland oder eine deutliche Grenze muss erkennbar sein. Eine Alm kann aus Nieder-, Mittel- und Hochlegern bestehen.",
+      "conditions": [
+        {
+          "expression": "alm.in_alm_cadastre_or_alm_area and not alm.managed_from_home_farm and alm.boundary_or_management_difference_visible",
+          "description": "Definitionsmerkmale einer Alm.",
+          "input_paths": [
+            "alpine_farming.alms[].in_alm_cadastre_or_alm_area",
+            "alpine_farming.alms[].managed_from_home_farm",
+            "alpine_farming.alms[].boundary_or_management_difference_visible"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "alm_eligible",
+        "description": "Nur Almen im Sinne der Definition sind prämienfähig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P3-ALM-DEF",
+        "MB-P3-ALM-CADASTRE",
+        "MB-P3-ALM-BOUNDARY",
+        "MB-P3-ALM-LEGER",
+        "SRL-P69-ALM"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.alm_definition_met",
+        "data.oepul.o6_14.alm_premium_eligible"
+      ]
+    },
+    {
+      "id": "O614-AREA-003",
+      "rule_type": "eligibility",
+      "statement": "Geförderte Flächen müssen in Österreich liegen; bestoßene Almflächen im Ausland können nicht im Mehrfachantrag beantragt und nicht gefördert werden.",
+      "conditions": [
+        {
+          "expression": "premium area = alm.alm_pasture_area_ha (AT only)",
+          "description": "Prämienfläche nur österreichische Almweidefläche.",
+          "input_paths": [
+            "alpine_farming.alms[].alm_pasture_area_ha",
+            "alpine_farming.alms[].foreign_adjacent_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "foreign_area_not_paid",
+        "description": "Ausländische Fläche nicht prämienfähig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P5-FOREIGN-NOAPP",
+        "AT-P9-AT",
+        "SRL-P9-LOCATION"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.alm_premium_area_ha"
+      ]
+    },
+    {
+      "id": "O614-AREA-004",
+      "rule_type": "eligibility",
+      "statement": "Im Nationalpark Kalkalpen ist die Almbewirtschaftung nicht prämienfähig; in den Nationalparks Neusiedlersee und Donau-Auen werden (außer Maßnahmen 23/24) keine flächenbezogenen Prämien gewährt; in den anderen Nationalparks ist eine Prämiengewährung möglich. Die Förderverpflichtungen sind auch auf Nationalparkflächen einzuhalten.",
+      "conditions": [
+        {
+          "expression": "national_parks[alm.national_park].almbewirtschaftung_premium == true",
+          "description": "Nationalparkstatus erlaubt Prämie.",
+          "input_paths": [
+            "alpine_farming.alms[].national_park"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium_in_excluded_parks",
+        "description": "Prämienfläche 0 in Kalkalpen, Neusiedlersee, Donau-Auen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P7-KALKALPEN",
+        "AT-P7-NP-NEUSIEDL",
+        "AT-P7-NP-OBLIG",
+        "SRL-P11-NP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.national_park_allows",
+        "data.oepul.o6_14.alm_premium_area_ha"
+      ]
+    },
+    {
+      "id": "O614-AREA-005",
+      "rule_type": "eligibility",
+      "statement": "Nicht förderfähig sind u. a. Flächen, die im Mehrfachantrag nicht für die Maßnahme angegeben oder falsch identifiziert sind, Versuchsflächen mit Code VF sowie Flächen mit Code OP (bzw. maßnahmenbezogenem OP-Code).",
+      "conditions": [
+        {
+          "expression": "'OP' in plot.codes or 'VF' in plot.codes",
+          "description": "Ausschlusscode am Schlag.",
+          "input_paths": [
+            "alpine_farming.alms[].plots[].codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Keine Prämie für betroffene Flächen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P7-NOTAPPLIED",
+        "AT-P7-VF",
+        "AT-P7-OP",
+        "SRL-P16-TRIAL"
+      ]
+    },
+    {
+      "id": "O614-AREA-006",
+      "rule_type": "obligation",
+      "statement": "Die beantragten Flächen müssen aktiv für die landwirtschaftliche Produktion (bei Almen: Beweidung) bewirtschaftet werden.",
+      "conditions": [
+        {
+          "expression": "alm_occupied_days[alm] > 0",
+          "description": "Aktive Beweidung.",
+          "input_paths": [
+            "alpine_farming.animals[].stays[].alm_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligibility_condition",
+        "description": "Nicht bewirtschaftete Flächen sind nicht förderfähig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P6-ACTIVE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.alm_occupied_days"
+      ]
+    },
+    {
+      "id": "O614-AREA-007",
+      "rule_type": "code_requirement",
+      "statement": "Der Code OP bzw. ein maßnahmenbezogener OP-Code ist zu vergeben, u. a. bei Leistungsüberschneidung mit anderen öffentlichen Mitteln, wenn die Verpflichtung nicht ganzjährig oder nicht über den gesamten Vertragszeitraum erfüllt werden kann, sowie bei reinem Fremdverschulden; ohne Fremdverschulden ist der Code zu löschen oder eine Selbstanzeige zu erstatten (geringere Sanktion als bei VOK-Feststellung).",
+      "conditions": [
+        {
+          "expression": "overlap or not_full_year or third_party_fault",
+          "description": "OP-Tatbestand liegt vor.",
+          "input_paths": [
+            "alpine_farming.alms[].plots[].codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "op_code_required",
+        "description": "Keine Prämie auf OP-Flächen; Selbstanzeige führt zu reduzierter Sanktion.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P8-OVERLAP",
+        "AT-P8-NOTYEAR",
+        "AT-P8-FREMD",
+        "AT-P9-SELF"
+      ]
+    },
+    {
+      "id": "O614-AREA-008",
+      "rule_type": "eligibility",
+      "statement": "Leistungen, die aus einem anderen Titel mit öffentlichen Mitteln (z. B. Naturschutz) gefördert werden oder gesetzlich/behördlich vorgeschrieben sind, sind nicht nochmals förderbar.",
+      "conditions": [
+        {
+          "expression": "double_funding == false",
+          "description": "Keine Doppelförderung."
+        }
+      ],
+      "result": {
+        "outcome": "no_premium_if_overlap",
+        "description": "Keine Prämie für die überschneidende Leistung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P11-OVERLAP"
+      ]
+    },
+    {
+      "id": "O614-ANIMAL-001",
+      "rule_type": "eligibility",
+      "statement": "Teilnahmefähig sind raufutterverzehrende Großvieheinheiten (RGVE): Rinder, Schafe, Ziegen, Equiden (Pferde, Ponys, Esel und Kreuzungen) und Neuweltkamele gemäß RGVE-Schlüssel.",
+      "conditions": [
+        {
+          "expression": "animal.species in eligible_species",
+          "description": "Tierart in data.o6_14.rgve_key.eligible_species.",
+          "input_paths": [
+            "alpine_farming.animals[].species"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_not_eligible_otherwise",
+        "description": "Andere Tierarten zählen nicht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P2-ANIMALS",
+        "SRL-P69-RGVE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.species_eligible",
+        "data.oepul.o6_14.eligible_species",
+        "data.oepul.o6_14.animal_notices"
+      ]
+    },
+    {
+      "id": "O614-ANIMAL-002",
+      "rule_type": "calculation",
+      "statement": "Für die Ermittlung der förderfähigen RGVE sind die Umrechnungsfaktoren des RGVE-Schlüssels anzuwenden (Rinder 0,40/0,60/1,00; Zwergrinder 0,20/0,30/0,50; Schafe/Ziegen 0,15/0,07; Equiden bis 1,48 m und 300 kg 0,20/0,30/0,50, darüber 0,40/0,60/1,00; Neuweltkamele 0,15/0,07).",
+      "conditions": [
+        {
+          "expression": "rgve_per_head(animal) = rgve_key.categories[rgve_category(animal)].rgve",
+          "description": "Faktor aus Datentabelle.",
+          "input_paths": [
+            "alpine_farming.animals[].species",
+            "alpine_farming.animals[].birth_date",
+            "alpine_farming.animals[].breed",
+            "alpine_farming.animals[].equine_size_class",
+            "alpine_farming.animals[].rgve_category_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rgve_factor",
+        "description": "RGVE je Stück laut Tabelle; RGVE = Faktor x Stückzahl.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P14-KEY",
+        "MB-P14-CATTLE",
+        "MB-P14-DWARF",
+        "MB-P14-SHEEP-GOAT",
+        "MB-P14-EQUID",
+        "MB-P14-CAMEL",
+        "ANH-P3-KEY",
+        "ANH-P3-EQUID",
+        "ANH-P3-CAMEL",
+        "SRL-P10-GVE",
+        "MB-P13-KEY"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.rgve_category",
+        "data.oepul.o6_14.rgve_per_head",
+        "data.oepul.o6_14.animal_rgve",
+        "data.oepul.o6_14.category_matches"
+      ]
+    },
+    {
+      "id": "O614-ANIMAL-003",
+      "rule_type": "definition",
+      "statement": "Als Zwergrinder gelten die Rassen Dahomey, Dexter, Kerry und Zwergzebu.",
+      "conditions": [
+        {
+          "expression": "animal.breed in dwarf_cattle_breeds",
+          "description": "Rasse in geschlossener Liste.",
+          "input_paths": [
+            "alpine_farming.animals[].breed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "dwarf_cattle_factor",
+        "description": "Zwergrinder-Faktoren anwenden.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ANH-P3-DWARF"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.size_class",
+        "data.oepul.o6_14.dwarf_breed"
+      ]
+    },
+    {
+      "id": "O614-ANIMAL-004",
+      "rule_type": "eligibility",
+      "statement": "Geförderte Tiere müssen in Österreich gehalten werden; Bestoßung muss auf in Österreich liegenden Almen erfolgen.",
+      "conditions": [
+        {
+          "expression": "stay.in_austria == true",
+          "description": "Aufenthalt auf österreichischer Alm.",
+          "input_paths": [
+            "alpine_farming.animals[].stays[].in_austria"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "foreign_stays_not_counted",
+        "description": "Auslandsaufenthalte zählen nicht als Alpungstage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P9-ANIMALS-AT",
+        "MB-P4-AT-ALM",
+        "SRL-P69-60"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.valid_stay"
+      ]
+    },
+    {
+      "id": "O614-GRAZE-001",
+      "rule_type": "obligation",
+      "statement": "Sowohl die Mindestweidedauer pro Tier als auch die Mindestbestoßungsdauer pro Alm beträgt 60 Tage (Bestoßung einer in Österreich liegenden Alm durch in der Auftriebsliste bzw. Alm-/Weidemeldung angeführte Tiere).",
+      "conditions": [
+        {
+          "expression": "total_credited_days[animal] >= 60",
+          "description": "Mindestweidedauer je Tier.",
+          "input_paths": [
+            "alpine_farming.animals[].stays[].drive_up_date",
+            "alpine_farming.animals[].stays[].drive_down_date"
+          ]
+        },
+        {
+          "expression": "alm_occupied_days[alm] >= 60",
+          "description": "Mindestbestoßungsdauer je Alm.",
+          "input_paths": [
+            "alpine_farming.animals[].stays[].alm_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_or_animal_excluded",
+        "description": "Tier <60 Tage: keine Prämie; Alm <60 Tage: Verpflichtungsverstoß, keine Prämie für die Alm.",
+        "value": {
+          "min_days": 60
+        }
+      },
+      "source_reference_ids": [
+        "MB-P4-60DAYS",
+        "MB-P4-AT-ALM",
+        "SRL-P69-60"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.meets_min_grazing",
+        "data.oepul.o6_14.alm_min_occupancy_met",
+        "data.oepul.o6_14.alm_occupied_days",
+        "data.oepul.o6_14.obligation_violations",
+        "data.oepul.o6_14.animal_notices"
+      ]
+    },
+    {
+      "id": "O614-GRAZE-002",
+      "rule_type": "calculation",
+      "statement": "Der Auftriebstag zählt zur Weide- und Bestoßungsdauer, der Abtriebstag nicht.",
+      "conditions": [
+        {
+          "expression": "actual_days = drive_down_date - drive_up_date",
+          "description": "Tagesdifferenz.",
+          "input_paths": [
+            "alpine_farming.animals[].stays[].drive_up_date",
+            "alpine_farming.animals[].stays[].drive_down_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "day_count",
+        "description": "Alpungstage = Abtriebsdatum minus Auftriebsdatum.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P4-DAYS-COUNT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.actual_days",
+        "data.oepul.o6_14.days_between"
+      ]
+    },
+    {
+      "id": "O614-GRAZE-003",
+      "rule_type": "calculation",
+      "statement": "Die Mindestbestoßungsdauer pro Alm kann durch ein Tier mit mindestens 60 Tagen oder durch hintereinander aufgetriebene Tiere erreicht werden.",
+      "conditions": [
+        {
+          "expression": "count(union of stay days on alm) >= 60",
+          "description": "Vereinigung der Aufenthaltstage.",
+          "input_paths": [
+            "alpine_farming.animals[].stays[].alm_id",
+            "alpine_farming.animals[].stays[].drive_up_date",
+            "alpine_farming.animals[].stays[].drive_down_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "occupancy_days",
+        "description": "Belegte Tage der Alm.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P4-CONSECUTIVE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.alm_occupied_days"
+      ]
+    },
+    {
+      "id": "O614-GRAZE-004",
+      "rule_type": "calculation",
+      "statement": "Mindestweidedauer und Mindestbestoßungsdauer müssen nicht durchgängig erreicht werden; Unterbrechungen sind möglich, zählen aber nicht zur Dauer.",
+      "conditions": [
+        {
+          "expression": "sum over stays",
+          "description": "Summe der Aufenthalte ohne Unterbrechungszeiten.",
+          "input_paths": [
+            "alpine_farming.animals[].stays[].drive_up_date",
+            "alpine_farming.animals[].stays[].drive_down_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "interruptions_excluded",
+        "description": "Unterbrechungen werden nicht angerechnet.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P4-INTERRUPT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.total_actual_days",
+        "data.oepul.o6_14.total_credited_days"
+      ]
+    },
+    {
+      "id": "O614-GRAZE-005",
+      "rule_type": "calculation",
+      "statement": "Werden Tiere auf andere Almen weitergetrieben, werden sie für jede Alm anteilig bezogen auf die gesamte Alpungsdauer angerechnet; in Summe müssen mindestens 60 Alpungstage erreicht werden.",
+      "conditions": [
+        {
+          "expression": "share = rgve * days_on_alm / total_days",
+          "description": "Anteilige Anrechnung.",
+          "input_paths": [
+            "alpine_farming.animals[].stays[].alm_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "pro_rata_rgve",
+        "description": "Anteilige RGVE je Alm.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P4-PRORATA",
+        "MB-P6-PRORATA-EX"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.stocking_rgve_share",
+        "data.oepul.o6_14.premium_rgve_share"
+      ]
+    },
+    {
+      "id": "O614-GRAZE-006",
+      "rule_type": "calculation",
+      "statement": "Für Tierzugänge werden maximal 7 Tage (Rinder: 14 Tage) Weidezeit vor Abgabe der Auftriebsliste bzw. vor dem Meldedatum als Alpungstage angerechnet.",
+      "conditions": [
+        {
+          "expression": "credited_start = max(drive_up_date, report_date - N days)",
+          "description": "N = 7 bzw. 14 bei Rindern.",
+          "input_paths": [
+            "alpine_farming.animals[].stays[].drive_up_report_date",
+            "alpine_farming.animals[].species"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "credited_days",
+        "description": "Angerechnete Alpungstage; verspätete Meldung wird ausgewiesen.",
+        "value": {
+          "cattle": 14,
+          "other": 7
+        }
+      },
+      "source_reference_ids": [
+        "MB-P4-CREDIT7",
+        "MB-P5-CREDIT14",
+        "MB-P5-EXAMPLE-CATTLE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.credited_start_ns",
+        "data.oepul.o6_14.credited_days",
+        "data.oepul.o6_14.reporting_violations"
+      ]
+    },
+    {
+      "id": "O614-GRAZE-007",
+      "rule_type": "reporting",
+      "statement": "Ein Abgang beantragter Tiere ist bei Rindern binnen 14 Tagen, bei allen anderen Tieren binnen 7 Tagen ab dem Tag des tatsächlichen Abtriebs zu melden; nicht fristgerechte Meldungen können bei Vor-Ort-Kontrollen zu Beanstandungen führen.",
+      "conditions": [
+        {
+          "expression": "days_between(drive_down_date, drive_down_report_date) <= window",
+          "description": "Abgangsmeldung fristgerecht.",
+          "input_paths": [
+            "alpine_farming.animals[].stays[].drive_down_report_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reporting_violation_if_late",
+        "description": "Beanstandung möglich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P5-DEPARTURE",
+        "MB-P5-LATE-CTRL",
+        "MB-P11-CATTLE-DOWN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.down_report_late",
+        "data.oepul.o6_14.reporting_violations"
+      ]
+    },
+    {
+      "id": "O614-GRAZE-008",
+      "rule_type": "obligation",
+      "statement": "Alle beantragten Tiere müssen sich grundsätzlich Tag und Nacht auf der Alm befinden und über einen wesentlichen Teil des Tages weiden; bei Gefahr dürfen sie in den Almstall; bis zur Hälfte des Tages im Almstall ist aus arbeitswirtschaftlichen oder tiergesundheitlichen Gründen zulässig, sonst ständiger Zugang zur Almweide. Bei Nichteinhaltung ist dies der AMA zu melden und für diese Tiere keine Prämie zu gewähren.",
+      "conditions": [
+        {
+          "expression": "animal.presence_compliant == true",
+          "description": "Anwesenheitsregel erfüllt.",
+          "input_paths": [
+            "alpine_farming.animals[].presence_compliant",
+            "alpine_farming.animals[].non_compliance_reported"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_no_premium",
+        "description": "Tier ohne Prämie; fehlende Meldung wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P5-DAYNIGHT",
+        "MB-P5-GRAZE-DAY",
+        "MB-P5-HALFDAY",
+        "MB-P5-REPORT-NOPREM",
+        "SRL-P69-GRAZE-DAY"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.presence_compliant",
+        "data.oepul.o6_14.animal_premium_eligible",
+        "data.oepul.o6_14.reporting_violations",
+        "data.oepul.o6_14.animal_notices"
+      ]
+    },
+    {
+      "id": "O614-GRAZE-009",
+      "rule_type": "obligation",
+      "statement": "Werden bei an das Heimgut angrenzenden Almen die Tiere zum Melken in den Heimstall getrieben, dürfen sie dort nur für die Dauer des Melkvorganges verbleiben.",
+      "conditions": [
+        {
+          "expression": "alm.adjacent_to_home_farm implies animal.home_stable_only_for_milking",
+          "description": "Heimstall nur zum Melken.",
+          "input_paths": [
+            "alpine_farming.alms[].adjacent_to_home_farm",
+            "alpine_farming.animals[].home_stable_only_for_milking"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P5-MILKING"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.obligation_violations"
+      ]
+    },
+    {
+      "id": "O614-STOCK-001",
+      "rule_type": "obligation",
+      "statement": "Es dürfen maximal 2,00 RGVE/ha Almweidefläche aufgetrieben werden; bei mehreren Almen (Teilbetrieben) wird der maximale Viehbesatz je Alm separat berechnet.",
+      "conditions": [
+        {
+          "expression": "alm_stocking_rgve[alm] / stocking_area_ha(alm) <= max_stocking_limit(alm)",
+          "description": "Viehbesatz je Alm.",
+          "input_paths": [
+            "alpine_farming.alms[].alm_pasture_area_ha",
+            "alpine_farming.animals[].stays[].alm_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation_if_exceeded",
+        "description": "Überbesatz = Verstoß gegen Förderverpflichtung (Sanktion gemäß Schema).",
+        "value": {
+          "max_rgve_per_ha": 2.0
+        }
+      },
+      "source_reference_ids": [
+        "MB-P5-MAX2",
+        "SRL-P69-MAX2",
+        "MB-P13-SEP",
+        "MB-P6-EX1",
+        "MB-P6-EX2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.alm_stocking_rgve",
+        "data.oepul.o6_14.alm_stocking_density",
+        "data.oepul.o6_14.alm_max_stocking_limit",
+        "data.oepul.o6_14.overstocked",
+        "data.oepul.o6_14.obligation_violations"
+      ]
+    },
+    {
+      "id": "O614-STOCK-002",
+      "rule_type": "calculation",
+      "statement": "Für den maximalen Viehbesatz werden nur Tiere mit insgesamt mindestens 60 Alpungstagen angerechnet; maßgeblich für die GVE-Einstufung ist der 1. Juli; nach dem 1. Juli geborene Jungtiere werden nicht herangezogen.",
+      "conditions": [
+        {
+          "expression": "total_actual_days[animal] >= 60 and birth_date <= year-07-01",
+          "description": "Tier zählt für Viehbesatz.",
+          "input_paths": [
+            "alpine_farming.animals[].birth_date",
+            "alpine_farming.animals[].stays[].drive_up_date",
+            "alpine_farming.animals[].stays[].drive_down_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "counted_animals",
+        "description": "Nur zählende Tiere gehen in den Viehbesatz ein.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P5-STOCK60",
+        "MB-P5-BORN",
+        "MB-P9-NATA-SEP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.counts_for_stocking",
+        "data.oepul.o6_14.born_after_reference"
+      ]
+    },
+    {
+      "id": "O614-STOCK-003",
+      "rule_type": "exception",
+      "statement": "Angrenzende Almflächen im Ausland können zur Entlastung des maximalen Viehbesatzes berücksichtigt werden; bei Überschreitung ist jährlich eine gesonderte Meldung an die AMA mit Nachweis über die Bewirtschaftung der ausländischen Flächen erforderlich.",
+      "conditions": [
+        {
+          "expression": "alm.foreign_area_report_submitted == true",
+          "description": "Meldung mit Nachweis liegt vor.",
+          "input_paths": [
+            "alpine_farming.alms[].foreign_adjacent_area_ha",
+            "alpine_farming.alms[].foreign_area_report_submitted"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "stocking_area_increased",
+        "description": "Ausländische Fläche erhöht nur die Bezugsfläche des Viehbesatzes.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P5-FOREIGN",
+        "MB-P6-FOREIGN-PROOF",
+        "AT-P9-CROSSBORDER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.foreign_relief_ha",
+        "data.oepul.o6_14.stocking_area_ha"
+      ]
+    },
+    {
+      "id": "O614-STOCK-004",
+      "rule_type": "exception",
+      "statement": "Bei Teilnahme am Zuschlag Almweideplan mit notwendiger verstärkter Weideintensität (Begründung im Almweideplan, gesonderte Beantragung) dürfen bis zu 2,40 RGVE/ha Almweidefläche je Alm aufgetrieben werden.",
+      "conditions": [
+        {
+          "expression": "awp_applied and year >= 2025 and gp.increased_intensity_applied and gp.increased_intensity_justified_in_plan",
+          "description": "Voraussetzungen der Ausnahme.",
+          "input_paths": [
+            "alpine_farming.alms[].grazing_plan.increased_intensity_applied",
+            "alpine_farming.alms[].grazing_plan.increased_intensity_justified_in_plan"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "limit_2_4",
+        "description": "Grenzwert 2,40 RGVE/ha.",
+        "value": {
+          "max_rgve_per_ha": 2.4
+        }
+      },
+      "source_reference_ids": [
+        "MB-P7-AWP24",
+        "MB-P10-AWP-INT",
+        "MB-P11-AWP-24",
+        "MB-P11-AWP-JUST",
+        "SRL-P71-AWP-B"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.awp_increased_intensity",
+        "data.oepul.o6_14.max_stocking_limit"
+      ]
+    },
+    {
+      "id": "O614-STOCK-005",
+      "rule_type": "obligation",
+      "statement": "Beim Zuschlag Naturschutz auf der Alm dürfen maximal 1,50 RGVE/ha Almweidefläche je teilnehmende Alm aufgetrieben werden (nur Tiere mit mindestens 60 Tagen, je Alm separat).",
+      "conditions": [
+        {
+          "expression": "nata_alm(alm) implies density <= 1.5",
+          "description": "NATA-Grenzwert.",
+          "input_paths": [
+            "alpine_farming.alms[].nature_conservation.participates"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation_if_exceeded",
+        "description": "Überbesatz wird ausgewiesen.",
+        "value": {
+          "max_rgve_per_ha": 1.5
+        }
+      },
+      "source_reference_ids": [
+        "MB-P8-NATA15",
+        "MB-P9-NATA-SEP",
+        "SRL-P70-NATA-B"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.nata_alm",
+        "data.oepul.o6_14.max_stocking_limit",
+        "data.oepul.o6_14.overstocked"
+      ]
+    },
+    {
+      "id": "O614-FEED-001",
+      "rule_type": "obligation",
+      "statement": "Die natürliche Futtergrundlage der Alm muss für die aufgetriebenen RGVE ausreichend sein; eine Zufütterung mit Grundfutter ist grundsätzlich nicht erlaubt.",
+      "conditions": [
+        {
+          "expression": "feeding.basic_fodder_supplementation == false",
+          "description": "Keine Grundfutterzufütterung.",
+          "input_paths": [
+            "alpine_farming.alms[].feeding.basic_fodder_supplementation"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P7-FEED-BASE",
+        "MB-P7-NO-BASIC",
+        "SRL-P69-FEED"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.obligation_violations"
+      ]
+    },
+    {
+      "id": "O614-FEED-002",
+      "rule_type": "exception",
+      "statement": "Zulässig ist Ausgleichsfütterung (Heu zum Rohfaserausgleich, Mineralstoffergänzung, Kraftfutter zur Aufrechterhaltung der Milchleistung); das Heu darf auch vom Heimbetrieb stammen.",
+      "conditions": [
+        {
+          "expression": "feeding.compensatory_feeding",
+          "description": "Ausgleichsfütterung.",
+          "input_paths": [
+            "alpine_farming.alms[].feeding.compensatory_feeding"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "allowed",
+        "description": "Kein Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P7-COMP",
+        "SRL-P69-FEED"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.obligation_violations"
+      ]
+    },
+    {
+      "id": "O614-FEED-003",
+      "rule_type": "obligation",
+      "statement": "Die Verfütterung von Silage und almfremdem Grünfutter ist verboten; auf der Alm gewonnenes Grünfutter oder Heu (z. B. in Notzeiten) darf verfüttert werden; ab dem Antragsjahr 2025 ist die Verfütterung almeigener Silage erlaubt.",
+      "conditions": [
+        {
+          "expression": "not feeding.alm_foreign_green_fodder_fed and (not feeding.silage_fed or (year >= 2025 and feeding.silage_alm_own))",
+          "description": "Futterherkunft zulässig.",
+          "input_paths": [
+            "alpine_farming.alms[].feeding.silage_fed",
+            "alpine_farming.alms[].feeding.silage_alm_own",
+            "alpine_farming.alms[].feeding.alm_foreign_green_fodder_fed",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P7-SILAGE-BAN",
+        "MB-P7-ALM-GREEN",
+        "MB-P7-OWN-SILAGE",
+        "SRL-P69-FEED"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.silage_feeding_allowed",
+        "data.oepul.o6_14.obligation_violations"
+      ]
+    },
+    {
+      "id": "O614-FEED-004",
+      "rule_type": "obligation",
+      "statement": "Ab 2025 auf der Almweidefläche produzierte Silage muss gänzlich auf der jeweiligen Alm verfüttert werden; eine Verbringung auf den Heimbetrieb ist unzulässig (sonst Bergmähder bzw. Mähwiese/-weide).",
+      "conditions": [
+        {
+          "expression": "feeding.alm_silage_moved_to_home_farm == false",
+          "description": "Keine Verbringung.",
+          "input_paths": [
+            "alpine_farming.alms[].feeding.alm_silage_moved_to_home_farm"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P7-SILAGE-HOME"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.obligation_violations"
+      ]
+    },
+    {
+      "id": "O614-FEED-005",
+      "rule_type": "exception",
+      "statement": "Nehmen auftreibende Betriebe an Heuwirtschaft teil, darf die ab 2025 auf der Almweidefläche einer Fremdalm produzierte Silage auf dieser Fremdalm verfüttert werden, da sich das Verbot nur auf den Auftreiber-Betrieb erstreckt.",
+      "conditions": [
+        {
+          "expression": "not alm.is_own_alm",
+          "description": "Fremdalm.",
+          "input_paths": [
+            "alpine_farming.alms[].is_own_alm",
+            "farm.oepul.participating_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "allowed",
+        "description": "Kein Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P7-HEU-FREMD"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.heuwirtschaft_own_alm",
+        "data.oepul.o6_14.silage_feeding_allowed"
+      ]
+    },
+    {
+      "id": "O614-FEED-006",
+      "rule_type": "combination",
+      "statement": "Betriebe mit Eigenalm, die an Heuwirtschaft teilnehmen, dürfen am gesamten Betrieb – auch auf der Alm – keine Silage erzeugen, füttern und lagern.",
+      "conditions": [
+        {
+          "expression": "'heuwirtschaft' in participating_measures and alm.is_own_alm implies not (silage_fed or silage_produced or silage_stored)",
+          "description": "Silageverbot bei Eigenalm + Heuwirtschaft.",
+          "input_paths": [
+            "farm.oepul.participating_measures",
+            "alpine_farming.alms[].is_own_alm",
+            "alpine_farming.alms[].feeding.silage_stored",
+            "alpine_farming.alms[].feeding.silage_produced"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P7-HEU-EIGEN",
+        "SRL-P50-HEU"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.heuwirtschaft_own_alm",
+        "data.oepul.o6_14.silage_activity",
+        "data.oepul.o6_14.obligation_violations"
+      ]
+    },
+    {
+      "id": "O614-PSM-001",
+      "rule_type": "obligation",
+      "statement": "Der Einsatz von Pflanzenschutzmitteln ist nicht erlaubt; ausgenommen sind Mittel, die ausschließlich gemäß VO (EU) 2018/848 zulässige Wirkstoffe enthalten.",
+      "conditions": [
+        {
+          "expression": "plant_protection.non_organic_psm_used == false",
+          "description": "Nur Bio-zulässige PSM.",
+          "input_paths": [
+            "alpine_farming.alms[].plant_protection.non_organic_psm_used"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P7-PSM",
+        "SRL-P69-PSM"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.obligation_violations"
+      ]
+    },
+    {
+      "id": "O614-PSM-002",
+      "rule_type": "code_requirement",
+      "statement": "Bis einschließlich Antragsjahr 2025 ist ein flächiger PSM-Einsatz im Mehrfachantrag mit den Codes PSMBIO bzw. PSMCS am Schlag anzugeben; bei beiden Mitteltypen genügt PSMCS; Codes können vorab gesetzt werden, sind bei Nichteinsatz zu streichen, Änderungen umgehend vorzunehmen. Die PSM-Angabe gilt als inhaltliche Bewirtschaftungsauflage.",
+      "conditions": [
+        {
+          "expression": "year <= 2025 and area_wide_psm_types != [] implies required_psm_code in plot.codes",
+          "description": "Codierung vorhanden.",
+          "input_paths": [
+            "alpine_farming.alms[].plots[].area_wide_psm_types",
+            "alpine_farming.alms[].plots[].codes",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reporting_violation",
+        "description": "Fehlender Code wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P7-PSM-CODE",
+        "MB-P8-PSM-CODES",
+        "MB-P8-PSM-ADV",
+        "MB-P8-PSMCS-BOTH",
+        "SRL-P25-PSM"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.psm_coding_required",
+        "data.oepul.o6_14.required_psm_code",
+        "data.oepul.o6_14.reporting_violations"
+      ]
+    },
+    {
+      "id": "O614-PSM-003",
+      "rule_type": "exception",
+      "statement": "Ab dem Antragsjahr 2026 entfallen die Regelungen zur PSM-Codierung; PSM-Einsätze sind nicht mehr im Mehrfachantrag zu erfassen.",
+      "conditions": [
+        {
+          "expression": "year >= 2026",
+          "description": "Antragsjahr ab 2026.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_coding_required",
+        "description": "Keine Codierpflicht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P8-PSM-2026"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.psm_coding_required"
+      ]
+    },
+    {
+      "id": "O614-FERT-001",
+      "rule_type": "obligation",
+      "statement": "Die Ausbringung von Düngemitteln ist nicht erlaubt; ausgenommen sind gemäß VO (EU) 2018/848 zugelassene Düngemittel.",
+      "conditions": [
+        {
+          "expression": "fertilisation.non_organic_fertiliser_used == false",
+          "description": "Nur Bio-zugelassene Düngemittel.",
+          "input_paths": [
+            "alpine_farming.alms[].fertilisation.non_organic_fertiliser_used"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P8-FERT",
+        "SRL-P70-FERT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.fertiliser_breaches",
+        "data.oepul.o6_14.obligation_violations"
+      ]
+    },
+    {
+      "id": "O614-FERT-002",
+      "rule_type": "obligation",
+      "statement": "Auf die Ausbringung nicht auf der Alm angefallener (almfremder) Gülle oder Jauche ist zu verzichten; Gülle/Jauche, die nicht in einem auf der Almfläche befindlichen Stall anfällt, gilt als almfremd.",
+      "conditions": [
+        {
+          "expression": "fertilisation.alm_foreign_slurry_applied == false",
+          "description": "Keine almfremde Gülle/Jauche.",
+          "input_paths": [
+            "alpine_farming.alms[].fertilisation.alm_foreign_slurry_applied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P8-SLURRY",
+        "MB-P8-SLURRY-DEF",
+        "SRL-P70-FERT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.fertiliser_breaches",
+        "data.oepul.o6_14.obligation_violations"
+      ]
+    },
+    {
+      "id": "O614-FERT-003",
+      "rule_type": "obligation",
+      "statement": "Auf die Ausbringung von Klärschlamm und kompostiertem Klärschlamm ist zu verzichten.",
+      "conditions": [
+        {
+          "expression": "fertilisation.sewage_sludge_applied == false",
+          "description": "Kein Klärschlamm.",
+          "input_paths": [
+            "alpine_farming.alms[].fertilisation.sewage_sludge_applied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P8-SLUDGE",
+        "SRL-P70-FERT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.fertiliser_breaches",
+        "data.oepul.o6_14.obligation_violations"
+      ]
+    },
+    {
+      "id": "O614-FERT-004",
+      "rule_type": "obligation",
+      "statement": "Ein separierter Gülleanteil in fester Form vom Heimbetrieb ist nicht zulässig.",
+      "conditions": [
+        {
+          "expression": "fertilisation.home_farm_separated_slurry_solids_applied == false",
+          "description": "Keine Separat-Feststoffe vom Heimbetrieb.",
+          "input_paths": [
+            "alpine_farming.alms[].fertilisation.home_farm_separated_slurry_solids_applied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P8-SEP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.fertiliser_breaches",
+        "data.oepul.o6_14.obligation_violations"
+      ]
+    },
+    {
+      "id": "O614-FERT-005",
+      "rule_type": "exception",
+      "statement": "Mist von Heimbetrieben darf ausgebracht werden; er muss nicht vom eigenen Heimbetrieb stammen.",
+      "conditions": [
+        {
+          "expression": "fertilisation.home_farm_manure_applied",
+          "description": "Mist von Heimbetrieben.",
+          "input_paths": [
+            "alpine_farming.alms[].fertilisation.home_farm_manure_applied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "allowed",
+        "description": "Kein Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P8-SEP",
+        "MB-P8-MANURE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.fertiliser_breaches"
+      ]
+    },
+    {
+      "id": "O614-NATA-001",
+      "rule_type": "obligation",
+      "statement": "Beim Zuschlag Naturschutz auf der Alm sind die Bewirtschaftungsauflagen gemäß Projektbestätigung (auf Grundlage Anhang E: Weidemanagement, Düngemanagement, Biotopmanagement/Pflege strukturreicher Flächen) auf allen Feldstücken der Alm (Almbetriebsnummer) einzuhalten.",
+      "conditions": [
+        {
+          "expression": "nature_conservation.project_requirements_met == true",
+          "description": "Auflagen eingehalten.",
+          "input_paths": [
+            "alpine_farming.alms[].nature_conservation.project_requirements_met"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P8-NATA-INTRO",
+        "MB-P8-NATA-ALL",
+        "MB-P8-NATA-THEMES",
+        "SRL-P70-NATA-A",
+        "ANH-P10-INTRO"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.nata_violations"
+      ]
+    },
+    {
+      "id": "O614-NATA-003",
+      "rule_type": "obligation",
+      "statement": "Beim Zuschlag Naturschutz auf der Alm ist vollständig auf organische oder mineralische Düngemittel in Mooren, Feuchtflächen, Kalk- und Silikatmagerrasen zu verzichten; Ausnahme nur Borstgrasrasen.",
+      "conditions": [
+        {
+          "expression": "not any(h in fertilised_habitats: h in {moor, wetland, calcareous_grassland, siliceous_grassland})",
+          "description": "Keine Düngung in geschützten Lebensräumen.",
+          "input_paths": [
+            "alpine_farming.alms[].nature_conservation.fertilised_habitats"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P9-NATA-FERT",
+        "MB-P9-BORST",
+        "SRL-P70-NATA-C"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.nata_forbidden_fertilised_habitats",
+        "data.oepul.o6_14.nata_violations"
+      ]
+    },
+    {
+      "id": "O614-NATA-004",
+      "rule_type": "obligation",
+      "statement": "Beim Zuschlag Naturschutz auf der Alm dürfen keine Geländekorrekturen oder Neuentwässerungen durchgeführt werden; bestehende Drainagen dürfen nur im Einvernehmen mit der Naturschutzstelle des Landes ertüchtigt werden.",
+      "conditions": [
+        {
+          "expression": "not terrain_correction and not new_drainage and (not drainage_upgraded or drainage_upgrade_consent)",
+          "description": "Keine unzulässigen Eingriffe.",
+          "input_paths": [
+            "alpine_farming.alms[].nature_conservation.terrain_correction",
+            "alpine_farming.alms[].nature_conservation.new_drainage",
+            "alpine_farming.alms[].nature_conservation.drainage_upgraded",
+            "alpine_farming.alms[].nature_conservation.drainage_upgrade_consent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P9-TERRAIN",
+        "MB-P9-DRAIN",
+        "SRL-P70-NATA-D"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.nata_violations"
+      ]
+    },
+    {
+      "id": "O614-NATA-005",
+      "rule_type": "obligation",
+      "statement": "Beim Zuschlag Naturschutz auf der Alm dürfen Tränkestellen nicht in Feuchtflächen oder Quellfluren errichtet werden.",
+      "conditions": [
+        {
+          "expression": "nature_conservation.watering_point_in_wetland_or_spring == false",
+          "description": "Keine Tränke in Feuchtflächen.",
+          "input_paths": [
+            "alpine_farming.alms[].nature_conservation.watering_point_in_wetland_or_spring"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P9-WATER",
+        "SRL-P70-NATA-E"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.nata_violations"
+      ]
+    },
+    {
+      "id": "O614-NATA-006",
+      "rule_type": "obligation",
+      "statement": "Beim Zuschlag Naturschutz auf der Alm sind bis 31.12.2025 von einer am Almbetrieb maßgeblich tätigen, in die Bewirtschaftung eingebundenen Person (z. B. Hirt/in, almbewirtschaftende Person) fachspezifische Kurse im Mindestausmaß von 4 Stunden mit naturschutz-/biodiversitätsbezogenen Inhalten bei einem anerkannten Bildungsanbieter zu absolvieren; anrechenbar ab 01.01.2022.",
+      "conditions": [
+        {
+          "expression": "course.completed and course.hours >= 4 and 2022-01-01 <= course.completion_date <= 2025-12-31 and provider_recognized and content_related and attendee_role in allowed",
+          "description": "Kursnachweis gültig.",
+          "input_paths": [
+            "alpine_farming.nature_conservation_supplement.course.completed",
+            "alpine_farming.nature_conservation_supplement.course.hours",
+            "alpine_farming.nature_conservation_supplement.course.completion_date",
+            "alpine_farming.nature_conservation_supplement.course.provider_recognized",
+            "alpine_farming.nature_conservation_supplement.course.attendee_role"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Fehlender Kurs wird ab 2025 als Verstoß ausgewiesen (Weiterbildungsverpflichtung).",
+        "value": {
+          "min_hours": 4,
+          "deadline": "2025-12-31",
+          "creditable_from": "2022-01-01"
+        }
+      },
+      "source_reference_ids": [
+        "MB-P9-COURSE",
+        "MB-P9-COURSE-HOURS",
+        "MB-P9-COURSE-CONTENT",
+        "MB-P9-COURSE-PROV",
+        "MB-P9-FROM2022",
+        "SRL-P70-NATA-F"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.nata_course_valid",
+        "data.oepul.o6_14.nata_violations"
+      ]
+    },
+    {
+      "id": "O614-NATA-007",
+      "rule_type": "obligation",
+      "statement": "Ein Kursbesuch einer Person kann grundsätzlich nicht auf mehrere Betriebe angerechnet werden; Doppelanrechnungen derselben Bildungsveranstaltung auf mehrere Verpflichtungen sind unzulässig.",
+      "conditions": [
+        {
+          "expression": "not course.credited_to_other_farm and not course.double_counted",
+          "description": "Keine Mehrfachanrechnung.",
+          "input_paths": [
+            "alpine_farming.nature_conservation_supplement.course.credited_to_other_farm",
+            "alpine_farming.nature_conservation_supplement.course.double_counted"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "course_invalid",
+        "description": "Kurs zählt nicht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P9-FROM2022",
+        "MB-P9-DOUBLE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.nata_course_valid"
+      ]
+    },
+    {
+      "id": "O614-NATA-008",
+      "rule_type": "obligation",
+      "statement": "Die Kursabsolvierung ist an die geschulte Person gebunden: Verlässt sie den Betrieb vor dem 31.12.2025, muss bis dahin ein Kurs nachgeholt werden; scheidet sie danach aus, ist kein weiterer Kurs nötig.",
+      "conditions": [
+        {
+          "expression": "trained_person_left_date <= 2025-12-31 implies replacement_course_completed",
+          "description": "Ersatzkurs bei frühem Ausscheiden.",
+          "input_paths": [
+            "alpine_farming.nature_conservation_supplement.course.trained_person_left_date",
+            "alpine_farming.nature_conservation_supplement.course.replacement_course_completed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "course_invalid",
+        "description": "Kursverpflichtung nicht erfüllt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P9-LEAVE",
+        "MB-P9-LEAVE-AFTER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.trained_person_left_without_replacement",
+        "data.oepul.o6_14.nata_course_valid"
+      ]
+    },
+    {
+      "id": "O614-NATA-009",
+      "rule_type": "procedure",
+      "statement": "Eine schriftliche Kursbesuchsbestätigung ist nach Aufforderung an die AMA zu übermitteln, sofern nicht der Bildungsanbieter übermittelt.",
+      "conditions": [
+        {
+          "expression": "ama_request == true",
+          "description": "Aufforderung der AMA."
+        }
+      ],
+      "result": {
+        "outcome": "submission_required",
+        "description": "Bestätigung vorlegen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P9-CONFIRM",
+        "MB-P10-AWP-CONFIRM"
+      ]
+    },
+    {
+      "id": "O614-NATA-010",
+      "rule_type": "premium_rate",
+      "statement": "Grundprämie Zuschlag Naturschutz auf der Alm: 5,0 €/ha (2023), 5,4 €/ha (2024), 10,0 €/ha (ab 2025), für die prämienfähige Almweidefläche.",
+      "conditions": [
+        {
+          "expression": "nata_premium_eligible(alm)",
+          "description": "NATA-Zuschlag förderfähig.",
+          "input_paths": [
+            "alpine_farming.nature_conservation_supplement.applied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium",
+        "description": "Satz x prämienfähige ha.",
+        "value": {
+          "2023": 5.0,
+          "2024": 5.4,
+          "2025_2028": 10.0
+        }
+      },
+      "source_reference_ids": [
+        "MB-P13-NATA-RATES",
+        "SRL-P71-NATA-RATE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.nata_base_rate",
+        "data.oepul.o6_14.alm_nata_premium"
+      ]
+    },
+    {
+      "id": "O614-NATA-011",
+      "rule_type": "premium_rate",
+      "statement": "Zusätzliche NATA-Zuschläge gemäß Projektbestätigung (Anhang E, ab 01.01.2024): Weidemanagement NAW1/2/3 = 2,2/8,6/27,0 €/ha, Düngemanagement NAD1/2/3 = 2,2/4,3/10,8 €/ha, Biotopmanagement NAB1/2/3 = 4,3/16,2/43,2 €/ha; Aufwandsstufen gering (>1-5 %), mittel (>5-20 %), hoch (>20 % der Almweidefläche); Einzelgehölze werden mit 100 m² angerechnet.",
+      "conditions": [
+        {
+          "expression": "m.code in nature_conservation_measure_codes",
+          "description": "Gültiger Anhang-E-Code.",
+          "input_paths": [
+            "alpine_farming.alms[].nature_conservation.measures[].code"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium",
+        "description": "Summe der Code-Sätze x prämienfähige ha.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ANH-P10-NAW",
+        "ANH-P10-NAD",
+        "ANH-P10-NAB",
+        "ANH-P10-TREE",
+        "ANH-P10-RATES-FROM",
+        "ANH-P10-ZAUN",
+        "ANH-P10-DUENGEPLAN",
+        "MB-P13-NATA-RATES"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.nata_code_rate",
+        "data.oepul.o6_14.nata_code_for_share",
+        "data.oepul.o6_14.nata_codes_rate_sum",
+        "data.oepul.o6_14.valid_nata_code",
+        "data.oepul.o6_14.alm_nata_premium",
+        "data.oepul.o6_14.isolated_trees_area_ha"
+      ]
+    },
+    {
+      "id": "O614-NATA-012",
+      "rule_type": "calculation",
+      "statement": "Auch beim Zuschlag Naturschutz auf der Alm wird die Prämie für maximal 1 ha Almweidefläche je RGVE, maximal im Ausmaß der Almweidefläche gewährt.",
+      "conditions": [
+        {
+          "expression": "premium_area = min(alm_area, rgve)",
+          "description": "Begrenzung 1 ha/RGVE."
+        }
+      ],
+      "result": {
+        "outcome": "premium_area",
+        "description": "Gleiche Bemessungsfläche wie Grundprämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ANH-P10-1HA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.alm_premium_area_ha",
+        "data.oepul.o6_14.alm_nata_premium"
+      ]
+    },
+    {
+      "id": "O614-NATA-013",
+      "rule_type": "procedure",
+      "statement": "Projektbestätigungen werden von der für Naturschutz zuständigen Stelle des Landes ausgestellt; sie enthalten flächenspezifische Ziele und Förderverpflichtungen auf Basis von Kartierungen und werden auf Flächenebene erteilt.",
+      "conditions": [
+        {
+          "expression": "project_confirmation issued by Land",
+          "description": "Zuständigkeit."
+        }
+      ],
+      "result": {
+        "outcome": "procedure",
+        "description": "Projektbestätigung als Grundlage des Zuschlags.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P19-PB",
+        "SRL-P20-PB-CONTENT",
+        "MB-P2-NATA-PB"
+      ]
+    },
+    {
+      "id": "O614-AWP-001",
+      "rule_type": "access_condition",
+      "statement": "Der Zuschlag Almweideplan ist ab 2025 möglich und erfordert die Erstellung eines Almweideplans für alle Almen des Betriebes zur gelenkten Weideführung sowie eine Bildungsveranstaltung.",
+      "conditions": [
+        {
+          "expression": "plan.covers_all_alms and course valid",
+          "description": "Plan für alle Almen, Kurs.",
+          "input_paths": [
+            "alpine_farming.grazing_plan_supplement.plan.covers_all_alms"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "supplement_condition",
+        "description": "Voraussetzung für den Zuschlag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P10-AWP",
+        "MB-P10-AWP-ALL",
+        "SRL-P70-AWP-A"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.awp_obligation_violations",
+        "data.oepul.o6_14.awp_premium_eligible"
+      ]
+    },
+    {
+      "id": "O614-AWP-002",
+      "rule_type": "obligation",
+      "statement": "Die Bildungsveranstaltung (mind. 4 Stunden, Themen Almwirtschaft/Weideführung/standortangepasste Beweidung und ökologische Auswirkungen, anerkannter Bildungsanbieter) ist bis 15. Juli des ersten Beantragungsjahres zu absolvieren; anrechenbar ab 01.10.2024; aus betrieblichen Erfordernissen auch durch eine maßgeblich tätige, eingebundene Person; nicht auf mehrere Betriebe anrechenbar, keine Doppelanrechnung.",
+      "conditions": [
+        {
+          "expression": "course.hours >= 4 and 2024-10-01 <= completion_date <= first_year-07-15 and provider_recognized and covers_required_topics",
+          "description": "Kurs gültig.",
+          "input_paths": [
+            "alpine_farming.grazing_plan_supplement.course.hours",
+            "alpine_farming.grazing_plan_supplement.course.completion_date",
+            "alpine_farming.grazing_plan_supplement.course.attendee_role",
+            "alpine_farming.grazing_plan_supplement.course.covers_required_topics"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Ohne gültigen Kurs kein Zuschlag.",
+        "value": {
+          "min_hours": 4,
+          "creditable_from": "2024-10-01"
+        }
+      },
+      "source_reference_ids": [
+        "MB-P10-AWP-COURSE",
+        "MB-P10-AWP-TOPICS",
+        "MB-P10-AWP-FROM",
+        "MB-P10-AWP-PERSON",
+        "MB-P10-AWP-CONFIRM",
+        "SRL-P70-AWP-I"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.awp_course_valid",
+        "data.oepul.o6_14.awp_obligation_violations"
+      ]
+    },
+    {
+      "id": "O614-AWP-003",
+      "rule_type": "deadline",
+      "statement": "Der Almweideplan ist bis 15. Juli des jeweiligen Teilnahmejahres zu erstellen.",
+      "conditions": [
+        {
+          "expression": "plan.created_date <= year-07-15",
+          "description": "Plan fristgerecht.",
+          "input_paths": [
+            "alpine_farming.grazing_plan_supplement.plan.created_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Ohne fristgerechten Plan kein Zuschlag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P10-AWP-PLAN",
+        "SRL-P70-AWP-II"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.awp_obligation_violations"
+      ]
+    },
+    {
+      "id": "O614-AWP-004",
+      "rule_type": "obligation",
+      "statement": "Der Almweideplan hat eine Bewertung der Almweideflächen nach Standortfaktoren/Ertragsfähigkeit, ökologischer Wertigkeit, Entwicklungszielen und Managementnotwendigkeiten (Beweidungsintensität, Schwendmaßnahmen) zu enthalten, geeignete Maßnahmen zur standortangepassten Beweidung bzw. Lenkungsmaßnahmen je Almfeldstück/Teilfläche darzustellen und ist gemeinsam mit den eingebundenen Personen zu erstellen oder diesen zu kommunizieren; er ist BMLUK/AMA im Bedarfsfall zu übermitteln (Vorlagen der LK).",
+      "conditions": [
+        {
+          "expression": "all(awp_plan_contents)",
+          "description": "Alle Pflichtinhalte vorhanden.",
+          "input_paths": [
+            "alpine_farming.grazing_plan_supplement.plan.assessment_site_yield",
+            "alpine_farming.grazing_plan_supplement.plan.assessment_ecological_value",
+            "alpine_farming.grazing_plan_supplement.plan.development_goals_and_management_needs",
+            "alpine_farming.grazing_plan_supplement.plan.grazing_and_steering_measures_per_plot",
+            "alpine_farming.grazing_plan_supplement.plan.created_with_or_communicated_to_involved_persons"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Unvollständiger Plan wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P10-AWP-CONTENTS",
+        "MB-P10-AWP-MEASURES",
+        "MB-P10-AWP-COMM",
+        "MB-P10-AWP-SUBMIT",
+        "SRL-P70-AWP-II"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.awp_plan_contents",
+        "data.oepul.o6_14.awp_obligation_violations"
+      ]
+    },
+    {
+      "id": "O614-AWP-005",
+      "rule_type": "obligation",
+      "statement": "Ab dem zweiten Teilnahmejahr ist der Almweideplan jährlich durch die eingebundenen Personen zu überprüfen und ggf. zu aktualisieren; die Überprüfung ist zu dokumentieren.",
+      "conditions": [
+        {
+          "expression": "year > first_application_year implies plan.annual_review_documented",
+          "description": "Dokumentierte Überprüfung.",
+          "input_paths": [
+            "alpine_farming.grazing_plan_supplement.plan.annual_review_documented",
+            "alpine_farming.grazing_plan_supplement.first_application_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P10-AWP-REVIEW",
+        "SRL-P71-AWP-REVIEW"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.awp_obligation_violations"
+      ]
+    },
+    {
+      "id": "O614-AWP-006",
+      "rule_type": "obligation",
+      "statement": "Die verstärkte Weideintensität bis 2,40 RGVE/ha ist nur zulässig, wenn sie aufgrund der Bewertung (insbesondere zur Erhaltung der ökologischen Wertigkeit) erforderlich ist; eine Begründung ist im Almweideplan darzulegen.",
+      "conditions": [
+        {
+          "expression": "gp.increased_intensity_applied implies gp.increased_intensity_justified_in_plan",
+          "description": "Begründung vorhanden.",
+          "input_paths": [
+            "alpine_farming.alms[].grazing_plan.increased_intensity_justified_in_plan"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Ohne Begründung gilt 2,00 RGVE/ha; Verstoß wird ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P10-AWP-INT",
+        "MB-P11-AWP-JUST",
+        "SRL-P71-AWP-B"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.awp_obligation_violations",
+        "data.oepul.o6_14.awp_increased_intensity"
+      ]
+    },
+    {
+      "id": "O614-AWP-007",
+      "rule_type": "premium_rate",
+      "statement": "Zuschlag Almweideplan ab 2025: 20,0 €/ha für die ersten 20 ha je Alm (je Alm separat gerechnet).",
+      "conditions": [
+        {
+          "expression": "awp_premium_eligible",
+          "description": "Zuschlag förderfähig.",
+          "input_paths": [
+            "alpine_farming.grazing_plan_supplement.applied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium",
+        "description": "min(prämienfähige ha, 20) x 20 €.",
+        "value": {
+          "eur_per_ha": 20.0,
+          "max_ha_per_alm": 20
+        }
+      },
+      "source_reference_ids": [
+        "MB-P13-AWP-RATE",
+        "SRL-P71-AWP-RATE",
+        "MB-P13-SEP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.alm_awp_premium",
+        "data.oepul.o6_14.awp_premium_eligible"
+      ]
+    },
+    {
+      "id": "O614-AWP-008",
+      "rule_type": "combination",
+      "statement": "Der Zuschlag Almweideplan ist nicht mit dem Zuschlag Naturschutz auf der Alm kombinierbar.",
+      "conditions": [
+        {
+          "expression": "not (nata_applied and awp_applied)",
+          "description": "Nicht beide Zuschläge.",
+          "input_paths": [
+            "alpine_farming.nature_conservation_supplement.applied",
+            "alpine_farming.grazing_plan_supplement.applied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combination_violation",
+        "description": "Kombination ausgewiesen; Almweideplan-Zuschlag wird nicht gewährt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P13-NOCOMB",
+        "SRL-P71-NOCOMB"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.nata_violations",
+        "data.oepul.o6_14.awp_premium_eligible",
+        "data.oepul.o6_14.nata_premium_eligible",
+        "data.oepul.o6_14.supplements_combinable",
+        "data.oepul.o6_14.supplement_exclusion"
+      ]
+    },
+    {
+      "id": "O614-AWP-009",
+      "rule_type": "contract_rule",
+      "statement": "Eine Maßnahmenübernahme des Zuschlags Almweideplan ist nur in Einzelfällen im Zuge einer Betriebsauflösung, -teilung oder -zusammenlegung möglich.",
+      "conditions": [
+        {
+          "expression": "context in {farm_dissolution, farm_division, farm_merger}",
+          "description": "Zulässiger Übernahmefall.",
+          "input_paths": [
+            "alpine_farming.grazing_plan_supplement.takeover_context"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "takeover_allowed",
+        "description": "Sonst keine Übernahme.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P15-AWP-TAKEOVER",
+        "AT-P15-TAKEOVER-CASES"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.awp_takeover_allowed"
+      ]
+    },
+    {
+      "id": "O614-PREM-001",
+      "rule_type": "premium_rate",
+      "statement": "Prämie Almweideflächen je Erschließungsstufe: Stufe 1 (Allradtraktor mit Anhänger über Weg mit Unterbau) 40,0 €/ha 2023 bzw. 43,2 €/ha ab 2024; Stufe 2 (nur Seilbahn oder Bergbauern-Spezialmaschine) 60,0 bzw. 64,8 €/ha; Stufe 3 (nur Fuß- oder Viehtriebweg) 80,0 bzw. 86,4 €/ha.",
+      "conditions": [
+        {
+          "expression": "base_rate(alm_access_level[alm], year)",
+          "description": "Satz aus data.o6_14.premium_rates.base_rates_eur_per_ha.",
+          "input_paths": [
+            "alpine_farming.alms[].access_level",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium",
+        "description": "Satz x prämienfähige ha.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P12-RATE-L1",
+        "MB-P12-RATE-L2",
+        "MB-P12-RATE-L3",
+        "SRL-P71-RATES",
+        "SRL-P27-APPLY"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.base_rate",
+        "data.oepul.o6_14.alm_base_premium"
+      ]
+    },
+    {
+      "id": "O614-PREM-002",
+      "rule_type": "calculation",
+      "statement": "Die Prämie wird für maximal 1,00 ha Almweidefläche je RGVE, maximal jedoch im Ausmaß der Almweidefläche gewährt (z. B. 50 ha/43 RGVE -> 43 ha; 50 ha/67 RGVE -> 50 ha).",
+      "conditions": [
+        {
+          "expression": "premium_area_ha = min(alm_pasture_area_ha, premium_rgve)",
+          "description": "Begrenzung.",
+          "input_paths": [
+            "alpine_farming.alms[].alm_pasture_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_area",
+        "description": "Prämienfähige Fläche je Alm.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P13-1HA",
+        "MB-P13-EX43",
+        "SRL-P71-1HA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.alm_premium_area_ha",
+        "data.oepul.o6_14.alm_premium_rgve"
+      ]
+    },
+    {
+      "id": "O614-PREM-003",
+      "rule_type": "calculation",
+      "statement": "Die förderfähigen RGVE werden gemäß Almauftriebsliste bzw. Alm/Weidemeldung Rinder unter Anwendung des RGVE-Schlüssels ermittelt; nur prämienfähige Tiere (>= 60 angerechnete Tage, Auftrieb bis 15.07., Anwesenheit erfüllt) zählen, anteilig je Alm.",
+      "conditions": [
+        {
+          "expression": "sum(premium_rgve_share(animal, alm))",
+          "description": "Summe prämienfähiger RGVE je Alm.",
+          "input_paths": [
+            "alpine_farming.animals[].stays[].alm_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_rgve",
+        "description": "RGVE je Alm für die Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P71-RGVE-DET",
+        "MB-P13-KEY"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.alm_premium_rgve",
+        "data.oepul.o6_14.animal_premium_eligible",
+        "data.oepul.o6_14.premium_rgve_share"
+      ]
+    },
+    {
+      "id": "O614-PREM-004",
+      "rule_type": "calculation",
+      "statement": "Werden mehrere Almen als Teilbetriebe bewirtschaftet, werden Erschließung, Begrenzung auf 1,00 ha/RGVE, Maximalviehbesatz von 2,00 RGVE/ha sowie der Zuschlag Almweideplan für jede Alm separat gerechnet.",
+      "conditions": [
+        {
+          "expression": "for each alm separately",
+          "description": "Je-Alm-Berechnung.",
+          "input_paths": [
+            "alpine_farming.alms[].alm_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "per_alm_calculation",
+        "description": "Getrennte Berechnung je Alm.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P13-SEP",
+        "MB-P5-MAX2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.alm_access_level",
+        "data.oepul.o6_14.alm_premium_area_ha",
+        "data.oepul.o6_14.alm_stocking_density",
+        "data.oepul.o6_14.alm_awp_premium"
+      ]
+    },
+    {
+      "id": "O614-PREM-005",
+      "rule_type": "calculation",
+      "statement": "Betriebsgrößenmodulation: Almbewirtschaftung wird getrennt von der Heimfläche betrachtet; bei Überschreitung von 200 ha bzw. 200 RGVE wird das Minimum aus RGVE und ha Almweidefläche (Summe des gesamten Betriebes) herangezogen; Auszahlung bis 200 ha 100 %, >200-300 ha 90 %, >300-1.000 ha 85 %, >1.000 ha 75 %.",
+      "conditions": [
+        {
+          "expression": "factor = sum(tier_portion * payout_factor) / modulation_base_ha",
+          "description": "Gewichteter Modulationsfaktor."
+        }
+      ],
+      "result": {
+        "outcome": "modulation_factor",
+        "description": "Faktor auf Gesamtprämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P13-MOD",
+        "MB-P13-MOD-FARM",
+        "MB-P13-EX300",
+        "AT-P19-MOD-TIERS",
+        "AT-P19-MOD-SEP",
+        "AT-P20-MOD-EX1",
+        "AT-P20-MOD-EX2",
+        "SRL-P17-MOD",
+        "SRL-P17-MOD-TIERS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.modulation_base_ha",
+        "data.oepul.o6_14.modulation_factor",
+        "data.oepul.o6_14.modulation_factor_for",
+        "data.oepul.o6_14.tier_portion",
+        "data.oepul.o6_14.premium_total"
+      ]
+    },
+    {
+      "id": "O614-PREM-006",
+      "rule_type": "cap",
+      "statement": "Prämienobergrenzen für die Summe flächenbezogener Zahlungen je ha (Schlag): 1.200 €/ha (2023), 1.300 €/ha (ab 2024); weitere Obergrenzen für Nützlinge, Naturschutz/EBW und K20 laut Tabelle.",
+      "conditions": [
+        {
+          "expression": "alm_rate_per_ha(alm) <= area_payment_cap('general', year)",
+          "description": "Obergrenze eingehalten.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "cap",
+        "description": "Überschreitung wird gekürzt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P19-CAPS",
+        "SRL-P17-CAP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.area_payment_cap",
+        "data.oepul.o6_14.alm_rate_per_ha"
+      ]
+    },
+    {
+      "id": "O614-PREM-007",
+      "rule_type": "threshold",
+      "statement": "Von der Gewährung einer Förderung kann abgesehen werden, wenn der Auszahlungsbetrag 50 Euro nicht überschreitet.",
+      "conditions": [
+        {
+          "expression": "premium_total <= 50",
+          "description": "Kleinbetrag."
+        }
+      ],
+      "result": {
+        "outcome": "may_be_withheld",
+        "description": "Keine Auszahlung möglich.",
+        "value": {
+          "eur": 50
+        }
+      },
+      "source_reference_ids": [
+        "SRL-P22-50"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.payout_may_be_withheld"
+      ]
+    },
+    {
+      "id": "O614-PREM-008",
+      "rule_type": "procedure",
+      "statement": "Die Auszahlung erfolgt bis 30. Juni des Folgejahres; nach Verwaltungskontrolle ist eine Teilzahlung von maximal 75 % möglich.",
+      "conditions": [
+        {
+          "expression": "payment_date <= (year+1)-06-30",
+          "description": "Zahlungstermin."
+        }
+      ],
+      "result": {
+        "outcome": "payment_schedule",
+        "description": "Vorschuss max. 75 %.",
+        "value": {
+          "advance_max_share": 0.75
+        }
+      },
+      "source_reference_ids": [
+        "AT-P18-PAYMENT",
+        "AT-P18-ADVANCE",
+        "SRL-P22-PAY"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.advance_payment_max"
+      ]
+    },
+    {
+      "id": "O614-PREM-009",
+      "rule_type": "procedure",
+      "statement": "Die Förderung wird als jährliche Prämie aus EU-, Bundes- und Landesmitteln gewährt (Landeszuschuss 2/3 der Bundesmittel).",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Allgemein."
+        }
+      ],
+      "result": {
+        "outcome": "annual_premium",
+        "description": "Jährliche Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P18-ANNUAL",
+        "SRL-P18-FIN"
+      ]
+    },
+    {
+      "id": "O614-ACCESSLVL-001",
+      "rule_type": "definition",
+      "statement": "Der Erschließungszustand bezeichnet die Erreichbarkeit der Alm zur zeitgemäßen Bewirtschaftung und für Lasten-/Viehtransport; mit Almzentrum wird die Erschließung bis zum Wirtschaftsgebäude (Umkreis 50 m) beurteilt, ohne Wirtschaftsgebäude die Zufahrt zu den Almflächen.",
+      "conditions": [
+        {
+          "expression": "alm.access_level in {1,2,3}",
+          "description": "Deklarierte Stufe.",
+          "input_paths": [
+            "alpine_farming.alms[].access_level"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_level",
+        "description": "Einstufung 1-3.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P3-ACCESS-DEF",
+        "SRL-P69-ACCESS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.effective_access_level",
+        "data.oepul.o6_14.alm_access_level"
+      ]
+    },
+    {
+      "id": "O614-ACCESSLVL-002",
+      "rule_type": "calculation",
+      "statement": "Bei Almen mit mehreren, nicht aneinander angrenzenden Flächen mit unterschiedlichem Erschließungszustand und stark abweichenden Auftriebszeiten wird die Alm nach der Fläche mit dem längeren Auftriebszeitraum eingestuft; das Flächenausmaß bleibt unberücksichtigt.",
+      "conditions": [
+        {
+          "expression": "not access_times_comparable -> level of unit with max drive_period_days",
+          "description": "Längster Auftriebszeitraum.",
+          "input_paths": [
+            "alpine_farming.alms[].access_units[].drive_period_days",
+            "alpine_farming.alms[].access_times_comparable"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_level",
+        "description": "Stufe der maßgeblichen Teilfläche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P3-ACCESS-LONGER",
+        "MB-P3-ACCESS-AREA",
+        "SRL-P69-ACCESS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.effective_access_level"
+      ]
+    },
+    {
+      "id": "O614-ACCESSLVL-003",
+      "rule_type": "calculation",
+      "statement": "Bei mehreren Feldstücken mit unterschiedlichen Erschließungsstufen und vergleichbaren Auftriebszeiten ist der Erschließungszustand zu mitteln (Beispiel: 3.750 Alptage Stufe 1 und 4.800 Alptage Stufe 3 -> Stufe 2).",
+      "conditions": [
+        {
+          "expression": "access_times_comparable -> round(sum(level*alp_days)/sum(alp_days))",
+          "description": "Gewichtetes Mittel nach Alptagen.",
+          "input_paths": [
+            "alpine_farming.alms[].access_units[].access_level",
+            "alpine_farming.alms[].access_units[].alp_days"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_level",
+        "description": "Gemittelte Stufe.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-P4-ACCESS-AVG",
+        "MB-P4-ACCESS-EXAMPLE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.effective_access_level"
+      ]
+    },
+    {
+      "id": "O614-GEN-001",
+      "rule_type": "general_condition",
+      "statement": "Alle teilnehmenden Betriebe müssen die Konditionalität (Klima/Umwelt, öffentliche Gesundheit, Pflanzengesundheit, Tierwohl) sowie die soziale Konditionalität gemäß §§ 6e, 6f MOG 2021 einhalten, um die Förderung in voller Höhe zu erhalten.",
+      "conditions": [
+        {
+          "expression": "conditionality_compliant",
+          "description": "Konditionalität eingehalten.",
+          "input_paths": [
+            "documentation.audit_last_year_noncompliance"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_if_not",
+        "description": "Kürzung gemäß Art. 83-89 VO (EU) 2021/2116.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P4-KOND"
+      ]
+    },
+    {
+      "id": "O614-GEN-002",
+      "rule_type": "general_condition",
+      "statement": "Die Bestimmungen des MOG 2021 und der GSP-AV sind zusätzlich zur Sonderrichtlinie einzuhalten; die Sonderrichtlinie samt Anhängen ist integraler Vertragsbestandteil.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Allgemein."
+        }
+      ],
+      "result": {
+        "outcome": "legal_framework",
+        "description": "Rechtsgrundlagen gelten ergänzend.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P2-LEGAL",
+        "SRL-P5-SCOPE"
+      ]
+    },
+    {
+      "id": "O614-GEN-006",
+      "rule_type": "contract_rule",
+      "statement": "Die Maßnahme Almbewirtschaftung kann nach der Antragsfrist bis 15. Juli (2023/2028: 17. Juli) im Übernahmejahr von einem bisher nicht teilnehmenden Betrieb für die Restlaufzeit übernommen werden; keine Ausweitung auf andere Flächen um mehr als 50 %; Einreichung online, Genehmigung durch die AMA; auch nach dem letzten Einstiegsjahr möglich.",
+      "conditions": [
+        {
+          "expression": "takeover.submission_date <= deadline('measure_takeover', year) and not previously_participating and expansion_share <= 0.5 and approved_by_ama",
+          "description": "Übernahmevoraussetzungen.",
+          "input_paths": [
+            "alpine_farming.takeover.submission_date",
+            "alpine_farming.takeover.previously_participating",
+            "alpine_farming.takeover.expansion_share",
+            "alpine_farming.takeover.approved_by_ama"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "valid_contract",
+        "description": "Neuer Vertrag bis Ende des ursprünglichen Vertragszeitraums.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P14-TAKEOVER",
+        "AT-P14-TAKEOVER-50",
+        "AT-P14-TAKEOVER-AMA",
+        "SRL-P14-TAKEOVER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.takeover_valid",
+        "data.oepul.o6_14.valid_contract"
+      ]
+    },
+    {
+      "id": "O614-GEN-007",
+      "rule_type": "sanction",
+      "statement": "Verstöße gegen inhaltliche Auflagen werden maßnahmenbezogen inkl. Zuschlägen nach Schwere, Ausmaß, Dauer und Häufigkeit in Stufen bewertet: Verwarnung (ab 2027 Einbehalt 1 %), 2 %, 5 %, 10 %, 25 %, 50 %, 100 %, Ausschluss mit Rückforderung bei zweimaliger 100 %-Kürzung im Vertragszeitraum; Sanktionen werden nach festgelegtem Schema automatisiert vergeben (§ 48 GSP-AV).",
+      "conditions": [
+        {
+          "expression": "sanction_stage_share(stage, year)",
+          "description": "Kürzungssatz je Stufe.",
+          "input_paths": [
+            "alpine_farming.sanction_history.full_reductions_in_contract_period"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_share",
+        "description": "Kürzung/Ausschluss.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P18-CRITERIA",
+        "AT-P18-STAGES",
+        "AT-P18-2027",
+        "SRL-P24-SANCTION"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.sanction_stage_share",
+        "data.oepul.o6_14.exclusion_from_measure"
+      ]
+    },
+    {
+      "id": "O614-GEN-008",
+      "rule_type": "sanction",
+      "statement": "Kürzungen oder Einbehalt können aus Nichteinhaltung von Zugangsvoraussetzungen, Flächen-/Tierabweichungen, Nichteinhaltung inhaltlicher Verpflichtungen (z. B. Düngeverbote, Weiterbildung), der Konditionalität und des mehrjährigen Vertragszeitraumes resultieren; Abweichungen bei Flächen und Tieren nach §§ 42-47 GSP-AV.",
+      "conditions": [
+        {
+          "expression": "any violation",
+          "description": "Verstoßkategorie."
+        }
+      ],
+      "result": {
+        "outcome": "reduction",
+        "description": "Kürzung je Kategorie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-P17-REASONS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.violations",
+        "data.oepul.o6_14.all_violations"
+      ]
+    },
+    {
+      "id": "O614-GEN-009",
+      "rule_type": "calculation",
+      "statement": "Bei Mehrfachkürzungen gilt die Reihenfolge: Übererklärungen, Förder-/Zugangsvoraussetzungen, Fristversäumnis, Untererklärungen, inhaltliche Kürzungen, Förderobergrenze je Maßnahme, Modulation, Obergrenze Flächenzahlungen, Vertragszeitraumüberprüfung, Zugangskürzung, Konditionalität.",
+      "conditions": [
+        {
+          "expression": "apply in order data.o6_14.procedure.multiple_reduction_order",
+          "description": "Reihenfolge."
+        }
+      ],
+      "result": {
+        "outcome": "reduction_order",
+        "description": "Geordnete Kürzungsanwendung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P25-ORDER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.multiple_reduction_order",
+        "data.oepul.o6_14.reduction_step_index"
+      ]
+    },
+    {
+      "id": "O614-GEN-010",
+      "rule_type": "exception",
+      "statement": "Höhere Gewalt/außergewöhnliche Umstände nach § 6 GSP-AV; bei dauerhaften, nicht beeinflussbaren Umständen kann die AMA die Verpflichtung vorzeitig ohne Rückforderung beenden (Meldung im MFA bzw. bis zur Vertragszeitraumüberprüfung); im Eintrittsjahr grundsätzlich keine Prämie, außer der Umstand tritt nach dem Almauftrieb ein oder es liegt höhere Gewalt vor.",
+      "conditions": [
+        {
+          "expression": "circumstance.type == 'permanent' and circumstance.reported and (occurrence_date > first_drive_up or force_majeure)",
+          "description": "Prämie im Eintrittsjahr möglich.",
+          "input_paths": [
+            "alpine_farming.circumstance.type",
+            "alpine_farming.circumstance.reported",
+            "alpine_farming.circumstance.occurrence_date",
+            "alpine_farming.circumstance.force_majeure"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_possible",
+        "description": "Prämie im Jahr möglich; keine Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P15-FM",
+        "SRL-P15-PERM",
+        "SRL-P15-PERM-END"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.permanent_circumstance_premium_possible",
+        "data.oepul.o6_14.repayment_exempt_reasons"
+      ]
+    },
+    {
+      "id": "O614-GEN-011",
+      "rule_type": "exception",
+      "statement": "Bei vorübergehenden, nicht beeinflussbaren Umständen (z. B. Bodenordnung, verordnete Schädlingsbekämpfung) kann die AMA bei Meldung von Rückforderungen absehen; im Jahr der Nichteinhaltung grundsätzlich keine Prämie, außer bei höherer Gewalt oder wenn alle Bedingungen auf geänderten Flächen eingehalten werden. Das BML kann spezielle Festlegungen treffen.",
+      "conditions": [
+        {
+          "expression": "circumstance.type == 'temporary' and reported",
+          "description": "Vorübergehender Umstand gemeldet.",
+          "input_paths": [
+            "alpine_farming.circumstance.type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_repayment",
+        "description": "Keine Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P15-TEMP",
+        "SRL-P16-BML"
+      ]
+    },
+    {
+      "id": "O614-GEN-014",
+      "rule_type": "consequence",
+      "statement": "Verweigert die förderwerbende Person die Auskunft oder verhindert sie die Vor-Ort-Kontrolle (außer höhere Gewalt), wird der Antrag abgelehnt, keine Prämie für das laufende Jahr gewährt und bestehende Verträge beendet und rückabgewickelt; förderrelevante Unterlagen sind am Betrieb aufzubewahren.",
+      "conditions": [
+        {
+          "expression": "control.refused == true",
+          "description": "Kontrolle verweigert.",
+          "input_paths": [
+            "alpine_farming.control.refused"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rejection_and_termination",
+        "description": "Ablehnung und Rückabwicklung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P23-REFUSE",
+        "SRL-P23-DOCS",
+        "AT-P17-CONTROLS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.refused_control",
+        "data.oepul.o6_14.refused_control_value"
+      ]
+    },
+    {
+      "id": "O614-GEN-015",
+      "rule_type": "combination",
+      "statement": "Anhang L: Die Zeile Almbewirtschaftung (14) enthält keine Einträge – Almbewirtschaftung ist auf der Einzelfläche mit keiner der gelisteten Flächenmaßnahmen prämienmäßig kombinierbar; eine betriebliche Teilnahme an mehreren Maßnahmen ist möglich. Unmögliche Kombinationen können bis zur Auszahlungsmitteilung korrigiert werden.",
+      "conditions": [
+        {
+          "expression": "plot.other_area_measures ∩ annex_l_row_14 (combinable=false) == ∅",
+          "description": "Keine Einzelflächenkombination.",
+          "input_paths": [
+            "alpine_farming.alms[].plots[].other_area_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combination_violation",
+        "description": "Kombination ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ANH-P103-ROW14",
+        "ANH-P103-LEGEND",
+        "SRL-P18-ANNEXL",
+        "SRL-P18-COMB",
+        "AT-P13-COMB",
+        "AT-P13-COMB-FIX"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.single_area_combinable_with",
+        "data.oepul.o6_14.combination_violations"
+      ]
+    },
+    {
+      "id": "O614-GEN-018",
+      "rule_type": "combination",
+      "statement": "Die Teilnahme an Tierwohl – Behirtung setzt die Teilnahme an der Maßnahme Almbewirtschaftung voraus.",
+      "conditions": [
+        {
+          "expression": "'tierwohl_behirtung' in participating_measures implies measure.applied",
+          "description": "Almbewirtschaftung vorhanden.",
+          "input_paths": [
+            "farm.oepul.participating_measures",
+            "alpine_farming.measure.applied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combination_violation",
+        "description": "Fehlende Voraussetzung ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-P72-BEHIRTUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.combination_violations"
+      ]
+    },
+    {
+      "id": "O614-GEN-019",
+      "rule_type": "combination",
+      "statement": "Tierwohl – Stallhaltung Rinder: Bei gleichzeitiger tierbezogener Prämienbeantragung in der Almbewirtschaftung beträgt der Satz 162,0 statt 194,4 €/RGVE.",
+      "conditions": [
+        {
+          "expression": "animal applied in o6_14",
+          "description": "Rind mit Almaufenthalt.",
+          "input_paths": [
+            "alpine_farming.animals[].stays[].alm_id",
+            "alpine_farming.animals[].species"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduced_rate",
+        "description": "162,0 €/RGVE.",
+        "value": {
+          "standard": 194.4,
+          "reduced": 162.0
+        }
+      },
+      "source_reference_ids": [
+        "SRL-P87-STALL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.stallhaltung_rinder_rate_eur_per_rgve",
+        "data.oepul.o6_14.applied_in_alm"
+      ]
+    },
+    {
+      "id": "O614-N2026-001",
+      "rule_type": "exception",
+      "statement": "Trockenheit 2026: Sind Förderverpflichtungen aufgrund der Trockenheit nicht einhaltbar (z. B. fehlende Wasserversorgung auf Almen), kann ein einzelbetriebliches Ansuchen auf Anerkennung höherer Gewalt über eAMA (Register Eingaben) gestellt werden.",
+      "conditions": [
+        {
+          "expression": "year == 2026 and circumstance.drought_prevents_compliance and circumstance.force_majeure_application_submitted",
+          "description": "Ansuchen gestellt.",
+          "input_paths": [
+            "farm.year",
+            "alpine_farming.circumstance.drought_prevents_compliance",
+            "alpine_farming.circumstance.force_majeure_application_submitted"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "force_majeure_possible",
+        "description": "Anerkennung höherer Gewalt möglich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "N-TRO-FM-ALM",
+        "N-TRO-FM-EAMA",
+        "SRL-P15-FM"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_14.drought_2026_force_majeure_possible",
+        "data.oepul.o6_14.drought_2026_force_majeure_recognised"
+      ]
+    },
+    {
+      "id": "O614-N2026-002",
+      "rule_type": "procedure",
+      "statement": "Bei Vor-Ort-Kontrollen 2026 wird die besondere Situation aufgrund der Trockenheit (z. B. Grundfutterbedarf auf der Weide) entsprechend berücksichtigt.",
+      "conditions": [
+        {
+          "expression": "year == 2026",
+          "description": "Kontrolljahr 2026.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "control_consideration",
+        "description": "Berücksichtigung bei der Beurteilung der natürlichen Futtergrundlage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "N-TRO-VOK"
+      ]
+    }
+  ]
+}
