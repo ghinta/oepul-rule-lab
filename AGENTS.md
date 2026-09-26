@@ -5,8 +5,8 @@ Regeln aus den bereitgestellten ÖPUL-Quellen.
 
 ## Nutzungsgrenze (Codex und Claude)
 
-Ein Codex-Run darf nur mit mindestens 50 % Restbudget im primären
-Fünf-Stunden-Fenster starten; das sekundäre/Wochenfenster ist kein Gate. Bei
+Ein Codex- oder Claude-Run darf nur mit mindestens 50 % Restbudget im
+Fünf-Stunden-Fenster starten; das Wochenfenster ist kein Gate. Bei
 5 % Restbudget oder weniger ist er kontrolliert zu beenden und in einen
 sicheren, fortsetzbaren Zustand zu bringen; ein harter Limitfehler darf nicht
 als normaler Abschluss behandelt werden. Ein unterbrochener Run wird später
