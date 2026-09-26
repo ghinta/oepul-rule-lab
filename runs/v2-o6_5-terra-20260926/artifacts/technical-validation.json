@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 144,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-5-terra/runs/v2-o6_5-terra-20260926/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_5.rego",
+    "tests/o6_5_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-5-terra/runs/v2-o6_5-terra-20260926/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 15,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_5.rego",
+        "tests/o6_5_test.rego"
+      ],
+      "duration_ms": 28,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-5-terra/runs/v2-o6_5-terra-20260926/workspace/tools/opa",
+            "fmt",
+            "policy/o6_5.rego"
+          ],
+          "duration_ms": 15,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_5\n\nimport rego.v1\n\n# Returned messages document determinate eligibility failures for the supplied animal records.\nerrors contains msg if {\n\tanimal := input.livestock.breeding_animals[_]\n\tnot eligible_breed(animal.breed)\n\tmsg := sprintf(\"Animal %s is not an eligible breed in Annex D.\", [animal.animal_id])\n}\n\nerrors contains msg if {\n\tanimal := input.livestock.breeding_animals[_]\n\tanimal.purebred != true\n\tmsg := sprintf(\"Animal %s is not recorded as purebred.\", [animal.animal_id])\n}\n\nerrors contains msg if {\n\tanimal := input.livestock.breeding_animals[_]\n\tanimal.zuchtbook_registered != true\n\tmsg := sprintf(\"Animal %s lacks Zuchtbuch registration.\", [animal.animal_id])\n}\n\nerrors contains msg if {\n\tinput.farm.year != 2026\n\tanimal := input.livestock.breeding_animals[_]\n\tanimal.held_from_april_1 != true\n\tmsg := sprintf(\"Animal %s was not held from 1 April.\", [animal.animal_id])\n}\n\nerrors contains msg if {\n\tinput.farm.year != 2026\n\tanimal := input.livestock.breeding_animals[_]\n\tanimal.held_through_december_31 != true\n\tmsg := sprintf(\"Animal %s was not held through 31 December.\", [animal.animal_id])\n}\n\nerrors contains msg if {\n\tinput.farm.year == 2026\n\tanimal := input.livestock.breeding_animals[_]\n\tanimal.held_through_august_31 != true\n\tmsg := sprintf(\"Animal %s was not held through the 2026 drought end date, 31 August.\", [animal.animal_id])\n}\n\neligible_breed(breed) if data.breeds[_].breed == breed\n\neligible if {\n\tcount(input.livestock.breeding_animals) >= 1\n\tcount(errors) == 0\n}\n\npremium(animal) := amount if {\n\trow := data.breeds[_]\n\trow.breed == animal.breed\n\tschedule := premium_schedule(input.farm.year)\n\tbase := schedule[animal.category][row.premium_tier]\n\tgep := gep_amount(schedule, row)\n\tmlk := milk_amount(schedule, animal)\n\tamount := (base + gep) + mlk\n}\n\ngep_amount(schedule, row) := object.get(schedule, \"gep\", 0) if row.special_gep\ngep_amount(_, row) := 0 if not row.special_gep\n\nmilk_amount(schedule, animal) := object.get(schedule, \"milk_recording_cow\", 0) if {\n\tanimal.category == \"cow\"\n\tanimal.milk_recording == true\n}\n\nmilk_amount(_, animal) := 0 if {\n\tanimal.category != \"cow\"\n}\n\nmilk_amount(_, animal) := 0 if {\n\tanimal.category == \"cow\"\n\tanimal.milk_recording != true\n}\n\npremium_schedule(year) := data.premiums_eur_per_animal[\"2023\"] if year == 2023\npremium_schedule(year) := data.premiums_eur_per_animal[\"2024_plus\"] if year >= 2024\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-5-terra/runs/v2-o6_5-terra-20260926/workspace/tools/opa",
+            "fmt",
+            "tests/o6_5_test.rego"
+          ],
+          "duration_ms": 12,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_5_test\n\nimport rego.v1\n\ntest_2026_drought_holding_and_premium if {\n\tprofile := {\"farm\": {\"year\": 2026}, \"livestock\": {\"breeding_animals\": [{\"animal_id\": \"AT1\", \"breed\": \"Murbodner\", \"purebred\": true, \"zuchtbook_registered\": true, \"held_from_april_1\": true, \"held_through_august_31\": true, \"category\": \"cow\", \"milk_recording\": true}]}}\n\tresult := data.oepul.o6_5 with input as profile\n\tresult.eligible\n\tamount := data.oepul.o6_5.premium({\"breed\": \"Murbodner\", \"category\": \"cow\", \"milk_recording\": true}) with input as profile\n\tamount > 334\n\tamount < 335\n}\n\ntest_excludes_unknown_breed if {\n\tresult := data.oepul.o6_5 with input as {\"farm\": {\"year\": 2025}, \"livestock\": {\"breeding_animals\": [{\"animal_id\": \"AT2\", \"breed\": \"Unknown\", \"purebred\": true, \"zuchtbook_registered\": true, \"held_from_april_1\": true, \"held_through_december_31\": true}]}}\n\tcount(result.errors) == 1\n}\n\ntest_regular_year_requires_december if {\n\tresult := data.oepul.o6_5 with input as {\"farm\": {\"year\": 2025}, \"livestock\": {\"breeding_animals\": [{\"animal_id\": \"AT3\", \"breed\": \"Noriker\", \"purebred\": true, \"zuchtbook_registered\": true, \"held_from_april_1\": true, \"held_through_december_31\": false}]}}\n\tcount(result.errors) == 1\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-5-terra/runs/v2-o6_5-terra-20260926/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 18,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 3/3\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-5-terra/runs/v2-o6_5-terra-20260926/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 82,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-5-terra/runs/v2-o6_5-terra-20260926/workspace"
+}
