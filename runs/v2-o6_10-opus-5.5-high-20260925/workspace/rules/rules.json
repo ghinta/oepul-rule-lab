@@ -1,0 +1,2537 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_10",
+  "rules": [
+    {
+      "id": "O610-SCOPE-PURPOSE",
+      "rule_type": "scope",
+      "statement": "Gefördert wird die Anlage von Begrünungskulturen in den Fahrgassen von Wein-, Obst- und Hopfenflächen bzw. die Bewirtschaftung von Weinterrassen; optional ein Zuschlag für den Einsatz von Organismen oder Pheromonen.",
+      "conditions": [
+        {
+          "expression": "effective_crop_type(p) in {vine, vine_terrace, fruit, hop}",
+          "description": "Schlag ist Wein-, Weinterrassen-, Obst- oder Hopfenfläche",
+          "input_paths": [
+            "land.parcels[].permanent_crop.type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "measure_scope",
+        "description": "Maßnahmengegenstand: Begrünung Fahrgassen / Weinterrassen, optionaler Zuschlag EOP",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-1-OVERVIEW",
+        "REF-MB-1-OPTIONAL",
+        "REF-SRL-210-SUPPORT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.vfh_parcel",
+        "data.oepul.o6_10.eop_requested"
+      ]
+    },
+    {
+      "id": "O610-CONTRACT-PERIOD",
+      "rule_type": "contract_term",
+      "statement": "Der Verpflichtungs- und Vertragszeitraum beträgt ein Kalenderjahr (1. Jänner bis 31. Dezember); die Maßnahme ist nur innerhalb der Programmlaufzeit 2023–2028 möglich.",
+      "conditions": [
+        {
+          "expression": "farm.year in [2023..2028]",
+          "description": "Antragsjahr innerhalb der Programmlaufzeit",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_period_one_calendar_year",
+        "description": "Vertragszeitraum 1.1.–31.12.; außerhalb 2023–2028 Zugangsverstoß",
+        "value": {
+          "contract_period_years": 1,
+          "programme_end": "2028-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "REF-MB-31-PERIOD",
+        "REF-ATB-59-ONEYEAR",
+        "REF-SRL-1711-ONEYEAR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.access_violations",
+        "data.oepul.o6_10.contract_valid"
+      ]
+    },
+    {
+      "id": "O610-CONTRACT-AUTO-RENEWAL",
+      "rule_type": "contract_term",
+      "statement": "Die Maßnahme verlängert sich automatisch um ein weiteres Förderjahr, wenn sie nicht abgemeldet wird; die erstmalige Beantragung gilt als Vorbeantragung für alle Folgejahre.",
+      "conditions": [
+        {
+          "expression": "measure_application_date != null and not deregistered_for_year",
+          "description": "Beantragt und nicht abgemeldet",
+          "input_paths": [
+            "farm.oepul.o6_10.measure_application_date",
+            "farm.oepul.o6_10.deregistration_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_renewed",
+        "description": "Vertrag gilt im Folgejahr weiter",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-31-RENEW",
+        "REF-ATB-6-AUTORENEW",
+        "REF-SRL-11052-PRE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.applied_via_measure_application",
+        "data.oepul.o6_10.contract_valid"
+      ]
+    },
+    {
+      "id": "O610-CONTRACT-LAPSE-MIN-AREA",
+      "rule_type": "consequence",
+      "statement": "Wird die Mindestteilnahmebedingung nicht eingehalten, erlischt der Vertrag für die Maßnahme; bei einjährigen Maßnahmen kommt bei Nichterfüllung von Zugangsvoraussetzungen kein Vertrag zustande.",
+      "conditions": [
+        {
+          "expression": "count(access_violations) > 0",
+          "description": "Mindestteilnahmefläche oder sonstige Zugangsvoraussetzung nicht erfüllt",
+          "input_paths": [
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_lapsed",
+        "description": "contract_status = lapsed_access_conditions_not_met; keine Prämie",
+        "value": {
+          "contract_status": "lapsed_access_conditions_not_met"
+        }
+      },
+      "source_reference_ids": [
+        "REF-MB-31-LAPSE",
+        "REF-SRL-11211-ACCESS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.contract_status",
+        "data.oepul.o6_10.contract_valid"
+      ]
+    },
+    {
+      "id": "O610-MIN-AREA",
+      "rule_type": "access_condition",
+      "statement": "In jedem Teilnahmejahr müssen zumindest 0,50 ha Wein-, Obst- oder Hopfenflächen gemäß Mehrfachantrag bewirtschaftet werden.",
+      "conditions": [
+        {
+          "expression": "sum(area_ha of VFH parcels) >= 0.5",
+          "description": "Summe der teilnahmefähigen Wein-, Obst- und Hopfenflächen",
+          "input_paths": [
+            "land.parcels[].area_ha",
+            "land.parcels[].permanent_crop.type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_below",
+        "description": "Unterschreitung -> Zugangsverstoß O610-MIN-AREA",
+        "value": {
+          "min_participation_area_ha": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "REF-MB-32-MINAREA",
+        "REF-SRL-210-ACCESS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.vfh_area_ha",
+        "data.oepul.o6_10.access_violations"
+      ]
+    },
+    {
+      "id": "O610-ELIG-ALL-AREAS",
+      "rule_type": "scope",
+      "statement": "Die Förderverpflichtungen beziehen sich auf alle Wein-, Obst- und Hopfenflächen des Betriebes einschließlich der Weinterrassenflächen (gesamtbetriebliche Verpflichtung).",
+      "conditions": [
+        {
+          "expression": "vfh_parcel(p)",
+          "description": "Jeder Wein-, Obst-, Hopfen- oder Weinterrassenschlag des Betriebes",
+          "input_paths": [
+            "land.parcels[].permanent_crop.type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "whole_farm_obligation",
+        "description": "Verpflichtungsprüfung auf allen VFH-Schlägen (auch prämienausgeschlossenen)",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-33-TERRACES",
+        "REF-MB-41-GREENING"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.vfh_parcels",
+        "data.oepul.o6_10.greening_parcels"
+      ]
+    },
+    {
+      "id": "O610-ELIG-TERRACE-SLOPE",
+      "rule_type": "eligibility",
+      "statement": "Weinterrassenflächen müssen eine durchschnittliche Hangneigung (bezogen auf den Hangabschnitt) von mindestens 25 % aufweisen.",
+      "conditions": [
+        {
+          "expression": "permanent_crop.type == vine_terrace and slope_percent >= 25",
+          "description": "Terrasse mit mind. 25 % Hangneigung",
+          "input_paths": [
+            "land.parcels[].permanent_crop.type",
+            "land.parcels[].slope_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "terrace_recognised",
+        "description": "Unter 25 % wird der Schlag als normale Weinfläche behandelt (Annahme A-03)",
+        "value": {
+          "terrace_min_avg_slope_percent": 25
+        }
+      },
+      "source_reference_ids": [
+        "REF-MB-33-TERRACE-SLOPE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.effective_crop_type",
+        "data.oepul.o6_10.is_terrace"
+      ]
+    },
+    {
+      "id": "O610-ELIG-ONLY-VFH",
+      "rule_type": "eligibility",
+      "statement": "An der Maßnahme kann nur mit Wein-, Obst- und Hopfenflächen teilgenommen werden; Reb- und Baumschulen, Energieholzflächen und andere Dauerkulturen sind keine teilnahmefähigen Flächen.",
+      "conditions": [
+        {
+          "expression": "effective_crop_type(p) in data.o6_10.definitions.eligible_crop_types",
+          "description": "Kulturart teilnahmefähig",
+          "input_paths": [
+            "land.parcels[].permanent_crop.type",
+            "land.parcels[].crop.crop_category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_ineligible_otherwise",
+        "description": "Nicht teilnahmefähige Schläge werden in ineligible_parcels ausgewiesen und nicht zur Mindestfläche gezählt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-33-ONLY-VFH",
+        "REF-MB-33-NURSERY",
+        "REF-ATB-551-NONELIG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.vfh_parcel",
+        "data.oepul.o6_10.ineligible_parcels"
+      ]
+    },
+    {
+      "id": "O610-SLOPE-SOURCE",
+      "rule_type": "data_source",
+      "statement": "Die Hangneigung wird im INVEKOS-GIS (Legende Gebietsabgrenzungen/Hangneigungen) automatisch ausgewiesen und kann nicht geändert werden.",
+      "conditions": [
+        {
+          "expression": "slope_percent = INVEKOS-GIS-Wert",
+          "description": "Hangneigung des Schlages aus INVEKOS-GIS",
+          "input_paths": [
+            "land.parcels[].slope_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "slope_input_authoritative",
+        "description": "slope_percent wird unverändert für Terrassenprüfung und Prämienstufe verwendet",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-33-SLOPE-GIS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.slope_of"
+      ]
+    },
+    {
+      "id": "O610-GEN-DEF-FRUIT",
+      "rule_type": "definition",
+      "statement": "Als Obst gelten Flächen mit den abschließend aufgezählten Obstkulturen; ab Antragsjahr 2025 zusätzlich Felsenbirne, Maulbeere und Papau.",
+      "conditions": [
+        {
+          "expression": "crop_name in data.o6_10.definitions.fruit_crops[from_year <= farm.year]",
+          "description": "Obstart im Antragsjahr anerkannt",
+          "input_paths": [
+            "land.parcels[].crop.crop_name",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "fruit_area_if_listed",
+        "description": "Nicht gelistete Obstarten sind nicht teilnahmefähig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-4-FRUIT",
+        "REF-ATB-4-FRUIT2025",
+        "REF-SRL-1532-FRUIT",
+        "REF-SRL-1532-FRUIT2025"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.valid_fruit_name",
+        "data.oepul.o6_10.fruit_species_ok"
+      ]
+    },
+    {
+      "id": "O610-GEN-DEF-CEREAL",
+      "rule_type": "definition",
+      "statement": "Als Getreide gelten Dinkel, Durum, Einkorn, Emmer, Gerste, Grünschnittroggen, Hafer, Reis, Roggen, Triticale und Weizen; nicht als Getreide gelten u. a. Amaranth, Buchweizen, Hirse, Sorghum, Kanariensaat, Quinoa, Sudangras sowie Gemenge mit weniger als 50 % Getreide.",
+      "conditions": [
+        {
+          "expression": "species in data.o6_10.definitions.cereals",
+          "description": "Einstufung als Getreide für die 50 %-Regel der Begrünung"
+        }
+      ],
+      "result": {
+        "outcome": "cereal_classification",
+        "description": "Grundlage für O610-GREEN-INVALID-CEREAL-MAIZE und O610-GREEN-CEREAL-SHARE-50",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-4-CEREALS",
+        "REF-ATB-4-NOTCEREALS",
+        "REF-SRL-1532-CEREAL"
+      ]
+    },
+    {
+      "id": "O610-GEN-DEF-ELIGIBLE-LAND",
+      "rule_type": "definition",
+      "statement": "Förderfähige landwirtschaftliche Flächen umfassen u. a. Dauer- und Spezialkulturen sowie Weinflächen samt darauf befindlicher oder höchstens 5 m angrenzender Landschaftselemente (§ 25 GSP-AV).",
+      "conditions": [
+        {
+          "expression": "land_use in {special_crop} and eligible per § 25 GSP-AV",
+          "description": "Landwirtschaftliche Fläche",
+          "input_paths": [
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_agricultural_land",
+        "description": "Definition der förderfähigen Flächen",
+        "value": {
+          "landscape_element_max_distance_m": 5
+        }
+      },
+      "source_reference_ids": [
+        "REF-ATB-4-LAND"
+      ]
+    },
+    {
+      "id": "O610-GEN-LOCATION-AT",
+      "rule_type": "eligibility",
+      "statement": "Geförderte Flächen müssen in Österreich liegen; Flächen außerhalb Österreichs werden nicht gefördert und nicht berücksichtigt.",
+      "conditions": [
+        {
+          "expression": "location.is_in_austria == true",
+          "description": "Schlag liegt in Österreich",
+          "input_paths": [
+            "land.parcels[].location.is_in_austria"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_ineligible_if_abroad",
+        "description": "Auslandsflächen nicht teilnahmefähig und nicht mindestflächenrelevant",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-56-AT",
+        "REF-SRL-1421-AT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.located_in_austria",
+        "data.oepul.o6_10.ineligible_parcels"
+      ]
+    },
+    {
+      "id": "O610-GEN-NONELIG-AREAS",
+      "rule_type": "eligibility",
+      "statement": "Nicht förderfähig sind u. a. Energieholz/Kurzumtrieb, Palmkätzchen, Reb- und Baumschulen, nicht aktiv bewirtschaftete Flächen, Sonstige Wein-/Spezialkulturflächen, nicht für die Maßnahme angegebene oder falsch identifizierte Flächen, nicht hauptsächlich landwirtschaftlich genutzte Flächen (§ 31 GSP-AV) und GLÖZ-Landschaftselemente.",
+      "conditions": [
+        {
+          "expression": "permanent_crop.type in non_eligible_crop_types or is_gloez_landscape_element",
+          "description": "Nicht förderfähige Flächenart",
+          "input_paths": [
+            "land.parcels[].permanent_crop.type",
+            "land.parcels[].is_gloez_landscape_element"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_not_eligible",
+        "description": "Keine Prämie, keine Anrechnung auf Mindestfläche",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-551-NONELIG",
+        "REF-ATB-551-SONSTIGE",
+        "REF-ATB-551-NOTDECL",
+        "REF-ATB-551-S31",
+        "REF-ATB-551-GLOEZ",
+        "REF-ATB-55-ACTIVE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.ineligible_parcels",
+        "data.oepul.o6_10.vfh_parcel"
+      ]
+    },
+    {
+      "id": "O610-GEN-NATIONAL-PARK",
+      "rule_type": "premium_exclusion",
+      "statement": "In den Nationalparks Neusiedlersee und Donau-Auen werden außer für Maßnahmen 23 und 24 keine flächenbezogenen ÖPUL-Prämien gewährt; in anderen Nationalparks ist die Prämie für Maßnahme 10 möglich; die gesamtbetrieblichen Verpflichtungen gelten auch auf Nationalparkflächen.",
+      "conditions": [
+        {
+          "expression": "location.national_park in {neusiedlersee, donau_auen}",
+          "description": "Schlag im Nationalpark ohne Prämienmöglichkeit",
+          "input_paths": [
+            "land.parcels[].location.national_park"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium_on_parcel",
+        "description": "Schlag in premium_exclusions; Verpflichtungen bleiben",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-551-NP",
+        "REF-ATB-551-NP-OBLIG",
+        "REF-ATB-551-NP-OTHER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.premium_exclusions"
+      ]
+    },
+    {
+      "id": "O610-GEN-MIN-MGMT-PERMANENT",
+      "rule_type": "eligibility",
+      "statement": "Auf Dauer-/Spezialkultur- und Weinflächen sind ordnungsgemäße Auspflanzung, jährliche ordnungsgemäße Pflege von Fläche und Aufwuchs sowie Ernte und Verbringen des Erntegutes Voraussetzung der Förderfähigkeit.",
+      "conditions": [
+        {
+          "expression": "permanent_crop.minimum_management.{properly_planted, annual_care, harvest_and_removal} all true",
+          "description": "Mindestbewirtschaftung erfüllt",
+          "input_paths": [
+            "land.parcels[].permanent_crop.minimum_management.properly_planted",
+            "land.parcels[].permanent_crop.minimum_management.annual_care",
+            "land.parcels[].permanent_crop.minimum_management.harvest_and_removal"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium_if_not_met",
+        "description": "Schlag nicht förderfähig (premium_exclusions)",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-54-PERMANENT",
+        "REF-SRL-1632-PERMANENT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.premium_exclusions"
+      ]
+    },
+    {
+      "id": "O610-EOP-NO-OP-PO",
+      "rule_type": "access_condition",
+      "statement": "Ist der Betrieb Mitglied einer Erzeugerorganisation, die an einem operationellen Programm mit Abgeltung des Einsatzes von Organismen oder Pheromonen teilnimmt, ist der optionale Zuschlag nicht möglich – unabhängig davon, ob der Betrieb selbst abgegolten wird, welche Flächen betroffen sind und ob Organismen oder Pheromone.",
+      "conditions": [
+        {
+          "expression": "producer_organisation.is_member and producer_organisation.operational_programme_compensates_organisms_or_pheromones",
+          "description": "Doppelförderungsausschluss",
+          "input_paths": [
+            "farm.oepul.producer_organisation.is_member",
+            "farm.oepul.producer_organisation.operational_programme_compensates_organisms_or_pheromones"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "supplement_not_possible",
+        "description": "EOP-Zuschlag abgelehnt; Grundprämie unberührt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-34-PO",
+        "REF-MB-34-PO-NOTPOSSIBLE",
+        "REF-SRL-210-PO"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.po_blocks_eop",
+        "data.oepul.o6_10.eop_rejections",
+        "data.oepul.o6_10.eop_supplement_granted"
+      ]
+    },
+    {
+      "id": "O610-GREEN-ALLYEAR-FULL",
+      "rule_type": "obligation",
+      "statement": "Es muss eine ganzjährige, flächendeckende Begrünung in allen Fahrgassen auf allen Wein-, Obst- und Hopfenflächen des Betriebes gegeben sein.",
+      "conditions": [
+        {
+          "expression": "inter_row_greening.full_coverage_all_inter_rows_all_year == true",
+          "description": "Ganzjährige flächendeckende Begrünung",
+          "input_paths": [
+            "land.parcels[].operations.inter_row_greening.full_coverage_all_inter_rows_all_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation_if_not",
+        "description": "Verstoß O610-GREEN-ALLYEAR-FULL (außer Dürre-Erleichterung 2026)",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-41-GREENING",
+        "REF-N0805-GREENING"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.obligation_violations",
+        "data.oepul.o6_10.greening_required"
+      ]
+    },
+    {
+      "id": "O610-GREEN-ESTABLISHMENT",
+      "rule_type": "obligation",
+      "statement": "Die Begrünung erfolgt durch Einsaat von Begrünungskulturen mit mindestens 3 winterharten Mischungspartnern oder durch Belassen einer bestehenden Begrünung zwischen den Reihen ohne Neueinsaat.",
+      "conditions": [
+        {
+          "expression": "establishment_method == existing_greening_retained or (establishment_method == sown_mixture and winter_hardy_mixture_partners >= 3)",
+          "description": "Zulässige Anlageform",
+          "input_paths": [
+            "land.parcels[].operations.inter_row_greening.establishment_method",
+            "land.parcels[].operations.inter_row_greening.winter_hardy_mixture_partners"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation_if_not",
+        "description": "Verstoß O610-GREEN-ESTABLISHMENT",
+        "value": {
+          "min_winter_hardy_mixture_partners": 3
+        }
+      },
+      "source_reference_ids": [
+        "REF-MB-41-PARTNERS",
+        "REF-SRL-210-GREENING"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.obligation_violations"
+      ]
+    },
+    {
+      "id": "O610-GREEN-TERRACE-EXEMPT",
+      "rule_type": "exemption",
+      "statement": "Bei der Bewirtschaftung von Terrassenflächen muss keine Begrünung gewährleistet sein.",
+      "conditions": [
+        {
+          "expression": "effective_crop_type(p) == vine_terrace",
+          "description": "Anerkannte Weinterrasse (>= 25 %)",
+          "input_paths": [
+            "land.parcels[].permanent_crop.type",
+            "land.parcels[].slope_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_greening_obligation",
+        "description": "Terrassen aus greening_parcels ausgenommen",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-41-TERRACE",
+        "REF-SRL-210-TERRACE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.greening_required",
+        "data.oepul.o6_10.is_terrace"
+      ]
+    },
+    {
+      "id": "O610-GREEN-OPEN-STRIP",
+      "rule_type": "obligation",
+      "statement": "Zulässig ist das Offenhalten des unmittelbaren Bereichs um die Stämme in einer Zeilenbreite von maximal 80 cm bei Wein und maximal 100 cm bei Obst und Hopfen.",
+      "conditions": [
+        {
+          "expression": "planting_system == single_row and open_strip_width_cm <= max(crop)",
+          "description": "Offengehaltener Streifen innerhalb der Höchstbreite",
+          "input_paths": [
+            "land.parcels[].permanent_crop.planting_system",
+            "land.parcels[].operations.inter_row_greening.open_strip_width_cm"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation_if_exceeded",
+        "description": "Verstoß O610-GREEN-OPEN-STRIP",
+        "value": {
+          "vine_cm": 80,
+          "fruit_cm": 100,
+          "hop_cm": 100
+        }
+      },
+      "source_reference_ids": [
+        "REF-MB-41-STRIP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.open_strip_max_cm",
+        "data.oepul.o6_10.obligation_violations"
+      ]
+    },
+    {
+      "id": "O610-GREEN-60PCT-ALT-SYSTEMS",
+      "rule_type": "obligation",
+      "statement": "Bei von Einzelreihen abweichenden Pflanzsystemen (Doppelreihen, Pflanzbeete, versetzte Pflanzungen) oder besonders breiten Reihenabständen (z. B. Holunder), die die maximale Zeilenbreite nicht einhalten können, sind zumindest 60 % der Gesamtfläche zu begrünen.",
+      "conditions": [
+        {
+          "expression": "planting_system != single_row and open_strip_width_cm > max and greened_share_of_total_area_percent >= 60",
+          "description": "Mindestbegrünungsanteil",
+          "input_paths": [
+            "land.parcels[].permanent_crop.planting_system",
+            "land.parcels[].operations.inter_row_greening.open_strip_width_cm",
+            "land.parcels[].operations.inter_row_greening.greened_share_of_total_area_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation_if_below_60",
+        "description": "Verstoß O610-GREEN-60PCT-ALT-SYSTEMS",
+        "value": {
+          "min_greened_share_percent": 60
+        }
+      },
+      "source_reference_ids": [
+        "REF-MB-41-ALTSYSTEMS",
+        "REF-MB-41-60PCT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.obligation_violations"
+      ]
+    },
+    {
+      "id": "O610-GREEN-INVALID-MULCH",
+      "rule_type": "obligation",
+      "statement": "Organische Bodenbedeckungen (z. B. Stroh, Grasmulch, Rindenmulch) gelten nicht als Begrünungskultur.",
+      "conditions": [
+        {
+          "expression": "cover_type != organic_mulch",
+          "description": "Keine rein organische Bodenbedeckung",
+          "input_paths": [
+            "land.parcels[].operations.inter_row_greening.cover_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß O610-GREEN-INVALID-MULCH",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-42-MULCH",
+        "REF-SRL-210-INVALID"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.invalid_cover_rule",
+        "data.oepul.o6_10.obligation_violations"
+      ]
+    },
+    {
+      "id": "O610-GREEN-INVALID-SELF",
+      "rule_type": "obligation",
+      "statement": "(Reine) Selbstbegrünungen sind nicht zulässig.",
+      "conditions": [
+        {
+          "expression": "cover_type != self_greening",
+          "description": "Keine Selbstbegrünung",
+          "input_paths": [
+            "land.parcels[].operations.inter_row_greening.cover_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß O610-GREEN-INVALID-SELF",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-42-SELF",
+        "REF-SRL-210-INVALID"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.invalid_cover_rule",
+        "data.oepul.o6_10.obligation_violations"
+      ]
+    },
+    {
+      "id": "O610-GREEN-INVALID-CEREAL-MAIZE",
+      "rule_type": "obligation",
+      "statement": "Einsaaten von Getreide (ausgenommen Grünschnittroggensorten gemäß Saatgutgesetz) und Mais sind keine gültige Begrünungskultur.",
+      "conditions": [
+        {
+          "expression": "not (contains_pure_cereal_or_maize and not is_green_cut_rye_variety)",
+          "description": "Keine Getreide-/Maiseinsaat außer Grünschnittroggen",
+          "input_paths": [
+            "land.parcels[].operations.inter_row_greening.contains_pure_cereal_or_maize",
+            "land.parcels[].operations.inter_row_greening.is_green_cut_rye_variety"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß O610-GREEN-INVALID-CEREAL-MAIZE",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-42-CEREAL",
+        "REF-SRL-210-INVALID"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.obligation_violations"
+      ]
+    },
+    {
+      "id": "O610-GREEN-CEREAL-SHARE-50",
+      "rule_type": "obligation",
+      "statement": "Mischungen mit mehr als 50 % Getreide bzw. Mais im Bestand sind keine gültige Begrünungskultur; der Maximalanteil darf zu keinem Zeitpunkt im Jahr überschritten werden.",
+      "conditions": [
+        {
+          "expression": "max_cereal_maize_share_percent <= 50 or cereal_is_oat_or_spring_barley_nurse_crop",
+          "description": "Getreide-/Maisanteil höchstens 50 %",
+          "input_paths": [
+            "land.parcels[].operations.inter_row_greening.max_cereal_maize_share_percent",
+            "land.parcels[].operations.inter_row_greening.cereal_is_oat_or_spring_barley_nurse_crop"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation_if_exceeded",
+        "description": "Verstoß O610-GREEN-CEREAL-SHARE-50 (außer Dürre-Erleichterung 2026)",
+        "value": {
+          "max_share_percent": 50
+        }
+      },
+      "source_reference_ids": [
+        "REF-MB-42-SHARE",
+        "REF-SRL-210-INVALID"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.cereal_share_exceeded",
+        "data.oepul.o6_10.obligation_violations"
+      ]
+    },
+    {
+      "id": "O610-GREEN-NURSE-CROP-EXC",
+      "rule_type": "exemption",
+      "statement": "Hafer oder Sommergerste als Deckfrucht zur Etablierung von Dauerbegrünungen sind von der 50 %-Getreideregelung ausgenommen.",
+      "conditions": [
+        {
+          "expression": "cereal_is_oat_or_spring_barley_nurse_crop == true",
+          "description": "Deckfrucht Hafer/Sommergerste",
+          "input_paths": [
+            "land.parcels[].operations.inter_row_greening.cereal_is_oat_or_spring_barley_nurse_crop"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "share_rule_not_applied",
+        "description": "Kein Verstoß O610-GREEN-CEREAL-SHARE-50",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-42-NURSE",
+        "REF-SRL-210-NURSE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.cereal_share_exceeded"
+      ]
+    },
+    {
+      "id": "O610-TILLAGE-ALLOWED",
+      "rule_type": "obligation",
+      "statement": "Bodenbearbeitung im Begrünungszeitraum ist nur erlaubt, wenn die Begrünung dadurch nicht zerstört wird (z. B. Untergrund- oder Tiefenlockerung) oder danach die Neuanlage erfolgt.",
+      "conditions": [
+        {
+          "expression": "event_type in {subsoil_loosening} or (other_tillage and destroys_greening == false) or reestablished(p, e)",
+          "description": "Nicht zerstörende Bearbeitung oder fristgerechte Neuanlage",
+          "input_paths": [
+            "land.parcels[].operations.inter_row_greening.events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation_if_destroyed_without_reestablishment",
+        "description": "Zerstörende Bearbeitung ohne Neuanlage -> Verstoß O610-TILLAGE-REESTABLISH-8W",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-43-TILLAGE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.destructive_event",
+        "data.oepul.o6_10.reestablished"
+      ]
+    },
+    {
+      "id": "O610-TILLAGE-RENEWAL-ONCE",
+      "rule_type": "obligation",
+      "statement": "Die Erneuerung der Begrünung ist einmal im Jahr zulässig; die Rodung zur Neuauspflanzung ist zulässig.",
+      "conditions": [
+        {
+          "expression": "count(break events in farm.year) <= 1",
+          "description": "Höchstens eine Erneuerung pro Jahr (Rodung zählt nicht)",
+          "input_paths": [
+            "land.parcels[].operations.inter_row_greening.events",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation_if_more",
+        "description": "Verstoß O610-TILLAGE-RENEWAL-ONCE",
+        "value": {
+          "max_renewals_per_year": 1
+        }
+      },
+      "source_reference_ids": [
+        "REF-MB-43-RENEW",
+        "REF-SRL-210-8W"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.renewal_event",
+        "data.oepul.o6_10.obligation_violations"
+      ]
+    },
+    {
+      "id": "O610-TILLAGE-REESTABLISH-8W",
+      "rule_type": "deadline",
+      "statement": "Die Neuanlage der Begrünung muss innerhalb von 8 Wochen nach Umbruch der Begrünung bzw. nach Rodung/Neuauspflanzung der Dauerkultur erfolgen, jedoch spätestens bis zum 1. Oktober.",
+      "conditions": [
+        {
+          "expression": "establishment.date <= min(anchor + 56 days, 01.10.)",
+          "description": "Fristgerechte Neuanlage",
+          "input_paths": [
+            "land.parcels[].operations.inter_row_greening.events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation_if_late",
+        "description": "Verstoß O610-TILLAGE-REESTABLISH-8W",
+        "value": {
+          "max_days": 56,
+          "latest": "10-01"
+        }
+      },
+      "source_reference_ids": [
+        "REF-MB-43-8W",
+        "REF-MB-43-OCT1",
+        "REF-SRL-210-8W"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.regular_deadline_ns",
+        "data.oepul.o6_10.window_anchor",
+        "data.oepul.o6_10.obligation_violations"
+      ]
+    },
+    {
+      "id": "O610-TILLAGE-LATE-CLEARING",
+      "rule_type": "exemption",
+      "statement": "Bei Rodung nach dem 15. September darf die Fläche bis zum folgenden Frühjahr (bis 15. Mai) unbegrünt bleiben.",
+      "conditions": [
+        {
+          "expression": "clearing.date > 15.09. => establishment.date <= 15.05. Folgejahr",
+          "description": "Verlängerte Frist nach später Rodung",
+          "input_paths": [
+            "land.parcels[].operations.inter_row_greening.events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "extended_deadline",
+        "description": "Frist bis 15.05. des Folgejahres; offene Fristen in pending_reestablishments",
+        "value": {
+          "after": "09-15",
+          "until": "05-15"
+        }
+      },
+      "source_reference_ids": [
+        "REF-MB-43-OCT1",
+        "REF-MB-43-MAY15",
+        "REF-SRL-210-LATE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.late_clearing",
+        "data.oepul.o6_10.late_clearing_deadline_ns",
+        "data.oepul.o6_10.pending_reestablishments"
+      ]
+    },
+    {
+      "id": "O610-TILLAGE-YOUNG-PLANTING",
+      "rule_type": "exemption",
+      "statement": "Eine einmalige Erneuerung der Begrünung ist auch bei Junganlagen im Auspflanzjahr zulässig.",
+      "conditions": [
+        {
+          "expression": "planting_year == farm.year and count(break events) <= 1",
+          "description": "Junganlage im Auspflanzjahr",
+          "input_paths": [
+            "land.parcels[].permanent_crop.planting_year",
+            "land.parcels[].operations.inter_row_greening.events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "one_renewal_allowed",
+        "description": "Eine Erneuerung zusätzlich zur Neuauspflanzung zulässig (durch O610-TILLAGE-RENEWAL-ONCE abgedeckt)",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-43-YOUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.renewal_event"
+      ]
+    },
+    {
+      "id": "O610-REC-GREENING",
+      "rule_type": "record_keeping",
+      "statement": "Über die betrieblichen Bewirtschaftungsmaßnahmen sind Aufzeichnungen zu führen: Betrieb, Feldstücksnummer und -bezeichnung, Schlaggröße, Datum der Rodung bzw. Neuauspflanzung, Datum der Anlage und des Umbruchs der Begrünung.",
+      "conditions": [
+        {
+          "expression": "data.o6_10.record_requirements.greening_records ⊆ documentation.o6_10_greening_record_items",
+          "description": "Alle Pflichtangaben vorhanden",
+          "input_paths": [
+            "documentation.o6_10_greening_record_items"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "farm_obligation_violation_if_incomplete",
+        "description": "Verstoß O610-REC-GREENING mit Liste fehlender Angaben",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-44-RECORDS",
+        "REF-SRL-210-RECORDS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.missing_greening_record_items",
+        "data.oepul.o6_10.farm_obligation_violations"
+      ]
+    },
+    {
+      "id": "O610-REC-TEMPLATE",
+      "rule_type": "record_keeping",
+      "statement": "Eine Aufzeichnungsvorlage steht zur Verfügung; andere Aufzeichnungen werden anerkannt, sofern sie die notwendigen Angaben enthalten.",
+      "conditions": [
+        {
+          "expression": "record contains required items",
+          "description": "Formfreiheit der Aufzeichnung",
+          "input_paths": [
+            "documentation.o6_10_greening_record_items"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "format_free",
+        "description": "Nur Vollständigkeit der Inhalte wird geprüft",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-44-OTHERREC"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.missing_greening_record_items"
+      ]
+    },
+    {
+      "id": "O610-USE-BAN",
+      "rule_type": "obligation",
+      "statement": "Eine Nutzung des Begrünungsaufwuchses ist nicht erlaubt; Mähgut muss auf der Fläche verbleiben und darf nicht abtransportiert werden.",
+      "conditions": [
+        {
+          "expression": "growth_used_or_removed != true",
+          "description": "Keine Nutzung/kein Abtransport",
+          "input_paths": [
+            "land.parcels[].operations.inter_row_greening.growth_used_or_removed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß O610-USE-BAN",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-45-USEBAN",
+        "REF-SRL-210-USE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.obligation_violations"
+      ]
+    },
+    {
+      "id": "O610-USE-GRAZING-EXC",
+      "rule_type": "exemption",
+      "statement": "Eine extensive Weidenutzung durch Schafe bzw. temporäre Weidenutzung durch Geflügel ist zulässig (temporär = nicht ganzjährig, kein dauerhafter Hühnerauslauf); andere Beweidung gilt als unzulässige Nutzung.",
+      "conditions": [
+        {
+          "expression": "grazing in {none, sheep_extensive, poultry_temporary}",
+          "description": "Zulässige Beweidungsform",
+          "input_paths": [
+            "land.parcels[].operations.inter_row_greening.grazing"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "allowed_or_violation",
+        "description": "Sonstige Beweidung -> Verstoß O610-USE-GRAZING-EXC",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-45-GRAZING",
+        "REF-MB-45-GRAZING-DEF"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.obligation_violations"
+      ]
+    },
+    {
+      "id": "O610-PSM-BAN-GREENING",
+      "rule_type": "obligation",
+      "statement": "Auf den Begrünungen in den Fahrgassen ist vom Zeitpunkt der Anlage bis zum Umbruch der Einsatz von Pflanzenschutzmitteln nicht erlaubt.",
+      "conditions": [
+        {
+          "expression": "psm_applied_on_greening != true",
+          "description": "Kein PSM auf der Begrünung",
+          "input_paths": [
+            "land.parcels[].operations.inter_row_greening.psm_applied_on_greening"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß O610-PSM-BAN-GREENING",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-46-PSM",
+        "REF-SRL-210-PSM"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.obligation_violations"
+      ]
+    },
+    {
+      "id": "O610-REMOVAL-MECHANICAL",
+      "rule_type": "obligation",
+      "statement": "Die Beseitigung der Begrünung in den Fahrgassen darf nur mit mechanischen Methoden (z. B. Häckseln oder Einarbeiten) erfolgen.",
+      "conditions": [
+        {
+          "expression": "removal_method in {mechanical, none}",
+          "description": "Nur mechanische Beseitigung",
+          "input_paths": [
+            "land.parcels[].operations.inter_row_greening.removal_method"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß O610-REMOVAL-MECHANICAL",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-46-MECH",
+        "REF-SRL-210-PSM"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.obligation_violations"
+      ]
+    },
+    {
+      "id": "O610-EOP-REQ-USE",
+      "rule_type": "supplement_condition",
+      "statement": "Wird der Zuschlag beantragt, müssen zumindest auf einem Wein-, Obst- oder Hopfenschlag Organismen oder Pheromone gemäß den Aufwandsmengen im AGES-Pflanzenschutzmittelregister eingesetzt werden.",
+      "conditions": [
+        {
+          "expression": "exists p: organisms_pheromones.used and per_register_application_rates",
+          "description": "Anrechenbarer Einsatz auf mind. einem Schlag",
+          "input_paths": [
+            "land.parcels[].operations.organisms_pheromones.used",
+            "land.parcels[].operations.organisms_pheromones.per_register_application_rates"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "supplement_rejected_if_not",
+        "description": "EOP-Ablehnung O610-EOP-REQ-USE",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-47-EOP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.creditable_use",
+        "data.oepul.o6_10.eop_use_fulfilled",
+        "data.oepul.o6_10.eop_rejections"
+      ]
+    },
+    {
+      "id": "O610-EOP-REPLACE-PSM",
+      "rule_type": "supplement_condition",
+      "statement": "Anrechenbar sind nur Anwendungen von Organismen oder Pheromonen, die einen Pflanzenschutzmitteleinsatz ersetzen.",
+      "conditions": [
+        {
+          "expression": "organisms_pheromones.replaces_psm_application == true",
+          "description": "Ersatz eines PSM-Einsatzes",
+          "input_paths": [
+            "land.parcels[].operations.organisms_pheromones.replaces_psm_application"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_creditable_otherwise",
+        "description": "Nicht ersetzende Anwendung zählt nicht",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-47-REPLACE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.creditable_use"
+      ]
+    },
+    {
+      "id": "O610-EOP-RECORDS",
+      "rule_type": "record_keeping",
+      "statement": "Für den Zuschlag sind schlagbezogene Aufzeichnungen über Art und Menge der eingesetzten Organismen oder Pheromone, Belege über Zukauf, Grund und Ziel sowie Datum des Einsatzes zu führen.",
+      "conditions": [
+        {
+          "expression": "organisms_pheromones_records ⊆ documentation.o6_10_organisms_pheromones_record_items",
+          "description": "Aufzeichnungen vollständig",
+          "input_paths": [
+            "documentation.o6_10_organisms_pheromones_record_items"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "farm_obligation_violation_if_incomplete",
+        "description": "Verstoß O610-EOP-RECORDS",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-47-RECORDS",
+        "REF-SRL-210-EOP-RECORDS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.missing_eop_record_items",
+        "data.oepul.o6_10.farm_obligation_violations"
+      ]
+    },
+    {
+      "id": "O610-APP-EOP-CODE",
+      "rule_type": "application",
+      "statement": "Für den Zuschlag ist der betroffene Schlag in der Feldstücksliste mit dem Code EOP zu kennzeichnen; eine separate Beantragung bis 31. Dezember des Vorjahres ist nicht erforderlich.",
+      "conditions": [
+        {
+          "expression": "'EOP' in land.parcels[].oepul_codes",
+          "description": "Schlag mit EOP gekennzeichnet",
+          "input_paths": [
+            "land.parcels[].oepul_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "supplement_requested",
+        "description": "eop_requested; Zuschlag je ha auf EOP-Schlägen (Annahme A-08)",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-5-EOPCODE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.eop_parcels",
+        "data.oepul.o6_10.eop_requested",
+        "data.oepul.o6_10.parcel_supplement_rate"
+      ]
+    },
+    {
+      "id": "O610-APP-DEADLINE",
+      "rule_type": "application",
+      "statement": "Die Maßnahme muss vor Vertragsbeginn im Maßnahmenantrag des Mehrfachantrages bis spätestens 31. Dezember beantragt werden, um einen Vertrag ab dem Folgejahr zu begründen.",
+      "conditions": [
+        {
+          "expression": "year(measure_application_date) + 1 <= farm.year",
+          "description": "Beantragung bis 31.12. des Vorjahres",
+          "input_paths": [
+            "farm.oepul.o6_10.measure_application_date",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_from_following_year",
+        "description": "Vertragsbeginn = Jahr der Beantragung + 1",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-5-APPLICATION",
+        "REF-ATB-6-APPLICATION"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.contract_start_year",
+        "data.oepul.o6_10.applied_via_measure_application"
+      ]
+    },
+    {
+      "id": "O610-APP-LAST-ENTRY",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg ist mit dem Förderjahr 2027 möglich (Beantragung bis spätestens 31. Dezember 2026).",
+      "conditions": [
+        {
+          "expression": "contract_start_year <= 2027",
+          "description": "Spätester Vertragsbeginn 01.01.2027",
+          "input_paths": [
+            "farm.oepul.o6_10.measure_application_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_entry_after_2027",
+        "description": "Spätere Beantragung begründet keinen Vertrag",
+        "value": {
+          "last_entry_funding_year": 2027
+        }
+      },
+      "source_reference_ids": [
+        "REF-MB-5-LASTENTRY",
+        "REF-ATB-59-LASTENTRY"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.applied_via_measure_application"
+      ]
+    },
+    {
+      "id": "O610-FRUIT-GRAFTED",
+      "rule_type": "premium_exclusion",
+      "statement": "Die Prämie für Obst wird nur für Anlagen mit qualitativ hochwertigem (veredeltem) Pflanzgut gewährt, für Neu- und Altanlagen; unveredelte Bäume (z. B. Walnuss) sind mit Code OP zu beantragen und erhalten keine ÖPUL-Prämie.",
+      "conditions": [
+        {
+          "expression": "permanent_crop.type == fruit and is_grafted_planting_material == false",
+          "description": "Unveredeltes Obst",
+          "input_paths": [
+            "land.parcels[].permanent_crop.is_grafted_planting_material",
+            "land.parcels[].oepul_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium_and_op_code_required",
+        "description": "Prämienausschluss; ohne Code OP zusätzlich Verstoß",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-5-GRAFTED",
+        "REF-MB-5-WALNUT",
+        "REF-ATB-552-GRAFTED"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.premium_exclusions",
+        "data.oepul.o6_10.obligation_violations"
+      ]
+    },
+    {
+      "id": "O610-EXIT-AFTER-1Y",
+      "rule_type": "exit",
+      "statement": "Nach Erfüllung des einjährigen Vertragszeitraumes ist ein Ausstieg möglich, auch nach zwei oder mehreren Teilnahmejahren.",
+      "conditions": [
+        {
+          "expression": "farm.year >= contract_start_year + 1",
+          "description": "Mindestens ein Vertragsjahr erfüllt",
+          "input_paths": [
+            "farm.oepul.o6_10.measure_application_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exit_possible",
+        "description": "exit_possible_from_year",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-6-EXIT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.exit_possible_from_year"
+      ]
+    },
+    {
+      "id": "O610-EXIT-NOTIFY",
+      "rule_type": "exit",
+      "statement": "Der Ausstieg ist der AMA für das laufende Förderjahr online auf eAMA im Rahmen der Antragstellung des aktuellen Mehrfachantrages bekanntzugeben.",
+      "conditions": [
+        {
+          "expression": "deregistration_date != null",
+          "description": "Abmeldung erfasst",
+          "input_paths": [
+            "farm.oepul.o6_10.deregistration_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "deregistration_recorded",
+        "description": "Abmeldung wirkt gemäß O610-EXIT-TIMING",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-6-NOTIFY"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.deregistration_date"
+      ]
+    },
+    {
+      "id": "O610-EXIT-TIMING",
+      "rule_type": "exit",
+      "statement": "Wird die Abmeldung im Zeitraum 1. Jänner bis 31. Dezember durchgeführt, ist die Maßnahme im betroffenen Förderjahr nicht mehr gültig; werden die Auflagen bis 31. Dezember erfüllt, darf erst ab 1. Jänner des Folgejahres abgemeldet werden.",
+      "conditions": [
+        {
+          "expression": "year(deregistration_date) <= farm.year and not reentered",
+          "description": "Abmeldung im oder vor dem Antragsjahr",
+          "input_paths": [
+            "farm.oepul.o6_10.deregistration_date",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "measure_invalid_for_year",
+        "description": "contract_status = deregistered; keine Prämie",
+        "value": {
+          "contract_status": "deregistered"
+        }
+      },
+      "source_reference_ids": [
+        "REF-MB-6-TIMING",
+        "REF-MB-6-TIMING2",
+        "REF-ATB-6-DEREG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.deregistered_for_year",
+        "data.oepul.o6_10.contract_status"
+      ]
+    },
+    {
+      "id": "O610-PREM-RATES",
+      "rule_type": "premium_calculation",
+      "statement": "Prämiensätze je ha nach Kulturgruppe und Hangneigung: Wein (inkl. Weinterrassen) <25 %: 216, 25–<35 %: 324, 35–<50 %: 540, >=50 %: 864; Obst <25 %: 216, >=25 %: 378; Hopfen: 216 €/ha (ab 2025); 2023/2024 Prämienbänder laut Tabelle.",
+      "conditions": [
+        {
+          "expression": "rate = data.o6_10.premium_rates.base[crop_group, slope band]",
+          "description": "Satz nach Kultur und Hangneigung",
+          "input_paths": [
+            "land.parcels[].permanent_crop.type",
+            "land.parcels[].slope_percent",
+            "land.parcels[].area_ha",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "base_premium",
+        "description": "area_ha × Satz je Schlag",
+        "value": {
+          "table": "data/o6_10/premium_rates.json#/premium_rates/base"
+        }
+      },
+      "source_reference_ids": [
+        "REF-MB-7-VINE",
+        "REF-MB-7-VINE-25",
+        "REF-MB-7-VINE-35",
+        "REF-MB-7-VINE-50",
+        "REF-MB-7-FRUIT-25",
+        "REF-MB-7-HOP",
+        "REF-SRL-210-RATES-VINE50",
+        "REF-SRL-210-RATES-FRUIT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.base_row",
+        "data.oepul.o6_10.applicable_rate",
+        "data.oepul.o6_10.gross_parcel_premiums"
+      ]
+    },
+    {
+      "id": "O610-PREM-VINE-TERRACE-INCL",
+      "rule_type": "premium_calculation",
+      "statement": "Die Weinsätze gelten für Wein und Weinterrassen gleichermaßen, gestaffelt nach Hangneigung.",
+      "conditions": [
+        {
+          "expression": "effective_crop_type in {vine, vine_terrace}",
+          "description": "Weinterrasse nach Weintabelle",
+          "input_paths": [
+            "land.parcels[].permanent_crop.type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "vine_rates_apply",
+        "description": "Weinterrasse wird nach Wein-Hangneigungsstufe bewertet",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-210-RATES-VINE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.base_row"
+      ]
+    },
+    {
+      "id": "O610-PREM-EOP-RATE",
+      "rule_type": "premium_calculation",
+      "statement": "Der optionale Zuschlag für den Einsatz von Organismen oder Pheromonen beträgt für Wein, Obst und Hopfen 162 €/ha ab 2025 (2023/2024: 135–165 €/ha).",
+      "conditions": [
+        {
+          "expression": "eop_supplement_granted and 'EOP' in oepul_codes",
+          "description": "Zuschlag gewährt und Schlag gekennzeichnet",
+          "input_paths": [
+            "land.parcels[].oepul_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "supplement_premium",
+        "description": "area_ha × Zuschlagssatz × Kürzungsfaktor",
+        "value": {
+          "fixed_from_2025": 162.0,
+          "band_2023_2024": [
+            135.0,
+            165.0
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "REF-MB-7-EOP",
+        "REF-SRL-210-RATES-EOP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.supplement_row",
+        "data.oepul.o6_10.parcel_supplement_rate"
+      ]
+    },
+    {
+      "id": "O610-PREM-EOP-REDUCTION",
+      "rule_type": "premium_calculation",
+      "statement": "Der optionale Zuschlag wird bei Teilnahme des Betriebes an „Insektizidverzicht Wein, Obst und Hopfen“ (12) oder „Biologische Wirtschaftsweise“ (1B) um 50 % reduziert.",
+      "conditions": [
+        {
+          "expression": "'12' in participating_measures or '1B' in participating_measures",
+          "description": "Teilnahme an 12 oder 1B",
+          "input_paths": [
+            "farm.oepul.participating_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "supplement_reduced_50",
+        "description": "eop_reduction_factor = 0,5",
+        "value": {
+          "reduction_percent": 50
+        }
+      },
+      "source_reference_ids": [
+        "REF-MB-7-REDUCTION",
+        "REF-SRL-210-REDUCTION",
+        "REF-ANH-L-FN3"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.eop_reduction_applies",
+        "data.oepul.o6_10.eop_reduction_factor"
+      ]
+    },
+    {
+      "id": "O610-PREM-BAND-2023-2024",
+      "rule_type": "premium_calculation",
+      "statement": "Bis einschließlich Antragsjahr 2024 (Öko-Regelung) sind die Beträge Prämienbänder, die je nach beantragter Fläche und verfügbaren Mitteln ausbezahlt werden; garantiert ist der Mindestbetrag. Ab 2025 (Maßnahme nach Art. 70) Fixbetrag.",
+      "conditions": [
+        {
+          "expression": "farm.year <= 2024 => rate = band.min (garantiert), band.max ausgewiesen",
+          "description": "Prämienregime nach Jahr",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rate_regime",
+        "description": "2023/2024: Mindestbetrag; ab 2025: Fixbetrag",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-7-BAND",
+        "REF-MB-7-FIXED",
+        "REF-SRL-1932-ECO",
+        "REF-SRL-PRE-ART70"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.fixed_rate_regime",
+        "data.oepul.o6_10.applicable_rate",
+        "data.oepul.o6_10.rate_band_max"
+      ]
+    },
+    {
+      "id": "O610-GEN-CONDITIONALITY",
+      "rule_type": "general_condition",
+      "statement": "Alle Teilnehmer müssen die Konditionalität (§ 6e, § 6f MOG 2021) einhalten, um die Förderung in voller Höhe zu erhalten; Sanktionen nach Art. 83–89 VO (EU) 2021/2116.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.conditionality_breach != true",
+          "description": "Keine Konditionalitätsverstöße",
+          "input_paths": [
+            "farm.oepul.conditionality_breach"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "conditionality_reduction_notice",
+        "description": "Hinweis; Kürzung außerhalb dieser Maßnahmenlogik",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-51-COND",
+        "REF-SRL-11214-COND"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.notices"
+      ]
+    },
+    {
+      "id": "O610-GEN-APPLICANT-TYPES",
+      "rule_type": "access_condition",
+      "statement": "Förderwerbend sind natürliche Personen, eingetragene Personengesellschaften sowie juristische Personen und Personenvereinigungen, sofern die Beteiligung von Gebietskörperschaften 25 % nicht übersteigt.",
+      "conditions": [
+        {
+          "expression": "applicant.person_type in eligible_applicant_types",
+          "description": "Zulässiger Personentyp",
+          "input_paths": [
+            "farm.applicant.person_type",
+            "farm.applicant.public_authority_share_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_not",
+        "description": "Zugangsverstoß O610-GEN-APPLICANT-TYPES",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-52-TYPES"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.eligible_person_types",
+        "data.oepul.o6_10.access_violations"
+      ]
+    },
+    {
+      "id": "O610-GEN-APPLICANT-OWN-ACCOUNT",
+      "rule_type": "access_condition",
+      "statement": "Es muss ein landwirtschaftlicher Betrieb im eigenen Namen und auf eigene Rechnung mit Verfügungsgewalt über die Flächen bewirtschaftet werden; aktiver Landwirt und landwirtschaftliche Tätigkeit sind zu erfüllen.",
+      "conditions": [
+        {
+          "expression": "applicant.is_active_farmer and applicant.farms_in_own_name_and_account",
+          "description": "Aktiver Landwirt, eigene Rechnung",
+          "input_paths": [
+            "farm.applicant.is_active_farmer",
+            "farm.applicant.farms_in_own_name_and_account"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_not",
+        "description": "Zugangsverstoß O610-GEN-APPLICANT-OWN-ACCOUNT",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-52-OWN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.access_violations"
+      ]
+    },
+    {
+      "id": "O610-GEN-PUBLIC-AUTHORITY-10",
+      "rule_type": "access_condition",
+      "statement": "Gebietskörperschaften und Einrichtungen mit mehr als 25 % Beteiligung von Gebietskörperschaften sind bei Erosionsschutz Wein, Obst und Hopfen nur bis einschließlich Antragsjahr 2024 förderwerbend.",
+      "conditions": [
+        {
+          "expression": "public_body and farm.year >= 2025",
+          "description": "Öffentliche Hand ab 2025",
+          "input_paths": [
+            "farm.applicant.person_type",
+            "farm.applicant.public_authority_share_percent",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation",
+        "description": "Zugangsverstoß O610-GEN-PUBLIC-AUTHORITY-10",
+        "value": {
+          "allowed_until_year": 2024
+        }
+      },
+      "source_reference_ids": [
+        "REF-ATB-52-PUBLIC",
+        "REF-SRL-14-PUBLIC"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.public_body",
+        "data.oepul.o6_10.public_body_allowed_for_measure_10",
+        "data.oepul.o6_10.access_violations"
+      ]
+    },
+    {
+      "id": "O610-GEN-FARM-MIN-SIZE",
+      "rule_type": "access_condition",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr muss der Betrieb mindestens 1,50 ha landwirtschaftliche Fläche oder 0,50 ha geschützten Anbau bewirtschaften; ab dem zweiten Teilnahmejahr entfällt diese Voraussetzung.",
+      "conditions": [
+        {
+          "expression": "first_oepul_participation_year == farm.year => total_area_ha >= 1.5 or protected_cultivation_area_ha >= 0.5",
+          "description": "Betriebsmindestgröße",
+          "input_paths": [
+            "farm.oepul.first_oepul_participation_year",
+            "land.total_area_ha",
+            "land.protected_cultivation_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_not",
+        "description": "Zugangsverstoß O610-GEN-FARM-MIN-SIZE",
+        "value": {
+          "min_ha": 1.5,
+          "min_protected_ha": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "REF-ATB-53-MINSIZE",
+        "REF-ATB-53-SECOND",
+        "REF-SRL-161-MINSIZE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.first_oepul_year",
+        "data.oepul.o6_10.access_violations"
+      ]
+    },
+    {
+      "id": "O610-GEN-OP-CODE",
+      "rule_type": "premium_exclusion",
+      "statement": "Bei Flächen mit dem Code OP wird im jeweiligen Förderjahr keine ÖPUL-Prämie gewährt; die Vergabe ist u. a. bei nicht erfüllter Ernteverpflichtung, Leistungsüberschneidung, behördlichen Ausgleichsflächen, nicht ganzjähriger oder nicht über den Vertragszeitraum erfüllbarer Verpflichtung verpflichtend.",
+      "conditions": [
+        {
+          "expression": "'OP' in land.parcels[].oepul_codes",
+          "description": "Code OP am Schlag",
+          "input_paths": [
+            "land.parcels[].oepul_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium_on_parcel",
+        "description": "premium_exclusions",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-552-OP",
+        "REF-ATB-552-HARVEST",
+        "REF-ATB-552-OVERLAP",
+        "REF-ATB-552-COMPENSATION",
+        "REF-ATB-552-NOTALLYEAR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.premium_exclusions"
+      ]
+    },
+    {
+      "id": "O610-GEN-OP-MEASURE-SPECIFIC",
+      "rule_type": "premium_exclusion",
+      "statement": "Eine maßnahmenbezogene OP-Kennzeichnung (in der jeweiligen Maßnahme nicht prämienfähig) ist möglich; der Schlag erhält dann keine Prämie für diese Maßnahme.",
+      "conditions": [
+        {
+          "expression": "'10' in land.parcels[].op_excluded_measures",
+          "description": "Maßnahmenbezogener OP-Code für Maßnahme 10",
+          "input_paths": [
+            "land.parcels[].op_excluded_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium_in_measure",
+        "description": "premium_exclusions",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-552-OPMEASURE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.premium_exclusions"
+      ]
+    },
+    {
+      "id": "O610-GEN-THIRD-PARTY-FAULT",
+      "rule_type": "procedure",
+      "statement": "Beruht die Nichterfüllung auf reinem Fremdverschulden, ist das betroffene Flächenausmaß mit dem maßnahmenbezogenen OP-Code zu versehen (keine Prämie in der Maßnahme); Nachweise sind aufzubewahren und bei Vor-Ort-Kontrolle vorzulegen.",
+      "conditions": [
+        {
+          "expression": "third_party_fault => '10' in op_excluded_measures",
+          "description": "Fremdverschulden",
+          "input_paths": [
+            "land.parcels[].op_excluded_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "measure_specific_op_code",
+        "description": "Kein Sanktionsverfahren, aber keine Prämie auf der Fläche",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-552-THIRDPARTY",
+        "REF-ATB-552-EVIDENCE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.premium_exclusions"
+      ]
+    },
+    {
+      "id": "O610-GEN-SELF-REPORT",
+      "rule_type": "procedure",
+      "statement": "Bei Nichterfüllung ohne reines Fremdverschulden ist der Code mittels Korrektur zu löschen oder eine Selbstanzeige zu erstatten; die Sanktion laut Verwaltungskontrolle ist grundsätzlich geringer als bei Feststellung in einer Vor-Ort-Kontrolle.",
+      "conditions": [
+        {
+          "expression": "nonfulfilment and not third_party_fault",
+          "description": "Selbstanzeige/Korrektur"
+        }
+      ],
+      "result": {
+        "outcome": "self_report",
+        "description": "Sanktionsstufe über farm.oepul.o6_10.control_findings abbildbar",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-552-SELFREPORT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.content_reduction_percent"
+      ]
+    },
+    {
+      "id": "O610-GEN-COMMITMENT-FULL-YEAR",
+      "rule_type": "general_condition",
+      "statement": "Die Verpflichtungsdauer erstreckt sich über das gesamte Kalenderjahr; förderfähig sind nur Flächen, auf denen die Verpflichtungen während der gesamten Verpflichtungsdauer erfüllt werden; bis zum Ausstieg sind die Verpflichtungen einzuhalten.",
+      "conditions": [
+        {
+          "expression": "obligations fulfilled 01.01.–31.12.",
+          "description": "Ganzjährige Erfüllung",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "full_year_commitment",
+        "description": "Grundlage aller Verpflichtungsprüfungen",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-58-DURATION",
+        "REF-ATB-58-FULLDURATION",
+        "REF-SRL-171-FULLDURATION",
+        "REF-ATB-6-UNTILEXIT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.obligation_violations"
+      ]
+    },
+    {
+      "id": "O610-GEN-TRANSFER-MIDYEAR",
+      "rule_type": "premium_exclusion",
+      "statement": "Flächen können unterjährig weitergegeben werden, wenn der Übernehmer die Auflagen bis Ende der Verpflichtungsdauer einhält; andernfalls ist die Fläche mit Code OP bzw. maßnahmenbezogenem OP-Code zu versehen, zu melden und es wird keine Prämie gewährt.",
+      "conditions": [
+        {
+          "expression": "transfer.transferred_during_year and not transfer.successor_continues_until_year_end",
+          "description": "Weitergabe ohne Weiterführung",
+          "input_paths": [
+            "land.parcels[].transfer.transferred_during_year",
+            "land.parcels[].transfer.successor_continues_until_year_end"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium_and_code_required",
+        "description": "Prämienausschluss; ohne OP-Code zusätzlich Verstoß",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-58-TRANSFER",
+        "REF-SRL-171-TRANSFER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.premium_exclusions",
+        "data.oepul.o6_10.obligation_violations"
+      ]
+    },
+    {
+      "id": "O610-GEN-ONE-YEAR-CLASS",
+      "rule_type": "classification",
+      "statement": "Erosionsschutz Wein, Obst und Hopfen ist eine einjährige Maßnahme: keine Beschränkung des prämienfähigen Flächenzugangs, keine Rückforderung wegen Flächenabgangs bei mehrjährigen Maßnahmen und kein Maßnahmenwechsel nach 6.2.",
+      "conditions": [
+        {
+          "expression": "'10' in one_year_measures and not '10' in area_access_restricted_measures",
+          "description": "Einjährige Maßnahme"
+        }
+      ],
+      "result": {
+        "outcome": "one_year_measure",
+        "description": "measure_is_one_year = true; area_access_restricted = false",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-59-ONEYEAR",
+        "REF-SRL-1711-ONEYEAR",
+        "REF-ATB-71-MULTIYEAR",
+        "REF-ATB-72-NOLIMIT",
+        "REF-ATB-62-SWITCH"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.measure_is_one_year",
+        "data.oepul.o6_10.area_access_restricted"
+      ]
+    },
+    {
+      "id": "O610-GEN-ONE-YEAR-OPTIONS-2028",
+      "rule_type": "deadline",
+      "statement": "Eine Beantragung von Optionen oder Zuschlägen bei einjährigen Maßnahmen ist bis inklusive Förderjahr 2028 möglich; über den Maßnahmenantrag abgewickelte Optionen/Zuschläge bis 31. Dezember 2027.",
+      "conditions": [
+        {
+          "expression": "farm.year <= 2028",
+          "description": "Zuschlagsjahr innerhalb Laufzeit",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "supplement_application_possible",
+        "description": "EOP-Code kann bis Förderjahr 2028 gesetzt werden",
+        "value": {
+          "last_year": 2028
+        }
+      },
+      "source_reference_ids": [
+        "REF-ATB-59-OPTIONS",
+        "REF-ATB-59-OPTIONS-MA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.supplement_application_possible"
+      ]
+    },
+    {
+      "id": "O610-GEN-PREAPPLICATION",
+      "rule_type": "application",
+      "statement": "Die Weiterführung in den Folgejahren wird durch Abgabe des Mehrfachantrages mit förderrelevanten Flächen beantragt; ohne Mehrfachantrag keine Zahlung im Antragsjahr.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.o6_10.multiple_application_submitted == true",
+          "description": "Mehrfachantrag abgegeben",
+          "input_paths": [
+            "farm.oepul.o6_10.multiple_application_submitted"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_payment_if_missing",
+        "description": "payable_total_eur = 0",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-6-CONTINUE",
+        "REF-SRL-11052-PRE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.payment_application_missing",
+        "data.oepul.o6_10.payable_total_eur"
+      ]
+    },
+    {
+      "id": "O610-GEN-EXIT-CONTROL-LIMIT",
+      "rule_type": "exit",
+      "statement": "Ein Maßnahmenausstieg ist grundsätzlich nur bis zur Durchführung oder Ankündigung einer Vor-Ort-Kontrolle bzw. bis zur Mitteilung des Ergebnisses einer Verwaltungskontrolle möglich.",
+      "conditions": [
+        {
+          "expression": "deregistration_date < on_site_control_announced_date (gleiches Jahr)",
+          "description": "Abmeldung vor Kontrollankündigung",
+          "input_paths": [
+            "farm.oepul.o6_10.deregistration_date",
+            "farm.oepul.o6_10.on_site_control_announced_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "deregistration_ineffective_otherwise",
+        "description": "deregistration_blocked -> Vertrag bleibt aufrecht",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-6-EXITCONTROL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.deregistration_blocked"
+      ]
+    },
+    {
+      "id": "O610-GEN-REENTRY",
+      "rule_type": "application",
+      "statement": "Nach Ausstieg, Ausschluss oder einjähriger Nichtabgabe des Mehrfachantrages ist ein Wiedereinstieg nur mit einem neuerlichen Maßnahmenantrag möglich.",
+      "conditions": [
+        {
+          "expression": "measure_application_date > deregistration_date",
+          "description": "Neuer Maßnahmenantrag nach Abmeldung",
+          "input_paths": [
+            "farm.oepul.o6_10.measure_application_date",
+            "farm.oepul.o6_10.deregistration_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reentry",
+        "description": "reentered_after_deregistration",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-6-REENTRY",
+        "REF-SRL-11053-REENTRY"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.reentered_after_deregistration"
+      ]
+    },
+    {
+      "id": "O610-COMB-ANNEX-L",
+      "rule_type": "combination",
+      "statement": "Maßnahme 10 ist auf der Einzelfläche prämienmäßig nur kombinierbar mit 1A (nur Landschaftselemente), 1B (EOP mit Prämienabschlag), 2, 11 und 12 (EOP mit Prämienabschlag); alle übrigen Maßnahmen sind auf derselben Fläche nicht kombinierbar.",
+      "conditions": [
+        {
+          "expression": "m in land.parcels[].oepul_measures and m not in combinable_with_10",
+          "description": "Nicht kombinierbare Maßnahme am Schlag",
+          "input_paths": [
+            "land.parcels[].oepul_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combination_conflict",
+        "description": "combination_conflicts / combination_notes",
+        "value": {
+          "combinable": [
+            "1A",
+            "1B",
+            "2",
+            "11",
+            "12"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "REF-ANH-L-TITLE",
+        "REF-ANH-L-LEGEND",
+        "REF-ANH-L-ROW10",
+        "REF-ANH-L-FN1",
+        "REF-ANH-L-FN3",
+        "REF-SRL-194-COMB"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.combinable_with_10",
+        "data.oepul.o6_10.combination_conflicts",
+        "data.oepul.o6_10.combination_notes"
+      ]
+    },
+    {
+      "id": "O610-GEN-COMBINATION",
+      "rule_type": "combination",
+      "statement": "Eine Teilnahme und Prämiengewährung an mehreren Maßnahmen ist möglich, sofern die Kombination nicht ausgeschlossen ist.",
+      "conditions": [
+        {
+          "expression": "not combination excluded",
+          "description": "Kombination zulässig",
+          "input_paths": [
+            "farm.oepul.participating_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combination_allowed",
+        "description": "Grundsatz",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-61-COMBINATION",
+        "REF-SRL-194-COMB"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.combinable_with_10"
+      ]
+    },
+    {
+      "id": "O610-GEN-COMBINATION-CORRECTION",
+      "rule_type": "procedure",
+      "statement": "Unmögliche Maßnahmenkombinationen können bis zum Erhalt der Auszahlungsmitteilung korrigiert werden, sofern keine Beanstandung bei einer Vor-Ort-Kontrolle vorliegt; bis zur Abmeldung sind alle Verpflichtungen einzuhalten.",
+      "conditions": [
+        {
+          "expression": "count(combination_conflicts) > 0",
+          "description": "Konflikt vorhanden",
+          "input_paths": [
+            "land.parcels[].oepul_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "correction_notice",
+        "description": "Hinweis in notices",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-61-CORRECTION"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.notices"
+      ]
+    },
+    {
+      "id": "O610-GEN-TAKEOVER",
+      "rule_type": "application",
+      "statement": "Flächenbezogene Maßnahmen können nach der Antragsfrist bis 15. April (2023 und 2028: 17. April) von einem bisher nicht teilnehmenden Betrieb für die Restlaufzeit übernommen werden; die Ausweitung auf andere Flächen darf 50 % nicht übersteigen; Einreichung online im Mehrfachantrag, Genehmigung durch die AMA.",
+      "conditions": [
+        {
+          "expression": "takeover.request_date <= 15.04./17.04. and not farm_already_participating and additional_area_ha <= 0.5 * taken_over_area_ha",
+          "description": "Zulässige Übernahme",
+          "input_paths": [
+            "farm.oepul.o6_10.takeover.is_takeover",
+            "farm.oepul.o6_10.takeover.request_date",
+            "farm.oepul.o6_10.takeover.farm_already_participating",
+            "farm.oepul.o6_10.takeover.taken_over_area_ha",
+            "farm.oepul.o6_10.takeover.additional_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "takeover_valid_or_rejected",
+        "description": "takeover_valid / takeover_rejections",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-63-TAKEOVER",
+        "REF-ATB-63-EXTENSION",
+        "REF-ATB-63-ONLINE",
+        "REF-SRL-1731-TAKEOVER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.takeover_valid",
+        "data.oepul.o6_10.takeover_rejections",
+        "data.oepul.o6_10.takeover_deadline_md"
+      ]
+    },
+    {
+      "id": "O610-GEN-CONTROLS",
+      "rule_type": "procedure",
+      "statement": "Die Einhaltung aller Bedingungen wird über Verwaltungs-, Vor-Ort- und nachgängige Kontrollen geprüft; die Person muss Kontrollen zulassen.",
+      "conditions": [
+        {
+          "expression": "controls permitted",
+          "description": "Kontrollen zugelassen",
+          "input_paths": [
+            "farm.oepul.o6_10.control_refused"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "controls",
+        "description": "Grundlage für control_findings",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-81-CONTROLS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.findings"
+      ]
+    },
+    {
+      "id": "O610-GEN-CONTROL-REFUSAL",
+      "rule_type": "consequence",
+      "statement": "Verweigert die Person die Auskunft oder verhindert sie die Vor-Ort-Kontrolle (außer höhere Gewalt), ist der Antrag abzulehnen: keine Prämie für das laufende Jahr, Verträge werden beendet und rückabgewickelt.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.o6_10.control_refused == true",
+          "description": "Kontrollverweigerung",
+          "input_paths": [
+            "farm.oepul.o6_10.control_refused"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "application_rejected",
+        "description": "payable_total_eur = 0",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-11112-REFUSAL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.control_refused",
+        "data.oepul.o6_10.payable_total_eur",
+        "data.oepul.o6_10.notices"
+      ]
+    },
+    {
+      "id": "O610-GEN-SANCTION-GROUNDS",
+      "rule_type": "sanction",
+      "statement": "Kürzung, Einbehalt oder Rückforderung können aus Nichteinhaltung von Zugangsvoraussetzungen, Flächen-/Angabenabweichungen, inhaltlichen Förderverpflichtungen, Konditionalität oder mehrjährigem Vertragszeitraum resultieren.",
+      "conditions": [
+        {
+          "expression": "any ground in data.o6_10.sanction_grounds",
+          "description": "Sanktionsgrund"
+        }
+      ],
+      "result": {
+        "outcome": "sanction_ground",
+        "description": "Klassifikation",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-82-GROUNDS"
+      ]
+    },
+    {
+      "id": "O610-GEN-SANCTION-STAGES",
+      "rule_type": "sanction",
+      "statement": "Verstöße gegen inhaltliche Auflagen werden nach Schwere, Ausmaß, Dauer und Häufigkeit in Stufen beurteilt: Verwarnung (ab 2027 Einbehalt 1 %), Kürzung 2/5/10/25/50/100 %, Ausschluss und Rückforderung bei zweimaliger 100 %-Kürzung im Vertragszeitraum.",
+      "conditions": [
+        {
+          "expression": "stage in farm.oepul.o6_10.control_findings[].stage",
+          "description": "Festgestellte Stufe",
+          "input_paths": [
+            "farm.oepul.o6_10.control_findings[].stage",
+            "farm.oepul.o6_10.full_reductions_in_contract_period",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "content_reduction",
+        "description": "content_reduction_percent; excluded_from_measure",
+        "value": {
+          "table": "data/o6_10/general_payment_rules.json#/sanction_stages"
+        }
+      },
+      "source_reference_ids": [
+        "REF-ATB-82-ASSESS",
+        "REF-ATB-82-EXCLUSION",
+        "REF-ATB-82-2027",
+        "REF-SRL-11213-SANCTION"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.stage_percent",
+        "data.oepul.o6_10.content_reduction_percent",
+        "data.oepul.o6_10.excluded_from_measure"
+      ]
+    },
+    {
+      "id": "O610-GEN-SANCTION-MEASURE-LEVEL",
+      "rule_type": "sanction",
+      "statement": "Die Beurteilung der Verstöße erfolgt maßnahmenbezogen inklusive aller Zuschläge und zusätzlich beantragter Optionen.",
+      "conditions": [
+        {
+          "expression": "reduction applies to base + supplement",
+          "description": "Maßnahmenbezogene Kürzung",
+          "input_paths": [
+            "farm.oepul.o6_10.control_findings[].stage"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_on_measure_total",
+        "description": "content_factor auf Grundprämie und Zuschlag",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-82-MEASURE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.content_factor",
+        "data.oepul.o6_10.parcel_payments"
+      ]
+    },
+    {
+      "id": "O610-GEN-REDUCTION-ORDER",
+      "rule_type": "premium_calculation",
+      "statement": "Mehrfachkürzungen erfolgen in festgelegter Reihenfolge: u. a. Übererklärung, Zugangsvoraussetzungen, Fristversäumnis, Untererklärung, inhaltliche Kürzungen, Förderobergrenze je Maßnahme, Modulation, Obergrenze für Flächenzahlungen, Vertragszeitraumüberprüfung, Zugangskürzung, Konditionalität.",
+      "conditions": [
+        {
+          "expression": "apply reductions in data.o6_10.reduction_order",
+          "description": "Reihenfolge"
+        }
+      ],
+      "result": {
+        "outcome": "ordered_reductions",
+        "description": "Umgesetzt: inhaltliche Kürzung -> Modulation -> Obergrenze",
+        "value": {
+          "table": "data/o6_10/general_payment_rules.json#/reduction_order"
+        }
+      },
+      "source_reference_ids": [
+        "REF-SRL-1122-ORDER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.parcel_payments"
+      ]
+    },
+    {
+      "id": "O610-GEN-PAYMENT",
+      "rule_type": "payment",
+      "statement": "Die Förderung wird als jährliche Prämie bis 30. Juni des Folgejahres ausbezahlt; nach Abschluss der Verwaltungskontrollen ist eine Teilzahlung von maximal 75 % möglich.",
+      "conditions": [
+        {
+          "expression": "payment_deadline = (farm.year+1)-06-30",
+          "description": "Auszahlungsfrist",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "payment_schedule",
+        "description": "payment_deadline, max_advance_payment_eur",
+        "value": {
+          "advance_max_percent": 75
+        }
+      },
+      "source_reference_ids": [
+        "REF-ATB-91-ANNUAL",
+        "REF-ATB-91-ADVANCE",
+        "REF-SRL-1107-PAYMENT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.payment_deadline",
+        "data.oepul.o6_10.max_advance_payment_eur"
+      ]
+    },
+    {
+      "id": "O610-GEN-MIN-PAYOUT",
+      "rule_type": "payment",
+      "statement": "Von der Gewährung einer Förderung kann abgesehen werden, wenn der Auszahlungsbetrag 50 Euro nicht überschreitet.",
+      "conditions": [
+        {
+          "expression": "0 < payable_total_eur <= 50",
+          "description": "Kleinbetrag",
+          "input_paths": [
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "may_not_be_granted",
+        "description": "below_minimum_payout + Hinweis",
+        "value": {
+          "minimum_payout_eur": 50
+        }
+      },
+      "source_reference_ids": [
+        "REF-SRL-1107-MIN50"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.below_minimum_payout",
+        "data.oepul.o6_10.notices"
+      ]
+    },
+    {
+      "id": "O610-GEN-CAP",
+      "rule_type": "premium_calculation",
+      "statement": "Prämienobergrenze für die Summe der flächenbezogenen Zahlungen je Schlag: 2023 1.200 €/ha, 2024 1.300 €/ha jeweils ohne Einrechnung von Maßnahme 10; ab 2025 1.300 €/ha ohne Einrechnung von 6, 7 und 1C (Maßnahme 10 zählt mit).",
+      "conditions": [
+        {
+          "expression": "farm.year >= 2025 and (o6_10_per_ha + other_area_payments_eur_per_ha) > 1300",
+          "description": "Obergrenze überschritten",
+          "input_paths": [
+            "land.parcels[].other_area_payments_eur_per_ha",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "capped_payment",
+        "description": "Überschreitung anteilig abgezogen (Annahme A-10)",
+        "value": {
+          "table": "data/o6_10/general_payment_rules.json#/area_payment_caps"
+        }
+      },
+      "source_reference_ids": [
+        "REF-ATB-92-CAP-2324",
+        "REF-ATB-92-CAP-2025"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.applicable_cap",
+        "data.oepul.o6_10.cap_result",
+        "data.oepul.o6_10.parcel_payments"
+      ]
+    },
+    {
+      "id": "O610-GEN-MODULATION",
+      "rule_type": "premium_calculation",
+      "statement": "Das Prämienausmaß wird nach Gesamtfläche des Betriebes moduliert: bis 200 ha 100 %, >200–300 ha 90 %, >300–1.000 ha 85 %, über 1.000 ha 75 % (Beispiel 220 ha: 99,09 %); Basis sind die Angaben im Mehrfachantrag.",
+      "conditions": [
+        {
+          "expression": "factor = Σ band_portion × payout% / total_area_ha",
+          "description": "Modulationsfaktor",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "modulation_factor",
+        "description": "modulation_factor",
+        "value": {
+          "table": "data/o6_10/general_payment_rules.json#/modulation_bands"
+        }
+      },
+      "source_reference_ids": [
+        "REF-ATB-93-MODULATION",
+        "REF-ATB-93-EXAMPLE",
+        "REF-SRL-1922-MOD"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.modulation_factor_for",
+        "data.oepul.o6_10.modulation_factor",
+        "data.oepul.o6_10.band_portion"
+      ]
+    },
+    {
+      "id": "O610-GEN-FORCE-MAJEURE",
+      "rule_type": "exemption",
+      "statement": "Für höhere Gewalt und außergewöhnliche Umstände gilt § 6 GSP-AV; bei dauerhaften bzw. vorübergehenden flächen- oder bewirtschaftungsverändernden Umständen kann die AMA von Rückforderungen absehen (Meldung erforderlich); das BML kann spezielle Festlegungen treffen.",
+      "conditions": [
+        {
+          "expression": "force_majeure recognised",
+          "description": "Höhere Gewalt anerkannt"
+        }
+      ],
+      "result": {
+        "outcome": "no_sanction",
+        "description": "Einzelfallentscheidung der AMA; 2026 teils automatische Anerkennung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-1741-FM",
+        "REF-SRL-1742-PERMANENT",
+        "REF-SRL-1743-TEMPORARY",
+        "REF-SRL-1744-BML"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.drought_2026_relief"
+      ]
+    },
+    {
+      "id": "O610-GEN-TRIAL-AREAS",
+      "rule_type": "premium_exclusion",
+      "statement": "Flächen mit vom BML genehmigten wissenschaftlichen Versuchen, auf denen Verpflichtungen nicht eingehalten werden können, sind mit Code VF zu kennzeichnen (Genehmigung verfügbar halten, Versuch dokumentieren); keine Prämie im laufenden Jahr.",
+      "conditions": [
+        {
+          "expression": "'VF' in land.parcels[].oepul_codes",
+          "description": "Versuchsfläche",
+          "input_paths": [
+            "land.parcels[].oepul_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium_on_parcel",
+        "description": "premium_exclusions",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-551-VF",
+        "REF-SRL-1745-TRIAL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.premium_exclusions"
+      ]
+    },
+    {
+      "id": "O610-GEN-DOUBLE-FUNDING",
+      "rule_type": "premium_exclusion",
+      "statement": "Leistungen, die aus einem anderen Titel der öffentlichen Hand gefördert werden, sowie gesetzlich oder behördlich vorgeschriebene Maßnahmen sind nicht förderbar (Kennzeichnung mit Code OP).",
+      "conditions": [
+        {
+          "expression": "overlap => 'OP' in oepul_codes",
+          "description": "Leistungsüberschneidung",
+          "input_paths": [
+            "land.parcels[].oepul_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Über Code OP ausgeschlossen",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-1623-OVERLAP",
+        "REF-ATB-552-OVERLAP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.premium_exclusions"
+      ]
+    },
+    {
+      "id": "O610-GEN-REVISION-CLAUSE",
+      "rule_type": "contract_term",
+      "statement": "Bei Änderungen des verbindlichen Rechtsrahmens kann die Person die Zustimmung zur Vertragsanpassung verweigern; der Vertrag endet dann ohne Rückforderung für die Vergangenheit.",
+      "conditions": [
+        {
+          "expression": "revision refused",
+          "description": "Zustimmung verweigert"
+        }
+      ],
+      "result": {
+        "outcome": "contract_ends_without_repayment",
+        "description": "Beendigung ohne Rückforderung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-175-REVISION"
+      ]
+    },
+    {
+      "id": "O610-2026-DROUGHT-GREENING",
+      "rule_type": "exemption",
+      "statement": "Antragsjahr 2026: Keine Beanstandung, wenn die Begrünung ordnungsgemäß angelegt wurde, aber der Feldaufgang keine Flächendeckung erreicht oder Ausfallgetreide die 50 %-Grenze überschreitet; österreichweit automatisch höhere Gewalt, keine Meldung erforderlich.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026 and inter_row_greening.properly_established == true",
+          "description": "Ordnungsgemäße Anlage 2026",
+          "input_paths": [
+            "farm.year",
+            "land.parcels[].operations.inter_row_greening.properly_established",
+            "land.parcels[].operations.inter_row_greening.full_coverage_all_inter_rows_all_year",
+            "land.parcels[].operations.inter_row_greening.max_cereal_maize_share_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_violation",
+        "description": "Keine Verstöße ALLYEAR-FULL / CEREAL-SHARE-50; Hinweis",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-N0805-GREENING",
+        "REF-N0805-NOCOMPLAINT",
+        "REF-N0805-AUTOFM"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.drought_2026_relief",
+        "data.oepul.o6_10.drought_2026_relief_parcels",
+        "data.oepul.o6_10.notices"
+      ]
+    },
+    {
+      "id": "O610-2026-FORCE-MAJEURE-APP",
+      "rule_type": "procedure",
+      "statement": "Sind Förderverpflichtungen 2026 trockenheitsbedingt nicht einhaltbar, kann ein Antrag auf Anerkennung höherer Gewalt über eAMA (Register Eingaben) gestellt werden.",
+      "conditions": [
+        {
+          "expression": "drought prevents compliance",
+          "description": "Einzelbetriebliches Ansuchen"
+        }
+      ],
+      "result": {
+        "outcome": "force_majeure_application",
+        "description": "Verfahrenshinweis",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-N0522-FM"
+      ]
+    },
+    {
+      "id": "O610-2026-EXIT12-EOP",
+      "rule_type": "interpretation",
+      "statement": "Bei genehmigtem rückzahlungsfreiem Ausstieg aus Maßnahme 12 (Amerikanische Rebzikade) wird 2026 keine Prämie für 12 gewährt und der Vertrag endet mit der Meldung; die 50 %-Kürzung des EOP-Zuschlags knüpft an die Teilnahme an 12 an (Annahme A-12: nach Ausstieg keine Teilnahme mehr).",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026 and exited_measure_12_rebzikade_2026",
+          "description": "Ausstieg aus 12",
+          "input_paths": [
+            "farm.oepul.exited_measure_12_rebzikade_2026",
+            "farm.oepul.participating_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_trigger_review",
+        "description": "Hinweis: 12 nicht mehr als Teilnahme führen",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-N0612-EXIT",
+        "REF-N0612-NOPREMIUM",
+        "REF-SRL-212-INSECT",
+        "REF-N0612-ORDER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.notices",
+        "data.oepul.o6_10.eop_reduction_applies"
+      ]
+    },
+    {
+      "id": "O610-2026-DROUGHT-SCOPE",
+      "rule_type": "scope_exclusion",
+      "statement": "Die übrigen Dürre-/Trockenheits-Erleichterungen 2026 (Entfall der Ernteverpflichtung auf Ackerkulturen samt Bezirkslisten, vorzeitige Nutzung von UBB/BIO-Biodiversitätsflächen, Anbaufristen System Immergrün, Untersaaten Erosionsschutz Acker, Naturschutz/Natura 2000, Nutztierrassen) gelten nicht für Wein-, Obst- und Hopfenflächen der Maßnahme 10; für o6_10 gilt nur die Begrünungserleichterung.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026 and relief not in {greening coverage relief for measure 10}",
+          "description": "Erleichterung betrifft andere Maßnahmen oder Ackerkulturen",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_relief_for_o6_10",
+        "description": "Ernteverpflichtung und sonstige Auflagen auf Dauerkulturen bleiben unberührt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-N0805-HARVEST",
+        "REF-N0522-SCOPE",
+        "REF-N0812-SCOPE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_10.drought_2026_relief"
+      ]
+    }
+  ]
+}
