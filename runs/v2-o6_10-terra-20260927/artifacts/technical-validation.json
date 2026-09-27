@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 131,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-10-terra/runs/v2-o6_10-terra-20260927/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_10.rego",
+    "tests/o6_10_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-10-terra/runs/v2-o6_10-terra-20260927/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 15,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_10.rego",
+        "tests/o6_10_test.rego"
+      ],
+      "duration_ms": 27,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-10-terra/runs/v2-o6_10-terra-20260927/workspace/tools/opa",
+            "fmt",
+            "policy/o6_10.rego"
+          ],
+          "duration_ms": 16,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_10\n\nimport rego.v1\n\nin_rate_year(rate) if rate.to_year == null\nin_rate_year(rate) if input.farm.year <= rate.to_year\n\nwithin_slope_max(rate, _) if rate.slope_max_exclusive == null\nwithin_slope_max(rate, parcel) if parcel.slope_percent < rate.slope_max_exclusive\n\n# premium_rate returns the applicable base rate record for one eligible parcel.\npremium_rate(parcel) := rate if {\n\trate := data.rates_eur_per_ha[_]\n\trate.crop == parcel.crop.crop_category\n\tinput.farm.year >= rate.from_year\n\tin_rate_year(rate)\n\tparcel.slope_percent >= rate.slope_min\n\twithin_slope_max(rate, parcel)\n}\n\nsurcharge_rate := rate if {\n\trate := data.organisms_or_pheromones_surcharge[_]\n\tinput.farm.year >= rate.from_year\n\tin_rate_year(rate)\n}\n\ndiscounted_surcharge_rate := amount if {\n\trate := surcharge_rate\n\tinput.o6_10.participates_in_insecticide_waiver_or_organic\n\tamount := rate.fixed * 0.5\n}\n\ndiscounted_surcharge_rate := rate.fixed if {\n\trate := surcharge_rate\n\tnot input.o6_10.participates_in_insecticide_waiver_or_organic\n}\n\nis_target_parcel(parcel) if parcel.crop.crop_category == \"vineyard\"\nis_target_parcel(parcel) if parcel.crop.crop_category == \"orchard\"\nis_target_parcel(parcel) if parcel.crop.crop_category == \"hop\"\n\ncovered_area_ha := sum([p.area_ha | p := input.land.parcels[_]; is_target_parcel(p)])\n\ndrought_cover_exception(parcel) if {\n\tinput.farm.year == 2026\n\tparcel.o6_10.cover.ordinarily_established\n\tparcel.o6_10.cover.drought_prevents_full_cover\n}\n\ndrought_cereal_exception(parcel) if {\n\tdrought_cover_exception(parcel)\n\tparcel.o6_10.cover.drought_caused_volunteer_cereal_excess\n}\n\nviolations contains {\"rule_id\": \"O610.002\", \"message\": \"Mindestteilnahmefläche von 0,50 ha nicht erreicht\"} if {\n\tcovered_area_ha < 0.5\n}\n\nviolations contains {\"rule_id\": \"O610.007\", \"parcel_id\": p.parcel_id, \"message\": \"Fahrgassenbegrünung ist nicht ganzjährig und flächendeckend\"} if {\n\tp := input.land.parcels[_]\n\tis_target_parcel(p)\n\tnot p.o6_10.is_terrace\n\tnot p.o6_10.cover.is_year_round_and_full\n\tnot drought_cover_exception(p)\n}\n\nviolations contains {\"rule_id\": \"O610.009\", \"parcel_id\": p.parcel_id, \"message\": \"Offener Stammstreifen überschreitet die zulässige Breite\"} if {\n\tp := input.land.parcels[_]\n\tis_target_parcel(p)\n\tp.crop.crop_category == \"vineyard\"\n\tp.o6_10.cover.open_trunk_strip_cm > 80\n}\n\nviolations contains {\"rule_id\": \"O610.009\", \"parcel_id\": p.parcel_id, \"message\": \"Offener Stammstreifen überschreitet die zulässige Breite\"} if {\n\tp := input.land.parcels[_]\n\tis_target_parcel(p)\n\tp.crop.crop_category in {\"orchard\", \"hop\"}\n\tp.o6_10.cover.open_trunk_strip_cm > 100\n}\n\nviolations contains {\"rule_id\": \"O610.010\", \"parcel_id\": p.parcel_id, \"message\": \"Sondersystem erreicht weniger als 60 Prozent Begrünung\"} if {\n\tp := input.land.parcels[_]\n\tis_target_parcel(p)\n\tp.o6_10.cover.non_single_row_or_wide_system\n\tp.o6_10.cover.covered_percent < 60\n}\n\nviolations contains {\"rule_id\": \"O610.011\", \"parcel_id\": p.parcel_id, \"message\": \"Unzulässige Begrünungskultur\"} if {\n\tp := input.land.parcels[_]\n\tis_target_parcel(p)\n\tp.o6_10.cover.is_organic_mulch_or_self_greening\n}\n\nviolations contains {\"rule_id\": \"O610.012\", \"parcel_id\": p.parcel_id, \"message\": \"Getreide- oder Maisanteil über 50 Prozent\"} if {\n\tp := input.land.parcels[_]\n\tis_target_parcel(p)\n\tp.o6_10.cover.cereal_maize_percent > 50\n\tnot p.o6_10.cover.oat_or_summer_barley_as_nurse_crop\n\tnot drought_cereal_exception(p)\n}\n\nviolations contains {\"rule_id\": \"O610.019\", \"parcel_id\": p.parcel_id, \"message\": \"Pflanzenschutzmittel auf Fahrgassenbegrünung eingesetzt\"} if {\n\tp := input.land.parcels[_]\n\tis_target_parcel(p)\n\tp.o6_10.cover.psm_on_cover_used\n}\n\nviolations contains {\"rule_id\": \"O610.020\", \"message\": \"Optionaler Zuschlag ist wegen operationellem Programm ausgeschlossen\"} if {\n\tinput.o6_10.requests_organisms_or_pheromones_surcharge\n\tinput.o6_10.operation_programme_compensates_organisms_or_pheromones\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-10-terra/runs/v2-o6_10-terra-20260927/workspace/tools/opa",
+            "fmt",
+            "tests/o6_10_test.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_10_test\n\nimport data.oepul.o6_10\nimport rego.v1\n\nbase_input := {\n\t\"farm\": {\"year\": 2026},\n\t\"o6_10\": {\"participates_in_insecticide_waiver_or_organic\": false, \"requests_organisms_or_pheromones_surcharge\": false, \"operation_programme_compensates_organisms_or_pheromones\": false},\n\t\"land\": {\"parcels\": [{\"parcel_id\": \"V1\", \"area_ha\": 0.6, \"slope_percent\": 30, \"crop\": {\"crop_category\": \"vineyard\"}, \"o6_10\": {\"is_terrace\": false, \"cover\": {\"is_year_round_and_full\": true, \"open_trunk_strip_cm\": 70, \"non_single_row_or_wide_system\": false, \"covered_percent\": 100, \"is_organic_mulch_or_self_greening\": false, \"cereal_maize_percent\": 20, \"oat_or_summer_barley_as_nurse_crop\": false, \"psm_on_cover_used\": false}}}]},\n}\n\ntest_vineyard_rate_2025 if {\n\trate := o6_10.premium_rate(base_input.land.parcels[0]) with input as base_input\n\trate == {\"from_year\": 2025, \"to_year\": null, \"crop\": \"vineyard\", \"slope_min\": 25, \"slope_max_exclusive\": 35, \"fixed\": 324}\n}\n\ntest_small_area_is_violation if {\n\tsome v in o6_10.violations with input as object.union(base_input, {\"land\": {\"parcels\": [object.union(base_input.land.parcels[0], {\"area_ha\": 0.49})]}})\n\tv.rule_id == \"O610.002\"\n}\n\ntest_plant_protection_is_violation if {\n\tbad := object.union(base_input.land.parcels[0], {\"o6_10\": {\"is_terrace\": false, \"cover\": {\"is_year_round_and_full\": true, \"open_trunk_strip_cm\": 70, \"non_single_row_or_wide_system\": false, \"covered_percent\": 100, \"is_organic_mulch_or_self_greening\": false, \"cereal_maize_percent\": 20, \"oat_or_summer_barley_as_nurse_crop\": false, \"psm_on_cover_used\": true}}})\n\tsome v in o6_10.violations with input as object.union(base_input, {\"land\": {\"parcels\": [bad]}})\n\tv.rule_id == \"O610.019\"\n}\n\ntest_surcharge_discount if {\n\tamount := o6_10.discounted_surcharge_rate with input as object.union(base_input, {\"o6_10\": {\"participates_in_insecticide_waiver_or_organic\": true, \"requests_organisms_or_pheromones_surcharge\": true, \"operation_programme_compensates_organisms_or_pheromones\": false}})\n\tamount == 81\n}\n\ntest_2026_drought_exception_suppresses_cover_violation if {\n\tdrought_parcel := object.union(base_input.land.parcels[0], {\"o6_10\": {\"is_terrace\": false, \"cover\": {\"is_year_round_and_full\": false, \"open_trunk_strip_cm\": 70, \"non_single_row_or_wide_system\": false, \"covered_percent\": 40, \"is_organic_mulch_or_self_greening\": false, \"cereal_maize_percent\": 20, \"oat_or_summer_barley_as_nurse_crop\": false, \"psm_on_cover_used\": false, \"ordinarily_established\": true, \"drought_prevents_full_cover\": true, \"drought_caused_volunteer_cereal_excess\": false}}})\n\tvs := [v | v := o6_10.violations[_]; v.rule_id == \"O610.007\"] with input as object.union(base_input, {\"land\": {\"parcels\": [drought_parcel]}})\n\tcount(vs) == 0\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-10-terra/runs/v2-o6_10-terra-20260927/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 17,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 5/5\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-10-terra/runs/v2-o6_10-terra-20260927/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 72,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-10-terra/runs/v2-o6_10-terra-20260927/workspace"
+}
