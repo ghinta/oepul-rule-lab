@@ -1,0 +1,3730 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_18",
+  "rules": [
+    {
+      "id": "O618-ELIG-001",
+      "rule_type": "eligibility",
+      "statement": "Voraussetzung für die Teilnahme ist je beantragtem Schlag eine Projektbestätigung der für Naturschutz zuständigen Stelle des Landes, die die verpflichtenden Bewirtschaftungsauflagen (Anhang I) festlegt.",
+      "conditions": [
+        {
+          "expression": "\"NAT\" in parcel.oepul.codes",
+          "description": "Schlag ist mit Code NAT beantragt",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        },
+        {
+          "expression": "not parcel.naturschutz.project_confirmation.present",
+          "description": "Keine Projektbestätigung vorhanden",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Schlag erfüllt die Zugangsvoraussetzung nicht; keine Prämie für den Schlag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-03-PB",
+        "C-MB-03-PB-AUFL",
+        "C-SRL-2.18-PB",
+        "C-SRL-1.10-LH"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.eligibility.violations",
+        "data.oepul.o6_18.premium.reasons"
+      ]
+    },
+    {
+      "id": "O618-ELIG-002",
+      "rule_type": "eligibility",
+      "statement": "In jedem Teilnahmejahr muss zumindest ein Schlag nach den Vorgaben der Maßnahme bewirtschaftet werden.",
+      "conditions": [
+        {
+          "expression": "\"18\" in farm.oepul.measures",
+          "description": "Betrieb nimmt an Naturschutz teil",
+          "input_paths": [
+            "farm.oepul.measures"
+          ]
+        },
+        {
+          "expression": "count(NAT-Schläge) < 1",
+          "description": "Kein NAT-Schlag im Antragsjahr",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Mindestteilnahme nicht erfüllt.",
+        "value": {
+          "min_plots": 1
+        }
+      },
+      "source_reference_ids": [
+        "C-MB-03-MINDEST"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.eligibility.violations"
+      ]
+    },
+    {
+      "id": "O618-ELIG-003",
+      "rule_type": "eligibility",
+      "statement": "Die Prämie wird nur für Acker- und Grünlandflächen (ohne Almen) gewährt.",
+      "conditions": [
+        {
+          "expression": "parcel.land_use not in {arable, grassland}",
+          "description": "Nutzungsart nicht Acker oder Grünland (z. B. Alm)",
+          "input_paths": [
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Fläche in Naturschutz nicht förderfähig.",
+        "value": {
+          "eligible_land_uses": [
+            "arable",
+            "grassland"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "C-MB-01-UEBERSICHT",
+        "C-SRL-2.18-ART"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.eligibility.violations"
+      ]
+    },
+    {
+      "id": "O618-ELIG-004",
+      "rule_type": "deadline",
+      "statement": "Die Maßnahme muss vor Vertragsbeginn im Maßnahmenantrag des Mehrfachantrages bis spätestens 31. Dezember beantragt werden, um einen gültigen Vertrag ab dem Folgejahr zu begründen.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.naturschutz.application_date > (contract_start_year-1)-12-31",
+          "description": "Antrag nach dem 31.12. vor Vertragsbeginn",
+          "input_paths": [
+            "farm.oepul.naturschutz.application_date",
+            "farm.oepul.naturschutz.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Kein gültiger Vertrag ab dem vorgesehenen Beginnjahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-06-ANTRAG",
+        "C-ATB-06-ANTRAG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.eligibility.violations",
+        "data.oepul.o6_18.eligibility.application_deadline"
+      ]
+    },
+    {
+      "id": "O618-ELIG-005",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg in Naturschutz ist mit dem Förderjahr 2025 möglich (Beantragung bis spätestens 31.12.2024); ein Vertragsbeginn vor 2023 ist nicht vorgesehen.",
+      "conditions": [
+        {
+          "expression": "contract_start_year > 2025 or contract_start_year < 2023",
+          "description": "Vertragsbeginn außerhalb 2023-2025",
+          "input_paths": [
+            "farm.oepul.naturschutz.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Einstieg nicht möglich.",
+        "value": {
+          "last_entry_year": 2025,
+          "last_application_date": "2024-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "C-MB-06-LETZT",
+        "C-ATB-05-LETZT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.eligibility.violations"
+      ]
+    },
+    {
+      "id": "O618-ELIG-006",
+      "rule_type": "definition",
+      "statement": "Der Verpflichtungs- und Vertragszeitraum beträgt mindestens 4 Jahre und läuft bis 31.12.2028: Beginn 2023 = 6 Jahre, 2024 = 5 Jahre, 2025 = 4 Jahre.",
+      "conditions": [
+        {
+          "expression": "contract_start_year in {2023,2024,2025}",
+          "description": "Vertragsbeginnjahr",
+          "input_paths": [
+            "farm.oepul.naturschutz.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Vertragsdauer in Jahren und Vertragsende 31.12.2028.",
+        "value": {
+          "2023": 6,
+          "2024": 5,
+          "2025": 4,
+          "end": "2028-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "C-MB-03-VERTRAG",
+        "C-MB-03-BEGINN",
+        "C-ATB-05-VZ-NAT",
+        "C-SRL-1.7-MEHRJ",
+        "C-SRL-1.7-NAT",
+        "C-SRL-1.7-BEGINN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.eligibility.contract_duration_years",
+        "data.oepul.o6_18.eligibility.contract_end_date",
+        "data.oepul.o6_18.eligibility.in_contract_period"
+      ]
+    },
+    {
+      "id": "O618-ELIG-007",
+      "rule_type": "procedure",
+      "statement": "Um einen Schlag für die Maßnahme zu beantragen, muss er in der Feldstücksliste des Mehrfachantrages mit dem Code NAT gekennzeichnet werden; nicht für die Maßnahme angegebene Flächen sind nicht förderfähig.",
+      "conditions": [
+        {
+          "expression": "parcel.naturschutz.applied_for_measure and \"NAT\" not in parcel.oepul.codes",
+          "description": "Für Naturschutz vorgesehener Schlag ohne Code NAT",
+          "input_paths": [
+            "land.parcels[].naturschutz.applied_for_measure",
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Schlag gilt als nicht beantragt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-06-NAT",
+        "C-ATB-05-NICHTANG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.eligibility.violations"
+      ]
+    },
+    {
+      "id": "O618-ELIG-008",
+      "rule_type": "eligibility",
+      "statement": "Für eine Auszahlung der Naturschutz-Schläge muss eine Naturschutz-Referenzfläche (grafische Projektbestätigung im INVEKOS-GIS) vorhanden sein.",
+      "conditions": [
+        {
+          "expression": "not parcel.naturschutz.reference_area_present",
+          "description": "Keine Naturschutz-Referenzfläche",
+          "input_paths": [
+            "land.parcels[].naturschutz.reference_area_present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_payment",
+        "description": "Keine Auszahlung für den Schlag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-06-REF"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.eligibility.no_payment_parcels",
+        "data.oepul.o6_18.premium.reasons"
+      ]
+    },
+    {
+      "id": "O618-ELIG-009",
+      "rule_type": "eligibility",
+      "statement": "Voraussetzung für den optionalen Zuschlag Regionaler Naturschutzplan ist eine jährliche Teilnahmebestätigung der zuständigen Landesstelle zusätzlich zur Projektbestätigung.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.naturschutz.regional_plan.applied",
+          "description": "Zuschlag beantragt",
+          "input_paths": [
+            "farm.oepul.naturschutz.regional_plan.applied"
+          ]
+        },
+        {
+          "expression": "not regional_plan.participation_confirmation",
+          "description": "Keine Teilnahmebestätigung im Jahr",
+          "input_paths": [
+            "farm.oepul.naturschutz.regional_plan.participation_confirmation"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Kein Zuschlag Regionaler Naturschutzplan.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-03-TB",
+        "C-MB-03-TB-ZUS",
+        "C-MB-05-RNP-TB",
+        "C-SRL-2.18-TB",
+        "C-SRL-2.18-RNP",
+        "C-SRL-1.10-RNP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.eligibility.violations",
+        "data.oepul.o6_18.eligibility.regional_plan_eligible"
+      ]
+    },
+    {
+      "id": "O618-ELIG-010",
+      "rule_type": "deadline",
+      "statement": "Der Zuschlag Regionaler Naturschutzplan ist vor Vertragsbeginn im Maßnahmenantrag bis 31. Dezember zu beantragen; letzter Einstieg Förderjahr 2028 (Beantragung bis 31.12.2027).",
+      "conditions": [
+        {
+          "expression": "regional_plan.application_date > 2027-12-31",
+          "description": "Antrag nach letzter Frist",
+          "input_paths": [
+            "farm.oepul.naturschutz.regional_plan.application_date"
+          ]
+        },
+        {
+          "expression": "regional_plan.application_date > (year-1)-12-31",
+          "description": "Antrag nicht vor dem Förderjahr",
+          "input_paths": [
+            "farm.oepul.naturschutz.regional_plan.application_date",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Zuschlag im Förderjahr nicht gültig beantragt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-06-LETZT-RNP",
+        "C-ATB-05-LETZT-OPT",
+        "C-SRL-1.10-MA-RNP",
+        "C-MB-06-ANTRAG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.eligibility.violations"
+      ]
+    },
+    {
+      "id": "O618-ELIG-011",
+      "rule_type": "procedure",
+      "statement": "Der Vertragszeitraum des Zuschlags Regionaler Naturschutzplan beträgt ein Kalenderjahr; er verlängert sich automatisch um ein weiteres Förderjahr, wenn er nicht abgemeldet wird und eine Teilnahmebestätigung vorliegt.",
+      "conditions": [
+        {
+          "expression": "regional_plan.applied and not regional_plan.deregistered and regional_plan.participation_confirmation",
+          "description": "Nicht abgemeldet, Bestätigung vorhanden",
+          "input_paths": [
+            "farm.oepul.naturschutz.regional_plan.deregistered",
+            "farm.oepul.naturschutz.regional_plan.participation_confirmation"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Zuschlag gilt im Folgejahr als weiter beantragt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-03-RNP-VERL",
+        "C-ATB-06-VERL",
+        "C-SRL-1.10-VORB",
+        "C-SRL-1.7-OPTZUSCHL",
+        "C-ATB-05-VZ-OPT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.eligibility.regional_plan_renews_next_year"
+      ]
+    },
+    {
+      "id": "O618-ELIG-012",
+      "rule_type": "eligibility",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr muss der Betrieb mindestens 0,50 ha Flächen im geschützten Anbau oder 1,50 ha landwirtschaftliche Fläche bewirtschaften; ab dem zweiten Jahr ist keine Betriebsmindestgröße erforderlich.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.first_oepul_year == farm.year",
+          "description": "Erstes ÖPUL-Jahr",
+          "input_paths": [
+            "farm.oepul.first_oepul_year",
+            "farm.year"
+          ]
+        },
+        {
+          "expression": "protected_cultivation_area_ha < 0.5 and land.total_area_ha < 1.5",
+          "description": "Mindestgröße unterschritten",
+          "input_paths": [
+            "farm.oepul.protected_cultivation_area_ha",
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Kein Vertrag bzw. keine Förderung.",
+        "value": {
+          "protected_cultivation_ha": 0.5,
+          "total_area_ha": 1.5
+        }
+      },
+      "source_reference_ids": [
+        "C-ATB-05-MINDEST",
+        "C-ATB-05-MINDEST-GA",
+        "C-ATB-05-MINDEST-2J",
+        "C-SRL-1.6-MINDEST"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.eligibility.violations"
+      ]
+    },
+    {
+      "id": "O618-ELIG-013",
+      "rule_type": "eligibility",
+      "statement": "Förderwerbend sind natürliche Personen, eingetragene Personengesellschaften, juristische Personen und Personenvereinigungen (aktive Landwirte, Bewirtschaftung im eigenen Namen); Gebietskörperschaften und Einrichtungen mit mehr als 25 % Beteiligung von Gebietskörperschaften sind in Naturschutz ausgeschlossen.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.applicant.type not in eligible_types",
+          "description": "Unzulässiger Antragstellertyp",
+          "input_paths": [
+            "farm.oepul.applicant.type"
+          ]
+        },
+        {
+          "expression": "farm.oepul.applicant.public_share_percent > 25",
+          "description": "Öffentliche Beteiligung > 25 %",
+          "input_paths": [
+            "farm.oepul.applicant.public_share_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Keine Teilnahme möglich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-05-PERSONEN",
+        "C-ATB-05-GEBK",
+        "C-ATB-05-EIGEN",
+        "C-SRL-1.4-PERSONEN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.eligibility.violations"
+      ]
+    },
+    {
+      "id": "O618-ELIG-014",
+      "rule_type": "eligibility",
+      "statement": "Bewirtschaftungsauflagen der Projektbestätigung werden aus Anhang I gewählt (Code aus zwei Buchstaben und zwei Zahlen) und müssen im Antragsjahr gültig sein (GA21, GC05, GD03, GR02/WF02, WC03, BI01, BI02 erst ab 2025; K20-Auflagen längstens bis 2024).",
+      "conditions": [
+        {
+          "expression": "auflage not in annex_i",
+          "description": "Auflagencode nicht in Anhang I",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        },
+        {
+          "expression": "not valid_in_year(auflage, farm.year)",
+          "description": "Auflage im Antragsjahr ungültig",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Auflage kann nicht anerkannt werden.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-04-ANHI",
+        "C-SRL-3-ANHI",
+        "C-ANH-I-GC05",
+        "C-ANH-I-BI",
+        "C-ANH-I-K20",
+        "C-ANH-J-CODES",
+        "C-ANH-I-KF01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.eligibility.violations",
+        "data.oepul.o6_18.lib.valid_in_year"
+      ]
+    },
+    {
+      "id": "O618-ELIG-015",
+      "rule_type": "eligibility",
+      "statement": "Auflagen der Gruppe GG (Erreichbarkeit, lange Wegzeit) sind nur für Bergmähder und in begründeten Ausnahmefällen (z. B. isolierte Lage) zulässig.",
+      "conditions": [
+        {
+          "expression": "auflage in GG*",
+          "description": "GG-Auflage vergeben",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        },
+        {
+          "expression": "not is_bergmahd and not gg_exception_justified",
+          "description": "Weder Bergmahd noch Ausnahmefall",
+          "input_paths": [
+            "land.parcels[].naturschutz.is_bergmahd",
+            "land.parcels[].naturschutz.gg_exception_justified"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Auflage unzulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-GG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.eligibility.violations"
+      ]
+    },
+    {
+      "id": "O618-ELIG-016",
+      "rule_type": "eligibility",
+      "statement": "Habitatbewirtschaftung HG01/HG02 ist nur auf von den Landesdienststellen gemeldeten und im GIS der AMA eingezeichneten Flächen der gelisteten Lebensraumtypen bzw. Lebensräume der gelisteten Arten förderfähig.",
+      "conditions": [
+        {
+          "expression": "auflage in {HG01,HG02}",
+          "description": "HG-Auflage",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        },
+        {
+          "expression": "not habitat_layer_registered",
+          "description": "Fläche nicht gemeldet/eingezeichnet",
+          "input_paths": [
+            "land.parcels[].naturschutz.habitat_layer_registered"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Keine Förderfähigkeit der HG-Auflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-HG",
+        "C-ANH-I-HG-LRT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.eligibility.violations"
+      ]
+    },
+    {
+      "id": "O618-ELIG-017",
+      "rule_type": "eligibility",
+      "statement": "Flächengrößenbedingungen einzelner Auflagen: GD01 nur Schläge bis max. 1 ha, GD02 nur Schläge < 0,30 ha, AG02 Schlaggröße kleiner als 0,50 ha.",
+      "conditions": [
+        {
+          "expression": "auflage has max_plot_area and parcel.area_ha exceeds it",
+          "description": "Schlaggröße überschritten",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Auflage für den Schlag unzulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-GD02",
+        "C-ANH-I-AG02",
+        "C-ANH-I-GD01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.eligibility.violations"
+      ]
+    },
+    {
+      "id": "O618-ELIG-019",
+      "rule_type": "eligibility",
+      "statement": "Die geförderten Flächen müssen in Österreich liegen.",
+      "conditions": [
+        {
+          "expression": "parcel.oepul.located_in_austria == false",
+          "description": "Fläche im Ausland",
+          "input_paths": [
+            "land.parcels[].oepul.located_in_austria"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Fläche nicht förderfähig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-05-OESTERR",
+        "C-SRL-1.4-OESTERR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.eligibility.violations"
+      ]
+    },
+    {
+      "id": "O618-ELIG-020",
+      "rule_type": "information",
+      "statement": "Zielsetzung: Optimierung land- und forstwirtschaftlicher Kohlenstoffspeicher sowie Schutz, Erhalt und Wiederherstellung naturschutzfachlich wertvoller Arten und Lebensräume.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Allgemeine Zielbestimmung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "information",
+        "description": "Keine unmittelbare Rechtsfolge.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-02-ZIEL",
+        "C-SRL-2.18-ZIEL"
+      ]
+    },
+    {
+      "id": "O618-ELIG-021",
+      "rule_type": "procedure",
+      "statement": "Die Projektbestätigung wird von der Landesstelle für ausgewählte Flächen auf Flächenebene mit flächenspezifischen Zielen (auf Basis von Kartierungen) und Förderverpflichtungen aus Anhang I ausgestellt; die Auflagen sind im INVEKOS-GIS abrufbar.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Ausstellung durch Landesstelle",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "information",
+        "description": "Grundlage der Schlag-Auflagen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-SRL-1.10-LH",
+        "C-SRL-1.10-PB-ZIELE",
+        "C-SRL-1.10-PB-FLAECHE",
+        "C-MB-03-HINWEIS"
+      ]
+    },
+    {
+      "id": "O618-ELIG-022",
+      "rule_type": "procedure",
+      "statement": "Beim Zuschlag Regionaler Naturschutzplan werden in einer Projektgemeinschaft Ziele für eine abgegrenzte Region definiert; die erforderlichen Auflagen stehen in der Projektbestätigung, die Teilnahmebestätigung beruht auf einer übergeordneten Planung.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.naturschutz.regional_plan.applied",
+          "description": "Zuschlag beantragt",
+          "input_paths": [
+            "farm.oepul.naturschutz.regional_plan.applied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "information",
+        "description": "Auflagen laut Projektbestätigung sind einzuhalten.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-05-RNP",
+        "C-SRL-1.10-RNP-PLAN",
+        "C-MB-01-ZUSCHLAG"
+      ]
+    },
+    {
+      "id": "O618-ELIG-023",
+      "rule_type": "obligation",
+      "statement": "Alle teilnehmenden Betriebe müssen die Konditionalität (Klima/Umwelt, öffentliche Gesundheit, Pflanzengesundheit, Tierwohl) und die soziale Konditionalität einhalten, um die Förderung in voller Höhe zu erhalten.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Teilnahme am ÖPUL",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "reduction_risk",
+        "description": "Kürzung bei Nichteinhaltung der Konditionalität.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-05-KOND"
+      ]
+    },
+    {
+      "id": "O618-ELIG-024",
+      "rule_type": "procedure",
+      "statement": "Der Vertrag kommt mit der Verständigung über die Genehmigung zustande; Sonderrichtlinie samt Anhängen ist Vertragsbestandteil; ab Vertragsbeginn besteht Bindung an die Förderbedingungen und Kontrollen sind zuzulassen.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Antrag genehmigt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "information",
+        "description": "Vertragliche Bindung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-SRL-1.10-VERTRAG",
+        "C-SRL-1.10-BINDUNG",
+        "C-SRL-1.1-VERTRAG"
+      ]
+    },
+    {
+      "id": "O618-ELIG-025",
+      "rule_type": "eligibility",
+      "statement": "Nicht förderfähig sind u. a. GLÖZ-Landschaftselemente, Sonstige Flächen sowie im Mehrfachantrag nicht für die Maßnahme angegebene oder falsch identifizierte Flächen.",
+      "conditions": [
+        {
+          "expression": "parcel is GLÖZ landscape element or sonstige Fläche or not declared",
+          "description": "Nicht förderfähige Flächenkategorie",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_payment",
+        "description": "Keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-05-GLOEZLSE",
+        "C-ATB-05-SONST",
+        "C-ATB-05-NICHTANG",
+        "C-SRL-1.6-GLOEZ8LE"
+      ]
+    },
+    {
+      "id": "O618-DEF-001",
+      "rule_type": "definition",
+      "statement": "Förderfähige landwirtschaftliche Flächen umfassen Ackerland, Grünland, Dauer-/Spezialkulturen, Weinflächen, Alm sowie darauf befindliche oder in höchstens 5 m Abstand angrenzende Landschaftselemente (§ 25 GSP-AV).",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Flächendefinition",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "definition",
+        "description": "Begriffsbestimmung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-04-FLAECHEN"
+      ]
+    },
+    {
+      "id": "O618-DEF-002",
+      "rule_type": "definition",
+      "statement": "Als Getreide gelten Dinkel, Durum, Einkorn, Emmer, Gerste, Grünschnittroggen, Hafer, Reis, Roggen, Triticale und Weizen; als Ackerfutter Futtergräser, Wechselwiese, Kleegras, Klee, Luzerne, Ackerweide und Sonstiges Feldfutter (relevant für AD-, NE- und TB-Auflagen).",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Kulturdefinition",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "definition",
+        "description": "Begriffsbestimmung (Liste in data/o6_18/parameters.json).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-04-GETREIDE",
+        "C-ATB-04-NICHTGETREIDE",
+        "C-ATB-04-ACKERFUTTER"
+      ]
+    },
+    {
+      "id": "O618-DEF-003",
+      "rule_type": "definition",
+      "statement": "RGVE/GVE werden mit den Umrechnungsfaktoren des GVE-Schlüssels in Anhang A ermittelt (z. B. Rinder ab 2 Jahre 1,0 RGVE; Zwergrinder: Dahomey, Dexter, Kerry, Zwergzebu).",
+      "conditions": [
+        {
+          "expression": "annex_a_key in data.o6_18.annex_a_gve_key.rows",
+          "description": "Tierkategorie laut Anhang A",
+          "input_paths": [
+            "land.parcels[].naturschutz.grazing_periods[].animals[].annex_a_key"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "RGVE je Stück.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-05-RGVE",
+        "C-SRL-1.5-RGVE",
+        "C-ANH-A-TITEL",
+        "C-ANH-A-RINDER",
+        "C-ANH-A-ZWERG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.key_rgve"
+      ]
+    },
+    {
+      "id": "O618-OBL-001",
+      "rule_type": "obligation",
+      "statement": "Auf allen Naturschutzflächen ist mindestens eine Nutzung/Pflege alle 2 Jahre durchzuführen (zusätzlich zu den Auflagen der Projektbestätigung).",
+      "conditions": [
+        {
+          "expression": "year_completed",
+          "description": "Jahresbilanz",
+          "input_paths": [
+            "land.parcels[].naturschutz.year_completed"
+          ]
+        },
+        {
+          "expression": "no use/care in year and year-1",
+          "description": "Keine Nutzung/Pflege in zwei Jahren",
+          "input_paths": [
+            "land.parcels[].naturschutz.use_or_care_years",
+            "land.parcels[].operations.cutting_dates",
+            "land.parcels[].naturschutz.grazing_periods"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen allgemeine Auflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-04-NUTZ2J",
+        "C-SRL-2.18-A",
+        "C-MB-04-ALLG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-002",
+      "rule_type": "obligation",
+      "statement": "Grünlandflächen dürfen maximal 3 Mal pro Jahr genutzt werden (Schnitte und Beweidungen); die Projektbestätigung kann weitere Einschränkungen vorsehen.",
+      "conditions": [
+        {
+          "expression": "parcel.land_use == grassland",
+          "description": "Grünland",
+          "input_paths": [
+            "land.parcels[].land_use"
+          ]
+        },
+        {
+          "expression": "count(cutting_dates)+count(grazing_periods) > 3",
+          "description": "Mehr als 3 Nutzungen",
+          "input_paths": [
+            "land.parcels[].operations.cutting_dates",
+            "land.parcels[].naturschutz.grazing_periods"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen allgemeine Auflage.",
+        "value": {
+          "max_uses": 3
+        }
+      },
+      "source_reference_ids": [
+        "C-MB-04-MAX3",
+        "C-SRL-2.18-A",
+        "C-SRL-2.18-A2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-003",
+      "rule_type": "prohibition",
+      "statement": "Verboten sind maschinelle Entsteinung, Geländekorrekturen, Ablagerungen und Aufschüttungen.",
+      "conditions": [
+        {
+          "expression": "activities.mechanical_stone_removal or terrain_correction or deposits or fill_up",
+          "description": "Verbotene Maßnahme durchgeführt",
+          "input_paths": [
+            "land.parcels[].naturschutz.activities.mechanical_stone_removal",
+            "land.parcels[].naturschutz.activities.terrain_correction",
+            "land.parcels[].naturschutz.activities.deposits",
+            "land.parcels[].naturschutz.activities.fill_up"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen allgemeine Auflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-04-ENTST",
+        "C-SRL-2.18-B"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-004",
+      "rule_type": "prohibition",
+      "statement": "Keine Neuentwässerung auf Naturschutzflächen.",
+      "conditions": [
+        {
+          "expression": "activities.new_drainage",
+          "description": "Neuentwässerung",
+          "input_paths": [
+            "land.parcels[].naturschutz.activities.new_drainage"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen allgemeine Auflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-04-ENTW",
+        "C-SRL-2.18-B2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-005",
+      "rule_type": "prohibition",
+      "statement": "Keine Lagerung von Siloballen auf Naturschutzflächen.",
+      "conditions": [
+        {
+          "expression": "activities.silage_bale_storage",
+          "description": "Siloballenlagerung",
+          "input_paths": [
+            "land.parcels[].naturschutz.activities.silage_bale_storage"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen allgemeine Auflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-04-SILO",
+        "C-SRL-2.18-B2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-006",
+      "rule_type": "prohibition",
+      "statement": "Keine Ein- oder Nachsaaten auf Grünland; Ausnahme: Sanierung von Wildschäden, Engerlingsbefall, Murenabgängen und anderen Ereignissen nach schriftlicher Genehmigung der Landesdienststelle.",
+      "conditions": [
+        {
+          "expression": "grassland and reseeding.performed",
+          "description": "Ein-/Nachsaat auf Grünland",
+          "input_paths": [
+            "land.parcels[].naturschutz.activities.reseeding.performed"
+          ]
+        },
+        {
+          "expression": "not (reason in exception_reasons and written_approval)",
+          "description": "Keine genehmigte Sanierungsausnahme",
+          "input_paths": [
+            "land.parcels[].naturschutz.activities.reseeding.reason",
+            "land.parcels[].naturschutz.activities.reseeding.written_approval"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen allgemeine Auflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-04-SAAT",
+        "C-MB-04-SAAT-GEN",
+        "C-SRL-2.18-C",
+        "C-SRL-2.18-C2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-007",
+      "rule_type": "prohibition",
+      "statement": "Keine zusätzliche Düngung auf Weideflächen (ausgenommen Mähweiden).",
+      "conditions": [
+        {
+          "expression": "grassland_type in {weide, hutweide}",
+          "description": "Weidefläche (keine Mähweide)",
+          "input_paths": [
+            "land.parcels[].naturschutz.grassland_type"
+          ]
+        },
+        {
+          "expression": "fertilized",
+          "description": "Düngung ausgebracht",
+          "input_paths": [
+            "land.parcels[].naturschutz.fertilization_events",
+            "land.parcels[].operations.fertilizer.mineral_n_kg_per_ha",
+            "land.parcels[].operations.fertilizer.organic_n_kg_per_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen allgemeine Auflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-04-WEIDEDUENG",
+        "C-SRL-2.18-D"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-008",
+      "rule_type": "prohibition",
+      "statement": "Keine Ausbringung von Klärschlamm und Klärschlammkompost.",
+      "conditions": [
+        {
+          "expression": "fertilization_events[].type in {klaerschlamm, klaerschlammkompost}",
+          "description": "Klärschlamm ausgebracht",
+          "input_paths": [
+            "land.parcels[].naturschutz.fertilization_events[].type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen allgemeine Auflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-04-KLAER",
+        "C-SRL-2.18-D2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-009",
+      "rule_type": "documentation",
+      "statement": "Bei Auflagen mit verpflichtender Beweidung ist laufend und tagaktuell ein Weidetagebuch zu führen (Tierkategorie/-gruppe, Weideort/Feldstück, Beginn und Ende der Weidezeiträume, tierbezogene Hinderungs- und Unterbrechungsgründe).",
+      "conditions": [
+        {
+          "expression": "auflage.requires_grazing (GA16, GA18, WA01, WA03, BA03, BA04)",
+          "description": "Auflage mit verpflichtender Beweidung",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        },
+        {
+          "expression": "not grazing_diary.kept or not grazing_diary.daily_current",
+          "description": "Weidetagebuch fehlt/nicht tagaktuell",
+          "input_paths": [
+            "land.parcels[].naturschutz.grazing_diary.kept",
+            "land.parcels[].naturschutz.grazing_diary.daily_current"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Dokumentationsverstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-04-WEIDETB",
+        "C-MB-04-TAGAKT",
+        "C-SRL-2.18-E",
+        "C-ANH-I-WA01",
+        "C-ANH-I-BA03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations",
+        "data.oepul.o6_18.obligations.requires_grazing"
+      ]
+    },
+    {
+      "id": "O618-OBL-010",
+      "rule_type": "obligation",
+      "statement": "Die Bewirtschaftungsauflagen der Projektbestätigung sind je Schlag einzuhalten; eine Abänderung der Bewirtschaftung ist nur nach vorheriger Rücksprache mit der Naturschutzabteilung und schriftlicher Abänderung der Projektbestätigung zulässig.",
+      "conditions": [
+        {
+          "expression": "project_confirmation.management_deviates and not written_amendment",
+          "description": "Abweichung ohne schriftliche Abänderung",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.management_deviates",
+            "land.parcels[].naturschutz.project_confirmation.written_amendment"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflagen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-04-ABAEND",
+        "C-MB-04-BEWAUFL",
+        "C-SRL-2.18-AUFL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-011A",
+      "rule_type": "obligation",
+      "statement": "Schnittzeitpunktverzögerung (GL01-GL05, GL33-GL37, GL06/GL15/GL25 nach Phänologie, NM05): keine Mahd vor dem in der Projektbestätigung festgelegten frühesten Mahdtermin ($1 bzw. $PHAENO).",
+      "conditions": [
+        {
+          "expression": "auflage.earliest_mowing_date_parameter",
+          "description": "GL-/NM05-Auflage",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        },
+        {
+          "expression": "any cutting_date < earliest_mowing_date (2026: min(earliest, 2026-08-12))",
+          "description": "Mahd vor frühestem Termin",
+          "input_paths": [
+            "land.parcels[].operations.cutting_dates",
+            "land.parcels[].naturschutz.project_confirmation.earliest_mowing_date",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-GL",
+        "C-ANH-I-GL06",
+        "C-ANH-I-NM05",
+        "C-ANH-I-DOLLAR",
+        "C-SRL-2.23-GLEICH"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations",
+        "data.oepul.o6_18.obligations.effective_date"
+      ]
+    },
+    {
+      "id": "O618-OBL-011B",
+      "rule_type": "obligation",
+      "statement": "Nutzungsintensität GA: GA01/GA02/GA19 3 x, GA04/GA06/GA08/GA20 2 x, GA09-GA11 1 x Mahd und Abtransport des Mähgutes pro Jahr; GA13/GA14/GA21 jedes 2. Jahr.",
+      "conditions": [
+        {
+          "expression": "auflage.required_mowings_per_year != null",
+          "description": "GA-Auflage mit Mahdanzahl",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        },
+        {
+          "expression": "year_completed and count(cutting_dates) != n",
+          "description": "Mahdanzahl abweichend",
+          "input_paths": [
+            "land.parcels[].operations.cutting_dates",
+            "land.parcels[].naturschutz.year_completed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-GA01",
+        "C-ANH-I-GA09"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-011C",
+      "rule_type": "prohibition",
+      "statement": "Düngeverbote laut Anhang I (GI05-GI07, GI16, AC01, AA06, BB01, SA01, OA02, ND04) bzw. Verbot zusätzlicher Düngung (GI15, WA01, WA03, BA03, BA04).",
+      "conditions": [
+        {
+          "expression": "fertilization_rule in {ban, additional_ban}",
+          "description": "Auflage mit Düngeverbot",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        },
+        {
+          "expression": "fertilized",
+          "description": "Düngung erfolgt",
+          "input_paths": [
+            "land.parcels[].naturschutz.fertilization_events",
+            "land.parcels[].operations.fertilizer.mineral_n_kg_per_ha",
+            "land.parcels[].operations.fertilizer.organic_n_kg_per_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-GI05",
+        "C-ANH-I-WA01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations",
+        "data.oepul.o6_18.obligations.fert_rule"
+      ]
+    },
+    {
+      "id": "O618-OBL-011D",
+      "rule_type": "obligation",
+      "statement": "Düngung nur mit Festmist (GI02-GI04, GI11-GI13, GI22/GI23, AC03, BB03); bei Festmist-/Wirtschaftsdüngerauflagen keine Mineraldüngung.",
+      "conditions": [
+        {
+          "expression": "fertilization_rule in solid manure rules",
+          "description": "Festmistauflage",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        },
+        {
+          "expression": "fertilization_events[].type != festmist or mineral fertilizer",
+          "description": "Andere Düngerart",
+          "input_paths": [
+            "land.parcels[].naturschutz.fertilization_events[].type",
+            "land.parcels[].operations.fertilizer.mineral_n_kg_per_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-GI02",
+        "C-ANH-I-GI11"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-011E",
+      "rule_type": "obligation",
+      "statement": "Düngung mit Wirtschaftsdüngern frühestens ab 01.09. (GI24, GI25, BB07) bzw. Festmist nur ab 01.09. in den Jahren $1 und $2 (GI22, GI23).",
+      "conditions": [
+        {
+          "expression": "fertilization_rule in {farm_manure_from_sept, solid_manure_two_years_from_sept}",
+          "description": "Auflage",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        },
+        {
+          "expression": "fertilization_events[].date month-day < 09-01",
+          "description": "Düngung vor 01.09.",
+          "input_paths": [
+            "land.parcels[].naturschutz.fertilization_events[].date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-GI24"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-011S",
+      "rule_type": "obligation",
+      "statement": "Düngung nur in den von der Projektbestätigung festgelegten Jahren (jedes 2. Jahr beginnend mit $: GI11-GI13, ND13; nur Jahre $1 und $2: GI22, GI23).",
+      "conditions": [
+        {
+          "expression": "fertilized and farm.year not in fertilization_allowed_years",
+          "description": "Düngung in nicht erlaubtem Jahr",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.fertilization_allowed_years",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-GI11"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-011F",
+      "rule_type": "prohibition",
+      "statement": "Pflanzenschutzmittel-/Pestizidverbot (AA04, AA06, SA01, OA02, WA01, WA03, NA07); TC01: Pestizidverbot ausgenommen Mittel gemäß EU-Bio-Verordnung.",
+      "conditions": [
+        {
+          "expression": "auflage.psm_ban or (TC01 and not psm_only_eu_organic_approved)",
+          "description": "PSM-Auflage",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].naturschutz.psm_only_eu_organic_approved"
+          ]
+        },
+        {
+          "expression": "operations.psm_used",
+          "description": "PSM eingesetzt",
+          "input_paths": [
+            "land.parcels[].operations.psm_used"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-NA07",
+        "C-ANH-I-TC01",
+        "C-ANH-I-AA04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-011G",
+      "rule_type": "prohibition",
+      "statement": "TD01 Maisverzicht: Anbau von Mais im Vertragszeitraum ist verboten.",
+      "conditions": [
+        {
+          "expression": "\"TD01\" in auflagen and crop.crop_category == maize",
+          "description": "Mais angebaut",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].crop.crop_category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-TD01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-011H",
+      "rule_type": "prohibition",
+      "statement": "NW09: Beweidung ist verboten.",
+      "conditions": [
+        {
+          "expression": "\"NW09\" in auflagen and grazing_periods not empty",
+          "description": "Beweidung erfolgt",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].naturschutz.grazing_periods"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-NW09"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-011I",
+      "rule_type": "prohibition",
+      "statement": "GB01/NW10: Beweidung (GB01 auch Befahren) vor dem 1. Schnitt ist verboten.",
+      "conditions": [
+        {
+          "expression": "auflage in {GB01, NW10}",
+          "description": "Auflage",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        },
+        {
+          "expression": "grazing_period.start < first cutting date",
+          "description": "Beweidung vor 1. Schnitt",
+          "input_paths": [
+            "land.parcels[].naturschutz.grazing_periods[].start",
+            "land.parcels[].operations.cutting_dates"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-GB01",
+        "C-ANH-I-NW10"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-011J",
+      "rule_type": "prohibition",
+      "statement": "NW11: Beweidung nach dem letzten Schnitt ist verboten.",
+      "conditions": [
+        {
+          "expression": "\"NW11\" in auflagen and grazing_period.end > last cutting date",
+          "description": "Nachweide",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].naturschutz.grazing_periods[].end",
+            "land.parcels[].operations.cutting_dates"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-NW11"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-011K",
+      "rule_type": "obligation",
+      "statement": "Viehbesatz bei Weideauflagen: WA01 max. 1 RGVE/ha und Jahr, WA03 max. 0,5 RGVE/ha und Jahr; NW06 max. $ GVE/ha und Jahr laut Projektbestätigung (RGVE nach Anhang A, zeitanteilig über Weidetage).",
+      "conditions": [
+        {
+          "expression": "auflage.max_rgve_per_ha_year or NW06",
+          "description": "Besatzgrenze",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].naturschutz.project_confirmation.max_gve_per_ha"
+          ]
+        },
+        {
+          "expression": "sum(count*rgve*days)/365/area_ha > limit",
+          "description": "Besatz überschritten",
+          "input_paths": [
+            "land.parcels[].naturschutz.grazing_periods[].animals[].count",
+            "land.parcels[].naturschutz.grazing_periods[].animals[].annex_a_key",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-WA",
+        "C-ANH-I-WA01",
+        "C-ANH-I-NW06",
+        "C-ANH-A-RINDER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations",
+        "data.oepul.o6_18.obligations.rgve_per_ha_year"
+      ]
+    },
+    {
+      "id": "O618-OBL-011L",
+      "rule_type": "obligation",
+      "statement": "GN03: Zeitfenster zwischen erster und zweiter Nutzung mindestens 9 Wochen (63 Tage).",
+      "conditions": [
+        {
+          "expression": "\"GN03\" in auflagen and days(cut1, cut2) < 63",
+          "description": "Zu kurzer Abstand",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].operations.cutting_dates"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-GN03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-011M",
+      "rule_type": "obligation",
+      "statement": "GN01/GN02: 2. Nutzung erst ab dem in der Projektbestätigung festgelegten Termin ($1; GN02 ab 01.09.).",
+      "conditions": [
+        {
+          "expression": "auflage in {GN01, GN02} and second cut < second_use_earliest_date",
+          "description": "2. Nutzung zu früh",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].naturschutz.project_confirmation.second_use_earliest_date",
+            "land.parcels[].operations.cutting_dates"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-GN02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-011N",
+      "rule_type": "obligation",
+      "statement": "GK02/BG01: 1. Mahd vor $1 und über die Vegetationsperiode eine weitere Mahd.",
+      "conditions": [
+        {
+          "expression": "auflage in {GK02, BG01}",
+          "description": "Auflage",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        },
+        {
+          "expression": "first cut >= first_mowing_before_date or count(cuts) < 2",
+          "description": "Frühe Mahd/Folgemahd fehlt",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.first_mowing_before_date",
+            "land.parcels[].operations.cutting_dates"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-GK02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-011O",
+      "rule_type": "prohibition",
+      "statement": "NA06/NV07: Bewässerung bzw. Beregnung ist verboten.",
+      "conditions": [
+        {
+          "expression": "auflage.irrigation_ban and irrigation_used",
+          "description": "Bewässert",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].naturschutz.irrigation_used"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-NA06"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-011P",
+      "rule_type": "prohibition",
+      "statement": "NA22/GM01: Silageproduktion auf dem Schlag verboten (Silageverzicht).",
+      "conditions": [
+        {
+          "expression": "auflage.silage_ban and silage_produced",
+          "description": "Silage produziert",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].naturschutz.silage_produced"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-NA22",
+        "C-ANH-I-GM01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-011Q",
+      "rule_type": "obligation",
+      "statement": "Weideauflagen WA01/WA03/BA03/BA04/NW17: Beweidung nur im Zeitraum laut Projektbestätigung (frühestens ab $1, längstens bis $2).",
+      "conditions": [
+        {
+          "expression": "grazing_period outside [grazing_window_start, grazing_window_end]",
+          "description": "Beweidung außerhalb des Zeitraums",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].naturschutz.project_confirmation.grazing_window_start",
+            "land.parcels[].naturschutz.project_confirmation.grazing_window_end",
+            "land.parcels[].naturschutz.grazing_periods"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-WA01-ZEIT",
+        "C-ANH-I-BA03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-011R",
+      "rule_type": "obligation",
+      "statement": "Mähweide: GA15/GA17 max. 2 x Beweidung und mind. 1 x Mahd, max. 3 Nutzungen; GA16/GA18 1 x Beweidung und 1 x Mahd pro Jahr.",
+      "conditions": [
+        {
+          "expression": "auflage.maehweide_pattern",
+          "description": "Mähweide-Auflage",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        },
+        {
+          "expression": "year_completed and pattern not met",
+          "description": "Muster verletzt",
+          "input_paths": [
+            "land.parcels[].naturschutz.grazing_periods",
+            "land.parcels[].operations.cutting_dates"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-GA15",
+        "C-ANH-I-GA16"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations",
+        "data.oepul.o6_18.obligations.maehweide_ok"
+      ]
+    },
+    {
+      "id": "O618-OBL-011T",
+      "rule_type": "prohibition",
+      "statement": "GB01: Befahren der Mähwiese/Mähweide bis zum 1. Schnitt ist verboten.",
+      "conditions": [
+        {
+          "expression": "\"GB01\" in auflagen and driven_on_before_first_cut",
+          "description": "Befahren",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].naturschutz.driven_on_before_first_cut"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-GB01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-011U",
+      "rule_type": "prohibition",
+      "statement": "GC01-GC03: Erneuerung oder Wartung von Drainagen verboten; GC04: Verzicht auf Grabenräumung mit Grabenfräsen.",
+      "conditions": [
+        {
+          "expression": "GC01-GC03 and drainage_maintenance or GC04 and trench_milling",
+          "description": "Verbotene Maßnahme",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].naturschutz.activities.drainage_maintenance",
+            "land.parcels[].naturschutz.activities.trench_milling"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-GC01",
+        "C-ANH-I-GC04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-012",
+      "rule_type": "prohibition",
+      "statement": "Auf einer in Naturschutz eingebrachten Bergmahdfläche ist eine Nachweide (auch ab 16. August) nur zulässig, wenn sie als Bewirtschaftungsauflage ausgewiesen ist (z. B. NW03, NW04, NW21).",
+      "conditions": [
+        {
+          "expression": "is_bergmahd and grazing after last cut",
+          "description": "Nachweide auf Bergmahd",
+          "input_paths": [
+            "land.parcels[].naturschutz.is_bergmahd",
+            "land.parcels[].naturschutz.grazing_periods"
+          ]
+        },
+        {
+          "expression": "no Nachweide-Auflage",
+          "description": "Keine erlaubende Auflage",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflagen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-04-BERGM",
+        "C-ANH-I-NW04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-013",
+      "rule_type": "documentation",
+      "statement": "Weideaufzeichnungen sind grundsätzlich je Schlag zu führen; Zusammenfassung nur bei gleicher Bewirtschaftung und Erkennbarkeit als Einheit (z. B. gemeinsame Einzäunung); Auflagen aller zusammengefassten Schläge bleiben einzuhalten; andere Aufzeichnungen mit den notwendigen Angaben werden anerkannt.",
+      "conditions": [
+        {
+          "expression": "grazing_diary.combined_with_other_plots and not same_management_and_visible_unit",
+          "description": "Unzulässige Zusammenfassung",
+          "input_paths": [
+            "land.parcels[].naturschutz.grazing_diary.combined_with_other_plots",
+            "land.parcels[].naturschutz.grazing_diary.same_management_and_visible_unit"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Dokumentationsverstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-04-ZUSAMMEN",
+        "C-MB-04-VORLAGE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations"
+      ]
+    },
+    {
+      "id": "O618-OBL-014",
+      "rule_type": "obligation",
+      "statement": "Auf bewirtschafteten Ackerflächen (Kapitel A) gilt die Mindestbewirtschaftung mit Ernte und Verbringen des Ernteguts auf mindestens 85 % des Schlages; 2026 entfällt dies in den Dürre-Gebietskulissen ohne Meldung, wenn kein erntbarer Bestand vorliegt.",
+      "conditions": [
+        {
+          "expression": "land_use == arable and chapter A auflage",
+          "description": "Bewirtschafteter NAT-Acker",
+          "input_paths": [
+            "land.parcels[].land_use",
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        },
+        {
+          "expression": "harvest_share < 0.85 and not drought exemption",
+          "description": "Ernte unter 85 %",
+          "input_paths": [
+            "land.parcels[].naturschutz.harvest_share",
+            "land.parcels[].naturschutz.drought_no_harvestable_crop",
+            "farm.region.federal_state",
+            "farm.region.district"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Mindestbewirtschaftung verletzt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-05-ERNTE",
+        "C-SRL-1.6-ERNTE",
+        "C-SRL-1.6-MBK-AUSN",
+        "C-ATB-05-MBK",
+        "C-N0805-ERNTE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.violations",
+        "data.oepul.o6_18.obligations.drought_harvest_exempt"
+      ]
+    },
+    {
+      "id": "O618-OBL-015",
+      "rule_type": "exception",
+      "statement": "Grünbrachen im Rahmen der Maßnahme Naturschutz (Code NAT) sind von den Mindestbewirtschaftungskriterien ausgenommen und förderfähig; es gelten die Förderbedingungen der Maßnahme.",
+      "conditions": [
+        {
+          "expression": "\"NAT\" in codes and schlagnutzung == Grünbrache",
+          "description": "NAT-Grünbrache",
+          "input_paths": [
+            "land.parcels[].oepul.codes",
+            "land.parcels[].oepul.schlagnutzung"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exemption",
+        "description": "Keine Mindestbewirtschaftungskriterien.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-05-GRUENBR",
+        "C-SRL-1.6-GRUENBR",
+        "C-ATB-05-GL-MBK"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.obligations.minimum_criteria_exempt"
+      ]
+    },
+    {
+      "id": "O618-OBL-016",
+      "rule_type": "obligation",
+      "statement": "Alle weiteren in der Projektbestätigung vergebenen Anhang-I-Auflagen (inkl. nicht prämienrelevanter N-Auflagen und $-Parameter) sind einzuhalten; die vollständige Auflagenliste liegt in data/o6_18/annex_i_auflagen.json.",
+      "conditions": [
+        {
+          "expression": "auflage in project_confirmation.auflagen",
+          "description": "Vergebene Auflage",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Einhaltung laut Projektbestätigung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-J-ZUSATZ",
+        "C-ANH-I-N",
+        "C-ANH-I-DOLLAR",
+        "C-MB-04-BEWAUFL"
+      ]
+    },
+    {
+      "id": "O618-OBL-017",
+      "rule_type": "obligation",
+      "statement": "NE01: Auf dem Schlag ist ausschließlich der Anbau der in Anhang I gelisteten Kulturarten erlaubt (u. a. max. 1 x Maisanbau im Vertragszeitraum).",
+      "conditions": [
+        {
+          "expression": "\"NE01\" in auflagen and crop not in allowed list",
+          "description": "Nicht gelistete Kultur",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].crop.crop_name"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Bewirtschaftungsauflage.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-NE01",
+        "C-ANH-I-NE01-LISTE"
+      ]
+    },
+    {
+      "id": "O618-KOMB-001",
+      "rule_type": "combination",
+      "statement": "Auflagen der Kapitel S (Ackerstilllegung), A (bewirtschafteter Acker inkl. Großtrappe T), B (begrünte Ackerfläche), G (Mähwiesen/-weiden), W (Weiden) und O (Obstwiesen) sind untereinander nicht kombinierbar; L ist mit allen kombinierbar, H mit allen außer S (Matrix Anhang J).",
+      "conditions": [
+        {
+          "expression": "chapter(c1), chapter(c2) with matrix[c1][c2] == false",
+          "description": "Nicht kombinierbare Kapitel am Schlag",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Unzulässige Auflagenkombination.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-04-ANHJ",
+        "C-SRL-2.18-ANHJ",
+        "C-ANH-J-REGEL",
+        "C-ANH-J-MATRIX-H",
+        "C-ANH-J-MATRIX-S",
+        "C-ANH-J-FN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.combinations.violations",
+        "data.oepul.o6_18.combinations.matrix_row"
+      ]
+    },
+    {
+      "id": "O618-KOMB-002",
+      "rule_type": "combination",
+      "statement": "Verpflichtende Kombinationen: SB-Pflegeauflagen (SB01-SB18) und Zuschlag SC02 nur mit SA01; GF01/GF02 nur mit einer der Auflagen GE01-GE03 (BD01/BD02 mit BC01).",
+      "conditions": [
+        {
+          "expression": "auflage requires_any_of and none present",
+          "description": "Pflichtkombination fehlt",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Unzulässige Auflagenkombination.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-SB",
+        "C-ANH-I-GF",
+        "C-MB-04-DIV-ACKER",
+        "C-ANH-I-SC02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.combinations.violations",
+        "data.oepul.o6_18.combinations.required_any"
+      ]
+    },
+    {
+      "id": "O618-KOMB-003",
+      "rule_type": "combination",
+      "statement": "AC01 (Düngungsverzicht) und AC03 (nur Festmist) sind mit AA06 nicht kombinierbar.",
+      "conditions": [
+        {
+          "expression": "AA06 and (AC01 or AC03)",
+          "description": "Ausgeschlossene Kombination",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Unzulässige Auflagenkombination.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-AA06"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.combinations.violations"
+      ]
+    },
+    {
+      "id": "O618-KOMB-004",
+      "rule_type": "combination",
+      "statement": "Bei GL06, GL15 und GL25 (Schnittzeit nach Phänologie) ist die Teilnahme des Betriebes an UBB oder BIO samt Zuschlag Monitoring „Schnittzeit nach Phänologie“ verpflichtend.",
+      "conditions": [
+        {
+          "expression": "auflage in {GL06, GL15, GL25}",
+          "description": "Phänologie-Auflage",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        },
+        {
+          "expression": "not (UBB or BIO) or \"schnittzeit_phaenologie\" not in monitoring_options",
+          "description": "Kombinationsverpflichtung fehlt",
+          "input_paths": [
+            "farm.oepul.measures",
+            "farm.oepul.ubb_bio_monitoring_options"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Zugangsvoraussetzung/Kombinationsverpflichtung verletzt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-04-PHAENO",
+        "C-ANH-I-PHAENO",
+        "C-ANH-I-GL06"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.combinations.violations",
+        "data.oepul.o6_18.combinations.monitoring_fulfilled"
+      ]
+    },
+    {
+      "id": "O618-KOMB-005",
+      "rule_type": "combination",
+      "statement": "Bei den Großtrappen-Auflagen TA und TB ist die Teilnahme an UBB oder BIO samt Zuschlag Monitoring „Beobachtung der Großtrappe“ verpflichtend.",
+      "conditions": [
+        {
+          "expression": "auflage in {TA01, TB01}",
+          "description": "Großtrappe-Auflage",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        },
+        {
+          "expression": "not (UBB or BIO) or \"grosstrappe\" not in monitoring_options",
+          "description": "Kombinationsverpflichtung fehlt",
+          "input_paths": [
+            "farm.oepul.measures",
+            "farm.oepul.ubb_bio_monitoring_options"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Zugangsvoraussetzung/Kombinationsverpflichtung verletzt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-04-TRAPPE",
+        "C-ANH-I-TA01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.combinations.violations",
+        "data.oepul.o6_18.combinations.monitoring_fulfilled"
+      ]
+    },
+    {
+      "id": "O618-KOMB-006",
+      "rule_type": "combination",
+      "statement": "Bei Teilnahme an UBB oder BIO sind Naturschutz-Ackerstilllegungen als Biodiversitätsfläche anrechenbar, wenn die Projektbestätigung SA01 (inkl. SB01-SB18 bzw. SC02) enthält und der Schlag mit Schlagnutzung Grünbrache sowie den Codes NAT und DIV beantragt ist.",
+      "conditions": [
+        {
+          "expression": "(\"1A\" or \"1B\") in measures",
+          "description": "UBB/BIO",
+          "input_paths": [
+            "farm.oepul.measures"
+          ]
+        },
+        {
+          "expression": "SA01 and schlagnutzung == Grünbrache and {NAT, DIV} ⊆ codes",
+          "description": "Anrechnungsbedingungen",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].oepul.schlagnutzung",
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Schlag zählt als Biodiversitätsfläche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-04-DIV",
+        "C-MB-04-DIV-ACKER",
+        "C-MB-04-DIV-CODES",
+        "C-SRL-2.1A-DIV-ACKER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.combinations.div_countable_arable"
+      ]
+    },
+    {
+      "id": "O618-KOMB-007",
+      "rule_type": "combination",
+      "statement": "Bei Teilnahme an UBB oder BIO sind NAT-Grünlandflächen (Schlagnutzung Einmähdige Wiese, Streuwiese, Mähwiese/-weide zwei bzw. drei und mehr Nutzungen) mit einer der Auflagen GA09-GA11, GL01-GL25, GL36, GL37, GN03 oder NM05 und den Codes NAT und DIVSZ als Biodiversitätsfläche anrechenbar.",
+      "conditions": [
+        {
+          "expression": "(\"1A\" or \"1B\") in measures",
+          "description": "UBB/BIO",
+          "input_paths": [
+            "farm.oepul.measures"
+          ]
+        },
+        {
+          "expression": "eligible auflage and schlagnutzung in list and {NAT, DIVSZ} ⊆ codes",
+          "description": "Anrechnungsbedingungen",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].oepul.schlagnutzung",
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Schlag zählt als Biodiversitätsfläche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-05-DIV-GL",
+        "C-MB-05-DIV-GL-CODES",
+        "C-MB-05-DIV-SCHLAG",
+        "C-SRL-2.1A-DIV-GL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.combinations.div_countable_grassland"
+      ]
+    },
+    {
+      "id": "O618-KOMB-008",
+      "rule_type": "procedure",
+      "statement": "Sollen NAT-Flächen für die DIV-Vorgaben angerechnet werden, sind sie mit NAT und zusätzlich DIV oder DIVSZ zu kennzeichnen; unabhängig von der Anrechenbarkeit sind sie immer nach der Projektbestätigung zu bewirtschaften.",
+      "conditions": [
+        {
+          "expression": "(\"DIV\" or \"DIVSZ\") in codes and not div_countable",
+          "description": "Kennzeichnung ohne erfüllte Anrechnungsbedingungen",
+          "input_paths": [
+            "land.parcels[].oepul.codes",
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Anrechnung als Biodiversitätsfläche nicht möglich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-06-DIVCODE",
+        "C-MB-05-PB-IMMER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.combinations.violations"
+      ]
+    },
+    {
+      "id": "O618-KOMB-009",
+      "rule_type": "combination",
+      "statement": "Nimmt der Betrieb an UBB/BIO teil, ist die DIV-Auflage „mindestens 0,15 ha bei Feldstücken größer 5,00 ha“ auch einzuhalten, wenn das Feldstück in Naturschutz eingebracht ist; ggf. ist eine Fläche aus NAT herauszunehmen und gesondert (z. B. DIVSZ ohne NAT) zu codieren.",
+      "conditions": [
+        {
+          "expression": "UBB/BIO and feldstueck_area_ha > 5 and NAT on feldstueck",
+          "description": "Feldstück > 5 ha mit NAT",
+          "input_paths": [
+            "farm.oepul.measures",
+            "land.parcels[].oepul.feldstueck_id",
+            "land.parcels[].oepul.feldstueck_area_ha"
+          ]
+        },
+        {
+          "expression": "div area on feldstueck < 0.15",
+          "description": "Zu wenig Biodiversitätsfläche",
+          "input_paths": [
+            "land.parcels[].area_ha",
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "DIV-Vorgabe der UBB/BIO nicht erfüllt.",
+        "value": {
+          "threshold_ha": 5.0,
+          "min_div_ha": 0.15
+        }
+      },
+      "source_reference_ids": [
+        "C-MB-05-015",
+        "C-MB-05-BSP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.combinations.violations",
+        "data.oepul.o6_18.combinations.feldstueck_div_area"
+      ]
+    },
+    {
+      "id": "O618-KOMB-010",
+      "rule_type": "combination",
+      "statement": "Naturschutzflächen sind prämienmäßig auf der Einzelfläche mit keiner anderen Maßnahme kombinierbar, ausgenommen Natura 2000 (23) sowie die Abgeltung für (punktförmige) Landschaftselemente im Rahmen von UBB (1A) bzw. BIO (1B) (Anhang L, Fußnote 1).",
+      "conditions": [
+        {
+          "expression": "other_area_measures - {23} not empty or 1A/1B not only landscape elements",
+          "description": "Unzulässige Einzelflächenkombination",
+          "input_paths": [
+            "land.parcels[].oepul.other_area_measures",
+            "land.parcels[].oepul.ubb_bio_only_landscape_elements"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Keine Prämienkombination auf der Einzelfläche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-07-KOMB",
+        "C-SRL-2.18-EINZEL",
+        "C-ANH-L-18",
+        "C-ANH-L-FN1",
+        "C-SRL-2.23-KOMB"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.combinations.violations",
+        "data.oepul.o6_18.combinations.allowed_single_area"
+      ]
+    },
+    {
+      "id": "O618-KOMB-012",
+      "rule_type": "combination",
+      "statement": "Naturschutz ist mit Ergebnisorientierter Bewirtschaftung am Betrieb kombinierbar (betriebliche Teilnahme an nicht einzelflächenkombinierbaren Maßnahmen); ein Schlag kann nicht zugleich NAT und EBW sein.",
+      "conditions": [
+        {
+          "expression": "\"NAT\" in codes and \"EBW\" in codes",
+          "description": "Doppelcodierung",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Keine Einzelflächenkombination NAT/EBW.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-06-EBW",
+        "C-SRL-1.9-KOMB"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.combinations.violations",
+        "data.oepul.o6_18.combinations.farm_level_combinable"
+      ]
+    },
+    {
+      "id": "O618-KOMB-013",
+      "rule_type": "information",
+      "statement": "Grundsätzlich verlangt Naturschutz keine zusätzliche Teilnahme an einer weiteren ÖPUL-Maßnahme (Ausnahmen: Phänologie- und Großtrappen-Auflagen).",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Keine allgemeine Kombinationspflicht",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "information",
+        "description": "Keine weitere Teilnahme nötig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-04-KEINEPFL"
+      ]
+    },
+    {
+      "id": "O618-KOMB-014",
+      "rule_type": "exception",
+      "statement": "Bis einschließlich Antragsjahr 2024 können NAT-Ackerstilllegungen mit Code NPF für den 4 %-Stilllegungsanteil (GLÖZ 8) angerechnet werden; in diesem Fall wird keine ÖPUL-Prämie gewährt. Ab 2025 ist NPF nicht mehr vorgesehen.",
+      "conditions": [
+        {
+          "expression": "\"NPF\" in codes",
+          "description": "NPF-Code",
+          "input_paths": [
+            "land.parcels[].oepul.codes",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_payment",
+        "description": "Keine ÖPUL-Prämie auf dem Schlag (bis 2024); ab 2025 unzulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-06-NPF",
+        "C-MB-06-NPF-KEINE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.combinations.npf_parcels",
+        "data.oepul.o6_18.combinations.violations",
+        "data.oepul.o6_18.premium.reasons"
+      ]
+    },
+    {
+      "id": "O618-KOMB-015",
+      "rule_type": "combination",
+      "statement": "Flächen mit laufenden K20-Verpflichtungen sind auf der Einzelfläche mit keinen anderen Maßnahmen kombinierbar; auf GLÖZ-8-Flächen ist keine Prämie möglich; K20 konnte bis 01.01.2024 in Naturschutz umgewandelt werden.",
+      "conditions": [
+        {
+          "expression": "K20 parcel and other_area_measures not empty",
+          "description": "K20-Kombination",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].oepul.codes",
+            "land.parcels[].oepul.other_area_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Unzulässige Kombination.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-SRL-1.8-K20-KOMB",
+        "C-SRL-1.8-K20",
+        "C-ATB-06-WECHSEL-K20"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.combinations.violations",
+        "data.oepul.o6_18.combinations.k20_parcel"
+      ]
+    },
+    {
+      "id": "O618-KOMB-016",
+      "rule_type": "premium_calculation",
+      "statement": "Aus Naturschutz als Biodiversitätsfläche angerechnete Flächen erhalten keine UBB-Prämie, sondern die Naturschutzprämie, und zählen nicht für den Zuschlag über 7 % hinausgehender Biodiversitätsflächen.",
+      "conditions": [
+        {
+          "expression": "parcel in div_countable",
+          "description": "Angerechnete NAT-Fläche",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Nur NAT-Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-SRL-2.1A-DIV-PRAEMIE",
+        "C-SRL-2.1A-DIV-7"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.combinations.div_counted_receive_nat_premium_only"
+      ]
+    },
+    {
+      "id": "O618-KOMB-017",
+      "rule_type": "combination",
+      "statement": "Die UBB/BIO-Monitoringzuschläge „Beobachtung der Großtrappe“ bzw. „Schnittzeit nach Phänologie“ sind nur möglich, wenn auch an Naturschutz teilgenommen wird und zumindest auf einem Schlag TA01 bzw. GL06/GL15/GL25 vergeben ist.",
+      "conditions": [
+        {
+          "expression": "monitoring option chosen and no NAT parcel with matching auflage",
+          "description": "Voraussetzung fehlt",
+          "input_paths": [
+            "farm.oepul.ubb_bio_monitoring_options",
+            "land.parcels[].naturschutz.project_confirmation.auflagen"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Monitoringzuschlag nicht zulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-SRL-2.1A-MON-TRAPPE",
+        "C-SRL-2.1A-MON-PHAENO"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.combinations.violations"
+      ]
+    },
+    {
+      "id": "O618-KOMB-018",
+      "rule_type": "obligation",
+      "statement": "Acker-Biodiversitätsflächen, die zusätzlich in Naturschutz eingebracht sind, dürfen nur nach den Vorgaben der Projektbestätigung bewirtschaftet werden.",
+      "conditions": [
+        {
+          "expression": "\"NAT\" in codes and \"DIV\" in codes",
+          "description": "NAT-DIV-Schlag",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Projektbestätigung geht vor.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-05-PB-IMMER",
+        "C-N0812-NAT-PB"
+      ]
+    },
+    {
+      "id": "O618-KOMB-019",
+      "rule_type": "information",
+      "statement": "Natura-2000-Auflagen GI05-GI07, GL02-GL05, GL36, GL37 sind mit den gleichnamigen Anhang-I-Auflagen gleichinhaltlich; Kombinationen zwischen Naturschutz und Natura 2000 regelt Anhang J; Natura 2000 ist mit Naturschutz auf der Einzelfläche kombinierbar.",
+      "conditions": [
+        {
+          "expression": "\"23\" in other_area_measures",
+          "description": "N2000-Fläche",
+          "input_paths": [
+            "land.parcels[].oepul.other_area_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "information",
+        "description": "Kombination erlaubt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-SRL-2.23-GLEICH",
+        "C-SRL-2.23-KOMB"
+      ]
+    },
+    {
+      "id": "O618-KOMB-020",
+      "rule_type": "procedure",
+      "statement": "Code OP bzw. maßnahmenbezogener OP-Code ist zu vergeben bei Leistungsüberschneidung mit anderen öffentlichen Titeln, behördlich vorgeschriebenen Ausgleichsflächen, nicht ganzjähriger oder nicht über den Vertragszeitraum möglicher Erfüllung; dieselbe Leistung ist nicht doppelt förderbar.",
+      "conditions": [
+        {
+          "expression": "overlap or authority-imposed or not full-year/contract fulfilment",
+          "description": "OP-Tatbestand",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_payment",
+        "description": "Keine ÖPUL-Prämie auf dem Schlag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-SRL-1.6-ABGR",
+        "C-ATB-05-OP-LEIST",
+        "C-ATB-05-OP-BEH",
+        "C-ATB-05-OP-GANZJ",
+        "C-ATB-05-OP-VZ"
+      ]
+    },
+    {
+      "id": "O618-PREM-001",
+      "rule_type": "premium_calculation",
+      "statement": "Die Schlagprämie ergibt sich aus der Summe der Anhang-I-Prämiensätze (Euro/ha, gültig ab 01.01.2024) der in der Projektbestätigung vergebenen Auflagen, multipliziert mit der förderfähigen Fläche.",
+      "conditions": [
+        {
+          "expression": "rates_available (year >= 2024)",
+          "description": "Anhang-I-Sätze verfügbar",
+          "input_paths": [
+            "farm.year"
+          ]
+        },
+        {
+          "expression": "sum(rate_for(auflage, year))",
+          "description": "Summe Teilprämien",
+          "input_paths": [
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Prämie je Schlag in Euro.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-01-TEILPRAEMIEN",
+        "C-MB-07-PRAEMIE",
+        "C-ANH-I-SAETZE",
+        "C-SRL-2.18-SAETZE",
+        "C-ANH-I-GA01",
+        "C-ANH-I-GG-2025",
+        "C-MB-04-ANHI",
+        "C-ANH-I-LA",
+        "C-ANH-I-OA02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.premium.base_rate",
+        "data.oepul.o6_18.premium.parcel_premium",
+        "data.oepul.o6_18.lib.rate_for"
+      ]
+    },
+    {
+      "id": "O618-PREM-002",
+      "rule_type": "premium_calculation",
+      "statement": "Prämienzuschläge: SA01 +75,6 €/ha bei Ackerzahl über 50; GM01 +108 €/ha bei Teilnahme an Heuwirtschaft; HG01/HG02 +108 €/ha, wenn mindestens 50 % der Fläche im Layer Schutzgutflächen liegen.",
+      "conditions": [
+        {
+          "expression": "SA01 and ackerzahl > 50",
+          "description": "Ackerzahl",
+          "input_paths": [
+            "land.parcels[].naturschutz.ackerzahl"
+          ]
+        },
+        {
+          "expression": "GM01 and \"3\" in measures",
+          "description": "Heuwirtschaft",
+          "input_paths": [
+            "farm.oepul.measures"
+          ]
+        },
+        {
+          "expression": "HG01/HG02 and schutzgut_layer_share >= 0.5",
+          "description": "Schutzgutflächen",
+          "input_paths": [
+            "land.parcels[].naturschutz.schutzgut_layer_share"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Zuschlag Euro/ha.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ANH-I-SA01",
+        "C-ANH-I-GM01",
+        "C-ANH-I-HG-ZUSCHL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.premium.surcharge_rate",
+        "data.oepul.o6_18.premium.surcharge_applies"
+      ]
+    },
+    {
+      "id": "O618-PREM-003",
+      "rule_type": "premium_calculation",
+      "statement": "Begrünte Ackerflächen im Rahmen von GLÖZ 4 (Pufferstreifen) und bis einschließlich 2024 stillgelegte Ackerflächen im Rahmen von GLÖZ 8 sind auf dem betroffenen Flächenteil nicht förderbar.",
+      "conditions": [
+        {
+          "expression": "eligible_area = area_ha - gloez4_buffer_area_ha - (year <= 2024 ? gloez8_fallow_area_ha : 0)",
+          "description": "Abzug",
+          "input_paths": [
+            "land.parcels[].oepul.gloez4_buffer_area_ha",
+            "land.parcels[].oepul.gloez8_fallow_area_ha",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Förderfähige Fläche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-07-GLOEZ",
+        "C-SRL-2.18-GLOEZ"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.premium.eligible_area",
+        "data.oepul.o6_18.premium.gloez8_area"
+      ]
+    },
+    {
+      "id": "O618-PREM-004",
+      "rule_type": "premium_calculation",
+      "statement": "Ackerstilllegungen (SA01) sind maximal im Ausmaß von 25 % der gesamten Ackerfläche des Betriebes, jedenfalls aber im Ausmaß von 2 ha förderfähig.",
+      "conditions": [
+        {
+          "expression": "set_aside_area > max(0.25 * arable_area_ha, 2.0)",
+          "description": "Obergrenze überschritten",
+          "input_paths": [
+            "land.arable_area_ha",
+            "land.parcels[].naturschutz.project_confirmation.auflagen",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Anteilige Kürzung der Stilllegungsfläche.",
+        "value": {
+          "share": 0.25,
+          "min_ha": 2.0
+        }
+      },
+      "source_reference_ids": [
+        "C-MB-07-STILL",
+        "C-SRL-2.18-STILL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.premium.set_aside_factor",
+        "data.oepul.o6_18.premium.set_aside_cap_ha",
+        "data.oepul.o6_18.premium.findings"
+      ]
+    },
+    {
+      "id": "O618-PREM-005",
+      "rule_type": "premium_calculation",
+      "statement": "Flächen mit Code OP (bzw. maßnahmenbezogenem OP-Code) oder als Versuchsfläche (VF) sowie NAT-Flächen mit Code NPF (bis 2024) erhalten im jeweiligen Jahr keine Prämie.",
+      "conditions": [
+        {
+          "expression": "codes ∩ {OP, OPNAT, VF, NPF} not empty",
+          "description": "Code ohne Prämie",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_payment",
+        "description": "Keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-05-OP",
+        "C-ATB-05-VF",
+        "C-SRL-1.7-VERSUCH",
+        "C-MB-06-NPF-KEINE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.premium.reasons",
+        "data.oepul.o6_18.premium.parcel_premium"
+      ]
+    },
+    {
+      "id": "O618-PREM-006",
+      "rule_type": "premium_calculation",
+      "statement": "Flächen in Nationalparks erhalten keine Naturschutzprämie, wenn dort relevante Bewirtschaftungsauflagen festgelegt sind; in den Nationalparks Neusiedlersee und Donau-Auen werden (außer Natura 2000/WRRL) generell keine flächenbezogenen ÖPUL-Prämien gewährt; Förderverpflichtungen gelten weiter.",
+      "conditions": [
+        {
+          "expression": "national_park in {Neusiedlersee, Donau-Auen} or national_park_relevant_requirements",
+          "description": "Nationalparkfläche",
+          "input_paths": [
+            "land.parcels[].oepul.national_park",
+            "land.parcels[].oepul.national_park_relevant_requirements"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_payment",
+        "description": "Keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-05-NP",
+        "C-ATB-05-NP-DA",
+        "C-SRL-1.6-NP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.premium.reasons"
+      ]
+    },
+    {
+      "id": "O618-PREM-007",
+      "rule_type": "premium_calculation",
+      "statement": "Ohne Naturschutz-Referenzfläche oder Projektbestätigung wird für den Schlag keine Prämie ausbezahlt.",
+      "conditions": [
+        {
+          "expression": "not reference_area_present or not project_confirmation.present",
+          "description": "Fehlende Grundlage",
+          "input_paths": [
+            "land.parcels[].naturschutz.reference_area_present",
+            "land.parcels[].naturschutz.project_confirmation.present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_payment",
+        "description": "Keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-06-REF",
+        "C-MB-03-PB"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.premium.reasons"
+      ]
+    },
+    {
+      "id": "O618-PREM-008",
+      "rule_type": "premium_calculation",
+      "statement": "Obergrenze der Summe flächenbezogener Zahlungen je Schlag bei Teilnahme an Naturschutz/EBW: 1.300 €/ha (2023), 1.500 €/ha (ab 2024).",
+      "conditions": [
+        {
+          "expression": "rate*modulation + other_area_payments_eur_per_ha > cap",
+          "description": "Obergrenze überschritten",
+          "input_paths": [
+            "land.parcels[].oepul.other_area_payments_eur_per_ha",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Gekappter Satz.",
+        "value": {
+          "2023": 1300,
+          "2024+": 1500
+        }
+      },
+      "source_reference_ids": [
+        "C-ATB-09-OBERGR",
+        "C-ATB-09-OBERGR-1500",
+        "C-SRL-1.9-OBERGR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.premium.capped_rate",
+        "data.oepul.o6_18.premium.cap_per_ha"
+      ]
+    },
+    {
+      "id": "O618-PREM-009",
+      "rule_type": "premium_calculation",
+      "statement": "Betriebsgrößenmodulation nach Gesamtfläche: bis 200 ha 100 %, >200-300 ha 90 %, >300-1.000 ha 85 %, über 1.000 ha 75 % (gewichteter Faktor auf alle Prämien; Basis Mehrfachantrag).",
+      "conditions": [
+        {
+          "expression": "factor = sum(band_share * band_factor)/total_area_ha",
+          "description": "Modulationsfaktor",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Modulationsfaktor.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-09-MOD200",
+        "C-ATB-09-MOD300",
+        "C-ATB-09-MOD1000",
+        "C-ATB-09-MODUEBER",
+        "C-ATB-09-MODBSP",
+        "C-SRL-1.9-MOD",
+        "C-SRL-1.9-MODMFA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.premium.modulation_factor"
+      ]
+    },
+    {
+      "id": "O618-PREM-010",
+      "rule_type": "premium_calculation",
+      "statement": "Zuschlag Regionaler Naturschutzplan: 250 € je Betrieb (2023), 270 € je Betrieb (ab 2024); bei gleichzeitiger Teilnahme an Naturschutz und EBW nur einmal je Betrieb und Jahr.",
+      "conditions": [
+        {
+          "expression": "regional_plan_eligible",
+          "description": "Zuschlagsvoraussetzungen erfüllt",
+          "input_paths": [
+            "farm.oepul.naturschutz.regional_plan.applied",
+            "farm.oepul.naturschutz.regional_plan.participation_confirmation"
+          ]
+        },
+        {
+          "expression": "not granted_via_ebw",
+          "description": "Nicht bereits über EBW gewährt",
+          "input_paths": [
+            "farm.oepul.naturschutz.regional_plan.granted_via_ebw"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Zuschlag in Euro.",
+        "value": {
+          "2023": 250,
+          "2024+": 270
+        }
+      },
+      "source_reference_ids": [
+        "C-MB-07-RNP-270",
+        "C-MB-07-RNP-250",
+        "C-SRL-2.18-RNP270",
+        "C-MB-07-RNP-EINMAL",
+        "C-SRL-2.18-EINMAL",
+        "C-SRL-2.19-RNP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.premium.regional_plan_premium",
+        "data.oepul.o6_18.premium.regional_plan_payable"
+      ]
+    },
+    {
+      "id": "O618-PREM-011",
+      "rule_type": "premium_calculation",
+      "statement": "Von der Gewährung kann abgesehen werden, wenn der Auszahlungsbetrag 50 Euro nicht überschreitet.",
+      "conditions": [
+        {
+          "expression": "total_premium <= 50",
+          "description": "Kleinbetrag",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Auszahlung kann unterbleiben.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-SRL-1.10-50EUR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.premium.payment_may_be_withheld"
+      ]
+    },
+    {
+      "id": "O618-PREM-012",
+      "rule_type": "information",
+      "statement": "Die Prämiensätze des Anhang I gelten ab 01.01.2024; die Sätze für 2023 sind in den bereitgestellten Quellen nicht enthalten, daher wird für 2023 keine Schlagprämie berechnet.",
+      "conditions": [
+        {
+          "expression": "farm.year < 2024",
+          "description": "Antragsjahr 2023",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "finding",
+        "description": "Prämie nicht berechenbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-SRL-2.18-SAETZE",
+        "C-ANH-I-SAETZE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.premium.rates_available",
+        "data.oepul.o6_18.premium.findings"
+      ]
+    },
+    {
+      "id": "O618-PREM-013",
+      "rule_type": "premium_calculation",
+      "statement": "Flächenzugänge sind 2024 und 2025 zur Gänze prämienfähig; in den Folgejahren nur bis 50 % auf Basis des Antragsjahres 2025, jedenfalls bis +5 ha; vorher mit gleicher Maßnahme belegte Flächen sind kein Zugang.",
+      "conditions": [
+        {
+          "expression": "year > 2025 and nat_area > area_2025 + max(0.5*area_2025, 5)",
+          "description": "Zugang über Grenze",
+          "input_paths": [
+            "farm.oepul.naturschutz.area_2025_ha",
+            "farm.oepul.naturschutz.previously_committed_added_area_ha",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Anteilige Prämienfähigkeit.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-07-ZUGANG",
+        "C-ATB-07-ZUGANG5",
+        "C-ATB-07-ZUGANG-2425",
+        "C-ATB-07-ZUGANG-GLEICH",
+        "C-SRL-1.7-ZUGANG-NAT",
+        "C-SRL-1.7-ZUGANG",
+        "C-SRL-1.7-ZUGANG5"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.premium.access_factor",
+        "data.oepul.o6_18.premium.access_limit_ha"
+      ]
+    },
+    {
+      "id": "O618-PREM-015",
+      "rule_type": "procedure",
+      "statement": "Auszahlung durch die AMA bis 30. Juni des Folgejahres; nach Verwaltungskontrolle Teilzahlung von höchstens 75 % möglich.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Auszahlungsmodalitäten",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Auszahlungstermin und maximale Teilzahlung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-09-AUSZ",
+        "C-ATB-09-TEIL",
+        "C-SRL-1.10-AUSZ"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.premium.max_advance_payment",
+        "data.oepul.o6_18.premium.payout_deadline"
+      ]
+    },
+    {
+      "id": "O618-PREM-016",
+      "rule_type": "premium_calculation",
+      "statement": "Förderfähig sind nur Flächen, auf denen die Verpflichtungen während des gesamten Kalenderjahres erfüllt werden; unterjährig weitergegebene Flächen nur, wenn der Übernehmer die Auflagen bis Jahresende einhält, sonst OP-Code und keine Prämie.",
+      "conditions": [
+        {
+          "expression": "transferred_during_year and not successor_continues_until_year_end",
+          "description": "Weitergabe ohne Weiterführung",
+          "input_paths": [
+            "land.parcels[].oepul.transferred_during_year",
+            "land.parcels[].oepul.successor_continues_until_year_end"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_payment",
+        "description": "Keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-05-WEITERG",
+        "C-ATB-05-GESAMT",
+        "C-SRL-1.7-WEITERG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.premium.reasons"
+      ]
+    },
+    {
+      "id": "O618-PREM-017",
+      "rule_type": "procedure",
+      "statement": "Reihenfolge bei Mehrfachkürzungen: Übererklärung, Förder-/Zugangsvoraussetzungen, Fristversäumnis, Untererklärung, inhaltliche Kürzungen, Förderobergrenze, Modulation, Obergrenze Flächenzahlungen, Vertragszeitraumüberprüfung, Zugangskürzung, Konditionalität.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Mehrfachkürzung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Kürzungsreihenfolge (data/o6_18/parameters.json reduction_order).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-SRL-1.12-REIHE",
+        "C-SRL-1.12-REIHE-ZUG"
+      ]
+    },
+    {
+      "id": "O618-PREM-019",
+      "rule_type": "definition",
+      "statement": "Die Verpflichtungsdauer erstreckt sich über das gesamte Kalenderjahr (1. Jänner bis 31. Dezember).",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Kalenderjahr",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "definition",
+        "description": "Verpflichtungsjahr = Kalenderjahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-05-VDAUER",
+        "C-SRL-1.7-VDAUER"
+      ]
+    },
+    {
+      "id": "O618-ADM-001",
+      "rule_type": "administrative_consequence",
+      "statement": "Verringerung der Maßnahmenfläche ist jährlich bis 5 % der Vorjahresfläche, höchstens 5 ha, jedenfalls 0,50 ha zulässig; bei Überschreitung besteht Rückzahlungspflicht für die gesamte Differenzfläche.",
+      "conditions": [
+        {
+          "expression": "decrease > max(min(0.05*previous, 5), 0.5)",
+          "description": "Toleranz überschritten",
+          "input_paths": [
+            "farm.oepul.naturschutz.area_previous_year_ha",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "repayment",
+        "description": "Rückzahlung für gesamte Differenzfläche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-07-TOL5",
+        "C-ATB-07-TOL5HA",
+        "C-ATB-07-TOL05",
+        "C-ATB-07-BASIS",
+        "C-SRL-1.7-ABGANG",
+        "C-ATB-07-RUECK"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.administration.repayment_area_ha",
+        "data.oepul.o6_18.administration.tolerated_decrease_ha"
+      ]
+    },
+    {
+      "id": "O618-ADM-002",
+      "rule_type": "exception",
+      "statement": "Keine Rückzahlung bei Verlust der Verfügungsgewalt (Übertragung an andere Person, z. B. Pachtende, Verkauf) sowie bei zulässigen Umwandlungen (Acker/Dauerkultur/Wein in Grünland; Grünland in Almweide; Maßnahmenflächen in LSE Mehrnutzenhecke/Agroforststreifen).",
+      "conditions": [
+        {
+          "expression": "area_lost_disposal_right_ha, area_permitted_conversion_ha",
+          "description": "Ausgenommene Verringerung",
+          "input_paths": [
+            "farm.oepul.naturschutz.area_lost_disposal_right_ha",
+            "farm.oepul.naturschutz.area_permitted_conversion_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exemption",
+        "description": "Keine Rückzahlung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-07-VERFUEG",
+        "C-SRL-1.7-VERFUEG",
+        "C-ATB-07-UMW",
+        "C-SRL-1.7-UMW"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.administration.exempt_decrease_ha"
+      ]
+    },
+    {
+      "id": "O618-ADM-003",
+      "rule_type": "procedure",
+      "statement": "Bei Wechsel der bewirtschaftenden Person sind die Maßnahmenflächen weiterzuführen; die nachfolgende Person tritt dem Fördervertrag bei, beide haften solidarisch.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.naturschutz.operator_change",
+          "description": "Bewirtschafterwechsel",
+          "input_paths": [
+            "farm.oepul.naturschutz.operator_change"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Weiterführung der Verpflichtung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-07-BEWWECHSEL",
+        "C-SRL-1.7-UEBERTR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.administration.findings"
+      ]
+    },
+    {
+      "id": "O618-ADM-004",
+      "rule_type": "administrative_consequence",
+      "statement": "Ausstieg aus der mehrjährigen Maßnahme vor Ende des Vertragszeitraums führt zur Rückforderung bereits gewährter Maßnahmenprämien; Flächen des ersten Jahres und Zugänge sind bis Vertragsende zu bewirtschaften.",
+      "conditions": [
+        {
+          "expression": "exit.exited and exit_year <= 2028 and not repayment_waived",
+          "description": "Vorzeitiger Ausstieg",
+          "input_paths": [
+            "farm.oepul.naturschutz.exit.exited",
+            "farm.oepul.naturschutz.exit.exit_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "repayment",
+        "description": "Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-06-AUSRUECK",
+        "C-ATB-05-VZ-FLAECHEN",
+        "C-SRL-1.7-FLAECHEN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.administration.repayment_of_granted_premiums"
+      ]
+    },
+    {
+      "id": "O618-ADM-005",
+      "rule_type": "administrative_consequence",
+      "statement": "Wird im laufenden Jahr abgemeldet, ist die Maßnahme im betroffenen Förderjahr nicht mehr gültig; bis zum Ausstieg sind die Verpflichtungen einzuhalten; ein Ausstieg ist bis zur Ankündigung/Durchführung einer Vor-Ort-Kontrolle bzw. Mitteilung eines Verwaltungskontrollergebnisses möglich.",
+      "conditions": [
+        {
+          "expression": "exit.exit_year == farm.year",
+          "description": "Abmeldung im Jahr",
+          "input_paths": [
+            "farm.oepul.naturschutz.exit.exit_year",
+            "farm.year"
+          ]
+        },
+        {
+          "expression": "exit.on_site_control_announced_before_exit",
+          "description": "VOK bereits angekündigt",
+          "input_paths": [
+            "farm.oepul.naturschutz.exit.on_site_control_announced_before_exit"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Maßnahme im Jahr ungültig / Ausstieg nicht mehr möglich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-06-ABMELD",
+        "C-ATB-06-AUSVOK",
+        "C-ATB-06-BISAUS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.administration.measure_valid_this_year",
+        "data.oepul.o6_18.administration.findings"
+      ]
+    },
+    {
+      "id": "O618-ADM-006",
+      "rule_type": "procedure",
+      "statement": "Nach Ausstieg, Ausschluss oder einjähriger Nichtabgabe des Mehrfachantrages ist ein Wiedereinstieg nur mit einem neuerlichen Maßnahmenantrag möglich.",
+      "conditions": [
+        {
+          "expression": "exited or excluded or mfa_not_submitted_previous_year",
+          "description": "Unterbrechung",
+          "input_paths": [
+            "farm.oepul.naturschutz.exit.exited",
+            "farm.oepul.naturschutz.excluded",
+            "farm.oepul.naturschutz.mfa_not_submitted_previous_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Neuer Maßnahmenantrag erforderlich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-06-WIEDER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.administration.reentry_requires_new_application"
+      ]
+    },
+    {
+      "id": "O618-ADM-007",
+      "rule_type": "deadline",
+      "statement": "Maßnahmenwechsel: Naturschutz kann bis spätestens 31.12.2025 in EBW umgewandelt werden (ohne Rückzahlung, Restlaufzeit); Umwandlung in Naturschutz aus Bergmähdern, Begrünten Abflusswegen, Auswaschungsgefährdeten Ackerflächen, EBW (bis 31.12.2025) und K20 (bis 01.01.2024).",
+      "conditions": [
+        {
+          "expression": "switch_to_ebw.switch_date > 2025-12-31",
+          "description": "Wechsel zu spät",
+          "input_paths": [
+            "farm.oepul.naturschutz.switch_to_ebw.requested",
+            "farm.oepul.naturschutz.switch_to_ebw.switch_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Wechsel nicht möglich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-MB-06-UMSTIEG",
+        "C-ATB-06-WECHSEL",
+        "C-ATB-06-WECHSEL-NAT",
+        "C-ATB-06-WECHSEL-BM",
+        "C-ATB-06-WECHSEL-K20",
+        "C-SRL-1.7-UMWANDL",
+        "C-SRL-1.7-UMWANDL-NAT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.administration.violations",
+        "data.oepul.o6_18.administration.switch_into_nat_allowed"
+      ]
+    },
+    {
+      "id": "O618-ADM-008",
+      "rule_type": "deadline",
+      "statement": "Maßnahmenübernahme durch einen nicht teilnehmenden Betrieb bis 15. April (2023 und 2028: 17. April) für die Restlaufzeit; Ausweitung auf andere Flächen höchstens 50 %; der Zuschlag Regionaler Naturschutzplan ist nur bei Betriebsauflösung, -teilung oder -zusammenlegung übernehmbar.",
+      "conditions": [
+        {
+          "expression": "takeover.date > deadline or expansion > 0.5*taken or regional plan without reason",
+          "description": "Übernahmebedingung verletzt",
+          "input_paths": [
+            "farm.oepul.naturschutz.takeover.date",
+            "farm.oepul.naturschutz.takeover.taken_over_area_ha",
+            "farm.oepul.naturschutz.takeover.expansion_area_ha",
+            "farm.oepul.naturschutz.takeover.reason"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Übernahme nicht genehmigungsfähig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-06-UEBERN",
+        "C-ATB-06-UEBERN-50",
+        "C-ATB-06-UEBERN-RNP",
+        "C-ATB-06-UEBERN-EINZ",
+        "C-SRL-1.7-UEBERN",
+        "C-SRL-1.7-UEBERN-EINZ"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.administration.violations",
+        "data.oepul.o6_18.administration.takeover_deadline"
+      ]
+    },
+    {
+      "id": "O618-ADM-009",
+      "rule_type": "sanction",
+      "statement": "Verstöße gegen inhaltliche Auflagen werden nach Schwere, Ausmaß, Dauer und Häufigkeit maßnahmenbezogen gestuft: Verwarnung (ab 2027 Einbehalt 1 %), Kürzung 2/5/10/25/50/100 %; bei zweimaliger 100 %-Kürzung im Vertragszeitraum Ausschluss und Rückforderung der bisher gewährten Maßnahmenprämie.",
+      "conditions": [
+        {
+          "expression": "sanction level; hundred_percent_reductions_in_contract_period >= 2",
+          "description": "Sanktionsstufe",
+          "input_paths": [
+            "farm.oepul.naturschutz.hundred_percent_reductions_in_contract_period",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "sanction",
+        "description": "Kürzungsanteil bzw. Ausschluss.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-08-BEWERT",
+        "C-ATB-08-100",
+        "C-ATB-08-AUSSCHL",
+        "C-ATB-08-2027",
+        "C-SRL-1.12-SANK",
+        "C-ATB-08-RUECKF"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.administration.sanction_share",
+        "data.oepul.o6_18.administration.excluded"
+      ]
+    },
+    {
+      "id": "O618-ADM-010",
+      "rule_type": "administrative_consequence",
+      "statement": "Nichterfüllung von Förder- bzw. Zugangsvoraussetzungen: im 1. Jahr kommt kein Vertrag zustande; ab dem 2. Verpflichtungsjahr wird im betroffenen Jahr keine Prämie gewährt.",
+      "conditions": [
+        {
+          "expression": "access_requirements_failed",
+          "description": "Zugangsvoraussetzung verletzt",
+          "input_paths": [
+            "farm.oepul.naturschutz.access_requirements_failed",
+            "farm.oepul.naturschutz.contract_start_year",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "no_contract bzw. no_premium_this_year.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-SRL-1.12-ZUGANG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.administration.access_failure_consequence"
+      ]
+    },
+    {
+      "id": "O618-ADM-011",
+      "rule_type": "administrative_consequence",
+      "statement": "Verweigert die förderwerbende Person die Auskunft oder verhindert sie die Vor-Ort-Kontrolle (außer höhere Gewalt), wird der Antrag abgelehnt, für das laufende Jahr keine Prämie gewährt und bestehende Verträge beendet und rückabgewickelt.",
+      "conditions": [
+        {
+          "expression": "refused_on_site_control and not refusal_force_majeure",
+          "description": "Kontrollverweigerung",
+          "input_paths": [
+            "farm.oepul.naturschutz.refused_on_site_control",
+            "farm.oepul.naturschutz.refusal_force_majeure"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "repayment",
+        "description": "Ablehnung und Rückabwicklung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-SRL-1.11-VERWEIG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.administration.findings"
+      ]
+    },
+    {
+      "id": "O618-ADM-012",
+      "rule_type": "administrative_consequence",
+      "statement": "Wird in einem weiteren Verpflichtungsjahr eine Maßnahme/Fläche nicht beantragt, bleibt die Verpflichtung aufrecht, aber es erfolgt keine Zahlung; wird der Zahlungsantrag nicht binnen 1 Jahr nachgeholt, endet die Verpflichtung und alle bisher gewährten Prämien sind zurückzuzahlen.",
+      "conditions": [
+        {
+          "expression": "payment_claim_missed_since_year",
+          "description": "Nicht beantragtes Jahr",
+          "input_paths": [
+            "farm.oepul.naturschutz.payment_claim_missed_since_year",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "obligation_remains_no_payment bzw. obligation_ends_full_repayment.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-SRL-1.10-ZA",
+        "C-SRL-1.10-ZA-ENDE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.administration.payment_claim_consequence"
+      ]
+    },
+    {
+      "id": "O618-ADM-013",
+      "rule_type": "exception",
+      "statement": "Höhere Gewalt/außergewöhnliche Umstände und dauerhafte bzw. vorübergehende flächen- oder bewirtschaftungsverändernde Umstände: bei rechtzeitiger Meldung keine Rückforderung; bei dauerhaften Umständen Prämie im Eintrittsjahr nur bei Eintritt nach dem 15.04. (bzw. bei höherer Gewalt).",
+      "conditions": [
+        {
+          "expression": "exit.permanent_circumstance and reported_in_time or force_majeure_recognised",
+          "description": "Anerkannter Umstand",
+          "input_paths": [
+            "farm.oepul.naturschutz.exit.permanent_circumstance",
+            "farm.oepul.naturschutz.exit.reported_in_time",
+            "farm.oepul.naturschutz.exit.force_majeure_recognised",
+            "farm.oepul.naturschutz.exit.event_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exemption",
+        "description": "Keine Rückforderung / Prämie im Eintrittsjahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-SRL-1.7-DAUERH",
+        "C-SRL-1.7-1504",
+        "C-SRL-1.7-VORUEB",
+        "C-N0522-HG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.administration.repayment_waived",
+        "data.oepul.o6_18.administration.premium_in_event_year"
+      ]
+    },
+    {
+      "id": "O618-ADM-014",
+      "rule_type": "exception",
+      "statement": "Revisionsklausel: Bei Änderungen des verbindlichen Rechtsrahmens kann die förderwerbende Person die Zustimmung zur Vertragsanpassung verweigern; der Vertrag endet dann ohne Rückforderungen für die Vergangenheit wegen Nichteinhaltung des Vertragszeitraums.",
+      "conditions": [
+        {
+          "expression": "exit.revision_clause_refusal",
+          "description": "Ablehnung der Vertragsanpassung",
+          "input_paths": [
+            "farm.oepul.naturschutz.exit.revision_clause_refusal"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exemption",
+        "description": "Vertragsende ohne Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-SRL-1.7-REVISION"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.administration.repayment_waived"
+      ]
+    },
+    {
+      "id": "O618-ADM-015",
+      "rule_type": "procedure",
+      "statement": "Nichterfüllung durch reines Fremdverschulden: betroffenes Flächenausmaß mit maßnahmenbezogenem OP-Code versehen (keine Prämie, Nachweise aufbewahren); ohne Fremdverschulden ist der Code (z. B. NAT) per Korrektur zu löschen oder eine Selbstanzeige zu erstatten (geringere Sanktion als bei VOK-Feststellung).",
+      "conditions": [
+        {
+          "expression": "noncompliance.occurred",
+          "description": "Verstoß",
+          "input_paths": [
+            "land.parcels[].naturschutz.noncompliance.occurred",
+            "land.parcels[].naturschutz.noncompliance.third_party_fault",
+            "land.parcels[].naturschutz.noncompliance.self_reported",
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "OP-Code bzw. Löschung/Selbstanzeige erforderlich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-05-FREMD",
+        "C-ATB-05-SELBST",
+        "C-ATB-05-SELBST-SANK"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.administration.violations"
+      ]
+    },
+    {
+      "id": "O618-ADM-017",
+      "rule_type": "procedure",
+      "statement": "Kann die Maßnahmenverpflichtung nicht ganzjährig erfüllt werden (z. B. unterjährige Flächenweitergabe ohne Weiterführung), ist der Schlag mit Code OP bzw. maßnahmenbezogenem OP-Code zu versehen.",
+      "conditions": [
+        {
+          "expression": "transferred_during_year and not successor_continues and no OP code",
+          "description": "OP-Code fehlt",
+          "input_paths": [
+            "land.parcels[].oepul.transferred_during_year",
+            "land.parcels[].oepul.successor_continues_until_year_end",
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Codierung erforderlich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-05-WEITERG",
+        "C-ATB-05-OP-GANZJ"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.administration.violations"
+      ]
+    },
+    {
+      "id": "O618-ADM-018",
+      "rule_type": "procedure",
+      "statement": "Unmögliche Maßnahmenkombinationen können bis zum Erhalt der Auszahlungsmitteilung korrigiert werden, sofern keine Beanstandung bei einer Vor-Ort-Kontrolle vorliegt; bis zur Abmeldung sind alle Verpflichtungen einzuhalten.",
+      "conditions": [
+        {
+          "expression": "not payment_notice_received and not on_site_control_objection",
+          "description": "Korrektur möglich",
+          "input_paths": [
+            "farm.oepul.naturschutz.payment_notice_received",
+            "farm.oepul.naturschutz.on_site_control_objection"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "value",
+        "description": "Korrektur zulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-06-KOMB"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.administration.combination_correction_possible"
+      ]
+    },
+    {
+      "id": "O618-ADM-021",
+      "rule_type": "procedure",
+      "statement": "Versuchsflächen (Code VF): schriftliche Genehmigung des BML-Versuches am Betrieb verfügbar halten, Art/Ausmaß/Lage dokumentieren; im laufenden Jahr keine Prämie.",
+      "conditions": [
+        {
+          "expression": "\"VF\" in codes and not trial_written_approval",
+          "description": "Genehmigung fehlt",
+          "input_paths": [
+            "land.parcels[].oepul.codes",
+            "land.parcels[].oepul.trial_written_approval"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Dokumentationsmangel; keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-05-VF",
+        "C-SRL-1.7-VERSUCH"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.administration.violations"
+      ]
+    },
+    {
+      "id": "O618-ADM-022",
+      "rule_type": "procedure",
+      "statement": "Die Einhaltung aller Bedingungen wird über Verwaltungs-, Vor-Ort- und nachgängige Kontrollen geprüft; Kürzungen/Rückforderungen resultieren u. a. aus Nichteinhaltung von Zugangsvoraussetzungen, Flächenabweichungen, inhaltlichen Verpflichtungen, Konditionalität und Vertragszeitraum.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Kontrolle",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "information",
+        "description": "Kontrollsystem.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-ATB-08-KONTR",
+        "C-ATB-08-RUECKF"
+      ]
+    },
+    {
+      "id": "O618-ADM-023",
+      "rule_type": "procedure",
+      "statement": "Das BML kann bei flächen- oder bewirtschaftungsverändernden Umständen spezielle Festlegungen treffen (Grundlage der 2026-Sonderregelungen).",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "BML-Festlegung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "information",
+        "description": "Sonderregelungen möglich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-SRL-1.7-BML"
+      ]
+    },
+    {
+      "id": "O618-N26-001",
+      "rule_type": "exception",
+      "statement": "Dürre 2026: Flächen in Naturschutz mit festgelegtem Nutzungstermin dürfen ab 12. August 2026 genutzt werden (erste oder zweite Nutzung); die Projektbestätigung wird nicht abgeändert und die ausgewiesene Prämie trotzdem gewährt.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026 and \"NAT\" in codes",
+          "description": "NAT-Fläche 2026",
+          "input_paths": [
+            "farm.year",
+            "land.parcels[].oepul.codes"
+          ]
+        },
+        {
+          "expression": "use date >= 2026-08-12",
+          "description": "Nutzung ab Freigabe",
+          "input_paths": [
+            "land.parcels[].operations.cutting_dates"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exemption",
+        "description": "Kein Verstoß gegen Nutzungstermin, Prämie bleibt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-N0812-FREIGABE",
+        "C-N0812-FREIGABE-NUTZ",
+        "C-N0812-FREIGABE-PRAEMIE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.notices_2026.released_use_allowed",
+        "data.oepul.o6_18.notices_2026.premium_kept_despite_release",
+        "data.oepul.o6_18.obligations.effective_date"
+      ]
+    },
+    {
+      "id": "O618-N26-002",
+      "rule_type": "exception",
+      "statement": "Die trockenheitsbedingten Ausnahmeregelungen 2026 für UBB/BIO-Biodiversitätsflächen (vorzeitige Nutzung mit OPUBB/OPBIO) umfassen keine Flächen, für die (auch) Naturschutzvorgaben gelten.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026 and drought_div_exception_used on NAT parcel",
+          "description": "Ausnahme auf NAT-Fläche genutzt",
+          "input_paths": [
+            "land.parcels[].naturschutz.drought_div_exception_used"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Nicht von der Ausnahme gedeckt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-N0522-NAT-AUSGENOMMEN",
+        "C-N0522-VORZ",
+        "C-N0522-DIV7"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.notices_2026.violations"
+      ]
+    },
+    {
+      "id": "O618-N26-003",
+      "rule_type": "exception",
+      "statement": "Die 2026 zusätzlich zulässige dritte Nutzung von Acker-Biodiversitätsflächen gilt nicht für Flächen, die zusätzlich in Naturschutz eingebracht sind; diese dürfen weiterhin nur nach der Projektbestätigung bewirtschaftet werden.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026 and NAT+DIV arable and uses >= 3",
+          "description": "Dritte Nutzung",
+          "input_paths": [
+            "land.parcels[].oepul.codes",
+            "land.parcels[].operations.cutting_dates",
+            "land.parcels[].naturschutz.grazing_periods"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Nicht von der Ausnahme gedeckt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-N0812-DRITTE",
+        "C-N0812-NAT-PB"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.notices_2026.violations"
+      ]
+    },
+    {
+      "id": "O618-N26-004",
+      "rule_type": "exception",
+      "statement": "Dürre 2026: In den gelisteten Bezirken (Burgenland und Wien alle; NÖ, OÖ gelistete; Steiermark Graz, Graz-Umgebung, Hartberg-Fürstenfeld, Leibnitz, Südoststeiermark, Weiz) entfällt die Ernte auf 85 % des Schlages ohne Meldung, wenn kein erntbarer Bestand vorliegt; die ÖPUL-Prämie wird dennoch gewährt.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026 and region in drought list",
+          "description": "Gebietskulisse",
+          "input_paths": [
+            "farm.region.federal_state",
+            "farm.region.district"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exemption",
+        "description": "Ernteverpflichtung entfällt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-N0805-GEBIET",
+        "C-N0805-PRAEMIE",
+        "C-N0805-NOE",
+        "C-N0812-STMK",
+        "C-N0805-ERNTE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.notices_2026.harvest_exemption_district"
+      ]
+    },
+    {
+      "id": "O618-N26-005",
+      "rule_type": "procedure",
+      "statement": "Außerhalb der Gebietskulisse ist bei dürrebedingter Nichterfüllung ein einzelflächenbezogenes Ansuchen auf Anerkennung höherer Gewalt über eAMA (Eingaben) mit Nachweisen erforderlich.",
+      "conditions": [
+        {
+          "expression": "drought_no_harvestable_crop and not harvest_exemption_district",
+          "description": "Außerhalb Gebietskulisse",
+          "input_paths": [
+            "land.parcels[].naturschutz.drought_no_harvestable_crop",
+            "farm.region.district"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Ansuchen erforderlich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "C-N0805-ANSUCHEN",
+        "C-N0522-HG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_18.notices_2026.force_majeure_application_required"
+      ]
+    }
+  ]
+}
