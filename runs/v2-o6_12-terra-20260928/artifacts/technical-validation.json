@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 60,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-12-terra/runs/v2-o6_12-terra-20260928/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_12.rego",
+    "tests/o6_12_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-12-terra/runs/v2-o6_12-terra-20260928/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 12,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_12.rego",
+        "tests/o6_12_test.rego"
+      ],
+      "duration_ms": 22,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-12-terra/runs/v2-o6_12-terra-20260928/workspace/tools/opa",
+            "fmt",
+            "policy/o6_12.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_12\n\nimport rego.v1\n\n# The input extensions documented in profile_changes.json make evidence explicit;\n# an absent required fact deliberately yields no positive eligibility decision.\neligible_crop(parcel) if {\n\tdata.eligible_crop_categories[_] == parcel.crop.crop_category\n}\n\nparticipating_parcels contains parcel if {\n\tparcel := input.land.parcels[_]\n\teligible_crop(parcel)\n}\n\neligible_area_ha := sum([parcel.area_ha | parcel := participating_parcels[_]])\n\nminimum_participation_met if {\n\teligible_area_ha >= 0.5\n}\n\ndisallowed_application(application) if {\n\tapplication.ages_effect_type == \"Insektizid\"\n\tnot application.bio_2018_848_permitted\n\tnot application.officially_ordered\n}\n\nfarmwide_insecticide_waiver_met if {\n\tevery parcel in participating_parcels {\n\t\tevery application in object.get(parcel.operations, \"insecticide_applications\", []) {\n\t\t\tnot disallowed_application(application)\n\t\t}\n\t}\n}\n\nofficial_order_exception_met(application) if {\n\tapplication.officially_ordered\n\tapplication.officially_authorised_active_ingredient\n\tapplication.official_order_documented\n\tapplication.application_documented\n}\n\nofficial_order_exception_met(application) if {\n\tapplication.bio_2018_848_permitted\n}\n\ndisallowed_inventory_item(item) if {\n\tnot item.bio_2018_848_permitted\n\tnot item.used_only_on_other_cultures\n}\n\ndisallowed_inventory_item(item) if {\n\tnot item.bio_2018_848_permitted\n\titem.used_only_on_other_cultures\n\tnot item.quantity_plausible_for_crops\n}\n\ndisallowed_inventory_item(item) if {\n\tnot item.bio_2018_848_permitted\n\titem.used_only_on_other_cultures\n\tnot item.records_available\n}\n\npurchase_or_storage_compliant if {\n\tevery item in object.get(input, \"insecticide_inventory\", []) {\n\t\tnot disallowed_inventory_item(item)\n\t}\n}\n\nrate_is_current(row) if {\n\trow.year_to == null\n}\n\nrate_is_current(row) if {\n\tinput.farm.year <= row.year_to\n}\n\npremium_rate(parcel) := rate if {\n\trow := data.premium_rates_eur_per_ha[_]\n\trow.crop_category == parcel.crop.crop_category\n\tinput.farm.year >= row.year_from\n\trate_is_current(row)\n\trate := row.rate\n}\n\npremium_for_parcel(parcel) := 0 if {\n\tparcel.o6_12_nonpremium\n}\n\npremium_for_parcel(parcel) := parcel.area_ha * premium_rate(parcel) if {\n\teligible_crop(parcel)\n\tnot parcel.o6_12_nonpremium\n\tparcel.crop.crop_category != \"orchard\"\n}\n\npremium_for_parcel(parcel) := parcel.area_ha * premium_rate(parcel) if {\n\teligible_crop(parcel)\n\tnot parcel.o6_12_nonpremium\n\tparcel.crop.crop_category == \"orchard\"\n\tparcel.crop.is_grafted\n}\n\nunmodulated_premium := sum([premium_for_parcel(parcel) | parcel := participating_parcels[_]])\n\nmodulation_factor(area_ha) := factor if {\n\tband := data.modulation_bands[_]\n\tarea_ha > band.lower_exclusive_ha\n\tband.upper_inclusive_ha != null\n\tarea_ha <= band.upper_inclusive_ha\n\tfactor := band.factor\n}\n\nmodulation_factor(area_ha) := factor if {\n\tband := data.modulation_bands[_]\n\tarea_ha > band.lower_exclusive_ha\n\tband.upper_inclusive_ha == null\n\tfactor := band.factor\n}\n\nerosion_organism_supplement_factor := 0.5 if {\n\tinput.farm.participations[_].measure == \"o6_12\"\n\tinput.farm.erosionschutz_organism_supplement\n}\n\nerosion_organism_supplement_factor := 1 if {\n\tnot input.farm.erosionschutz_organism_supplement\n}\n\nmodulated_premium := unmodulated_premium * modulation_factor(input.land.total_area_ha)\n\npsm_code_required(application) := \"PSMCSI\" if {\n\tinput.farm.year <= 2025\n\tapplication.chemical_synthetic\n\tapplication.ages_effect_type == \"Insektizid\"\n}\n\npsm_code_required(application) := \"PSMCS\" if {\n\tinput.farm.year <= 2025\n\tapplication.chemical_synthetic\n\tapplication.ages_effect_type != \"Insektizid\"\n}\n\npsm_code_required(application) := \"PSMBIO\" if {\n\tinput.farm.year <= 2025\n\tnot application.chemical_synthetic\n\tapplication.bio_2018_848_permitted\n}\n\npsm_coding_required if input.farm.year <= 2025\n\npsm_coding_not_required if input.farm.year >= 2026\n\ncontract_end_date := \"2028-12-31\"\n\nmeasure_eligible if {\n\tminimum_participation_met\n\tfarmwide_insecticide_waiver_met\n\tpurchase_or_storage_compliant\n\tnot input.farm.organic_whole_farm\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-12-terra/runs/v2-o6_12-terra-20260928/workspace/tools/opa",
+            "fmt",
+            "tests/o6_12_test.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_12_test\n\nimport data.oepul.o6_12\nimport rego.v1\n\nbase_input := {\n\t\"farm\": {\"year\": 2026, \"organic_whole_farm\": false},\n\t\"land\": {\"total_area_ha\": 10, \"parcels\": [\n\t\t{\"parcel_id\": \"v1\", \"area_ha\": 0.6, \"crop\": {\"crop_category\": \"vineyard\"}, \"operations\": {\"insecticide_applications\": []}},\n\t]},\n\t\"insecticide_inventory\": [],\n}\n\ntest_minimum_area_and_premium if {\n\to6_12.minimum_participation_met with input as base_input\n\to6_12.premium_for_parcel(base_input.land.parcels[0]) == 162 with input as base_input\n\to6_12.modulation_factor(220) == 0.9\n}\n\ntest_forbidden_insecticide_fails_waiver if {\n\taltered := object.union(base_input, {\"land\": {\"total_area_ha\": 10, \"parcels\": [\n\t\t{\"parcel_id\": \"v1\", \"area_ha\": 0.6, \"crop\": {\"crop_category\": \"vineyard\"}, \"operations\": {\"insecticide_applications\": [{\"ages_effect_type\": \"Insektizid\", \"bio_2018_848_permitted\": false, \"officially_ordered\": false}]}},\n\t]}})\n\tnot o6_12.farmwide_insecticide_waiver_met with input as altered\n}\n\ntest_ordered_application_needs_both_records if {\n\to6_12.official_order_exception_met({\"officially_ordered\": true, \"officially_authorised_active_ingredient\": true, \"official_order_documented\": true, \"application_documented\": true})\n\tnot o6_12.official_order_exception_met({\"officially_ordered\": true, \"officially_authorised_active_ingredient\": true, \"official_order_documented\": false, \"application_documented\": true})\n}\n\ntest_year_specific_code if {\n\to6_12.psm_code_required({\"chemical_synthetic\": true, \"ages_effect_type\": \"Insektizid\"}) == \"PSMCSI\" with input as object.union(base_input, {\"farm\": {\"year\": 2025}})\n\to6_12.psm_coding_not_required with input as base_input\n}\n\ntest_erosion_supplement_reduction if {\n\to6_12.erosion_organism_supplement_factor == 0.5 with input as object.union(base_input, {\"farm\": {\"year\": 2026, \"organic_whole_farm\": false, \"participations\": [{\"measure\": \"o6_12\"}], \"erosionschutz_organism_supplement\": true}})\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-12-terra/runs/v2-o6_12-terra-20260928/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 14,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 5/5\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-12-terra/runs/v2-o6_12-terra-20260928/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 12,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-12-terra/runs/v2-o6_12-terra-20260928/workspace"
+}
