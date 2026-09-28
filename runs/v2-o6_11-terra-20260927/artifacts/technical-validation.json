@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 58,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-11-terra/runs/v2-o6_11-terra-20260927/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_11.rego",
+    "tests/o6_11_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-11-terra/runs/v2-o6_11-terra-20260927/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 12,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_11.rego",
+        "tests/o6_11_test.rego"
+      ],
+      "duration_ms": 22,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-11-terra/runs/v2-o6_11-terra-20260927/workspace/tools/opa",
+            "fmt",
+            "policy/o6_11.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_11\n\nimport rego.v1\n\n# This policy evaluates only facts supplied under input.o6_11; profile-change\n# proposals document the facts absent from the canonical farm profile.\ndefault eligible := false\n\nspecial_crop(parcel) if parcel.crop.crop_category in {\"vineyard\", \"orchard\", \"hop\"}\n\nenrolled_area := sum([parcel.area_ha |\n\tparcel := input.land.parcels[_]\n\tspecial_crop(parcel)\n\tobject.get(parcel, \"o6_11\", {\"enrolled\": false}).enrolled\n])\n\nall_special_area := sum([parcel.area_ha |\n\tparcel := input.land.parcels[_]\n\tspecial_crop(parcel)\n])\n\nherbicide_violation contains parcel.parcel_id if {\n\tparcel := input.land.parcels[_]\n\tspecial_crop(parcel)\n\tapplication := object.get(parcel.operations, \"plant_protection_applications\", [])[_]\n\tapplication.effect_type == \"Herbizid\"\n}\n\nherbicide_violation contains parcel.parcel_id if {\n\tparcel := input.land.parcels[_]\n\tspecial_crop(parcel)\n\tobject.get(parcel.operations, \"psm_used\", false)\n\tobject.get(parcel.operations, \"psm_effect_type\", \"\") == \"Herbizid\"\n}\n\nuncovered_special_parcels := [parcel.parcel_id |\n\tparcel := input.land.parcels[_]\n\tspecial_crop(parcel)\n\tnot object.get(parcel, \"o6_11\", {\"enrolled\": false}).enrolled\n]\n\nall_special_parcels_enrolled if count(uncovered_special_parcels) == 0\n\neligible if {\n\tinput.o6_11.participation.requested\n\tinput.o6_11.participation.contract_start_year in {2023, 2024, 2025}\n\tinput.o6_11.participation.first_commitment_year_area_ha >= 0.5\n\tall_special_parcels_enrolled\n\tcount(herbicide_violation) == 0\n\tnot input.o6_11.inventory.has_prohibited_herbicide_purchase\n\tnot input.o6_11.inventory.has_prohibited_herbicide_storage\n\tnot input.o6_11.participation.incompatible_bio_combination\n}\n\nviolations contains {\"code\": \"minimum_area\", \"message\": \"Im ersten Verpflichtungsjahr sind mindestens 0,50 ha erforderlich.\"} if {\n\tinput.o6_11.participation.first_commitment_year_area_ha < 0.5\n}\n\nviolations contains {\"code\": \"complete_scope\", \"message\": \"Alle Wein-, Obst- und Hopfenflächen des Betriebes müssen einbezogen sein.\"} if {\n\tnot all_special_parcels_enrolled\n}\n\nviolations contains {\"code\": \"herbicide_use\", \"parcel_ids\": herbicide_violation, \"message\": \"Herbizide mit Wirkungstyp Herbizid sind auf der gesamten Fläche verboten.\"} if count(herbicide_violation) > 0\n\nviolations contains {\"code\": \"purchase_or_storage\", \"message\": \"Kauf oder Lagerung eines für die Maßnahme unzulässigen Herbizids ist verboten.\"} if {\n\tinput.o6_11.inventory.has_prohibited_herbicide_purchase\n}\n\nviolations contains {\"code\": \"purchase_or_storage\", \"message\": \"Kauf oder Lagerung eines für die Maßnahme unzulässigen Herbizids ist verboten.\"} if {\n\tinput.o6_11.inventory.has_prohibited_herbicide_storage\n}\n\nviolations contains {\"code\": \"bio_combination\", \"message\": \"Die betriebliche Kombination mit Biologischer Wirtschaftsweise ist nur beim Bio-Teilbetrieb Acker und Grünland zulässig.\"} if input.o6_11.participation.incompatible_bio_combination\n\npremium_rate(parcel) := rate if {\n\tspecial_crop(parcel)\n\trow := data.o6_11.premium_rates_eur_per_ha[_]\n\trow.crop == parcel.crop.crop_category\n\tinput.farm.year >= row.year_from\n\trow.year_to == null\n\trate := row.rate\n}\n\npremium_rate(parcel) := rate if {\n\tspecial_crop(parcel)\n\trow := data.o6_11.premium_rates_eur_per_ha[_]\n\trow.crop == parcel.crop.crop_category\n\tinput.farm.year >= row.year_from\n\tinput.farm.year <= row.year_to\n\trate := row.rate\n}\n\npremium_excluded(parcel) if parcel.crop.crop_name in data.o6_11.non_premium_crop_names\npremium_excluded(parcel) if object.get(parcel, \"land_use_name\", \"\") in data.o6_11.non_premium_land_use_names\npremium_excluded(parcel) if object.get(parcel, \"o6_11\", {}).op_code\n\npremium_by_parcel contains {\"parcel_id\": parcel.parcel_id, \"area_ha\": parcel.area_ha, \"rate_eur_per_ha\": rate, \"gross_eur\": parcel.area_ha * rate} if {\n\tparcel := input.land.parcels[_]\n\tobject.get(parcel, \"o6_11\", {\"enrolled\": false}).enrolled\n\tnot premium_excluded(parcel)\n\trate := premium_rate(parcel)\n}\n\ngross_premium_eur := sum([entry.gross_eur | entry := premium_by_parcel[_]])\n\nmodulation_factor := factor if {\n\tarea := input.land.total_area_ha\n\tarea > 0\n\tfactor := ((((min([area, 200]) * 1) + (max([min([area, 300]) - 200, 0]) * 0.9)) + (max([min([area, 1000]) - 300, 0]) * 0.85)) + (max([area - 1000, 0]) * 0.75)) / area\n}\n\nmodulated_premium_eur := gross_premium_eur * modulation_factor\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-11-terra/runs/v2-o6_11-terra-20260927/workspace/tools/opa",
+            "fmt",
+            "tests/o6_11_test.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_11_test\n\nimport rego.v1\n\ntest_eligible_vineyard_without_herbicide if {\n\tresult := data.oepul.o6_11.eligible with input as sample_input\n\tresult\n\tdata.oepul.o6_11.gross_premium_eur with input as sample_input == 270\n}\n\ntest_detects_herbicide_and_scope_violation if {\n\tbad := object.union(sample_input, {\"land\": object.union(sample_input.land, {\"parcels\": [\n\t\tsample_input.land.parcels[0],\n\t\t{\"parcel_id\": \"p2\", \"area_ha\": 0.2, \"crop\": {\"crop_category\": \"orchard\", \"crop_name\": \"Apfel\"}, \"operations\": {\"psm_used\": true, \"plant_protection_applications\": [{\"effect_type\": \"Herbizid\"}]}, \"o6_11\": {\"enrolled\": false}},\n\t]})})\n\tnot data.oepul.o6_11.eligible with input as bad\n\tviolations := data.oepul.o6_11.violations with input as bad\n\tviolations[_].code == \"complete_scope\"\n\tviolations[_].code == \"herbicide_use\"\n}\n\nsample_input := {\n\t\"farm\": {\"year\": 2026},\n\t\"land\": {\"total_area_ha\": 1, \"parcels\": [{\"parcel_id\": \"p1\", \"area_ha\": 1, \"crop\": {\"crop_category\": \"vineyard\", \"crop_name\": \"Grüner Veltliner\"}, \"operations\": {\"psm_used\": false, \"plant_protection_applications\": []}, \"o6_11\": {\"enrolled\": true}}]},\n\t\"o6_11\": {\"participation\": {\"requested\": true, \"contract_start_year\": 2025, \"first_commitment_year_area_ha\": 1, \"incompatible_bio_combination\": false}, \"inventory\": {\"has_prohibited_herbicide_purchase\": false, \"has_prohibited_herbicide_storage\": false}},\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-11-terra/runs/v2-o6_11-terra-20260927/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 13,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 2/2\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-11-terra/runs/v2-o6_11-terra-20260927/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 10,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-11-terra/runs/v2-o6_11-terra-20260927/workspace"
+}
