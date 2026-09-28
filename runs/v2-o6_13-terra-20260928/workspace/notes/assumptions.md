@@ -1,0 +1,6 @@
+# Assumptions and unresolved points
+
+- The AGES plant-protection product register and its dose rates are incorporated by reference in the source but are not included in this run's source set. Rego therefore accepts explicit input facts `organism_registered_at_ages` and `organism_dose_matches_register`; it does not invent or cache an external register list.
+- The 2026 drought notices expressly concern the general harvest duty for arable crops. This run models the stated exception as potentially relevant only to an o6_13 parcel coded A, only where the official district and no-harvestable-stand facts are supplied. It does not apply it to GA pots/substrate by inference.
+- The Annex L rendering contains no combination marker in row 13. The measure sheet provides the operational rule that its premium cannot combine with another premium on the individual area; the annex's explicit footnote 2 is additionally represented for GA pot/substrate culture.
+- Legal source pages are targeted to the o6_13 measure, the general rules that govern it, and Annex L. No evidence in the searched legal document made the four 2026 notices about biodiversity areas or insecticide avoidance substantively applicable to o6_13.
