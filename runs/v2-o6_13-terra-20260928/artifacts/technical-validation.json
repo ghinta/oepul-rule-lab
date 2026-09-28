@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 153,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-13-terra/runs/v2-o6_13-terra-20260928/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_13.rego",
+    "tests/o6_13_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-13-terra/runs/v2-o6_13-terra-20260928/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 13,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_13.rego",
+        "tests/o6_13_test.rego"
+      ],
+      "duration_ms": 27,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-13-terra/runs/v2-o6_13-terra-20260928/workspace/tools/opa",
+            "fmt",
+            "policy/o6_13.rego"
+          ],
+          "duration_ms": 16,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_13\n\nimport data as o6_13_constants\nimport rego.v1\n\n# Input contract: input.o6_13 supplies the measure-specific application,\n# protected-cultivation parcels, organism applications, and documentary facts.\n\ndefault eligible := false\n\neligible if {\n\tinput.o6_13.measure_applied\n\tnot input.o6_13.operation_program_organism_compensated\n\tinput.farm.first_oepul_participation_year == false\n\tcount(eligible_parcels) > 0\n}\n\neligible if {\n\tinput.o6_13.measure_applied\n\tnot input.o6_13.operation_program_organism_compensated\n\tinput.farm.first_oepul_participation_year\n\tinput.o6_13.protected_area_ha >= 0.5\n\tcount(eligible_parcels) > 0\n}\n\neligible if {\n\tinput.o6_13.measure_applied\n\tnot input.o6_13.operation_program_organism_compensated\n\tinput.farm.first_oepul_participation_year\n\tinput.o6_13.total_eligible_area_ha >= 1.5\n\tcount(eligible_parcels) > 0\n}\n\neligible_parcels contains parcel if {\n\tparcel := input.o6_13.parcels[_]\n\tparcel.application_code == \"NUE\"\n\tparcel.protected_structure in o6_13_constants.eligible_protected_structures\n\tparcel.land_use_code in o6_13_constants.eligible_land_use_codes\n\tparcel.active_agricultural_production\n\tnot parcel.sales_display_storage_area\n\tnot parcel.unused_between_structures\n\tparcel.organism_application_replaces_psm\n\tparcel.organism_registered_at_ages\n\tparcel.organism_dose_matches_register\n\tparcel.records_complete\n}\n\npremium_rate_eur_per_ha := row.rate if {\n\trow := o6_13_constants.premium_rates_eur_per_ha[_]\n\tinput.farm.year >= row.from_year\n\trow.to_year == null\n}\n\npremium_rate_eur_per_ha := row.rate if {\n\trow := o6_13_constants.premium_rates_eur_per_ha[_]\n\tinput.farm.year >= row.from_year\n\tinput.farm.year <= row.to_year\n}\n\neligible_premium_amounts contains amount if {\n\tparcel := eligible_parcels[_]\n\tamount := parcel.area_ha * premium_rate_eur_per_ha\n}\n\npremium_eur := sum(eligible_premium_amounts) if {\n\teligible\n}\n\nviolations contains \"operation_program_double_funding\" if {\n\tinput.o6_13.operation_program_organism_compensated\n}\n\nviolations contains \"no_eligible_greenhouse_or_tunnel\" if {\n\tinput.o6_13.measure_applied\n\tcount(eligible_parcels) == 0\n}\n\nviolations contains \"no_nue_use_ends_contract\" if {\n\tinput.o6_13.measure_applied\n\tnot input.o6_13.any_nue_use\n}\n\nviolations contains \"application_deadline_missed\" if {\n\tinput.o6_13.measure_applied\n\tinput.o6_13.application_submitted_by_december_31 == false\n}\n\nviolations contains \"last_entry_after_2027\" if {\n\tinput.farm.first_oepul_participation_year\n\tinput.farm.year > 2027\n}\n\nviolations contains \"incompatible_single_area_premium\" if {\n\tparcel := input.o6_13.parcels[_]\n\tparcel.application_code == \"NUE\"\n\tcount(parcel.other_single_area_premiums) > 0\n}\n\nviolations contains \"wrong_land_use_code_for_cultivation\" if {\n\tparcel := input.o6_13.parcels[_]\n\tparcel.growing_system == \"soil\"\n\tparcel.land_use_code != \"A\"\n}\n\nviolations contains \"wrong_land_use_code_for_cultivation\" if {\n\tparcel := input.o6_13.parcels[_]\n\tparcel.growing_system in {\"pots\", \"substrate\"}\n\tparcel.land_use_code != \"GA\"\n}\n\nviolations contains \"wrong_land_use_code_on_april_1\" if {\n\tparcel := input.o6_13.parcels[_]\n\tparcel.growing_system == \"mixed\"\n\tparcel.land_use_code != parcel.growing_system_on_april_1_code\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-13-terra/runs/v2-o6_13-terra-20260928/workspace/tools/opa",
+            "fmt",
+            "tests/o6_13_test.rego"
+          ],
+          "duration_ms": 10,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_13_test\n\nimport data.oepul.o6_13\nimport rego.v1\n\nbase := {\n\t\"farm\": {\"year\": 2026, \"first_oepul_participation_year\": false},\n\t\"o6_13\": {\n\t\t\"year\": 2026,\n\t\t\"measure_applied\": true,\n\t\t\"first_participation_year\": false,\n\t\t\"operation_program_organism_compensated\": false,\n\t\t\"any_nue_use\": true,\n\t\t\"application_submitted_by_december_31\": true,\n\t\t\"parcels\": [{\n\t\t\t\"area_ha\": 0.25,\n\t\t\t\"application_code\": \"NUE\",\n\t\t\t\"protected_structure\": \"fixed_greenhouse_glass\",\n\t\t\t\"land_use_code\": \"GA\",\n\t\t\t\"growing_system\": \"substrate\",\n\t\t\t\"active_agricultural_production\": true,\n\t\t\t\"sales_display_storage_area\": false,\n\t\t\t\"unused_between_structures\": false,\n\t\t\t\"organism_application_replaces_psm\": true,\n\t\t\t\"organism_registered_at_ages\": true,\n\t\t\t\"organism_dose_matches_register\": true,\n\t\t\t\"records_complete\": true,\n\t\t\t\"other_single_area_premiums\": [],\n\t\t}],\n\t},\n}\n\ntest_eligible_and_premium if {\n\to6_13.eligible with input as base\n\to6_13.premium_eur == 540 with input as base\n\tviolations := o6_13.violations with input as base\n\tcount(violations) == 0\n}\n\ntest_double_funding_is_denied if {\n\t\"operation_program_double_funding\" in o6_13.violations with input as object.union(base, {\"o6_13\": object.union(base.o6_13, {\"operation_program_organism_compensated\": true})})\n}\n\ntest_bees_are_not_eligible if {\n\tfacts := object.union(base, {\"o6_13\": object.union(base.o6_13, {\"parcels\": [object.union(base.o6_13.parcels[0], {\"organism_registered_at_ages\": false})]})})\n\tparcels := o6_13.eligible_parcels with input as facts\n\tcount(parcels) == 0\n}\n\ntest_soil_requires_a_code if {\n\tfacts := object.union(base, {\"o6_13\": object.union(base.o6_13, {\"parcels\": [object.union(base.o6_13.parcels[0], {\"growing_system\": \"soil\", \"land_use_code\": \"GA\"})]})})\n\t\"wrong_land_use_code_for_cultivation\" in o6_13.violations with input as facts\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-13-terra/runs/v2-o6_13-terra-20260928/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 18,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 4/4\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-13-terra/runs/v2-o6_13-terra-20260928/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 94,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-13-terra/runs/v2-o6_13-terra-20260928/workspace"
+}
