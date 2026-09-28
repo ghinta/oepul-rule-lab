@@ -48,8 +48,9 @@ passende Empfehlung für einen konkreten Betrieb.
 - Vier Coverage-Einträge bleiben `unresolved`: Alle vier 2026-Hinweisseiten
   verlinken die Meldung „Meldeverpflichtungen zu tierbezogenen
   ÖPUL-Maßnahmen“ (02.09.2026), deren Volltext nicht im Quellpaket liegt.
-- Die SRL-Prämientabelle enthält einen Tippfehler („Tierwohl – Weide“ in der
-  Zeile der Maßnahme 21); der Kandidat dokumentiert und korrigiert ihn.
+- Die SRL-Prämientabelle bezeichnet „Tierwohl – Weide“ mit der Nummer 21; der
+  Kandidat liest das in Übereinstimmung mit dem Informationsblatt als
+  Maßnahme 20 und dokumentiert die Abweichung.
 - Auslegungen zu reduziertem Satz, TGD-Schwelle über 10 RGVE, Stichtagen,
   Stallabteilen, Gewichtsklassen und Kompostierung stehen in
   `workspace/notes/assumptions.md`.
