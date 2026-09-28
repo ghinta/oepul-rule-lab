@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 157,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-14-terra/runs/v2-o6_14-terra-20260928/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_14.rego",
+    "tests/o6_14_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-14-terra/runs/v2-o6_14-terra-20260928/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 15,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_14.rego",
+        "tests/o6_14_test.rego"
+      ],
+      "duration_ms": 26,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-14-terra/runs/v2-o6_14-terra-20260928/workspace/tools/opa",
+            "fmt",
+            "policy/o6_14.rego"
+          ],
+          "duration_ms": 14,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_14\n\nimport rego.v1\n\n# Input shape is described by the discover-mode profile changes.  A missing fact\n# deliberately produces an unresolved result instead of an invented decision.\nrgve_factor(category) := data.rgve_factors[category]\n\neligible_species := {\"cattle\", \"sheep\", \"goats\", \"equids\", \"new_world_camelids\"}\n\neligible_animal(animal) if {\n\teligible_species[animal.species]\n\tanimal.days_total >= 60\n}\n\neligible_rgve(animal) := animal.count * rgve_factor(animal.category) if {\n\teligible_animal(animal)\n}\n\nstocking_rgve(alp) := sum([eligible_rgve(a) | some a in alp.animals])\n\nstocking_density(alp) := stocking_rgve(alp) / alp.area_ha if alp.area_ha > 0\n\nstocking_limit(alp) := 2.4 if {\n\talp.weideplan_intensification_approved\n}\n\nstocking_limit(alp) := 1.5 if {\n\talp.nature_supplement\n\tnot alp.weideplan_intensification_approved\n}\n\nstocking_limit(alp) := 2.0 if {\n\tnot alp.nature_supplement\n\tnot alp.weideplan_intensification_approved\n}\n\nstocking_compliant(alp) if stocking_density(alp) <= stocking_limit(alp)\n\neligible_premium_area(alp) := min([alp.area_ha, stocking_rgve(alp)])\n\nbase_rate(alp) := data.base_eur_per_ha[alp.access_stage]\n\nbase_premium(alp) := eligible_premium_area(alp) * base_rate(alp) if {\n\tstocking_compliant(alp)\n}\n\nweideplan_premium(alp) := min([eligible_premium_area(alp), 20]) * data.weideplan_eur_per_ha_first_20 if {\n\talp.weideplan\n\tnot alp.nature_supplement\n\tstocking_compliant(alp)\n}\n\ninitial_participation_compliant(farm) if {\n\tsum([a.area_ha | some a in farm.alpine_pastures]) >= 3\n\tsum([stocking_rgve(a) | some a in farm.alpine_pastures]) >= 3\n}\n\nviolations contains {\"id\": \"o6_14.stocking\", \"alp_id\": alp.id} if {\n\tsome alp in input.alpine_pastures\n\tnot stocking_compliant(alp)\n}\n\nviolations contains {\"id\": \"o6_14.nature_weideplan_incompatible\", \"alp_id\": alp.id} if {\n\tsome alp in input.alpine_pastures\n\talp.nature_supplement\n\talp.weideplan\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-14-terra/runs/v2-o6_14-terra-20260928/workspace/tools/opa",
+            "fmt",
+            "tests/o6_14_test.rego"
+          ],
+          "duration_ms": 12,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_14_test\n\nimport data.oepul.o6_14\nimport rego.v1\n\ntest_rgve_and_area_cap if {\n\talp := {\"id\": \"a1\", \"area_ha\": 10, \"access_stage\": \"stage_1\", \"nature_supplement\": false, \"weideplan\": false, \"weideplan_intensification_approved\": false, \"animals\": [{\"species\": \"cattle\", \"category\": \"cattle_2_plus\", \"count\": 12, \"days_total\": 60}]}\n\to6_14.stocking_rgve(alp) == 12\n\to6_14.eligible_premium_area(alp) == 10\n\to6_14.base_premium(alp) == 432\n}\n\ntest_stocking_limit_and_option_incompatibility if {\n\talp := {\"id\": \"a2\", \"area_ha\": 10, \"access_stage\": \"stage_3\", \"nature_supplement\": true, \"weideplan\": true, \"weideplan_intensification_approved\": false, \"animals\": [{\"species\": \"cattle\", \"category\": \"cattle_2_plus\", \"count\": 16, \"days_total\": 60}]}\n\to6_14.stocking_limit(alp) == 1.5\n\tnot o6_14.stocking_compliant(alp)\n}\n\ntest_weideplan_rate_first_twenty_hectares if {\n\talp := {\"id\": \"a3\", \"area_ha\": 25, \"access_stage\": \"stage_2\", \"nature_supplement\": false, \"weideplan\": true, \"weideplan_intensification_approved\": false, \"animals\": [{\"species\": \"cattle\", \"category\": \"cattle_2_plus\", \"count\": 25, \"days_total\": 60}]}\n\to6_14.weideplan_premium(alp) == 400\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-14-terra/runs/v2-o6_14-terra-20260928/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 17,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 3/3\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-14-terra/runs/v2-o6_14-terra-20260928/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 98,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-14-terra/runs/v2-o6_14-terra-20260928/workspace"
+}
