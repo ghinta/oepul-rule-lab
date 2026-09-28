@@ -1,0 +1,524 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_15",
+  "rules": [
+    {
+      "id": "o6_15.contract",
+      "rule_type": "eligibility",
+      "statement": "The undertaking is annual (1 January–31 December), renews automatically unless deregistered, and ends if the minimum participation or required combination is not met.",
+      "conditions": [
+        {
+          "expression": "annual contract active",
+          "description": "Measure is requested for the funding year."
+        }
+      ],
+      "result": {
+        "outcome": "contract_valid",
+        "description": "Annual contract remains valid only while its conditions are met."
+      },
+      "source_reference_ids": [
+        "c01"
+      ],
+      "rego_symbols": [
+        "minimum_participation_met"
+      ]
+    },
+    {
+      "id": "o6_15.combo_almbewirtschaftung",
+      "rule_type": "eligibility",
+      "statement": "Tierwohl – Behirtung requires simultaneous participation in Almbewirtschaftung.",
+      "conditions": [
+        {
+          "expression": "almbewirtschaftung_participating == true",
+          "description": "The required combination is active.",
+          "input_paths": [
+            "farm.o6_15.almbewirtschaftung_participating"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible",
+        "description": "Combination condition is met."
+      },
+      "source_reference_ids": [
+        "c01",
+        "c18"
+      ],
+      "rego_symbols": [
+        "minimum_participation_met"
+      ]
+    },
+    {
+      "id": "o6_15.minimum_rgve",
+      "rule_type": "threshold",
+      "statement": "At least 3.00 herded ruminant livestock units (RGVE) must participate in every funding year.",
+      "conditions": [
+        {
+          "expression": "behirtete_rgve >= 3",
+          "description": "Annual total of eligible herded RGVE.",
+          "input_paths": [
+            "farm.o6_15.behirtete_rgve"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible",
+        "description": "Minimum participation is satisfied; otherwise the contract expires."
+      },
+      "source_reference_ids": [
+        "c02",
+        "c09",
+        "c18"
+      ],
+      "rego_symbols": [
+        "minimum_participation_met"
+      ]
+    },
+    {
+      "id": "o6_15.species_categories",
+      "rule_type": "scope",
+      "statement": "Only milk cows, other cattle, sheep, goats, equids and New World camelids are requestable categories; all animals of each requested category must be herded.",
+      "conditions": [
+        {
+          "expression": "all_animals_of_category_herded == true",
+          "description": "A selected category may not be only partly herded.",
+          "input_paths": [
+            "farm.o6_15.categories[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "category_compliant",
+        "description": "Requested category is complete."
+      },
+      "source_reference_ids": [
+        "c02",
+        "c18"
+      ],
+      "rego_symbols": [
+        "category_complete"
+      ]
+    },
+    {
+      "id": "o6_15.milk_definition",
+      "rule_type": "definition",
+      "statement": "Milk animals are milk cows, milk sheep or milk goats milked for at least 45 days on one or more alpine pastures; cows must be age 2 and have calved by 1 July, milked sheep/goats age 1 by that date.",
+      "conditions": [
+        {
+          "expression": "milked_days >= 45 and age requirements met",
+          "description": "Milk classification requirements.",
+          "input_paths": [
+            "farm.o6_15.animals[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "milk_premium_classification",
+        "description": "Animal may be requested as milk livestock."
+      },
+      "source_reference_ids": [
+        "c03"
+      ],
+      "rego_symbols": [
+        "milk_animal_eligible"
+      ]
+    },
+    {
+      "id": "o6_15.days",
+      "rule_type": "duration",
+      "statement": "Each animal must be herded for at least 60 days and each alpine pasture stocked for at least 60 days; arrival counts, departure does not, interruptions do not count, and consecutive animals can meet pasture stocking duration.",
+      "conditions": [
+        {
+          "expression": "herding_days >= 60 and stocking_days >= 60",
+          "description": "Days are calculated excluding interruptions and departure day.",
+          "input_paths": [
+            "farm.o6_15.animals[]",
+            "farm.o6_15.alms[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "duration_compliant",
+        "description": "Minimum animal and alpine-pasture duration is met."
+      },
+      "source_reference_ids": [
+        "c04"
+      ],
+      "rego_symbols": [
+        "animal_days_met",
+        "alm_days_met"
+      ]
+    },
+    {
+      "id": "o6_15.transhumance_allocation",
+      "rule_type": "calculation",
+      "statement": "Cattle, sheep and goats moved to another herded alpine pasture are allocated to each pasture pro rata to total alpine duration, but must total at least 60 herding days.",
+      "conditions": [
+        {
+          "expression": "animal moved between herded alms",
+          "description": "Allocation is needed for a moved eligible animal.",
+          "input_paths": [
+            "farm.o6_15.animals[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "pro_rata_rgve",
+        "description": "RGVE are credited proportionately per alpine pasture."
+      },
+      "source_reference_ids": [
+        "c04",
+        "c12"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_15.daily_care",
+      "rule_type": "obligation",
+      "statement": "Herding requires daily proper care, if necessary overnight, for a substantial part of the day and not merely inspection; care includes water, animal care, treatment referral, safety and site-adapted grazing management.",
+      "conditions": [
+        {
+          "expression": "daily_care and substantive herding controls are true",
+          "description": "All documented care elements are available.",
+          "input_paths": [
+            "farm.o6_15.alms[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "care_compliant",
+        "description": "Animal-care obligation is met."
+      },
+      "source_reference_ids": [
+        "c05",
+        "c18"
+      ],
+      "rego_symbols": [
+        "daily_care_met"
+      ]
+    },
+    {
+      "id": "o6_15.accommodation",
+      "rule_type": "obligation",
+      "statement": "Suitable accommodation and overnight facilities for the responsible person must be available on the alpine pasture; sleeping there is not compulsory when daily duties are fulfilled.",
+      "conditions": [
+        {
+          "expression": "accommodation_available == true",
+          "description": "Suitable facility exists on the alpine pasture.",
+          "input_paths": [
+            "farm.o6_15.alms[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "accommodation_compliant",
+        "description": "Accommodation requirement is met."
+      },
+      "source_reference_ids": [
+        "c05"
+      ],
+      "rego_symbols": [
+        "daily_care_met"
+      ]
+    },
+    {
+      "id": "o6_15.guardian_dog",
+      "rule_type": "optional_supplement",
+      "statement": "A requested certified guardian dog must be used on the same alpine pasture throughout the animals’ alpine period and at least 60 days; it must be a permanent day-and-night herd member, work independently, have a recognised certificate and liability cover, and be requested for only one alpine pasture.",
+      "conditions": [
+        {
+          "expression": "guardian dog eligibility predicates are all true",
+          "description": "Dog and documentation satisfy the optional-supplement requirements.",
+          "input_paths": [
+            "farm.o6_15.alms[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "dog_supplement_eligible",
+        "description": "The dog can receive the optional supplement."
+      },
+      "source_reference_ids": [
+        "c06"
+      ],
+      "rego_symbols": [
+        "guardian_dog_eligible"
+      ]
+    },
+    {
+      "id": "o6_15.application_deadlines",
+      "rule_type": "deadline",
+      "statement": "The measure must be applied for by 31 December before contract start; final entry is funding year 2027 (application by 31 December 2026), and final guardian-dog supplement entry is funding year 2028 (application by 31 December 2027).",
+      "conditions": [
+        {
+          "expression": "application submitted by applicable deadline",
+          "description": "Deadline depends on requested measure or supplement."
+        }
+      ],
+      "result": {
+        "outcome": "application_timely",
+        "description": "A valid future annual contract can be created."
+      },
+      "source_reference_ids": [
+        "c07",
+        "c14"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_15.payment_application",
+      "rule_type": "deadline",
+      "statement": "The alpine/common-pasture list is the payment application and, together with herders, categories and dogs, is due by 15 July (17 July in 2023 and 2028); only animals driven up by 15 July may be recognised for payment.",
+      "conditions": [
+        {
+          "expression": "payment list and eligible animal drive-up are timely",
+          "description": "Annual payment application timing."
+        }
+      ],
+      "result": {
+        "outcome": "payment_application_accepted",
+        "description": "Timely reported animals can be assessed."
+      },
+      "source_reference_ids": [
+        "c07"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_15.animal_reporting",
+      "rule_type": "reporting",
+      "statement": "Cattle use the cattle alpine/pasture report within 14 days for drive-up and departure; sheep/goats are individual ear-tag reports within 7 days; equids/camelids have a 7-day drive-up deadline and correction deadline for a changed departure date. Late reports recognise no more than 14 or 7 preceding days respectively.",
+      "conditions": [
+        {
+          "expression": "report elapsed days <= species deadline",
+          "description": "Species-specific report deadline is met.",
+          "input_paths": [
+            "farm.o6_15.animals[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reported_days_recognised",
+        "description": "Timely report retains the corresponding alpine days."
+      },
+      "source_reference_ids": [
+        "c08"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_15.milk_flag_reporting",
+      "rule_type": "reporting",
+      "statement": "Milk flags may be supplied within 14 days after cattle drive-up, or within 7 days after sheep/goat drive-up but not after 15 July; later changes to milk are not possible and an invalid cattle milk flag must be removed immediately.",
+      "conditions": [
+        {
+          "expression": "milk flag correction is within relevant deadline",
+          "description": "Species-specific milk marking rule."
+        }
+      ],
+      "result": {
+        "outcome": "milk_flag_valid",
+        "description": "Milk classification may be paid only when reported correctly."
+      },
+      "source_reference_ids": [
+        "c08"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_15.exit",
+      "rule_type": "contract_consequence",
+      "statement": "After the annual term, exit from the measure, individual categories or dog supplement is possible; a deregistration from 1 January to 31 December invalidates the measure for that funding year, so deregister only from the next 1 January after fulfilling that year.",
+      "conditions": [
+        {
+          "expression": "deregistration date and completed annual duties",
+          "description": "Exit timing determines current-year validity."
+        }
+      ],
+      "result": {
+        "outcome": "exit_effective",
+        "description": "Exit applies without invalidating a completed year when timed correctly."
+      },
+      "source_reference_ids": [
+        "c10",
+        "c14"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_15.rgve_key",
+      "rule_type": "calculation",
+      "statement": "Eligible RGVE use the complete Annex A conversion key and the age reference date is 1 July of the application year.",
+      "conditions": [
+        {
+          "expression": "animal class has an Annex A factor",
+          "description": "Species, age and equid size determine factor.",
+          "input_paths": [
+            "farm.o6_15.animals[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rgve_calculated",
+        "description": "Animal count is converted with the legally specified factor."
+      },
+      "source_reference_ids": [
+        "c13",
+        "c20"
+      ],
+      "rego_symbols": [
+        "rgve_factor",
+        "animal_rgve"
+      ]
+    },
+    {
+      "id": "o6_15.premium_tiers",
+      "rule_type": "payment_calculation",
+      "statement": "From 2024, base payment is EUR 81/RGVE for the first 20 and EUR 27 thereafter; milk supplements are EUR 151.20 and EUR 108. From 2025 guardian dogs receive EUR 1,200 each, maximum five per alpine pasture.",
+      "conditions": [
+        {
+          "expression": "eligible annual RGVE and qualifying milk/dogs",
+          "description": "Payment is calculated after eligibility."
+        }
+      ],
+      "result": {
+        "outcome": "premium_eur",
+        "description": "Tiered base, milk and dog payment."
+      },
+      "source_reference_ids": [
+        "c11",
+        "c19"
+      ],
+      "rego_symbols": [
+        "base_premium",
+        "milk_premium",
+        "guardian_dog_premium"
+      ]
+    },
+    {
+      "id": "o6_15.herder_cap",
+      "rule_type": "payment_cap",
+      "statement": "Payment is capped at 50 RGVE per herder; the enhanced first-20-RGVE rate is paid separately per block of 50 RGVE and herder. One person may not herd several alpine pastures for this payment.",
+      "conditions": [
+        {
+          "expression": "rgve allocated to a distinct herder",
+          "description": "Apply the cap and allocate first-rate band per herder."
+        }
+      ],
+      "result": {
+        "outcome": "capped_premium",
+        "description": "At most 50 RGVE are paid for each herder."
+      },
+      "source_reference_ids": [
+        "c07",
+        "c11",
+        "c19"
+      ],
+      "rego_symbols": [
+        "eligible_rgve_per_herder",
+        "herder_premium"
+      ]
+    },
+    {
+      "id": "o6_15.modulation",
+      "rule_type": "payment_modulation",
+      "statement": "Behirtung is assessed separately from the home farm but subject to alpine modulation: 100% through 200, 90% from over 200 through 300, 85% from over 300 through 1,000, and 75% over 1,000; the alpine factor also applies to Behirtung irrespective of herded RGVE.",
+      "conditions": [
+        {
+          "expression": "alpine holding has modulated relevant extent",
+          "description": "Determine blended modulation factor from eligible alpine extent."
+        }
+      ],
+      "result": {
+        "outcome": "modulated_payment",
+        "description": "Calculated measure premium is reduced by the alpine factor."
+      },
+      "source_reference_ids": [
+        "c17"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_15.force_majeure_water",
+      "rule_type": "exception",
+      "statement": "If drought makes obligations impossible, including missing water provision on alpine pastures, an individual request for recognition of force majeure or special circumstances may be submitted through eAMA.",
+      "conditions": [
+        {
+          "expression": "drought prevents compliance",
+          "description": "Exceptional circumstances must be submitted individually."
+        }
+      ],
+      "result": {
+        "outcome": "exception_request_available",
+        "description": "A force-majeure assessment may protect the otherwise unfulfilled obligation."
+      },
+      "source_reference_ids": [
+        "c21"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_15.applicant_eligibility",
+      "rule_type": "eligibility",
+      "statement": "The applicant must operate an agricultural holding in its own name and on its own account, control the requested land, and meet active-farmer and agricultural-activity requirements.",
+      "conditions": [
+        {"expression":"applicant operates and controls the holding and is active farmer","description":"General ÖPUL applicant conditions."}
+      ],
+      "result": {"outcome":"applicant_eligible","description":"Applicant may receive ÖPUL funding."},
+      "source_reference_ids": ["c22"],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_15.farm_minimum_size",
+      "rule_type": "threshold",
+      "statement": "In the first ÖPUL year, the holding must have either 0.50 ha protected cultivation or 1.50 ha total agricultural area in Austria, subject to stated programme exceptions.",
+      "conditions": [
+        {"expression":"protected_area_ha >= 0.5 or eligible_agricultural_area_ha >= 1.5","description":"First-year holding minimum."}
+      ],
+      "result": {"outcome":"holding_size_eligible","description":"A first-year ÖPUL contract can be formed."},
+      "source_reference_ids": ["c23"],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_15.animal_location",
+      "rule_type": "eligibility",
+      "statement": "Funded animals must be held in Austria; animals held outside Austria cannot be considered for payment-relevant livestock numbers or listed in the animal list.",
+      "conditions": [
+        {"expression":"animal_holding_country == AT","description":"Location of each animal during the relevant period."}
+      ],
+      "result": {"outcome":"animal_location_eligible","description":"Only Austrian-held animals are credited."},
+      "source_reference_ids": ["c24"],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_15.conditionality",
+      "rule_type": "cross_compliance",
+      "statement": "All ÖPUL participants must comply with conditionality rules on climate/environment, public health, plant health, animal welfare and social conditionality to receive the full payment.",
+      "conditions": [
+        {"expression":"conditionality_compliant == true","description":"Applicable cross-programme conditionality is met."}
+      ],
+      "result": {"outcome":"full_payment_possible","description":"No conditionality-based reduction applies."},
+      "source_reference_ids": ["c25"],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_15.controls_sanctions",
+      "rule_type": "enforcement",
+      "statement": "Compliance is checked administratively, on site and subsequently; substantive violations are assessed by severity, extent, duration and frequency, with reductions through 100%, and two 100% reductions during the contract can exclude the measure and recover prior payments.",
+      "conditions": [
+        {
+          "expression": "noncompliance established",
+          "description": "Authority assesses the documented breach."
+        }
+      ],
+      "result": {
+        "outcome": "sanction_possible",
+        "description": "Measure-level reduction, exclusion and recovery may follow."
+      },
+      "source_reference_ids": [
+        "c16"
+      ],
+      "rego_symbols": []
+    }
+  ]
+}
