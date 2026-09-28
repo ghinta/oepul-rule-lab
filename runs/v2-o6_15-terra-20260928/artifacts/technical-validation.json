@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 56,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-15-terra/runs/v2-o6_15-terra-20260928/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_15.rego",
+    "tests/o6_15_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-15-terra/runs/v2-o6_15-terra-20260928/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 12,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_15.rego",
+        "tests/o6_15_test.rego"
+      ],
+      "duration_ms": 20,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-15-terra/runs/v2-o6_15-terra-20260928/workspace/tools/opa",
+            "fmt",
+            "policy/o6_15.rego"
+          ],
+          "duration_ms": 10,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_15\n\nimport rego.v1\n\n# Input extension proposed in rules/profile_changes.json: input.farm.o6_15.\nrgve_factor(class) := data.factors[class]\n\nanimal_rgve(class, count) := rgve_factor(class) * count\n\nminimum_participation_met if {\n\tinput.farm.o6_15.almbewirtschaftung_participating\n\tinput.farm.o6_15.behirtete_rgve >= 3\n}\n\ncategory_complete if {\n\tevery category in input.farm.o6_15.categories {\n\t\tcategory.all_animals_of_category_herded\n\t}\n}\n\nanimal_days_met(animal) if {\n\tanimal.herding_days >= 60\n}\n\nalm_days_met(alm) if {\n\talm.stocking_days >= 60\n}\n\nmilk_animal_eligible(animal) if {\n\tanimal.milked_days >= 45\n\tanimal.age_on_july_1_years >= animal.minimum_milk_age_years\n\tanimal.milk_cow_calved_once\n}\n\ndaily_care_met(alm) if {\n\talm.daily_care\n\talm.herding_substantial_daytime\n\tnot alm.mere_inspection\n\talm.sufficient_water\n\talm.animal_care\n\talm.treatment_referral\n\talm.safety_measures\n\talm.site_adapted_grazing\n\talm.accommodation_available\n}\n\nguardian_dog_eligible(dog) if {\n\tdog.certified\n\tdog.days_on_same_alm >= 60\n\tdog.days_on_same_alm == dog.herded_animals_alping_days\n\tdog.herd_member_day_and_night\n\tdog.works_independently\n\tdog.certificate_on_farm\n\tdog.liability_insurance\n\tdog.requested_on_only_one_alm\n}\n\neligible_rgve_per_herder(rgve) := min([rgve, 50])\n\nbase_premium(rgve) := (first * 81) + (rest * 27) if {\n\tcapped := eligible_rgve_per_herder(rgve)\n\tfirst := min([capped, 20])\n\trest := max([capped - 20, 0])\n}\n\nmilk_premium(total_rgve, milk_rgve) := (first * 151.2) + (rest * 108) if {\n\tcapped_total := eligible_rgve_per_herder(total_rgve)\n\tcapped_milk := min([milk_rgve, capped_total])\n\tfirst := min([capped_milk, 20])\n\trest := max([capped_milk - 20, 0])\n}\n\nherder_premium(herder) := base_premium(herder.rgve) + milk_premium(herder.rgve, herder.milk_rgve)\n\nguardian_dog_premium(dogs) := min([dogs, 5]) * 1200\n\npremium_total := sum([herder_premium(h) |\n\tsome h in input.farm.o6_15.herders\n]) + sum([guardian_dog_premium(a.eligible_guardian_dogs) |\n\tsome a in input.farm.o6_15.alms\n]) if {\n\tminimum_participation_met\n}\n\nviolations contains \"missing_almbewirtschaftung_or_3_rgve\" if {\n\tnot minimum_participation_met\n}\n\nviolations contains \"category_not_complete\" if {\n\tnot category_complete\n}\n\nviolations contains sprintf(\"animal_%v_under_60_days\", [animal.animal_id]) if {\n\tsome animal in input.farm.o6_15.animals\n\tnot animal_days_met(animal)\n}\n\nviolations contains sprintf(\"alm_%v_under_60_stocking_days\", [alm.alm_id]) if {\n\tsome alm in input.farm.o6_15.alms\n\tnot alm_days_met(alm)\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-15-terra/runs/v2-o6_15-terra-20260928/workspace/tools/opa",
+            "fmt",
+            "tests/o6_15_test.rego"
+          ],
+          "duration_ms": 10,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_15_test\n\nimport data.oepul.o6_15\nimport rego.v1\n\ntest_rgve_key if {\n\to6_15.animal_rgve(\"sheep_1_plus\", 20) == 3\n\to6_15.animal_rgve(\"equid_large_3_plus\", 2) == 2\n}\n\ntest_premium_tiers_and_cap if {\n\to6_15.base_premium(50) == 2430\n\to6_15.base_premium(95) == 2430\n\to6_15.milk_premium(50, 40) == 5184\n\to6_15.guardian_dog_premium(7) == 6000\n}\n\ntest_minimum_participation if {\n\to6_15.minimum_participation_met with input as {\n\t\t\"farm\": {\"o6_15\": {\"almbewirtschaftung_participating\": true, \"behirtete_rgve\": 3}},\n\t}\n}\n\ntest_under_threshold_is_violation if {\n\t\"missing_almbewirtschaftung_or_3_rgve\" in o6_15.violations with input as {\n\t\t\"farm\": {\"o6_15\": {\"almbewirtschaftung_participating\": true, \"behirtete_rgve\": 2, \"categories\": [], \"animals\": [], \"alms\": []}},\n\t}\n}\n\ntest_animal_duration_and_guardian_dog if {\n\to6_15.animal_days_met({\"herding_days\": 60})\n\tnot o6_15.animal_days_met({\"herding_days\": 59})\n\to6_15.guardian_dog_eligible({\n\t\t\"certified\": true,\n\t\t\"days_on_same_alm\": 60,\n\t\t\"herded_animals_alping_days\": 60,\n\t\t\"herd_member_day_and_night\": true,\n\t\t\"works_independently\": true,\n\t\t\"certificate_on_farm\": true,\n\t\t\"liability_insurance\": true,\n\t\t\"requested_on_only_one_alm\": true,\n\t})\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-15-terra/runs/v2-o6_15-terra-20260928/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 13,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 5/5\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-15-terra/runs/v2-o6_15-terra-20260928/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 11,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-15-terra/runs/v2-o6_15-terra-20260928/workspace"
+}
