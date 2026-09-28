@@ -1,0 +1,2999 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_19",
+  "rules": [
+    {
+      "id": "R-O619-SCOPE-SUPPORT",
+      "rule_type": "scope",
+      "statement": "Die EBW-Prämie wird für Grünland- und Ackerflächen gewährt, die mit einer Zielsetzung und Indikatoren belegt, in einem Auswahlverfahren ermittelt und in einer Projektbestätigung dokumentiert sind; gefördert werden Kosten und Einkommensverluste aus der zielkonformen Bewirtschaftung.",
+      "conditions": [
+        {
+          "expression": "EBW in land.parcels[].oepul.codes",
+          "description": "Schlag ist für die Maßnahme mit Code EBW beantragt",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        },
+        {
+          "expression": "land.parcels[].oepul.ebw.in_project_confirmation == true",
+          "description": "Schlag ist in der Projektbestätigung mit Zielen/Indikatoren enthalten",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.in_project_confirmation"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "in_scope",
+        "description": "Schlag fällt in den Anwendungsbereich der EBW.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-01-UEBERSICHT",
+        "CIT-S-82-UNTERSTUETZUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.ebw_parcels"
+      ]
+    },
+    {
+      "id": "R-O619-CONTRACT-PERIOD",
+      "rule_type": "eligibility",
+      "statement": "Der Vertragszeitraum beträgt mindestens 4 Jahre und läuft bis 31.12.2028: Beginn 01.01.2023 → 6 Jahre, 01.01.2024 → 5 Jahre, 01.01.2025 → 4 Jahre.",
+      "conditions": [
+        {
+          "expression": "oepul.o6_19.contract_start_year in {2023, 2024, 2025}",
+          "description": "Vertragsbeginn muss einem der drei zulässigen Einstiegsjahre entsprechen",
+          "input_paths": [
+            "oepul.o6_19.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_period",
+        "description": "Vertragsdauer laut Tabelle; sonst Zugangsverstoß.",
+        "value": {
+          "2023": 6,
+          "2024": 5,
+          "2025": 4,
+          "end": "2028-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-M-03-1-VERTRAG",
+        "CIT-M-03-1-TABELLE",
+        "CIT-G-11-EBW-2028",
+        "CIT-S-12-MEHRJAEHRIG",
+        "CIT-S-13-TABELLE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.contract_period",
+        "data.oepul.o6_19.contract_start_invalid",
+        "data.oepul.o6_19.within_contract_period"
+      ]
+    },
+    {
+      "id": "R-O619-RNP-CONTRACT-ONE-YEAR",
+      "rule_type": "definition",
+      "statement": "Der Vertragszeitraum des optionalen Zuschlags „Regionaler Naturschutzplan“ beträgt ein Kalenderjahr (1. Jänner bis 31. Dezember); einjährige Zuschläge sind während der Laufzeit mehrjähriger Maßnahmen beantragbar.",
+      "conditions": [
+        {
+          "expression": "oepul.o6_19.regional_plan.applied == true",
+          "description": "Zuschlag beantragt",
+          "input_paths": [
+            "oepul.o6_19.regional_plan.applied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "annual_commitment",
+        "description": "Verpflichtung für das jeweilige Kalenderjahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-03-1-RNP-JAHR",
+        "CIT-G-11-FLAECHENBINDUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.regional_plan_renewed"
+      ]
+    },
+    {
+      "id": "R-O619-RNP-AUTO-RENEWAL",
+      "rule_type": "procedure",
+      "statement": "Der Zuschlag „Regionaler Naturschutzplan“ verlängert sich automatisch um ein weiteres Förderjahr, wenn er nicht abgemeldet wird und eine Teilnahmebestätigung vorliegt.",
+      "conditions": [
+        {
+          "expression": "not oepul.o6_19.regional_plan.deregistered",
+          "description": "Keine Abmeldung",
+          "input_paths": [
+            "oepul.o6_19.regional_plan.deregistered"
+          ]
+        },
+        {
+          "expression": "oepul.o6_19.regional_plan.participation_confirmation_present == true",
+          "description": "Teilnahmebestätigung liegt vor",
+          "input_paths": [
+            "oepul.o6_19.regional_plan.participation_confirmation_present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "renewed",
+        "description": "Zuschlag gilt für das Folgejahr weiter.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-03-1-RNP-JAHR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.regional_plan_renewed"
+      ]
+    },
+    {
+      "id": "R-O619-MIN-AREA-FIRST-YEAR",
+      "rule_type": "eligibility",
+      "statement": "Im ersten Teilnahmejahr muss mit mindestens 1,00 ha förderfähiger EBW-Fläche teilgenommen werden (Zugangsvoraussetzung).",
+      "conditions": [
+        {
+          "expression": "farm.year == oepul.o6_19.contract_start_year",
+          "description": "Erstes Verpflichtungsjahr",
+          "input_paths": [
+            "farm.year",
+            "oepul.o6_19.contract_start_year"
+          ]
+        },
+        {
+          "expression": "sum(parcel_eligible_area) >= 1.0",
+          "description": "Summe förderfähiger EBW-Fläche mindestens 1,00 ha",
+          "input_paths": [
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_requirement",
+        "description": "Bei Unterschreitung kommt kein Vertrag zustande.",
+        "value": {
+          "min_area_ha": 1.0
+        }
+      },
+      "source_reference_ids": [
+        "CIT-M-03-2-MIN-1HA",
+        "CIT-S-82-MIN-1HA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.min_area_first_year_met",
+        "data.oepul.o6_19.ebw_eligible_area_total",
+        "data.oepul.o6_19.participation_violations"
+      ]
+    },
+    {
+      "id": "R-O619-MIN-PARCEL-LATER-YEARS",
+      "rule_type": "eligibility",
+      "statement": "In jedem weiteren Teilnahmejahr muss zumindest ein Schlag nach den Vorgaben der Maßnahme bewirtschaftet werden.",
+      "conditions": [
+        {
+          "expression": "farm.year > oepul.o6_19.contract_start_year",
+          "description": "Folgejahr",
+          "input_paths": [
+            "farm.year",
+            "oepul.o6_19.contract_start_year"
+          ]
+        },
+        {
+          "expression": "count(compliant EBW parcels) >= 1",
+          "description": "Mindestens ein Schlag ohne Förderfähigkeits- oder Auflagenverstoß",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.in_project_confirmation",
+            "land.parcels[].oepul.ebw.indicators_recorded",
+            "land.parcels[].oepul.ebw.indicators"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_requirement",
+        "description": "Andernfalls keine Prämie im betroffenen Jahr.",
+        "value": {
+          "min_parcels": 1
+        }
+      },
+      "source_reference_ids": [
+        "CIT-M-03-2-MIN-SCHLAG",
+        "CIT-G-17-KUERZUNGSGRUENDE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.min_parcel_later_years_met",
+        "data.oepul.o6_19.compliant_ebw_parcel_ids",
+        "data.oepul.o6_19.participation_violations"
+      ]
+    },
+    {
+      "id": "R-O619-PROJECT-CONFIRMATION",
+      "rule_type": "eligibility",
+      "statement": "Voraussetzung für die Teilnahme ist das Vorliegen einer Projektbestätigung der vom BML beauftragten Stelle (Koordinationsstelle), die die Bedingungen gemäß Anhang K gemeinsam mit der bewirtschaftenden Person festlegt.",
+      "conditions": [
+        {
+          "expression": "oepul.o6_19.project_confirmation_present == true",
+          "description": "Projektbestätigung liegt vor",
+          "input_paths": [
+            "oepul.o6_19.project_confirmation_present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_requirement",
+        "description": "Ohne Projektbestätigung keine Teilnahme.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-03-3-PB",
+        "CIT-S-82-PB"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.project_confirmation_present",
+        "data.oepul.o6_19.participation_violations"
+      ]
+    },
+    {
+      "id": "R-O619-PROJECT-CONFIRMATION-PARCEL",
+      "rule_type": "eligibility",
+      "statement": "Projektbestätigungen werden auf Flächenebene für ausgewählte Acker- und Grünlandflächen ausgestellt; nur darin enthaltene Schläge sind EBW-förderfähig.",
+      "conditions": [
+        {
+          "expression": "land.parcels[].oepul.ebw.in_project_confirmation == true",
+          "description": "Schlag in der Projektbestätigung",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.in_project_confirmation"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_eligibility",
+        "description": "Nicht enthaltene Schläge sind nicht förderfähig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-03-3-FLAECHEN",
+        "CIT-S-20-FLAECHENEBENE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.parcel_in_project_confirmation",
+        "data.oepul.o6_19.parcel_eligibility_failures"
+      ]
+    },
+    {
+      "id": "R-O619-ELIG-LAND-USE",
+      "rule_type": "eligibility",
+      "statement": "Förderfähig sind ausschließlich Acker- und Grünlandflächen ohne Almen.",
+      "conditions": [
+        {
+          "expression": "land.parcels[].land_use in {arable, grassland}",
+          "description": "Nutzungsart Acker oder Grünland; Almen ausgeschlossen",
+          "input_paths": [
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_eligibility",
+        "description": "Almen und sonstige Nutzungsarten sind nicht förderfähig.",
+        "value": [
+          "arable",
+          "grassland"
+        ]
+      },
+      "source_reference_ids": [
+        "CIT-M-03-3-FLAECHEN",
+        "CIT-S-82-PFLEGE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.parcel_land_use_eligible",
+        "data.oepul.o6_19.parcel_eligibility_failures"
+      ]
+    },
+    {
+      "id": "R-O619-INDICATORS-BINDING",
+      "rule_type": "obligation",
+      "statement": "Die in der Projektbestätigung festgelegten Indikatoren sind je beantragtem Schlag zu erreichen bzw. einzuhalten.",
+      "conditions": [
+        {
+          "expression": "every binding indicator fulfilled",
+          "description": "Alle bindenden Indikatoren des Schlags erfüllt",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.indicators[].binding",
+            "land.parcels[].oepul.ebw.indicators[].fulfilled"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Nichterfüllung ist ein inhaltlicher Verstoß (Kürzung nach Sanktionsschema).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-03-3-JE-SCHLAG",
+        "CIT-M-04-1-INDIKATOREN",
+        "CIT-S-82-INDIKATOREN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.parcel_unmet_binding_indicators",
+        "data.oepul.o6_19.parcel_obligation_violations"
+      ]
+    },
+    {
+      "id": "R-O619-INDICATORS-ADDITIONAL-NONBINDING",
+      "rule_type": "exception",
+      "statement": "Allfällige Zusatzindikatoren dienen der höheren Qualifizierung der Zielerreichung bzw. haben Weiterbildungsfunktion und sind nicht bindend.",
+      "conditions": [
+        {
+          "expression": "land.parcels[].oepul.ebw.indicators[].binding == false",
+          "description": "Indikator als Zusatzindikator gekennzeichnet",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.indicators[].binding"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_binding",
+        "description": "Zusatzindikatoren werden bei der Einhaltungsprüfung nicht berücksichtigt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-04-1-INDIKATOREN",
+        "CIT-S-82-INDIKATOREN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.parcel_binding_indicators"
+      ]
+    },
+    {
+      "id": "R-O619-INDICATORS-RECORDING",
+      "rule_type": "obligation",
+      "statement": "Die je Fläche festgelegten Indikatoren sind laufend zu beobachten und in der von der Koordinationsstelle vorgegebenen Datenbank mit vorgegebener Struktur zu erfassen.",
+      "conditions": [
+        {
+          "expression": "land.parcels[].oepul.ebw.indicators_recorded == true",
+          "description": "Beobachtung dokumentiert",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.indicators_recorded"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Fehlende Erfassung ist ein inhaltlicher Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-04-1-DATENBANK",
+        "CIT-S-82-DATENBANK"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.parcel_indicators_recorded",
+        "data.oepul.o6_19.parcel_obligation_violations"
+      ]
+    },
+    {
+      "id": "R-O619-USE-EVERY-SECOND-YEAR",
+      "rule_type": "eligibility",
+      "statement": "Förderfähige Flächen, die zu ihrer Erhaltung regelmäßiger Pflege bedürfen, müssen unabhängig von den Indikatoren zumindest jedes zweite Jahr genutzt oder gepflegt werden.",
+      "conditions": [
+        {
+          "expression": "requires_regular_care implies farm.year - last_use_or_care_year < 2",
+          "description": "Letzte Nutzung/Pflege im laufenden oder im Vorjahr",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.requires_regular_care",
+            "land.parcels[].oepul.ebw.last_use_or_care_year",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_eligibility",
+        "description": "Andernfalls ist die Fläche nicht förderfähig.",
+        "value": {
+          "interval_years": 2
+        }
+      },
+      "source_reference_ids": [
+        "CIT-M-04-1-PFLEGE",
+        "CIT-S-82-PFLEGE",
+        "CIT-A-92-BRACHEN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.parcel_use_interval_ok",
+        "data.oepul.o6_19.parcel_eligibility_failures"
+      ]
+    },
+    {
+      "id": "R-O619-MGMT-CHANGE",
+      "rule_type": "obligation",
+      "statement": "Eine von den Indikatoren abweichende Änderung der Bewirtschaftung ist nur nach vorheriger Rücksprache mit der Koordinationsstelle und schriftlicher Abänderung der Projektbestätigung zulässig.",
+      "conditions": [
+        {
+          "expression": "management_deviation implies agreed and amended_in_writing",
+          "description": "Abweichung vorab abgestimmt und schriftlich in der PB geändert",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.management_deviation",
+            "land.parcels[].oepul.ebw.deviation_agreed_with_coordination_body",
+            "land.parcels[].oepul.ebw.deviation_confirmation_amended_in_writing"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Nicht abgestimmte Änderung ist ein Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-04-1-AENDERUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.parcel_management_change_ok",
+        "data.oepul.o6_19.parcel_obligation_violations"
+      ]
+    },
+    {
+      "id": "R-O619-INDICATOR-CATALOGUE",
+      "rule_type": "definition",
+      "statement": "Alle Indikatoren und Prämiensätze sind in Anhang K der SRL ÖPUL 2023 festgelegt; die Projektbestätigung wählt Ziele und Indikatoren aus diesem Katalog (Acker-, Grünland-, Tier-, Neophyten-Indikatoren).",
+      "conditions": [
+        {
+          "expression": "land.parcels[].oepul.ebw.indicators[].code in Anhang-K-Katalog",
+          "description": "Indikatorcode existiert im Katalog",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.indicators[].code"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "catalogue_check",
+        "description": "Unbekannte Codes werden als Datenfehler gemeldet.",
+        "value": {
+          "catalogue_codes": 100
+        }
+      },
+      "source_reference_ids": [
+        "CIT-M-04-1-ANHANG-K",
+        "CIT-S-94-ANHANG-K",
+        "CIT-A-91-ACKER-INDIKATOREN",
+        "CIT-A-92-FEUCHT",
+        "CIT-A-93-MAEHWIESEN",
+        "CIT-A-94-WEIDEN",
+        "CIT-A-95-TIERE",
+        "CIT-A-96-TIERE-2",
+        "CIT-A-97-NEOPHYTEN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.indicator_codes",
+        "data.oepul.o6_19.parcel_unknown_indicator_codes",
+        "data.oepul.o6_19.parcel_obligation_violations"
+      ]
+    },
+    {
+      "id": "R-O619-TRAINING-DEADLINE",
+      "rule_type": "obligation",
+      "statement": "Bis spätestens 31.12.2026 ist unabhängig von der Vorqualifikation an mindestens einem regionalen Vernetzungstreffen teilzunehmen.",
+      "conditions": [
+        {
+          "expression": "training.attended and attendance_date <= 2026-12-31",
+          "description": "Teilnahme fristgerecht",
+          "input_paths": [
+            "oepul.o6_19.training.attended",
+            "oepul.o6_19.training.attendance_date"
+          ]
+        },
+        {
+          "expression": "farm.year > 2026",
+          "description": "Verstoß erst nach Fristablauf feststellbar",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Nichterfüllung der Weiterbildungsverpflichtung führt zu Kürzungen.",
+        "value": {
+          "deadline": "2026-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-M-04-2-FRIST",
+        "CIT-S-82-WEITERBILDUNG",
+        "CIT-G-17-WEITERBILDUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.training_attended_in_time",
+        "data.oepul.o6_19.training_fulfilled",
+        "data.oepul.o6_19.training_violation",
+        "data.oepul.o6_19.participation_violations"
+      ]
+    },
+    {
+      "id": "R-O619-TRAINING-PERSON",
+      "rule_type": "eligibility",
+      "statement": "Das Vernetzungstreffen ist von der förderwerbenden Person (Betriebsführer/in) oder aus betrieblichen Erfordernissen von einer am Betrieb maßgeblich tätigen und in die Bewirtschaftung eingebundenen Person zu besuchen.",
+      "conditions": [
+        {
+          "expression": "training.attendee_role in {farm_manager, involved_person}",
+          "description": "Zulässige teilnehmende Person",
+          "input_paths": [
+            "oepul.o6_19.training.attendee_role"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "training_valid",
+        "description": "Nur Teilnahme dieser Personen zählt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-04-2-PERSON",
+        "CIT-S-82-KURS-PERSON"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.training_attendee_ok"
+      ]
+    },
+    {
+      "id": "R-O619-TRAINING-NO-DOUBLE-COUNT",
+      "rule_type": "exclusion",
+      "statement": "Der Kursbesuch einer Person ist nicht auf mehrere Betriebe anrechenbar; Doppelanrechnungen derselben Bildungsveranstaltung auf mehrere Verpflichtungen sind unzulässig.",
+      "conditions": [
+        {
+          "expression": "not same_event_credited_elsewhere and not credited_to_other_farm",
+          "description": "Keine Mehrfachanrechnung",
+          "input_paths": [
+            "oepul.o6_19.training.same_event_credited_elsewhere",
+            "oepul.o6_19.training.credited_to_other_farm"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Doppelt angerechnete Teilnahme erfüllt die Verpflichtung nicht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-04-2-MEHRERE-BETRIEBE",
+        "CIT-M-04-2-DOPPEL",
+        "CIT-S-82-DOPPEL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.training_double_counted",
+        "data.oepul.o6_19.training_violation"
+      ]
+    },
+    {
+      "id": "R-O619-TRAINING-LEAVE",
+      "rule_type": "obligation",
+      "statement": "Die Teilnahme ist an die geschulte Person gebunden: Verlässt sie den Betrieb vor dem 31.12.2026, ist ein Vernetzungstreffen bis dahin nachzuholen; scheidet sie danach aus, ist keine weitere Teilnahme erforderlich.",
+      "conditions": [
+        {
+          "expression": "trained_person_left_date < 2026-12-31 implies repeat_attended_date <= 2026-12-31",
+          "description": "Nachholung bei Ausscheiden vor Fristende",
+          "input_paths": [
+            "oepul.o6_19.training.trained_person_left_date",
+            "oepul.o6_19.training.repeat_attended_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "training_valid",
+        "description": "Ohne Nachholung gilt die Verpflichtung als nicht erfüllt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-04-2-AUSSCHEIDEN",
+        "CIT-M-04-2-NACH-2026"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.trained_person_left_before_deadline",
+        "data.oepul.o6_19.training_repeated_in_time",
+        "data.oepul.o6_19.training_fulfilled"
+      ]
+    },
+    {
+      "id": "R-O619-TRAINING-CONFIRMATION",
+      "rule_type": "information_requirement",
+      "statement": "Eine schriftliche Besuchsbestätigung ist nach Aufforderung an die AMA zu übermitteln, sofern die Übermittlung nicht durch die Koordinationsstelle erfolgt.",
+      "conditions": [
+        {
+          "expression": "confirmation_requested implies (confirmation_submitted or transmitted_by_coordination_body)",
+          "description": "Bestätigung übermittelt",
+          "input_paths": [
+            "oepul.o6_19.training.confirmation_requested",
+            "oepul.o6_19.training.confirmation_submitted",
+            "oepul.o6_19.training.transmitted_by_coordination_body"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Fehlende Übermittlung nach Aufforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-04-2-BESTAETIGUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.training_confirmation_missing",
+        "data.oepul.o6_19.participation_violations"
+      ]
+    },
+    {
+      "id": "R-O619-NO-ADDITIONAL-MEASURE",
+      "rule_type": "combination",
+      "statement": "Die Maßnahme verlangt grundsätzlich keine zusätzliche Teilnahme an einer weiteren ÖPUL-Maßnahme.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Gilt allgemein",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "no_combination_obligation",
+        "description": "Keine Kombinationsverpflichtung.",
+        "value": false
+      },
+      "source_reference_ids": [
+        "CIT-M-04-3-KEINE-PFLICHT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.additional_measure_required"
+      ]
+    },
+    {
+      "id": "R-O619-DIV-GRASSLAND",
+      "rule_type": "crediting",
+      "statement": "Nimmt der Betrieb zusätzlich an UBB oder BIO teil, sind EBW-Grünlandflächen der in Kapitel 7 gelisteten Lebensräume als Biodiversitätsflächen (DIVSZ) anrechenbar (SRL: Grünlandflächen mit Schnittzeitpunktauflage); es gelten die Bewirtschaftungsauflagen der Projektbestätigung.",
+      "conditions": [
+        {
+          "expression": "oepul.participation.ubb or oepul.participation.bio",
+          "description": "Teilnahme an UBB oder BIO",
+          "input_paths": [
+            "oepul.participation.ubb",
+            "oepul.participation.bio"
+          ]
+        },
+        {
+          "expression": "land_use == grassland and chapter7_habitat in Kapitel-7-Liste",
+          "description": "Lebensraum gelistet",
+          "input_paths": [
+            "land.parcels[].land_use",
+            "land.parcels[].oepul.ebw.chapter7_habitat"
+          ]
+        },
+        {
+          "expression": "codes contain EBW and (DIV or DIVSZ)",
+          "description": "Codierung",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "creditable",
+        "description": "Fläche zählt für die UBB/BIO-Biodiversitätsflächenvorgaben.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-04-3-ANRECHNUNG",
+        "CIT-M-04-3-KAPITEL7",
+        "CIT-S-31-UBB-GRUENLAND",
+        "CIT-S-39-BIO-GRUENLAND"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.creditable_grassland_bdf",
+        "data.oepul.o6_19.creditable_bdf_ids",
+        "data.oepul.o6_19.bdf_crediting_issues"
+      ]
+    },
+    {
+      "id": "R-O619-DIV-USAGE-TYPE",
+      "rule_type": "crediting",
+      "statement": "Je Lebensraumtyp sind nur bestimmte Grünland-Schlagnutzungsarten für die Anrechnung als DIVSZ-Fläche möglich: einmähdige Lebensräume nur einmähdige Wiese/Streuwiese; ein- oder zweimähdige zusätzlich Mähwiese/-weide zwei Nutzungen.",
+      "conditions": [
+        {
+          "expression": "usage_type in group.allowed_usage_types",
+          "description": "Schlagnutzungsart passt zur Lebensraumgruppe",
+          "input_paths": [
+            "land.parcels[].oepul.usage_type",
+            "land.parcels[].oepul.ebw.chapter7_habitat"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "creditable",
+        "description": "Sonst keine DIVSZ-Anrechnung.",
+        "value": {
+          "einmaehdig": [
+            "einmähdige Wiese",
+            "Streuwiese"
+          ],
+          "ein_oder_zweimaehdig": [
+            "einmähdige Wiese",
+            "Streuwiese",
+            "Mähwiese/-weide zwei Nutzungen"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "CIT-M-04-3-SCHLAGNUTZUNG",
+        "CIT-M-07-LEBENSRAEUME",
+        "CIT-M-08-ZWEIMAEHDIG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.grassland_bdf_usage_ok",
+        "data.oepul.o6_19.bdf_crediting_issues"
+      ]
+    },
+    {
+      "id": "R-O619-DIV-HABITAT-LIST",
+      "rule_type": "definition",
+      "statement": "Kapitel 7 enthält die geschlossene Liste der anrechenbaren Lebensräume: 35 einmähdige und 46 ein- oder zweimähdige Lebensräume (vollständig in data/oepul_o6_19/creditable_habitats.json).",
+      "conditions": [
+        {
+          "expression": "chapter7_habitat in creditable_habitats.groups[].habitats",
+          "description": "Lebensraumname exakt gelistet",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.chapter7_habitat"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "habitat_group",
+        "description": "Ermittelt die Lebensraumgruppe.",
+        "value": {
+          "einmaehdig": 35,
+          "ein_oder_zweimaehdig": 46
+        }
+      },
+      "source_reference_ids": [
+        "CIT-M-07-LEBENSRAEUME",
+        "CIT-M-08-ZWEIMAEHDIG",
+        "CIT-M-09-LISTE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.chapter7_group",
+        "data.oepul.o6_19.grassland_bdf_habitat_ok"
+      ]
+    },
+    {
+      "id": "R-O619-DIV-SETASIDE",
+      "rule_type": "crediting",
+      "statement": "EBW-Ackerstilllegungen sind bei UBB/BIO-Teilnahme als Acker-Biodiversitätsflächen anrechenbar, wenn sie mit der Schlagnutzung „Grünbrache“ sowie den Codes EBW und DIV beantragt werden; bewirtschaftete EBW-Ackerflächen sind nicht anrechenbar.",
+      "conditions": [
+        {
+          "expression": "is_arable_set_aside and usage_type == 'Grünbrache' and codes contain DIV",
+          "description": "Stilllegung korrekt codiert",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.is_arable_set_aside",
+            "land.parcels[].oepul.usage_type",
+            "land.parcels[].oepul.codes"
+          ]
+        },
+        {
+          "expression": "oepul.participation.ubb or oepul.participation.bio",
+          "description": "UBB/BIO",
+          "input_paths": [
+            "oepul.participation.ubb",
+            "oepul.participation.bio"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "creditable",
+        "description": "Fläche zählt für die Acker-Biodiversitätsflächen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-04-3-STILLLEGUNG",
+        "CIT-S-29-UBB-ACKER",
+        "CIT-S-38-BIO-ACKER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.creditable_arable_bdf",
+        "data.oepul.o6_19.bdf_crediting_issues"
+      ]
+    },
+    {
+      "id": "R-O619-DIV-CODING-GRASSLAND",
+      "rule_type": "procedure",
+      "statement": "Naturschutzflächen, die zur Erfüllung der UBB/BIO-Biodiversitätsflächenvorgaben angerechnet werden sollen, sind mit dem Code EBW sowie zusätzlich DIV oder DIVSZ zu kennzeichnen.",
+      "conditions": [
+        {
+          "expression": "codes contain EBW and (DIV or DIVSZ)",
+          "description": "Doppelcodierung",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "coding_required",
+        "description": "Ohne Zusatzcode keine Anrechnung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-06-DIV-CODE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.has_div_code",
+        "data.oepul.o6_19.creditable_grassland_bdf"
+      ]
+    },
+    {
+      "id": "R-O619-DIV-MANAGE-PER-PB",
+      "rule_type": "obligation",
+      "statement": "Unabhängig von der Anrechenbarkeit als Biodiversitätsfläche sind EBW-Flächen immer nach den Vorgaben der jeweiligen Projektbestätigung zu bewirtschaften.",
+      "conditions": [
+        {
+          "expression": "EBW in codes",
+          "description": "Jeder EBW-Schlag",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "management_basis",
+        "description": "Maßgeblich ist die Projektbestätigung, nicht die DIV-Auflagen.",
+        "value": "projektbestaetigung"
+      },
+      "source_reference_ids": [
+        "CIT-M-04-3-PB-VORRANG",
+        "CIT-S-31-UBB-GRUENLAND",
+        "CIT-N0812-EBW-BDF"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.management_basis"
+      ]
+    },
+    {
+      "id": "R-O619-DIV-WHOLE-FARM",
+      "rule_type": "obligation",
+      "statement": "Ist die gesamte ÖPUL-Fläche des Betriebes in die EBW einbringbar und nimmt der Betrieb freiwillig an UBB oder BIO teil, müssen auch die Bedingungen für die Biodiversitätsflächen erfüllt werden.",
+      "conditions": [
+        {
+          "expression": "oepul.o6_19.all_oepul_area_ebw_eligible and (ubb or bio)",
+          "description": "Gesamtbetriebliche EBW-Eignung und UBB/BIO-Teilnahme",
+          "input_paths": [
+            "oepul.o6_19.all_oepul_area_ebw_eligible",
+            "oepul.participation.ubb",
+            "oepul.participation.bio"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "biodiversity_conditions_apply",
+        "description": "UBB/BIO-Biodiversitätsflächenbedingungen gelten zusätzlich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-04-3-GESAMT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.whole_farm_ebw_with_ubb_bio"
+      ]
+    },
+    {
+      "id": "R-O619-DIV-FIELD-PIECE-015",
+      "rule_type": "obligation",
+      "statement": "In diesem Fall ist auch die Auflage „mindestens 0,15 ha Biodiversitätsfläche bei Feldstücken größer 5,00 ha“ auf in die EBW eingebrachten Feldstücken einzuhalten; ist kein EBW-Schlag anrechenbar, ist eine Fläche von mindestens 0,15 ha aus der EBW herauszunehmen und gesondert (z. B. DIVSZ ohne EBW) nach DIV-Bedingungen zu bewirtschaften.",
+      "conditions": [
+        {
+          "expression": "field_piece_area_ha > 5.0",
+          "description": "Feldstück größer 5,00 ha mit EBW-Schlag",
+          "input_paths": [
+            "land.parcels[].oepul.field_piece_id",
+            "land.parcels[].oepul.field_piece_area_ha"
+          ]
+        },
+        {
+          "expression": "bdf_area_on_field_piece >= 0.15",
+          "description": "Anrechenbare EBW-Schläge oder gesonderte DIV/DIVSZ-Schläge ≥ 0,15 ha",
+          "input_paths": [
+            "land.parcels[].area_ha",
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Unterschreitung ist ein Verstoß.",
+        "value": {
+          "threshold_ha": 5.0,
+          "min_bdf_ha": 0.15
+        }
+      },
+      "source_reference_ids": [
+        "CIT-M-04-3-GESAMT",
+        "CIT-M-05-BEISPIEL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.field_piece_bdf_violations",
+        "data.oepul.o6_19.field_piece_bdf_area",
+        "data.oepul.o6_19.is_bdf_on_field_piece"
+      ]
+    },
+    {
+      "id": "R-O619-RNP-REGION",
+      "rule_type": "obligation",
+      "statement": "Wird der Zuschlag „Regionaler Naturschutzplan“ beantragt, werden in einer Projektgemeinschaft Ziele für eine abgegrenzte Region definiert; die dafür erforderlichen Indikatoren werden in der Projektbestätigung festgehalten und sind auf der jeweiligen Fläche einzuhalten.",
+      "conditions": [
+        {
+          "expression": "regional_plan.applied",
+          "description": "Zuschlag beantragt",
+          "input_paths": [
+            "oepul.o6_19.regional_plan.applied"
+          ]
+        },
+        {
+          "expression": "regional indicators fulfilled",
+          "description": "Regionale Indikatoren als bindende Schlagindikatoren erfüllt",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.indicators[].fulfilled"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Regionale Indikatoren unterliegen der Indikatorprüfung je Schlag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-05-RNP-REGION"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.parcel_unmet_binding_indicators",
+        "data.oepul.o6_19.regional_plan_prerequisites_met"
+      ]
+    },
+    {
+      "id": "R-O619-RNP-CONFIRMATION",
+      "rule_type": "eligibility",
+      "statement": "Voraussetzung für den Zuschlag „Regionaler Naturschutzplan“ ist eine jährliche Teilnahmebestätigung der zuständigen (Koordinations-)Stelle zusätzlich zur Projektbestätigung.",
+      "conditions": [
+        {
+          "expression": "regional_plan.participation_confirmation_present and project_confirmation_present",
+          "description": "Beide Bestätigungen liegen vor",
+          "input_paths": [
+            "oepul.o6_19.regional_plan.participation_confirmation_present",
+            "oepul.o6_19.project_confirmation_present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "surcharge_eligibility",
+        "description": "Ohne Teilnahmebestätigung kein Zuschlag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-03-4-TNB",
+        "CIT-S-82-RNP-TNB",
+        "CIT-M-05-RNP-REGION"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.regional_plan_prerequisites_met",
+        "data.oepul.o6_19.regional_plan_surcharge_eur"
+      ]
+    },
+    {
+      "id": "R-O619-APP-DEADLINE",
+      "rule_type": "deadline",
+      "statement": "Die Maßnahme und der optionale Zuschlag sind vor Vertragsbeginn im Maßnahmenantrag des Mehrfachantrags bis spätestens 31. Dezember zu beantragen, um einen Vertrag ab dem Folgejahr zu begründen.",
+      "conditions": [
+        {
+          "expression": "measure_application_date <= (contract_start_year - 1)-12-31",
+          "description": "Antrag fristgerecht",
+          "input_paths": [
+            "oepul.o6_19.measure_application_date",
+            "oepul.o6_19.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_requirement",
+        "description": "Verspäteter Antrag begründet keinen Vertrag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-05-ANTRAG",
+        "CIT-G-12-ANTRAG",
+        "CIT-S-21-MA-FRIST"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.application_deadline",
+        "data.oepul.o6_19.application_timely",
+        "data.oepul.o6_19.participation_violations"
+      ]
+    },
+    {
+      "id": "R-O619-APP-LAST-ENTRY",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg in die EBW ist mit dem Förderjahr 2025 möglich (Beantragung bis spätestens 31.12.2024).",
+      "conditions": [
+        {
+          "expression": "contract_start_year <= 2025",
+          "description": "Einstieg spätestens 2025",
+          "input_paths": [
+            "oepul.o6_19.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_requirement",
+        "description": "Späterer Einstieg nicht möglich.",
+        "value": {
+          "last_entry_year": 2025
+        }
+      },
+      "source_reference_ids": [
+        "CIT-M-05-LETZTER-EINSTIEG",
+        "CIT-G-12-LETZTER-EINSTIEG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.entry_year_allowed",
+        "data.oepul.o6_19.participation_violations"
+      ]
+    },
+    {
+      "id": "R-O619-RNP-LAST-ENTRY",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg in den Zuschlag „Regionaler Naturschutzplan“ ist mit dem Förderjahr 2028 möglich (Beantragung über den Maßnahmenantrag bis spätestens 31.12.2027).",
+      "conditions": [
+        {
+          "expression": "regional_plan.application_date <= 2027-12-31 and <= (first_year-1)-12-31",
+          "description": "Fristgerechte Beantragung",
+          "input_paths": [
+            "oepul.o6_19.regional_plan.application_date",
+            "oepul.o6_19.regional_plan.first_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "surcharge_eligibility",
+        "description": "Verspätete Beantragung: kein Zuschlag.",
+        "value": {
+          "last_entry_year": 2028,
+          "deadline": "2027-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-M-05-RNP-EINSTIEG",
+        "CIT-G-12-ZUSCHLAG-2027",
+        "CIT-S-21-MA-RNP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.regional_plan_application_timely"
+      ]
+    },
+    {
+      "id": "R-O619-APP-EBW-CODE",
+      "rule_type": "procedure",
+      "statement": "Um einen Schlag für die Maßnahme zu beantragen, ist er in der Feldstücksliste des Mehrfachantrags mit dem Code EBW zu kennzeichnen; nicht für die Maßnahme angegebene Flächen sind nicht förderfähig.",
+      "conditions": [
+        {
+          "expression": "'EBW' in land.parcels[].oepul.codes",
+          "description": "Code EBW gesetzt",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_in_measure",
+        "description": "Nur EBW-codierte Schläge werden berücksichtigt.",
+        "value": "EBW"
+      },
+      "source_reference_ids": [
+        "CIT-M-05-CODE-EBW",
+        "CIT-G-07-NICHT-FOERDERFAEHIG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.ebw_parcels",
+        "data.oepul.o6_19.ebw_parcel_ids"
+      ]
+    },
+    {
+      "id": "R-O619-COMBI-NATURSCHUTZ-FARM",
+      "rule_type": "combination",
+      "statement": "Die EBW ist mit der Maßnahme „Naturschutz“ am Betrieb (betrieblich, nicht auf derselben Einzelfläche) kombinierbar.",
+      "conditions": [
+        {
+          "expression": "oepul.participation.naturschutz",
+          "description": "Gleichzeitige NAT-Teilnahme",
+          "input_paths": [
+            "oepul.participation.naturschutz"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combinable_farm_level",
+        "description": "Betriebliche Kombination zulässig.",
+        "value": [
+          "18"
+        ]
+      },
+      "source_reference_ids": [
+        "CIT-M-05-NAT-KOMBI"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.farm_level_combinable_measures"
+      ]
+    },
+    {
+      "id": "R-O619-SWITCH-TO-NAT",
+      "rule_type": "option",
+      "statement": "Während der Laufzeit kann bis spätestens 31.12.2025 mit einzelnen oder allen Flächen von der EBW in die Maßnahme „Naturschutz“ umgestiegen werden (und umgekehrt), ohne Rückzahlungspflicht; die Verpflichtungen der neuen Maßnahme gelten für die Restlaufzeit.",
+      "conditions": [
+        {
+          "expression": "switch.from == '19' and switch.to == '18' and effective_date <= 2025-12-31",
+          "description": "Umstieg fristgerecht",
+          "input_paths": [
+            "oepul.o6_19.switch.from",
+            "oepul.o6_19.switch.to",
+            "oepul.o6_19.switch.effective_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "switch_allowed",
+        "description": "Umwandlung ohne Rückzahlung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-05-UMSTIEG-NAT",
+        "CIT-M-06-UMSTIEG-NAT-2",
+        "CIT-G-14-WECHSEL-TAB",
+        "CIT-S-15-UMWANDLUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.switch_allowed"
+      ]
+    },
+    {
+      "id": "R-O619-NPF-GLOEZ8",
+      "rule_type": "exception",
+      "statement": "Bis einschließlich Antragsjahr 2024 können EBW-Ackerstilllegungen für den mindestens 4 % Stilllegungsanteil (GLÖZ 8) angerechnet werden, wenn sie zusätzlich zum Code EBW mit Code NPF versehen sind; in diesem Fall erfolgt keine ÖPUL-Prämiengewährung.",
+      "conditions": [
+        {
+          "expression": "farm.year <= 2024 and codes contain NPF",
+          "description": "NPF-Codierung bis 2024",
+          "input_paths": [
+            "farm.year",
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "GLÖZ-8-Anrechnung, aber keine EBW-Prämie auf dem Schlag.",
+        "value": {
+          "last_year": 2024,
+          "gloez8_share_percent": 4
+        }
+      },
+      "source_reference_ids": [
+        "CIT-M-06-NPF"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.gloez8_creditable_set_aside",
+        "data.oepul.o6_19.no_premium_reasons"
+      ]
+    },
+    {
+      "id": "R-O619-REFERENCE-AREA",
+      "rule_type": "eligibility",
+      "statement": "Für die Auszahlung der EBW-Schläge muss eine entsprechende EBW-Referenzfläche (grafische Projektbestätigung, von der Koordinationsstelle im INVEKOS-GIS erfasst) vorhanden sein.",
+      "conditions": [
+        {
+          "expression": "land.parcels[].oepul.ebw.reference_area_present == true",
+          "description": "Referenzfläche vorhanden",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.reference_area_present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Ohne Referenzfläche keine Auszahlung für den Schlag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-06-REFERENZ"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.parcel_reference_area_present",
+        "data.oepul.o6_19.no_premium_reasons"
+      ]
+    },
+    {
+      "id": "R-O619-RATE-BASIS",
+      "rule_type": "premium_calculation",
+      "statement": "Acker- und Grünlandprämien ergeben sich aus den Indikatoren und Prämiensätzen gemäß Projektbestätigung bzw. Anhang K; die Basisprämie wurde aus Prämienbausteinen der Naturschutzmaßnahme je Biotoptyp, Erhaltungszustand (A/B/C) und bei Wiesen Erschwernisklasse kalkuliert.",
+      "conditions": [
+        {
+          "expression": "premium_table, premium_habitat, conservation_status, difficulty",
+          "description": "Klassifikation laut Projektbestätigung",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.premium_table",
+            "land.parcels[].oepul.ebw.premium_habitat",
+            "land.parcels[].oepul.ebw.conservation_status",
+            "land.parcels[].oepul.ebw.difficulty"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rate_lookup",
+        "description": "Prämiensatz aus Anhang-K-Tabellen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-06-PRAEMIE-TAB",
+        "CIT-S-83-PRAEMIENSATZ",
+        "CIT-A-98-BASIS",
+        "CIT-M-01-PRAEMIE-HERLEITUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.base_rate",
+        "data.oepul.o6_19.parcel_rate"
+      ]
+    },
+    {
+      "id": "R-O619-RATE-VALIDITY",
+      "rule_type": "premium_calculation",
+      "statement": "Die Anhang-K-Prämien (inkl. Flächenbeobachtungszuschlag, EUR/ha) gelten ab 01.01.2024, soweit nicht mit 1b (ab 2025) gekennzeichnet; für 2023 enthalten die Quellen keine Sätze.",
+      "conditions": [
+        {
+          "expression": "farm.year >= 2024",
+          "description": "Anwendbarkeit der Tabellen",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rates_applicable",
+        "description": "Für 2023 wird kein Satz ermittelt (offen).",
+        "value": {
+          "valid_from_year": 2024
+        }
+      },
+      "source_reference_ids": [
+        "CIT-A-101-GUELTIG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.rates_applicable"
+      ]
+    },
+    {
+      "id": "R-O619-RATE-WIESEN",
+      "rule_type": "premium_calculation",
+      "statement": "Wiesen: Prämie je Biotoptyp (18 Zeilen), Erhaltungszustand A/B/C und Erschwernis leicht/mittel/schwer gemäß Anhang K (z. B. Großseggenried A/leicht 1.296,0 EUR/ha; Lärchenwiese ohne Stufe 'leicht').",
+      "conditions": [
+        {
+          "expression": "premium_table == 'wiesen'",
+          "description": "Wiesentabelle",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.premium_table",
+            "land.parcels[].oepul.ebw.premium_habitat",
+            "land.parcels[].oepul.ebw.conservation_status",
+            "land.parcels[].oepul.ebw.difficulty"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rate_eur_per_ha",
+        "description": "Satz aus data/oepul_o6_19/premium_rates.json#/premium_rates/wiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-A-101-WIESEN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.base_rate"
+      ]
+    },
+    {
+      "id": "R-O619-RATE-WEIDEN",
+      "rule_type": "premium_calculation",
+      "statement": "Weiden: Prämie je Biotoptyp (7 Zeilen) und Erhaltungszustand A/B/C gemäß Anhang K.",
+      "conditions": [
+        {
+          "expression": "premium_table == 'weiden'",
+          "description": "Weidentabelle",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.premium_table",
+            "land.parcels[].oepul.ebw.premium_habitat",
+            "land.parcels[].oepul.ebw.conservation_status"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rate_eur_per_ha",
+        "description": "Satz aus premium_rates.weiden.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-A-101-WEIDEN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.base_rate"
+      ]
+    },
+    {
+      "id": "R-O619-RATE-VOEGEL",
+      "rule_type": "premium_calculation",
+      "statement": "Spezielle Grünland-Vogelarten (Erhaltungszustand A): Braunkehlchen 837,0 EUR/ha bis inkl. 2024 bzw. 1.053,0 EUR/ha ab 2025; Wachtelkönig 1.231,2 EUR/ha.",
+      "conditions": [
+        {
+          "expression": "premium_table == 'voegel' and year in row validity",
+          "description": "Vogeltabelle nach Jahr",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.premium_table",
+            "land.parcels[].oepul.ebw.premium_habitat",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rate_eur_per_ha",
+        "description": "Satz aus premium_rates.voegel.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-A-102-VOEGEL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.base_rate"
+      ]
+    },
+    {
+      "id": "R-O619-RATE-ACKER",
+      "rule_type": "premium_calculation",
+      "statement": "Acker: Prämie je Biotoptyp (Artenreiche/Artenarme Ackerbrache, Extensiv bewirtschafteter Acker, Intensiv bewirtschafteter Acker mit Tierziel) und Erhaltungszustand gemäß Anhang K.",
+      "conditions": [
+        {
+          "expression": "premium_table == 'acker'",
+          "description": "Ackertabelle",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.premium_table",
+            "land.parcels[].oepul.ebw.premium_habitat",
+            "land.parcels[].oepul.ebw.conservation_status"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rate_eur_per_ha",
+        "description": "Satz aus premium_rates.acker.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-A-102-ACKER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.base_rate"
+      ]
+    },
+    {
+      "id": "R-O619-EBBA01",
+      "rule_type": "premium_calculation",
+      "statement": "Besonderer-Aufwand-Zuschlag EBBA01: pauschal 108 EUR/ha, nur einmal pro Fläche und nur bei begründetem Vorliegen eines Grundes der Entscheidungsliste.",
+      "conditions": [
+        {
+          "expression": "'EBBA01' in surcharge_codes and count(EBBA codes) == 1",
+          "description": "Ein EBBA-Code",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.surcharge_codes"
+          ]
+        },
+        {
+          "expression": "ebba_reason_issues == {}",
+          "description": "Grund zulässig",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.ebba_reason_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "surcharge_eur_per_ha",
+        "description": "+108 EUR/ha.",
+        "value": 108.0
+      },
+      "source_reference_ids": [
+        "CIT-A-98-EBBA01",
+        "CIT-A-98-EBBA-TAB"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.ebba_rate"
+      ]
+    },
+    {
+      "id": "R-O619-EBBA02",
+      "rule_type": "premium_calculation",
+      "statement": "Zweite EBBA-Stufe EBBA02: ab Antragsjahr 2025 für den besonderen Aufwand bei Lebensräumen mit sehr gutem Erhaltungszustand (A), 162 EUR/ha.",
+      "conditions": [
+        {
+          "expression": "'EBBA02' in surcharge_codes and farm.year >= 2025 and conservation_status == 'A'",
+          "description": "Voraussetzungen EBBA02",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.surcharge_codes",
+            "farm.year",
+            "land.parcels[].oepul.ebw.conservation_status"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "surcharge_eur_per_ha",
+        "description": "+162 EUR/ha.",
+        "value": 162.0
+      },
+      "source_reference_ids": [
+        "CIT-A-98-EBBA02",
+        "CIT-A-98-EBBA-TAB"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.ebba_rate",
+        "data.oepul.o6_19.ebba_invalid"
+      ]
+    },
+    {
+      "id": "R-O619-EBBA-REASON-LIST",
+      "rule_type": "premium_calculation",
+      "statement": "Der EBBA muss begründet und im EBW-Erhebungsbogen ausgewählt werden; zulässig nur bei einem Grund der Entscheidungsliste (15 Gründe) unter Beachtung der jeweiligen Einschränkungen (z. B. Kleinflächigkeit nur leicht und ≤ 0,3 ha; Neophyten nur mit EBNE/EBPR-Indikator und Erhaltungszustand max. B; kein EBBA für EBGT13 auf Lärchenwiesen, EBGT14–17 bei Braunkehlchen, EBGT18–19 bei Wachtelkönig).",
+      "conditions": [
+        {
+          "expression": "ebba_reason_id in ebba_reasons and constraints satisfied",
+          "description": "Grund und Einschränkungen erfüllt",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.ebba_reason_id",
+            "land.parcels[].oepul.ebw.difficulty",
+            "land.parcels[].area_ha",
+            "land.parcels[].oepul.ebw.indicators[].code",
+            "land.parcels[].oepul.ebw.conservation_status",
+            "land.parcels[].oepul.ebw.cuts_per_year",
+            "land.parcels[].oepul.ebw.previous_year_land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "surcharge_admissible",
+        "description": "Sonst wird der Zuschlag nicht berücksichtigt (rate_issue).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-A-98-EBBA-BEGRUENDUNG",
+        "CIT-A-98-LISTE",
+        "CIT-A-99-EBBA-AUSSCHLUSS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.ebba_reason_issues",
+        "data.oepul.o6_19.ebba_reason",
+        "data.oepul.o6_19.ebba_invalid"
+      ]
+    },
+    {
+      "id": "R-O619-EBHG",
+      "rule_type": "premium_calculation",
+      "statement": "Habitatzuschlag EBHG01 (Grünland) / EBHG02 (Acker): 108 EUR/ha zusätzlich, wenn zumindest 50 % der Fläche im Layer „Schutzgutflächen“ liegen; förderfähig nur von den Landesdienststellen gemeldete und im GIS der AMA eingezeichnete Flächen der in Anhang I Abschnitt H definierten Lebensraumtypen/Artlebensräume.",
+      "conditions": [
+        {
+          "expression": "schutzgut_layer_share_percent >= 50 and habitat_area_reported_in_gis",
+          "description": "Layer-Anteil und Meldung",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.schutzgut_layer_share_percent",
+            "land.parcels[].oepul.ebw.habitat_area_reported_in_gis",
+            "land.parcels[].oepul.ebw.surcharge_codes",
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "surcharge_eur_per_ha",
+        "description": "+108 EUR/ha.",
+        "value": 108.0
+      },
+      "source_reference_ids": [
+        "CIT-A-100-EBHG",
+        "CIT-A-100-EBHG-50",
+        "CIT-A-77-HABITAT-H"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.ebhg_rate",
+        "data.oepul.o6_19.default_zero_ebhg"
+      ]
+    },
+    {
+      "id": "R-O619-RNP-RATE",
+      "rule_type": "premium_calculation",
+      "statement": "Optionaler Zuschlag Regionaler Naturschutzplan: 250,0 EUR/Betrieb (2023) bzw. 270,0 EUR/Betrieb pro Jahr ab 2024.",
+      "conditions": [
+        {
+          "expression": "regional_plan prerequisites met",
+          "description": "Voraussetzungen erfüllt",
+          "input_paths": [
+            "oepul.o6_19.regional_plan.applied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "surcharge_eur_per_farm",
+        "description": "Betriebsbezogener Zuschlag.",
+        "value": {
+          "2023": 250.0,
+          "from_2024": 270.0
+        }
+      },
+      "source_reference_ids": [
+        "CIT-M-06-RNP-SATZ",
+        "CIT-S-83-RNP-270",
+        "CIT-M-01-PRAEMIE-HERLEITUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.regional_plan_rate",
+        "data.oepul.o6_19.regional_plan_surcharge_eur"
+      ]
+    },
+    {
+      "id": "R-O619-RNP-ONCE-WITH-NAT",
+      "rule_type": "cap",
+      "statement": "Der Zuschlag Regionaler Naturschutzplan wird bei gleichzeitiger Teilnahme an EBW und „Naturschutz“ je Betrieb nur einmal pro Jahr gewährt.",
+      "conditions": [
+        {
+          "expression": "not oepul.participation.naturschutz_regional_plan_granted",
+          "description": "Nicht bereits über NAT gewährt",
+          "input_paths": [
+            "oepul.participation.naturschutz_regional_plan_granted"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "surcharge_once",
+        "description": "Kein zweiter Zuschlag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-07-RNP-EINMAL",
+        "CIT-S-83-RNP-EINMAL",
+        "CIT-S-81-NAT-RNP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.regional_plan_already_paid_via_naturschutz",
+        "data.oepul.o6_19.regional_plan_surcharge_eur"
+      ]
+    },
+    {
+      "id": "R-O619-GLOEZ4-GLOEZ8-EXCLUSION",
+      "rule_type": "exclusion",
+      "statement": "Begrünte Ackerflächen im Rahmen von GLÖZ 4 (Pufferstreifen entlang von Wasserläufen) und bis einschließlich 2024 stillgelegte Ackerflächen im Rahmen von GLÖZ 8 sind auf dem betroffenen Flächenteil nicht förderbar.",
+      "conditions": [
+        {
+          "expression": "eligible_area = area_ha - gloez4_buffer_area_ha - (year <= 2024 ? gloez8_set_aside_area_ha : 0)",
+          "description": "Abzug der GLÖZ-Teilflächen",
+          "input_paths": [
+            "land.parcels[].area_ha",
+            "land.parcels[].oepul.gloez4_buffer_area_ha",
+            "land.parcels[].oepul.gloez8_set_aside_area_ha",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "area_reduction",
+        "description": "Teilfläche ohne Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-M-06-GLOEZ",
+        "CIT-S-83-GLOEZ"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.parcel_gloez_excluded_area",
+        "data.oepul.o6_19.parcel_eligible_area"
+      ]
+    },
+    {
+      "id": "R-O619-SETASIDE-CAP",
+      "rule_type": "cap",
+      "statement": "Ackerstilllegungen in der Maßnahme sind maximal im Ausmaß von 25 % der gesamten Ackerfläche des Betriebes, jedenfalls aber im Ausmaß von 2,00 ha förderfähig.",
+      "conditions": [
+        {
+          "expression": "sum(set_aside eligible area) <= max(0.25 * land.arable_area_ha, 2.0)",
+          "description": "Obergrenze",
+          "input_paths": [
+            "land.arable_area_ha",
+            "land.parcels[].oepul.ebw.is_arable_set_aside",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "area_cap",
+        "description": "Übersteigende Stilllegungsfläche nicht förderfähig (anteilige Kürzung).",
+        "value": {
+          "share": 0.25,
+          "min_cap_ha": 2.0
+        }
+      },
+      "source_reference_ids": [
+        "CIT-M-06-STILLLEGUNG-MAX",
+        "CIT-S-83-STILLLEGUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.set_aside_area_total",
+        "data.oepul.o6_19.set_aside_cap_ha",
+        "data.oepul.o6_19.set_aside_factor",
+        "data.oepul.o6_19.parcel_premium_area"
+      ]
+    },
+    {
+      "id": "R-O619-COMBINATION-SAME-AREA",
+      "rule_type": "combination",
+      "statement": "EBW-geförderte Flächen sind hinsichtlich der Prämie auf der Einzelfläche mit keiner anderen Maßnahme kombinierbar, ausgenommen „Natura 2000 und andere Schutzgebiete – Landwirtschaft“ (23) sowie die Abgeltung der (punktförmigen) Landschaftselemente in UBB (1A) und BIO (1B) (Anhang L, Zeile 19, Fußnote 1).",
+      "conditions": [
+        {
+          "expression": "other_measure_premium_claims[].measure == '23' or (measure in {1A,1B} and component == 'landscape_elements')",
+          "description": "Zulässige Kombination",
+          "input_paths": [
+            "land.parcels[].oepul.other_measure_premium_claims[].measure",
+            "land.parcels[].oepul.other_measure_premium_claims[].component"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combination_conflict",
+        "description": "Unzulässige Kombinationen werden als Konflikt ausgewiesen.",
+        "value": {
+          "23": "x",
+          "1A": "x1",
+          "1B": "x1"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-M-06-KOMBI-EINZEL",
+        "CIT-S-83-KOMBI",
+        "CIT-S-92-N2000",
+        "CIT-A-103-KOMBI",
+        "CIT-A-103-FN1",
+        "CIT-S-18-KOMBINATION"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.combination_conflicts",
+        "data.oepul.o6_19.parcel_forbidden_combinations",
+        "data.oepul.o6_19.combination_allowed"
+      ]
+    },
+    {
+      "id": "R-O619-PREMIUM-CAP",
+      "rule_type": "cap",
+      "statement": "Obergrenze für die Summe der flächenbezogenen Zahlungen je Schlag (inkl. umgelegter LSE-Zahlungen) bei Teilnahme an EBW: 1.300 EUR/ha (2023) bzw. 1.500 EUR/ha (ab 2024).",
+      "conditions": [
+        {
+          "expression": "ebw_rate + other_area_payments_eur_per_ha <= cap(year)",
+          "description": "Summe je ha",
+          "input_paths": [
+            "land.parcels[].oepul.other_area_payments_eur_per_ha",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rate_cap",
+        "description": "EBW-Satz wird auf die Obergrenze abzüglich anderer Flächenzahlungen begrenzt.",
+        "value": {
+          "2023": 1300.0,
+          "from_2024": 1500.0
+        }
+      },
+      "source_reference_ids": [
+        "CIT-G-19-OBERGRENZE",
+        "CIT-S-17-OBERGRENZE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.premium_cap_eur_per_ha",
+        "data.oepul.o6_19.parcel_rate_after_reductions"
+      ]
+    },
+    {
+      "id": "R-O619-K-HABITAT-CLASSIFICATION",
+      "rule_type": "definition",
+      "statement": "Die Einstufung des Lebensraumtyps erfolgt nach dem Ist-Zustand bei der Beratung; bei Grünlandbrachen/verbrachten Flächen wird der zu entwickelnde Lebensraumtyp mit Erhaltungszustand C (ungünstig), selten B (gut), vergeben; Indikatoren richten sich nach dem Ziel-Lebensraum.",
+      "conditions": [
+        {
+          "expression": "is_grassland_fallow implies conservation_status in {B, C}",
+          "description": "Brachen nicht mit A einstufen",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.is_grassland_fallow",
+            "land.parcels[].oepul.ebw.conservation_status"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "pb_design_issue",
+        "description": "Abweichung wird als Planungsmangel gemeldet.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-A-91-EINSTUFUNG",
+        "CIT-A-91-BRACHE-C",
+        "CIT-A-92-BRACHEN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.pb_design_issues"
+      ]
+    },
+    {
+      "id": "R-O619-K-DOMINANT-HABITAT",
+      "rule_type": "definition",
+      "statement": "Bei kleinräumig verzahnten Lebensraumtypen bestimmt der flächenmäßig dominante Typ die Prämie; bei räumlich klar getrennten, unterschiedlich bewirtschafteten Lebensraumtypen können zwei Schläge gebildet werden, wenn die Einzelflächen mindestens 0,1 ha groß sind.",
+      "conditions": [
+        {
+          "expression": "split_by_habitat_type implies area_ha >= 0.1",
+          "description": "Mindestgröße getrennter Schläge",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.split_by_habitat_type",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "pb_design_issue",
+        "description": "Zu kleine Teilschläge werden gemeldet.",
+        "value": {
+          "min_area_ha": 0.1
+        }
+      },
+      "source_reference_ids": [
+        "CIT-A-91-DOMINANT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.pb_design_issues"
+      ]
+    },
+    {
+      "id": "R-O619-K-LOW-VALUE-EXCLUDED",
+      "rule_type": "exclusion",
+      "statement": "Ist der ökologische Wert der Fläche zu niedrig (z. B. Intensivwiese ohne Vogelschutzziele, massive Belastung durch problematische Neophyten), kann die Fläche nicht in die EBW aufgenommen werden.",
+      "conditions": [
+        {
+          "expression": "not ecological_value_too_low",
+          "description": "Ausreichender ökologischer Wert",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.ecological_value_too_low"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_eligibility",
+        "description": "Fläche nicht förderfähig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-A-91-NIEDRIGER-WERT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.parcel_ecological_value_ok",
+        "data.oepul.o6_19.parcel_eligibility_failures"
+      ]
+    },
+    {
+      "id": "R-O619-K-ARABLE-AS-GRASSLAND",
+      "rule_type": "definition",
+      "statement": "Wird eine Ackerfläche als Grünland bewirtschaftet, müssen die Indikatoren vom jeweiligen Grünlandtyp gewählt werden.",
+      "conditions": [
+        {
+          "expression": "managed_as_grassland implies no acker_lebensraum indicators",
+          "description": "Indikatorkategorie passend",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.managed_as_grassland",
+            "land.parcels[].oepul.ebw.indicators[].code"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "pb_design_issue",
+        "description": "Falsche Indikatorwahl wird gemeldet.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-A-91-ACKER-GRUENLAND"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.pb_design_issues",
+        "data.oepul.o6_19.indicator_category"
+      ]
+    },
+    {
+      "id": "R-O619-ACCESS-FAIL-CONSEQUENCE",
+      "rule_type": "sanction",
+      "statement": "Bei mehrjährigen Maßnahmen kommt bei Nichterfüllung von Förder- bzw. Zugangsvoraussetzungen im 1. Jahr kein Vertrag zustande; ab dem 2. Verpflichtungsjahr wird im betroffenen Jahr keine Prämie gewährt.",
+      "conditions": [
+        {
+          "expression": "access requirement violated",
+          "description": "Zugangsvoraussetzung verletzt",
+          "input_paths": [
+            "oepul.o6_19.contract_start_year",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_consequence",
+        "description": "no_contract (1. Jahr) bzw. no_premium_this_year.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-24-ZUGANG-FOLGE",
+        "CIT-G-17-KUERZUNGSGRUENDE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.access_consequence",
+        "data.oepul.o6_19.access_violated",
+        "data.oepul.o6_19.measure_premium_eur"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-FARM-MIN-SIZE",
+      "rule_type": "eligibility",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr muss der Betrieb mindestens 0,50 ha Flächen im geschützten Anbau oder 1,50 ha landwirtschaftliche Fläche bewirtschaften; ab dem zweiten ÖPUL-Jahr entfällt die Betriebsmindestgröße.",
+      "conditions": [
+        {
+          "expression": "oepul.first_oepul_participation_year == farm.year",
+          "description": "Erstes ÖPUL-Jahr",
+          "input_paths": [
+            "oepul.first_oepul_participation_year",
+            "farm.year"
+          ]
+        },
+        {
+          "expression": "land.total_area_ha >= 1.5 or protected_cultivation_area_ha >= 0.5",
+          "description": "Mindestgröße",
+          "input_paths": [
+            "land.total_area_ha",
+            "oepul.protected_cultivation_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_requirement",
+        "description": "Kein Vertrag bei Unterschreitung.",
+        "value": {
+          "agricultural_area_ha": 1.5,
+          "protected_cultivation_ha": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "CIT-G-05-3-MINDESTGROESSE",
+        "CIT-G-05-3-ZWEITES-JAHR",
+        "CIT-S-10-MINDESTGROESSE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.farm_min_size_met",
+        "data.oepul.o6_19.is_first_oepul_year",
+        "data.oepul.o6_19.general_violations"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-APPLICANT",
+      "rule_type": "eligibility",
+      "statement": "Förderwerbend sind natürliche Personen, eingetragene Personengesellschaften, juristische Personen und Personenvereinigungen (Gebietskörperschaftsbeteiligung ≤ 25 %), die aktive Landwirte sind; Gebietskörperschaften und deren Einrichtungen sind bei EBW ausgeschlossen.",
+      "conditions": [
+        {
+          "expression": "applicant.type != public_body",
+          "description": "Keine Gebietskörperschaft",
+          "input_paths": [
+            "oepul.applicant.type"
+          ]
+        },
+        {
+          "expression": "public_body_share_percent <= 25",
+          "description": "Beteiligungsgrenze",
+          "input_paths": [
+            "oepul.applicant.public_body_share_percent"
+          ]
+        },
+        {
+          "expression": "active_farmer",
+          "description": "Aktiver Landwirt",
+          "input_paths": [
+            "oepul.applicant.active_farmer"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_requirement",
+        "description": "Nicht förderwerbend.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-05-2-PERSONEN",
+        "CIT-G-05-2-GEBIETSKOERPER",
+        "CIT-S-08-AKTIVER-LANDWIRT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.general_violations"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-LOCATION-AT",
+      "rule_type": "eligibility",
+      "statement": "Die geförderten Flächen müssen in Österreich liegen.",
+      "conditions": [
+        {
+          "expression": "land.parcels[].oepul.located_in_austria != false",
+          "description": "Lage in Österreich",
+          "input_paths": [
+            "land.parcels[].oepul.located_in_austria"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Flächen außerhalb Österreichs werden nicht gefördert.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-09-OESTERREICH",
+        "CIT-S-09-OESTERREICH"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.no_premium_reasons"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-CONDITIONALITY",
+      "rule_type": "obligation",
+      "statement": "Alle ÖPUL-Teilnehmer müssen die Konditionalität (Klima/Umwelt, Gesundheit, Pflanzengesundheit, Tierwohl, soziale Konditionalität) einhalten, um die Förderung in voller Höhe zu erhalten.",
+      "conditions": [
+        {
+          "expression": "conditionality complied",
+          "description": "Außerhalb des EBW-Modells (Merkblatt Konditionalität)",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "reduction_if_violated",
+        "description": "Kürzungen gemäß Konditionalitätsregeln (nicht modelliert).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-05-1-KONDITIONALITAET"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "R-O619-GEN-MIN-MGMT-CRITERIA",
+      "rule_type": "obligation",
+      "statement": "Mindestbewirtschaftungskriterien (z. B. Grünland jährlich mindestens einmal vollflächige Mahd oder Beweidung) gelten auf allen eingebrachten Flächen, sofern die Maßnahmenbeschreibung nichts Abweichendes festlegt.",
+      "conditions": [
+        {
+          "expression": "measure-specific deviation absent",
+          "description": "Verhältnis zur EBW-Pflege 'jedes zweite Jahr' offen (siehe assumptions)",
+          "input_paths": [
+            "land.parcels[].operations.cutting_dates"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "unresolved_interaction",
+        "description": "Nicht automatisiert; als Annahme dokumentiert.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-05-4-MINDESTBEW",
+        "CIT-G-06-GRUENLAND-MAHD",
+        "CIT-S-11-MINDESTBEW"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "R-O619-GEN-MIN-MGMT-EXEMPT",
+      "rule_type": "exception",
+      "statement": "Grünbrachen im Rahmen der EBW (Code EBW) sind von den Mindestbewirtschaftungskriterien ausgenommen und förderfähig; es gelten die Förderbedingungen der Maßnahme.",
+      "conditions": [
+        {
+          "expression": "usage_type == 'Grünbrache'",
+          "description": "EBW-Grünbrache",
+          "input_paths": [
+            "land.parcels[].oepul.usage_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exempt",
+        "description": "Keine allgemeinen Mindestbewirtschaftungskriterien.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-06-GRUENBRACHE-EBW",
+        "CIT-S-10-GRUENBRACHE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.min_management_criteria_exempt"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-NOT-ELIGIBLE-LIST",
+      "rule_type": "exclusion",
+      "statement": "Im ÖPUL jedenfalls nicht förderfähig sind u. a. Energieholz/Kurzumtrieb, Reb- und Baumschulen, nicht aktiv bewirtschaftete Flächen, 'Sonstige' Flächen, nicht für die Maßnahme angegebene oder falsch identifizierte Flächen, Flächen gemäß § 31 GSP-AV und GLÖZ-Landschaftselemente.",
+      "conditions": [
+        {
+          "expression": "parcel category not in non-eligible list",
+          "description": "Nutzungskategorie",
+          "input_paths": [
+            "land.parcels[].crop.crop_name",
+            "land.parcels[].oepul.usage_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-07-NICHT-FOERDERFAEHIG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.ebw_parcels"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-NATIONAL-PARK",
+      "rule_type": "exclusion",
+      "statement": "Nationalparkflächen erhalten (außer in Maßnahmen 23/24 oder ohne relevante Bewirtschaftungsauflagen) keine Prämie; in den Nationalparks Neusiedlersee und Donau-Auen werden generell keine flächenbezogenen ÖPUL-Prämien für EBW gewährt; Verpflichtungen gelten weiter.",
+      "conditions": [
+        {
+          "expression": "national_park in {Neusiedlersee, Donau-Auen} or national_park_relevant_requirements",
+          "description": "Nationalparklage",
+          "input_paths": [
+            "land.parcels[].oepul.national_park",
+            "land.parcels[].oepul.national_park_relevant_requirements"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Keine Prämie für den Schlag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-07-NATIONALPARK"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.no_premium_reasons"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-TRIAL-AREA",
+      "rule_type": "exclusion",
+      "statement": "Flächen mit vom BML genehmigten Versuchen, auf denen Verpflichtungen nicht eingehalten werden können, sind mit Code VF zu versehen und erhalten im laufenden Jahr keine Prämie.",
+      "conditions": [
+        {
+          "expression": "'VF' in codes",
+          "description": "Versuchsfläche",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Keine Prämie im laufenden Jahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-07-VF",
+        "CIT-S-16-VERSUCH"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.no_premium_reasons"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-OP-CODE",
+      "rule_type": "exclusion",
+      "statement": "Bei Flächen mit dem Code OP wird im jeweiligen Förderjahr keine ÖPUL-Prämie gewährt.",
+      "conditions": [
+        {
+          "expression": "'OP' in codes",
+          "description": "OP-Code",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Keine Prämie im Förderjahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-07-OP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.no_premium_reasons"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-OP-CASES",
+      "rule_type": "procedure",
+      "statement": "Code OP ist verpflichtend zu vergeben u. a. bei Leistungsüberschneidung mit anderen öffentlichen Mitteln bzw. gesetzlichen Auflagen, behördlichen Ausgleichsflächen, nicht ganzjähriger Erfüllung oder nicht über den gesamten Vertragszeitraum erfüllbarer Verpflichtung (z. B. spätere Aufforstung); gleiche Leistungen sind nicht doppelt förderbar.",
+      "conditions": [
+        {
+          "expression": "overlap or compensation area or planned afforestation",
+          "description": "Fallkonstellation",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "op_code_required",
+        "description": "Kennzeichnung mit OP.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-08-OP-UEBERSCHNEIDUNG",
+        "CIT-S-11-ABGRENZUNG"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "R-O619-GEN-TRANSFER",
+      "rule_type": "procedure",
+      "statement": "Die Verpflichtungsdauer umfasst das ganze Kalenderjahr; Flächen können unterjährig nur weitergegeben werden, wenn der Übernehmer die Auflagen bis Jahresende einhält, sonst sind sie mit (maßnahmenbezogenem) OP-Code zu versehen und erhalten keine Prämie.",
+      "conditions": [
+        {
+          "expression": "transferred_during_year and not successor_continues_commitment implies 'OP' in codes",
+          "description": "Weitergabe ohne Weiterführung",
+          "input_paths": [
+            "land.parcels[].oepul.transferred_during_year",
+            "land.parcels[].oepul.successor_continues_commitment",
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "op_code_required",
+        "description": "OP-Code fehlt → Hinweis.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-08-OP-FAELLE",
+        "CIT-G-10-VERPFLICHTUNGSDAUER",
+        "CIT-S-12-DAUER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.transfer_requires_op_code"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-SELF-REPORT",
+      "rule_type": "procedure",
+      "statement": "Bei Nichterfüllung ohne reines Fremdverschulden ist der betroffene Code per Korrektur zu löschen oder eine Selbstanzeige an die AMA zu richten; die Sanktion ist dann grundsätzlich geringer als bei Feststellung in einer Vor-Ort-Kontrolle.",
+      "conditions": [
+        {
+          "expression": "non-compliance without third-party fault",
+          "description": "Fallkonstellation",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "self_report",
+        "description": "Korrektur/Selbstanzeige.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-09-SELBSTANZEIGE"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "R-O619-GEN-AREA-DECREASE",
+      "rule_type": "sanction",
+      "statement": "Verringerungen der EBW-Fläche sind jährlich bis 5 % der Vorjahresfläche, höchstens 5,00 ha, jedenfalls 0,50 ha zulässig; bei Überschreitung besteht Rückzahlungspflicht für die gesamte Differenzfläche. Flächen des ersten Vertragsjahres und Zugänge sind bis Vertragsende zu bewirtschaften.",
+      "conditions": [
+        {
+          "expression": "decrease = previous_year_ebw_area_ha - current - exempt",
+          "description": "Verringerung",
+          "input_paths": [
+            "oepul.o6_19.previous_year_ebw_area_ha",
+            "land.parcels[].area_ha",
+            "oepul.o6_19.area_decrease_exempt_ha"
+          ]
+        },
+        {
+          "expression": "decrease > max(min(5% prev, 5), 0.5)",
+          "description": "Toleranz überschritten",
+          "input_paths": [
+            "oepul.o6_19.previous_year_ebw_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "repayment_area_ha",
+        "description": "Gesamte Differenzfläche rückzahlungspflichtig.",
+        "value": {
+          "percent": 5,
+          "max_ha": 5.0,
+          "min_ha": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "CIT-G-16-TOLERANZ",
+        "CIT-G-16-DIFFERENZ",
+        "CIT-G-11-FLAECHENBINDUNG",
+        "CIT-S-13-ABGANG",
+        "CIT-S-13-FLAECHENBINDUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.area_decrease_ha",
+        "data.oepul.o6_19.area_decrease_tolerance_ha",
+        "data.oepul.o6_19.area_decrease_repayment_area_ha"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-AREA-DECREASE-EXEMPT",
+      "rule_type": "exception",
+      "statement": "Keine Rückzahlung bei Verlust der Verfügungsgewalt (Übertragung an anderen Betrieb/Person) sowie bei zulässiger Umwandlung (Acker/Spezialkultur/Wein → Grünland, Grünland → Almweide, Maßnahmenfläche → LSE Mehrnutzenhecke/Agroforststreifen).",
+      "conditions": [
+        {
+          "expression": "area_decrease_exempt_ha",
+          "description": "Befreite Abgangsfläche wird nicht in die Toleranz eingerechnet",
+          "input_paths": [
+            "oepul.o6_19.area_decrease_exempt_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exempt_area",
+        "description": "Abzug von der Verringerung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-15-ABGANG",
+        "CIT-G-16-UMWANDLUNG",
+        "CIT-S-13-VERFUEGUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.area_decrease_ha"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-FARM-TRANSFER",
+      "rule_type": "procedure",
+      "statement": "Beim Wechsel der bewirtschaftenden Person sind die Maßnahmenflächen jedenfalls weiterzuführen; die nachfolgende Person tritt dem bestehenden Fördervertrag bei (solidarische Haftung).",
+      "conditions": [
+        {
+          "expression": "change of farm manager",
+          "description": "Bewirtschafterwechsel",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "contract_continues",
+        "description": "Kein Verlust der Verfügungsgewalt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-16-BEWIRTSCHAFTERWECHSEL"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "R-O619-GEN-AREA-INCREASE",
+      "rule_type": "cap",
+      "statement": "Flächenzugänge sind 2024 und 2025 zur Gänze prämienfähig; ab 2026 ist die Prämienfähigkeit von Flächenausweitungen auf maximal +50 % auf Basis 2025 beschränkt, wobei +5,00 ha jedenfalls zulässig sind; vorher mit derselben Maßnahme belegte Flächen gelten nicht als Zugang.",
+      "conditions": [
+        {
+          "expression": "farm.year > 2025 and premium_area > ebw_area_2025_ha + max(0.5*ebw_area_2025_ha, 5)",
+          "description": "Ausweitung über Grenze",
+          "input_paths": [
+            "farm.year",
+            "oepul.o6_19.ebw_area_2025_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "area_factor",
+        "description": "Anteilige Kürzung der prämienfähigen Fläche (Zugangskürzung).",
+        "value": {
+          "share": 0.5,
+          "min_ha": 5.0,
+          "base_year": 2025
+        }
+      },
+      "source_reference_ids": [
+        "CIT-G-17-ZUGANG",
+        "CIT-S-14-ZUGANG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.area_increase_allowed_ha",
+        "data.oepul.o6_19.access_increase_factor"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-EARLY-EXIT",
+      "rule_type": "sanction",
+      "statement": "Ein Ausstieg aus der mehrjährigen Maßnahme vor Ende des Vertragszeitraums führt zur Rückforderung bereits gewährter Maßnahmenprämien und kann Kombinationsverpflichtungen verletzen; bis zum Ausstieg sind die Verpflichtungen einzuhalten.",
+      "conditions": [
+        {
+          "expression": "oepul.o6_19.exited_before_contract_end",
+          "description": "Vorzeitiger Ausstieg",
+          "input_paths": [
+            "oepul.o6_19.exited_before_contract_end"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "repayment",
+        "description": "Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-13-AUSSTIEG-RUECK"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.repayment_of_past_premiums_required"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-DEREGISTRATION",
+      "rule_type": "procedure",
+      "statement": "Wird die Abmeldung im Zeitraum 1. Jänner bis 31. Dezember durchgeführt, ist die Maßnahme im betroffenen Förderjahr nicht mehr gültig; bei Erfüllung bis 31.12. darf erst ab 1. Jänner des Folgejahres abgemeldet werden.",
+      "conditions": [
+        {
+          "expression": "oepul.o6_19.deregistered_in_year",
+          "description": "Abmeldung im Jahr",
+          "input_paths": [
+            "oepul.o6_19.deregistered_in_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "measure_invalid_this_year",
+        "description": "Keine Gültigkeit im Förderjahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-13-ABMELDUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.measure_valid_this_year"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-EXIT-TIMING",
+      "rule_type": "procedure",
+      "statement": "Ein Maßnahmenausstieg ist grundsätzlich bis zur Durchführung oder Ankündigung einer Vor-Ort-Kontrolle oder bis zur Mitteilung des Ergebnisses einer Verwaltungskontrolle möglich.",
+      "conditions": [
+        {
+          "expression": "exit before control announcement",
+          "description": "Zeitpunkt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "exit_allowed",
+        "description": "Zeitliche Grenze des Ausstiegs.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-13-AUSSTIEG-ZEIT"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "R-O619-GEN-REENTRY",
+      "rule_type": "procedure",
+      "statement": "Nach Ausstieg, Ausschluss oder einjähriger Nichtabgabe des Mehrfachantrags ist ein Wiedereinstieg nur mit neuerlichem Maßnahmenantrag möglich.",
+      "conditions": [
+        {
+          "expression": "after exit/exclusion/non-submission",
+          "description": "Wiedereinstieg",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "new_application_required",
+        "description": "Neuer Maßnahmenantrag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-13-WIEDEREINSTIEG",
+        "CIT-S-22-WIEDEREINSTIEG"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "R-O619-GEN-COMBINATION-CORRECTION",
+      "rule_type": "procedure",
+      "statement": "Unmögliche Maßnahmenkombinationen dürfen bis zum Erhalt der Auszahlungsmitteilung korrigiert werden, sofern keine Beanstandung aus einer Vor-Ort-Kontrolle vorliegt; bis zur Abmeldung sind alle Verpflichtungen einzuhalten.",
+      "conditions": [
+        {
+          "expression": "combination_conflicts not empty",
+          "description": "Konflikt vorhanden",
+          "input_paths": [
+            "land.parcels[].oepul.other_measure_premium_claims[].measure"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "correction_allowed",
+        "description": "Korrekturmöglichkeit.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-13-KOMBI-KORREKTUR"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "R-O619-GEN-SWITCH",
+      "rule_type": "option",
+      "statement": "Umwandlung in eine höherwertige Maßnahme bis spätestens 31.12.2025 ohne Rückzahlung: u. a. Bergmähder (4), Begrünte Abflusswege (8) und Auswaschungsgefährdete Ackerflächen (16) in NAT oder EBW; NAT ↔ EBW.",
+      "conditions": [
+        {
+          "expression": "(switch.from, switch.to) in measure_switches and effective_date <= 2025-12-31",
+          "description": "Zulässiger Wechsel",
+          "input_paths": [
+            "oepul.o6_19.switch.from",
+            "oepul.o6_19.switch.to",
+            "oepul.o6_19.switch.effective_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "switch_allowed",
+        "description": "Keine Rückzahlung, Restlaufzeit gilt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-13-WECHSEL",
+        "CIT-G-14-WECHSEL-TAB",
+        "CIT-S-15-UMWANDLUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.switch_allowed"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-TAKEOVER",
+      "rule_type": "option",
+      "statement": "Eine Maßnahmenübernahme durch einen bisher nicht teilnehmenden Betrieb ist bis 15. April (2023 und 2028: 17. April) des Übernahmejahres möglich, darf die Maßnahmenfläche um nicht mehr als 50 % ausweiten und bedarf der Genehmigung der AMA; der Zuschlag Regionaler Naturschutzplan ist nur in Einzelfällen bei Betriebsauflösung, -teilung oder -zusammenlegung übernehmbar.",
+      "conditions": [
+        {
+          "expression": "takeover.date <= deadline(year) and expansion_share <= 0.5",
+          "description": "Frist und Ausweitung",
+          "input_paths": [
+            "oepul.o6_19.takeover.date",
+            "oepul.o6_19.takeover.expansion_share"
+          ]
+        },
+        {
+          "expression": "includes_regional_plan implies farm_dissolution_split_or_merger",
+          "description": "RNP-Sonderfall",
+          "input_paths": [
+            "oepul.o6_19.takeover.includes_regional_plan",
+            "oepul.o6_19.takeover.farm_dissolution_split_or_merger"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "takeover_allowed",
+        "description": "Übernahme zulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-14-UEBERNAHME",
+        "CIT-G-14-UEBERNAHME-50",
+        "CIT-G-15-UEBERNAHME-RNP",
+        "CIT-S-14-UEBERNAHME"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.takeover_allowed",
+        "data.oepul.o6_19.takeover_deadline"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-SANCTION-STAGES",
+      "rule_type": "sanction",
+      "statement": "Verstöße gegen inhaltliche Auflagen werden nach Schwere, Ausmaß, Dauer und Häufigkeit maßnahmenbezogen inkl. aller Zuschläge bewertet: Verwarnung (ab 2027: 1 % Einbehalt), Kürzung 2 %, 5 %, 10 %, 25 %, 50 %, 100 %.",
+      "conditions": [
+        {
+          "expression": "oepul.o6_19.sanctions.stage",
+          "description": "Stufe laut Bewertung",
+          "input_paths": [
+            "oepul.o6_19.sanctions.stage",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_percent",
+        "description": "Kürzung der Maßnahmenprämie inkl. Zuschläge.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-18-STUFEN",
+        "CIT-G-18-BEWERTUNG",
+        "CIT-S-24-SANKTION-SCHEMA",
+        "CIT-G-17-WEITERBILDUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.sanction_reduction_percent",
+        "data.oepul.o6_19.regional_plan_surcharge_after_reductions"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-EXCLUSION-TWO-100",
+      "rule_type": "sanction",
+      "statement": "Bei zweimaliger 100 %-Kürzung im Vertragszeitraum erfolgt der Ausschluss aus der Maßnahme und die Rückforderung der bisher gewährten Maßnahmenprämie.",
+      "conditions": [
+        {
+          "expression": "sanctions.count_100_percent >= 2",
+          "description": "Zwei Vollkürzungen",
+          "input_paths": [
+            "oepul.o6_19.sanctions.count_100_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exclusion",
+        "description": "Ausschluss und Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-18-AUSSCHLUSS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.excluded_from_measure",
+        "data.oepul.o6_19.repayment_of_past_premiums_required"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-MULTI-REDUCTION-ORDER",
+      "rule_type": "premium_calculation",
+      "statement": "Mehrfachkürzungen erfolgen in der Reihenfolge: Übererklärung, Zugangsvoraussetzungen, Fristversäumnis, Untererklärung, inhaltliche Kürzungen, Förderobergrenze je Maßnahme, Modulation, Obergrenze Flächenzahlungen, Vertragszeitraumüberprüfung, Zugangskürzung, Konditionalität.",
+      "conditions": [
+        {
+          "expression": "apply reductions in order",
+          "description": "Berechnungsreihenfolge",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "calculation_order",
+        "description": "Inhaltliche Kürzung → Stilllegungsobergrenze → Modulation → Obergrenze je ha → Zugangskürzung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-25-REIHENFOLGE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.parcel_rate_after_reductions",
+        "data.oepul.o6_19.parcel_premium_eur"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-MODULATION",
+      "rule_type": "premium_calculation",
+      "statement": "Das Prämienausmaß wird nach der Gesamtfläche des Betriebes moduliert: bis 200 ha 100 %, >200–300 ha 90 %, >300–1.000 ha 85 %, >1.000 ha 75 % (Beispiel 220 ha → 99,09 %).",
+      "conditions": [
+        {
+          "expression": "modulation_factor = Σ band_width × factor / land.total_area_ha",
+          "description": "Gewichteter Faktor",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "modulation_factor",
+        "description": "Faktor auf alle Maßnahmenprämien.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-G-19-MODULATION",
+        "CIT-G-19-MOD-BEISPIEL",
+        "CIT-S-17-MODULATION"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.modulation_factor",
+        "data.oepul.o6_19.band_upper"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-PAYMENT-TIMING",
+      "rule_type": "procedure",
+      "statement": "Die Auszahlung erfolgt bis 30. Juni des Folgejahres; nach abgeschlossenen Verwaltungskontrollen ist eine Teilzahlung von maximal 75 % möglich.",
+      "conditions": [
+        {
+          "expression": "farm.year",
+          "description": "Antragsjahr",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "payment_schedule",
+        "description": "Auszahlungsfrist und Vorschussgrenze.",
+        "value": {
+          "deadline": "YYYY+1-06-30",
+          "advance_share": 0.75
+        }
+      },
+      "source_reference_ids": [
+        "CIT-G-18-AUSZAHLUNG",
+        "CIT-S-22-TEILZAHLUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.payment_deadline",
+        "data.oepul.o6_19.max_advance_payment_eur"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-MIN-PAYMENT",
+      "rule_type": "procedure",
+      "statement": "Von der Gewährung einer Förderung kann abgesehen werden, wenn der Auszahlungsbetrag 50 EUR nicht überschreitet.",
+      "conditions": [
+        {
+          "expression": "measure_premium_eur <= 50",
+          "description": "Kleinbetrag",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "may_be_withheld",
+        "description": "Kann-Bestimmung.",
+        "value": {
+          "threshold_eur": 50
+        }
+      },
+      "source_reference_ids": [
+        "CIT-S-22-MIN-50"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.payment_may_be_withheld"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-PAYMENT-CLAIM-MISSING",
+      "rule_type": "sanction",
+      "statement": "Wird ab dem 2. Verpflichtungsjahr eine Fläche nicht beantragt, bleibt die Verpflichtung aufrecht, aber es erfolgt keine Zahlung; wird der Zahlungsantrag nicht binnen 1 Jahr nachgeholt, endet die Verpflichtung und alle bisher gewährten Prämien sind zurückzuzahlen.",
+      "conditions": [
+        {
+          "expression": "payment_claim_missing_over_one_year",
+          "description": "Frist verstrichen",
+          "input_paths": [
+            "oepul.o6_19.payment_claim_missing_over_one_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "repayment",
+        "description": "Rückzahlung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-22-ZAHLUNGSANTRAG",
+        "CIT-S-22-NICHT-BEANTRAGT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.repayment_of_past_premiums_required"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-CONTROL-REFUSAL",
+      "rule_type": "sanction",
+      "statement": "Verweigert die förderwerbende Person die Auskunft oder verhindert sie die Vor-Ort-Kontrolle (außer höhere Gewalt), ist der Antrag abzulehnen: keine Prämie im laufenden Jahr, Beendigung und Rückabwicklung der Verträge.",
+      "conditions": [
+        {
+          "expression": "oepul.control_refused and not force_majeure_recognised",
+          "description": "Verweigerung",
+          "input_paths": [
+            "oepul.control_refused",
+            "oepul.force_majeure_recognised"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rejection",
+        "description": "Ablehnung und Rückabwicklung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-23-VERWEIGERUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.general_violations"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-FORCE-MAJEURE",
+      "rule_type": "exception",
+      "statement": "Bei dauerhaften oder vorübergehenden flächen-/bewirtschaftungsverändernden Umständen ohne Einfluss der förderwerbenden Person kann bei rechtzeitiger Meldung von einer Rückforderung abgesehen werden; im Eintrittsjahr grundsätzlich keine Prämie, außer bei höherer Gewalt, Eintritt nach dem 15.04. (dauerhaft) bzw. Einhaltung auf geänderten Flächen (vorübergehend).",
+      "conditions": [
+        {
+          "expression": "circumstance.outside_control and reported_in_time",
+          "description": "Meldung",
+          "input_paths": [
+            "oepul.o6_19.circumstance.outside_control",
+            "oepul.o6_19.circumstance.reported_in_time"
+          ]
+        },
+        {
+          "expression": "kind/occurred_date",
+          "description": "Prämienfähigkeit im Eintrittsjahr",
+          "input_paths": [
+            "oepul.o6_19.circumstance.kind",
+            "oepul.o6_19.circumstance.occurred_date",
+            "oepul.o6_19.circumstance.conditions_met_on_changed_areas"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_repayment",
+        "description": "Keine Rückforderung; Prämie im Jahr je nach Fall.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-15-DAUERHAFT",
+        "CIT-S-15-HOEHERE-GEWALT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.no_repayment_due_to_circumstance",
+        "data.oepul.o6_19.premium_in_circumstance_year"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-BML-SPECIAL",
+      "rule_type": "procedure",
+      "statement": "Das BML kann bei flächen- oder bewirtschaftungsverändernden Umständen spezielle Festlegungen treffen (Grundlage der 2026-Trockenheits- und Dürreerleichterungen).",
+      "conditions": [
+        {
+          "expression": "BML determination published",
+          "description": "Festlegung vorhanden",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "special_rules_apply",
+        "description": "Siehe Regeln R-O619-N2026-*.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-16-BML"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.drought"
+      ]
+    },
+    {
+      "id": "R-O619-GEN-REVISION-CLAUSE",
+      "rule_type": "option",
+      "statement": "Bei Änderungen des verbindlichen Rechtsrahmens kann die förderwerbende Person der Vertragsanpassung nicht zustimmen; der Vertrag endet dann ohne Rückforderung wegen Nichteinhaltung des Vertragszeitraums.",
+      "conditions": [
+        {
+          "expression": "legal framework changed and consent refused",
+          "description": "Revisionsklausel",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "contract_ends_without_repayment",
+        "description": "Keine Rückforderung für die Vergangenheit.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-16-REVISION"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "R-O619-GEN-COORD-BODY",
+      "rule_type": "procedure",
+      "statement": "Die vom BML beauftragte Stelle wählt eine beschränkte Anzahl teilnehmender Betriebe aus, schult sie ein und legt auf Basis von Vor-Ort-Kartierungen flächenspezifische Ziele und Indikatoren (aus Anhang K) in einer Projektbestätigung auf Flächenebene fest; regionale Zusatzindikatoren in Gemeinschaftsprojekten möglich.",
+      "conditions": [
+        {
+          "expression": "selection by coordination body",
+          "description": "Auswahlverfahren",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "project_confirmation_issued",
+        "description": "Grundlage der Projektbestätigung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-20-STELLE"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "R-O619-N2026-ACKER-BDF-PB",
+      "rule_type": "exception",
+      "statement": "2026: Acker-Biodiversitätsflächen, die zusätzlich in EBW eingebracht sind, dürfen weiterhin nur nach den Vorgaben der Projektbestätigung bewirtschaftet werden; die trockenheitsbedingte vorzeitige oder dritte Nutzung (mit OPUBB/OPBIO) steht für sie nicht zur Verfügung.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026 and EBW parcel with DIV/DIVSZ",
+          "description": "EBW-Biodiversitätsfläche 2026",
+          "input_paths": [
+            "farm.year",
+            "land.parcels[].oepul.codes"
+          ]
+        },
+        {
+          "expression": "use_2026.early_use_before_permitted_date or third_use or shortened_rest_period",
+          "description": "Abweichende Nutzung",
+          "input_paths": [
+            "land.parcels[].oepul.ebw.use_2026.early_use_before_permitted_date",
+            "land.parcels[].oepul.ebw.use_2026.third_use",
+            "land.parcels[].oepul.ebw.use_2026.shortened_rest_period"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exception_not_available",
+        "description": "Abweichende Nutzung wird als Befund gemeldet.",
+        "value": false
+      },
+      "source_reference_ids": [
+        "CIT-N0812-EBW-BDF",
+        "CIT-N0812-DRITTE-NUTZUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.drought_bdf_exception_available",
+        "data.oepul.o6_19.notice_2026_findings",
+        "data.oepul.o6_19.deviating_2026_use"
+      ]
+    },
+    {
+      "id": "R-O619-N2026-GRASSLAND-BDF-SCOPE",
+      "rule_type": "exception",
+      "statement": "2026: Die vorzeitige Nutzung von Grünland-Biodiversitätsflächen (bis 14 Tage, nur mit OPUBB/OPBIO) umfasst keine Flächen, für die (auch) andere Vorgaben gelten, wie Naturschutz-Projektbestätigungen; für EBW-Flächen gilt dies sinngemäß.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026 and EBW parcel credited as DIVSZ",
+          "description": "EBW-Grünland-BDF",
+          "input_paths": [
+            "farm.year",
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exception_not_available",
+        "description": "Keine Vorverlegung auf EBW-Flächen.",
+        "value": false
+      },
+      "source_reference_ids": [
+        "CIT-N0522-AUSNAHME-SCOPE",
+        "CIT-N0522-OP-CODE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.drought_bdf_exception_available",
+        "data.oepul.o6_19.notice_2026_findings"
+      ]
+    },
+    {
+      "id": "R-O619-N2026-NAT-RELEASE-SCOPE",
+      "rule_type": "exception",
+      "statement": "2026: Die Freigabe von Flächen mit Nutzungsterminen ab 12. August gilt nur für die Maßnahmen „Naturschutz“ und (nach Landesverordnung) „Natura 2000“; die EBW ist nicht genannt.",
+      "conditions": [
+        {
+          "expression": "measure == 'o6_19'",
+          "description": "EBW",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "not_applicable",
+        "description": "Keine automatische Freigabe für EBW-Flächen.",
+        "value": false
+      },
+      "source_reference_ids": [
+        "CIT-N0812-NAT-FREIGABE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.nat_release_applies_to_ebw"
+      ]
+    },
+    {
+      "id": "R-O619-N2026-HARVEST-DROUGHT",
+      "rule_type": "exception",
+      "statement": "2026: In der Gebietskulisse (Burgenland und Wien alle Bezirke; gelistete Bezirke in NÖ und OÖ; ab 12.08. zusätzlich steirische Bezirke) gilt die Dürre automatisch als höhere Gewalt: Ernte und Verbringen auf 85 % des Schlages entfallen für spät geerntete Ackerkulturen ohne erntbaren Bestand, ohne einzelbetriebliche Meldung, bei voller Prämie.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026 and farm.region in drought districts",
+          "description": "Gebietskulisse",
+          "input_paths": [
+            "farm.year",
+            "farm.region.federal_state",
+            "farm.region.district"
+          ]
+        },
+        {
+          "expression": "land_use == arable and harvest_2026.no_harvestable_stand_due_to_drought and late_summer_or_autumn_crop",
+          "description": "Betroffene Ackerkultur",
+          "input_paths": [
+            "land.parcels[].land_use",
+            "land.parcels[].oepul.harvest_2026.no_harvestable_stand_due_to_drought",
+            "land.parcels[].oepul.harvest_2026.late_summer_or_autumn_crop"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_waived",
+        "description": "Ernteverpflichtung entfällt, Prämie bleibt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-N0805-GEBIETE",
+        "CIT-N0805-KULTUREN",
+        "CIT-N0805-NOE",
+        "CIT-N0812-STEIERMARK"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.harvest_obligation_waived",
+        "data.oepul.o6_19.in_drought_area"
+      ]
+    },
+    {
+      "id": "R-O619-N2026-FORCE-MAJEURE-APPLICATION",
+      "rule_type": "procedure",
+      "statement": "Außerhalb der automatisch anerkannten Fälle ist bei trockenheitsbedingter Nichteinhaltung ein einzelflächenbezogenes Ansuchen auf Anerkennung höherer Gewalt mit Nachweisen über eAMA (Eingaben) einzubringen.",
+      "conditions": [
+        {
+          "expression": "obligation_not_met_due_to_drought and not harvest_obligation_waived",
+          "description": "Nicht automatisch anerkannt",
+          "input_paths": [
+            "land.parcels[].oepul.harvest_2026.obligation_not_met_due_to_drought"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "application_required",
+        "description": "Einzelansuchen erforderlich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-N0805-ANSUCHEN",
+        "CIT-N0522-HOEHERE-GEWALT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.force_majeure_application_required"
+      ]
+    },
+    {
+      "id": "R-O619-N2026-CONTROL-CONSIDERATION",
+      "rule_type": "procedure",
+      "statement": "Bei Vor-Ort-Kontrollen 2026 wird die besondere Trockenheitssituation (z. B. Feldaufgang, Grundfutterbedarf) generell berücksichtigt.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026",
+          "description": "Kontrolljahr",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "control_consideration",
+        "description": "Berücksichtigung bei Kontrollen (nicht automatisierbar).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-N0522-VOK"
+      ],
+      "rego_symbols": []
+    }
+  ]
+}
