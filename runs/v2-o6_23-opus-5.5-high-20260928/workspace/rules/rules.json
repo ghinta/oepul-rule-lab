@@ -1,0 +1,2412 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_23",
+  "rules": [
+    {
+      "id": "O6_23-SCOPE-001",
+      "rule_type": "eligibility",
+      "statement": "Die Prämie wird nur für ausgewählte Grünlandflächen in Natura 2000-Gebieten bzw. sonstigen Gebieten mit hohem Naturwert (Umsetzung Art. 10 FFH-RL) auf landwirtschaftlich genutzten Lebensraumtypen gewährt.",
+      "conditions": [
+        {
+          "expression": "parcel.constraints.natura2000.in_natura2000_or_high_nature_value_area == true",
+          "description": "Schlag liegt in einem Natura 2000-Gebiet oder sonstigen Gebiet mit hohem Naturwert",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.in_natura2000_or_high_nature_value_area"
+          ]
+        },
+        {
+          "expression": "parcel.land_use == 'grassland'",
+          "description": "Grünlandfläche",
+          "input_paths": [
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_eligible_scope",
+        "description": "Schlag liegt im Förderbereich der Maßnahme; sonst Zugangsfehler not_in_natura2000_or_high_nature_value_area bzw. not_grassland.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-01",
+        "CIT-S-42"
+      ],
+      "rego_symbols": [
+        "access_base_failed",
+        "access_grassland_failed",
+        "n2_parcels"
+      ]
+    },
+    {
+      "id": "O6_23-PREM-001",
+      "rule_type": "premium_calculation",
+      "statement": "Die Prämie je Schlag ergibt sich als Summe der Teilprämien aller in der Projektbestätigung festgelegten prämienrelevanten Auflagen (€/ha) multipliziert mit der Schlagfläche.",
+      "conditions": [
+        {
+          "expression": "parcel_codes(p) ⊆ known_codes",
+          "description": "Prämienrelevante N2-Auflagencodes laut Projektbestätigung",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.project_confirmation_codes",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_eur_per_parcel",
+        "description": "premium = sum(rate(code, year)) * area_ha",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-02",
+        "CIT-S-43"
+      ],
+      "rego_symbols": [
+        "parcel_rate_eur_per_ha",
+        "parcel_premium_eur",
+        "gross_premium_eur"
+      ]
+    },
+    {
+      "id": "O6_23-PREM-002",
+      "rule_type": "premium_rate_table",
+      "statement": "Prämiensätze je Auflage: N2GI05 325,0/351,0; N2GI06 245,0/264,6; N2GI07 170,0/183,6; N2GL02 90,0/97,2; N2GL03 150,0/162,0; N2GL04 210,0/226,8; N2GL05 250,0/270,0; N2GL36 380,0/410,4; N2GL37 500,0/540,0 €/ha (2023 / ab 2024; Anhebung um 8 % ab 01.01.2024).",
+      "conditions": [
+        {
+          "expression": "farm.year == 2023",
+          "description": "Satz 2023",
+          "input_paths": [
+            "farm.year"
+          ]
+        },
+        {
+          "expression": "farm.year >= 2024",
+          "description": "Satz ab 2024",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rate_lookup",
+        "description": "Prämiensatz aus data/o6_23/premium_rates.json (/premium_rates).",
+        "value": {
+          "data": "data/o6_23/premium_rates.json#/premium_rates"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-R-GI05",
+        "CIT-MB-R-GI06",
+        "CIT-MB-R-GI07",
+        "CIT-MB-R-GL02",
+        "CIT-MB-R-GL03",
+        "CIT-MB-R-GL04",
+        "CIT-MB-R-GL05",
+        "CIT-MB-R-GL36",
+        "CIT-MB-R-GL37",
+        "CIT-S-46",
+        "CIT-S-R-GI05",
+        "CIT-S-R-GI06",
+        "CIT-S-R-GI07",
+        "CIT-S-R-GL02",
+        "CIT-S-R-GL03",
+        "CIT-S-R-GL04",
+        "CIT-S-R-GL05",
+        "CIT-S-R-GL36",
+        "CIT-S-R-GL37",
+        "CIT-S-01",
+        "CIT-S-41"
+      ],
+      "rego_symbols": [
+        "rate_for",
+        "rate_row",
+        "known_codes"
+      ]
+    },
+    {
+      "id": "O6_23-PREM-003",
+      "rule_type": "eligibility",
+      "statement": "Förderfähig sind nur Mähwiesen und Mähweiden; Dauerweiden und Hutweiden sind ausgeschlossen.",
+      "conditions": [
+        {
+          "expression": "parcel.constraints.natura2000.grassland_type in {'maehwiese','maehweide'}",
+          "description": "Grünlandtyp Mähwiese oder Mähweide",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.grassland_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_access_failure",
+        "description": "Andernfalls Zugangsfehler grassland_type_not_eligible, keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-26",
+        "CIT-S-46b"
+      ],
+      "rego_symbols": [
+        "access_grassland_failed",
+        "eligible_grassland_types"
+      ]
+    },
+    {
+      "id": "O6_23-PREM-004",
+      "rule_type": "payment",
+      "statement": "Die Förderung wird in Form jährlicher Prämien gewährt.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "gilt für jedes Förderjahr",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "annual_premium",
+        "description": "Prämie wird je Förderjahr berechnet.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-21"
+      ],
+      "rego_symbols": [
+        "gross_premium_eur"
+      ]
+    },
+    {
+      "id": "O6_23-CONTRACT-001",
+      "rule_type": "contract",
+      "statement": "Natura 2000 ist eine einjährige Maßnahme: Verpflichtungs- und Vertragszeitraum ein Kalenderjahr (1. Jänner bis 31. Dezember).",
+      "conditions": [
+        {
+          "expression": "'23' in one_year_measures",
+          "description": "Maßnahme 23 in der Liste einjähriger Maßnahmen",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "one_year_contract",
+        "description": "Vertrags- und Verpflichtungszeitraum = Kalenderjahr.",
+        "value": {
+          "start": "01-01",
+          "end": "12-31"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-03",
+        "CIT-AT-26",
+        "CIT-AT-26b",
+        "CIT-S-13"
+      ],
+      "rego_symbols": [
+        "is_one_year_measure"
+      ]
+    },
+    {
+      "id": "O6_23-CONTRACT-002",
+      "rule_type": "contract",
+      "statement": "Die Maßnahme verlängert sich automatisch um ein weiteres Förderjahr, wenn sie nicht abgemeldet wird; die Weiterführung erfolgt durch Abgabe des Mehrfachantrages mit förderrelevanten Flächen (Vorbeantragung für alle Folgejahre).",
+      "conditions": [
+        {
+          "expression": "farm.oepul.o6_23.deregistration_date == null",
+          "description": "keine wirksame Abmeldung",
+          "input_paths": [
+            "farm.oepul.o6_23.deregistration_date"
+          ]
+        },
+        {
+          "expression": "farm.year >= contract_start_year",
+          "description": "Folgejahr nach Vertragsbeginn",
+          "input_paths": [
+            "farm.year",
+            "farm.oepul.o6_23.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_renewed",
+        "description": "Vertrag aktiv im Förderjahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-04",
+        "CIT-AT-30",
+        "CIT-S-30"
+      ],
+      "rego_symbols": [
+        "contract_active_in_year"
+      ]
+    },
+    {
+      "id": "O6_23-CONTRACT-003",
+      "rule_type": "contract",
+      "statement": "Wird die Mindestteilnahmebedingung nicht eingehalten, erlischt der Vertrag für die Maßnahme.",
+      "conditions": [
+        {
+          "expression": "count(premium_parcels) < 1",
+          "description": "kein Schlag nach den Vorgaben bewirtschaftet",
+          "input_paths": [
+            "land.parcels[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_lapses",
+        "description": "farm_failures enthält minimum_participation_not_met; keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-05"
+      ],
+      "rego_symbols": [
+        "minimum_participation_met",
+        "farm_failures",
+        "contract_valid"
+      ]
+    },
+    {
+      "id": "O6_23-MINPART-001",
+      "rule_type": "access_condition",
+      "statement": "In jedem Teilnahmejahr muss zumindest ein Schlag nach den Vorgaben der Maßnahme bewirtschaftet werden.",
+      "conditions": [
+        {
+          "expression": "count(premium_parcels) >= 1",
+          "description": "mindestens ein förderfähiger N2-Schlag",
+          "input_paths": [
+            "land.parcels[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "minimum_participation_met",
+        "description": "Mindestteilnahme erfüllt.",
+        "value": {
+          "minimum_parcels": 1
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-06"
+      ],
+      "rego_symbols": [
+        "minimum_participation_met"
+      ]
+    },
+    {
+      "id": "O6_23-ACCESS-001",
+      "rule_type": "access_condition",
+      "statement": "Voraussetzung für die Teilnahme ist das Vorliegen einer Projektbestätigung der für Naturschutz zuständigen Stelle des Landes, welche die ordnungsrechtlich (VS-RL, FFH-RL) festgelegten Bewirtschaftungsauflagen bestätigt und darlegt.",
+      "conditions": [
+        {
+          "expression": "land.parcels[].constraints.natura2000.project_confirmation_present == true",
+          "description": "Projektbestätigung liegt vor",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.project_confirmation_present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_access_failure",
+        "description": "Ohne Projektbestätigung Zugangsfehler no_project_confirmation, keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-07",
+        "CIT-S-44"
+      ],
+      "rego_symbols": [
+        "access_base_failed"
+      ]
+    },
+    {
+      "id": "O6_23-ACCESS-002",
+      "rule_type": "definition",
+      "statement": "Die Projektbestätigung enthält die verpflichtend einzuhaltenden, ordnungsrechtlich festgelegten Bewirtschaftungsauflagen; sie wird von der Landeshauptfrau bzw. dem Landeshauptmann (Naturschutzstelle) ausgestellt, die auch die Projektauflagen vergibt.",
+      "conditions": [
+        {
+          "expression": "land.parcels[].constraints.natura2000.project_confirmation_codes",
+          "description": "Auflagencodes aus der Projektbestätigung",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.project_confirmation_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligations_source",
+        "description": "Auflagen des Schlages = Codes der Projektbestätigung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-08",
+        "CIT-S-26"
+      ],
+      "rego_symbols": [
+        "parcel_codes"
+      ]
+    },
+    {
+      "id": "O6_23-ACCESS-003",
+      "rule_type": "procedure",
+      "statement": "Die Projektbestätigung erfolgt auf Flächenebene, enthält flächenspezifische Ziele und Förderverpflichtungen und die Flächen werden in einem INVEKOS-GIS-Layer dargestellt (Naturschutzdatenbank).",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "je Schlag eigene Projektbestätigungsauflagen",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.project_confirmation_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_level_confirmation",
+        "description": "Auflagen werden schlagbezogen ausgewertet.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-27a",
+        "CIT-S-27b",
+        "CIT-S-27d",
+        "CIT-MB-08b"
+      ],
+      "rego_symbols": [
+        "parcel_codes"
+      ]
+    },
+    {
+      "id": "O6_23-ACCESS-004",
+      "rule_type": "procedure",
+      "statement": "Für Maßnahme 23 bestätigt die Landeshauptfrau bzw. der Landeshauptmann bei Ausstellung der Projektbestätigung die ordnungsrechtlich im Zusammenhang mit den Richtlinien 2009/147/EG und 92/43/EWG festgelegten Bewirtschaftungsauflagen.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Ausstellung der Projektbestätigung",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.project_confirmation_present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "confirmation_of_statutory_requirements",
+        "description": "Nur ordnungsrechtlich festgelegte Auflagen sind Gegenstand der Förderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-27c",
+        "CIT-S-45b"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-OBL-001",
+      "rule_type": "obligation",
+      "statement": "Die Bewirtschaftungsauflagen gemäß Projektbestätigung sind einzuhalten (Flächenbewirtschaftung gemäß ordnungsrechtlich festgelegten Auflagen, z. B. Naturschutzgesetze und Verordnungen).",
+      "conditions": [
+        {
+          "expression": "land.parcels[].constraints.natura2000.project_confirmation_complied == true",
+          "description": "alle Auflagen der Projektbestätigung eingehalten",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.project_confirmation_complied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Sonst Verstoß project_confirmation_requirements_not_met (inhaltliche Kürzung).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-09",
+        "CIT-S-45b"
+      ],
+      "rego_symbols": [
+        "obligation_violated",
+        "parcel_obligation_violations"
+      ]
+    },
+    {
+      "id": "O6_23-OBL-002",
+      "rule_type": "closed_list",
+      "statement": "Mögliche Bewirtschaftungsauflagen der Maßnahme sind ausschließlich GI05, GI06, GI07 (Düngeverbot) und GL02–GL05, GL36, GL37 (Schnittzeitpunktverzögerung um 21, 28, 42, 56, 70 oder 84 Kalendertage), gleichinhaltlich mit Anhang I; Codes im Mehrfachantrag mit Präfix N2.",
+      "conditions": [
+        {
+          "expression": "code in known_codes",
+          "description": "Auflagencode in geschlossener Liste",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.project_confirmation_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "unknown_codes_reported",
+        "description": "Nicht gelistete Codes sind nicht prämienrelevant (unknown_codes).",
+        "value": {
+          "codes": [
+            "N2GI05",
+            "N2GI06",
+            "N2GI07",
+            "N2GL02",
+            "N2GL03",
+            "N2GL04",
+            "N2GL05",
+            "N2GL36",
+            "N2GL37"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-10",
+        "CIT-MB-11",
+        "CIT-S-45"
+      ],
+      "rego_symbols": [
+        "known_codes",
+        "parcel_unknown_codes",
+        "parcel_codes"
+      ]
+    },
+    {
+      "id": "O6_23-OBL-003",
+      "rule_type": "obligation",
+      "statement": "Bei den Auflagen N2GI05, N2GI06 und N2GI07 ist die Düngung verboten.",
+      "conditions": [
+        {
+          "expression": "code in gi_codes",
+          "description": "GI-Auflage auf dem Schlag",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.project_confirmation_codes"
+          ]
+        },
+        {
+          "expression": "fertilization_applied or mineral_n > 0 or organic_n > 0",
+          "description": "Düngung erfolgt",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.fertilization_applied",
+            "land.parcels[].operations.fertilizer.mineral_n_kg_per_ha",
+            "land.parcels[].operations.fertilizer.organic_n_kg_per_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß fertilization_despite_ban.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-10",
+        "CIT-N-02a",
+        "CIT-N-02b",
+        "CIT-N-02c",
+        "CIT-S-45"
+      ],
+      "rego_symbols": [
+        "parcel_has_fertilization_ban",
+        "parcel_fertilized",
+        "obligation_violated"
+      ]
+    },
+    {
+      "id": "O6_23-OBL-004",
+      "rule_type": "obligation",
+      "statement": "Bei den Auflagen N2GL02–N2GL05, N2GL36, N2GL37 ist der Schnittzeitpunkt zu verzögern; früheste Mahd ist der in der Projektbestätigung festgelegte Termin ($1).",
+      "conditions": [
+        {
+          "expression": "code in gl_codes",
+          "description": "GL-Auflage auf dem Schlag",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.project_confirmation_codes"
+          ]
+        },
+        {
+          "expression": "any cutting_date < effective_earliest_cut_date",
+          "description": "Mahd vor dem frühesten Termin",
+          "input_paths": [
+            "land.parcels[].operations.cutting_dates",
+            "land.parcels[].constraints.natura2000.earliest_cut_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Verstoß cut_before_earliest_cut_date.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-11",
+        "CIT-N-03a",
+        "CIT-N-03b"
+      ],
+      "rego_symbols": [
+        "parcel_has_cut_delay",
+        "cut_before_earliest_date",
+        "obligation_violated"
+      ]
+    },
+    {
+      "id": "O6_23-OBL-005",
+      "rule_type": "definition",
+      "statement": "Das Zeichen $ in den Bewirtschaftungsauflagen bedeutet, dass konkrete Termine/Jahre von den Naturschutzbehörden in der Projektbestätigung festgelegt werden; fehlt der Termin, ist die Schnittzeitpunktauflage nicht prüfbar.",
+      "conditions": [
+        {
+          "expression": "land.parcels[].constraints.natura2000.earliest_cut_date == null",
+          "description": "kein festgelegter Termin bei GL-Auflage",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.earliest_cut_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "Befund earliest_cut_date_missing.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-N-01"
+      ],
+      "rego_symbols": [
+        "effective_earliest_cut_date",
+        "obligation_violated"
+      ]
+    },
+    {
+      "id": "O6_23-OBL-006",
+      "rule_type": "classification",
+      "statement": "Die GI-Auflagen sind nach Nutzungshäufigkeit abgestuft: GI05 dreimalige (bzw. häufigere), GI06 zweimalige, GI07 einmalige Nutzung (Mähwiese), jeweils ohne Düngung.",
+      "conditions": [
+        {
+          "expression": "uses = count(cutting_dates) + grazing_uses",
+          "description": "tatsächliche Nutzungen",
+          "input_paths": [
+            "land.parcels[].operations.cutting_dates",
+            "land.parcels[].operations.grazing_uses"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "hint",
+        "description": "use_frequency_mismatch als Hinweis (keine Sanktion abgeleitet).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-10",
+        "CIT-N-02a",
+        "CIT-N-02b",
+        "CIT-N-02c",
+        "CIT-S-45"
+      ],
+      "rego_symbols": [
+        "use_frequency_mismatch",
+        "use_frequency_matches"
+      ]
+    },
+    {
+      "id": "O6_23-COMB-001",
+      "rule_type": "combination",
+      "statement": "Bestimmte Auflagen der Maßnahmen 23 und 18 sind nicht kombinierbar (Anhang J): Auflagen der Kapitel S, A (inkl. T), B, G, W, O sind untereinander nicht kombinierbar; G ist nur mit L und H kombinierbar. N2-Auflagen gehören zu Kapitel G.",
+      "conditions": [
+        {
+          "expression": "chapter(naturschutz_code) not in {'G','L','H'}",
+          "description": "Naturschutz-Auflage aus nicht kombinierbarem Kapitel auf demselben Schlag",
+          "input_paths": [
+            "land.parcels[].oepul.naturschutz_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combination_conflict",
+        "description": "annex_j_conflicts, keine N2-Prämie auf dem Schlag.",
+        "value": {
+          "data": "data/o6_23/combinations.json#/annex_j_chapter_combination"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-12",
+        "CIT-MB-12b",
+        "CIT-S-48",
+        "CIT-N-04",
+        "CIT-N-04c"
+      ],
+      "rego_symbols": [
+        "parcel_annex_j_conflicts",
+        "annex_j_combinable",
+        "annex_j_chapter"
+      ]
+    },
+    {
+      "id": "O6_23-COMB-002",
+      "rule_type": "combination",
+      "statement": "Geförderte Natura 2000-Flächen sind hinsichtlich der Prämie auf der Einzelfläche mit keiner anderen ÖPUL-Maßnahme kombinierbar, ausgenommen UBB (1A), BIO (1B) inkl. Teilbetrieb, Einschränkung ertragssteigernder Betriebsmittel (2), Naturschutz (18) und Ergebnisorientierte Bewirtschaftung (19).",
+      "conditions": [
+        {
+          "expression": "m in land.parcels[].oepul.measures and m not in {1A,1B,1B_TB,2,18,19,23}",
+          "description": "andere Maßnahme mit Prämie auf demselben Schlag",
+          "input_paths": [
+            "land.parcels[].oepul.measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combination_conflict",
+        "description": "combination_conflicts, keine N2-Prämie auf dem Schlag.",
+        "value": {
+          "combinable": [
+            "1A",
+            "1B",
+            "1B_TB",
+            "2",
+            "18",
+            "19"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-27",
+        "CIT-S-47",
+        "CIT-N-05"
+      ],
+      "rego_symbols": [
+        "parcel_combination_conflicts",
+        "combinable_measures",
+        "annex_l_combinable"
+      ]
+    },
+    {
+      "id": "O6_23-COMB-003",
+      "rule_type": "combination",
+      "statement": "Teilnahme und Prämiengewährung an mehreren Maßnahmen sind grundsätzlich möglich, sofern die Kombination nicht ausgeschlossen ist; die auf der Einzelfläche kombinierbaren Maßnahmen sind in Anhang L dargestellt (x = kombinierbar, a = mit Prämienabschlag, Fußnote 1 = nur Landschaftselemente).",
+      "conditions": [
+        {
+          "expression": "annex_l[23][m].symbol != ''",
+          "description": "Zelle der Kombinationstabelle",
+          "input_paths": [
+            "land.parcels[].oepul.measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combination_lookup",
+        "description": "Kombinierbarkeit aus data/o6_23/combinations.json.",
+        "value": {
+          "data": "data/o6_23/combinations.json#/annex_l_combination_table"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-AT-34",
+        "CIT-S-25",
+        "CIT-N-05",
+        "CIT-N-05b"
+      ],
+      "rego_symbols": [
+        "annex_l_combinable",
+        "annex_l_row"
+      ]
+    },
+    {
+      "id": "O6_23-COMB-004",
+      "rule_type": "combination",
+      "statement": "Naturschutzflächen (Maßnahme 18) sind auf der Einzelfläche mit der Maßnahme 23 kombinierbar.",
+      "conditions": [
+        {
+          "expression": "'18' in parcel.oepul.measures",
+          "description": "Naturschutz auf demselben Schlag",
+          "input_paths": [
+            "land.parcels[].oepul.measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combinable",
+        "description": "Kein Kombinationskonflikt; Obergrenze 1.500 €/ha.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-50"
+      ],
+      "rego_symbols": [
+        "combinable_measures",
+        "parcel_cap_id"
+      ]
+    },
+    {
+      "id": "O6_23-COMB-005",
+      "rule_type": "information",
+      "statement": "In der Projektbestätigung können zusätzliche Auflagen und Informationen ohne Prämienrelevanz vergeben werden.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "nicht prämienrelevante Zusatzauflagen",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.project_confirmation_complied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_without_premium",
+        "description": "Einhaltung über project_confirmation_complied geprüft, keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-N-04b"
+      ],
+      "rego_symbols": [
+        "obligation_violated"
+      ]
+    },
+    {
+      "id": "O6_23-COMB-006",
+      "rule_type": "procedure",
+      "statement": "Korrekturen unmöglicher Maßnahmenkombinationen sind bis zum Erhalt der Auszahlungsmitteilung zulässig, sofern keine Beanstandung bei einer Vor-Ort-Kontrolle vorliegt; bis zur Abmeldung sind alle Verpflichtungen einzuhalten.",
+      "conditions": [
+        {
+          "expression": "correction_date <= payment_notice_date and not on_site_objection",
+          "description": "Korrekturzeitpunkt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "correction_allowed",
+        "description": "Korrektur zulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-35"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-APP-001",
+      "rule_type": "deadline",
+      "statement": "Die Maßnahme ist vor Vertragsbeginn im Maßnahmenantrag des Mehrfachantrages bis spätestens 31. Dezember zu beantragen, um einen gültigen Vertrag ab dem Folgejahr zu begründen.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.o6_23.measure_application_date <= (contract_start_year-1)-12-31",
+          "description": "rechtzeitiger Maßnahmenantrag",
+          "input_paths": [
+            "farm.oepul.o6_23.measure_application_date",
+            "farm.oepul.o6_23.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "application_timely",
+        "description": "Sonst contract_not_active.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-13",
+        "CIT-AT-29",
+        "CIT-S-29"
+      ],
+      "rego_symbols": [
+        "application_timely"
+      ]
+    },
+    {
+      "id": "O6_23-APP-002",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg ist mit dem Förderjahr 2027 möglich (Beantragung bis 31. Dezember 2026; spätester Vertragsbeginn 01.01.2027).",
+      "conditions": [
+        {
+          "expression": "farm.oepul.o6_23.contract_start_year <= 2027",
+          "description": "Vertragsbeginn spätestens 2027",
+          "input_paths": [
+            "farm.oepul.o6_23.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "entry_year_allowed",
+        "description": "Einstieg ab 2028 nicht möglich.",
+        "value": {
+          "last_entry_year": 2027
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-14",
+        "CIT-AT-27",
+        "CIT-S-12"
+      ],
+      "rego_symbols": [
+        "entry_year_allowed"
+      ]
+    },
+    {
+      "id": "O6_23-APP-003",
+      "rule_type": "deadline",
+      "statement": "Optionen oder Zuschläge bei einjährigen Maßnahmen können bis inklusive Förderjahr 2028 beantragt werden (über den Maßnahmenantrag bis 31.12.2027); die Maßnahme 23 selbst sieht keine Optionen vor.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "informativ",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "information",
+        "description": "Keine Optionen für o6_23.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-28"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-APP-004",
+      "rule_type": "procedure",
+      "statement": "Um einen Schlag zu beantragen, ist er in der Feldstücksliste des Mehrfachantrages mit Code N2 zu kennzeichnen; ohne N2 ist der Schlag nicht beantragt.",
+      "conditions": [
+        {
+          "expression": "land.parcels[].constraints.natura2000.n2_code_marked == true",
+          "description": "Code N2 gesetzt",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.n2_code_marked"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_applied",
+        "description": "Nur N2-Schläge werden berechnet; Befund project_confirmation_without_n2_code.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-16",
+        "CIT-AT-13"
+      ],
+      "rego_symbols": [
+        "n2_parcels",
+        "parcels_with_confirmation_without_n2_code"
+      ]
+    },
+    {
+      "id": "O6_23-APP-005",
+      "rule_type": "procedure",
+      "statement": "Die Projektbestätigung muss vorhanden und im eAMA INVEKOS-GIS über den Legendeneintrag Naturschutz/Natura2000 einsehbar sein.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "GIS-Darstellung",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.project_confirmation_present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "information",
+        "description": "Nachweis der Projektbestätigung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-15",
+        "CIT-MB-08b"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-APP-006",
+      "rule_type": "procedure",
+      "statement": "Als Zahlungsantrag gilt die Beantragung der Flächen und förderrelevanten Angaben im Mehrfachantrag.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Mehrfachantrag",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "payment_claim",
+        "description": "MFA ist Zahlungsantrag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-31"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-APP-007",
+      "rule_type": "contract",
+      "statement": "Der Vertrag kommt mit der Verständigung über die Genehmigung zustande; die Sonderrichtlinie samt Anhängen ist Vertragsbestandteil.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Genehmigung durch AMA",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "contract_formation",
+        "description": "Vertragsbestandteile festgelegt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-33",
+        "CIT-S-02"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-BIO-001",
+      "rule_type": "crediting",
+      "statement": "Natura 2000-Flächen mit Schnittzeitpunktauflagen (N2GL02–N2GL05, N2GL36, N2GL37) sind auf die erforderlichen 7 %-Biodiversitätsflächen bei UBB und BIO anrechenbar.",
+      "conditions": [
+        {
+          "expression": "code in gl_codes",
+          "description": "Schnittzeitpunktauflage",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.project_confirmation_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "biodiversity_creditable",
+        "description": "biodiversity_creditable_area_ha.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-17",
+        "CIT-MB-18",
+        "CIT-S-49",
+        "CIT-S-49b"
+      ],
+      "rego_symbols": [
+        "parcel_creditable_as_biodiversity",
+        "biodiversity_creditable_area_ha"
+      ]
+    },
+    {
+      "id": "O6_23-BIO-002",
+      "rule_type": "procedure",
+      "statement": "Solche Flächen sind zusätzlich zum Code N2 mit dem Code DIVSZ zu versehen.",
+      "conditions": [
+        {
+          "expression": "land.parcels[].constraints.natura2000.divsz_code_marked == true",
+          "description": "DIVSZ gesetzt",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.divsz_code_marked"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "biodiversity_creditable",
+        "description": "Ohne DIVSZ keine Anrechnung (Befund divsz_code_missing_on_cut_delay_parcel); DIVSZ ohne GL-Auflage: divsz_code_without_cut_delay.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-19"
+      ],
+      "rego_symbols": [
+        "biodiversity_creditable_parcels",
+        "biodiversity_divsz_missing",
+        "biodiversity_divsz_without_cut_delay"
+      ]
+    },
+    {
+      "id": "O6_23-BIO-003",
+      "rule_type": "obligation",
+      "statement": "Angerechnete Flächen sind unabhängig von den Biodiversitätsflächenauflagen von UBB/BIO nach den Vorgaben der Projektbestätigung zu bewirtschaften.",
+      "conditions": [
+        {
+          "expression": "land.parcels[].constraints.natura2000.divsz_code_marked == true",
+          "description": "angerechnete Fläche",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.divsz_code_marked"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "project_confirmation_prevails",
+        "description": "Prüfung erfolgt nach N2-Auflagen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-20",
+        "CIT-S-49"
+      ],
+      "rego_symbols": [
+        "obligation_violated"
+      ]
+    },
+    {
+      "id": "O6_23-EXIT-001",
+      "rule_type": "contract",
+      "statement": "Nach Erfüllung des einjährigen Vertragszeitraumes ist ein Ausstieg möglich, auch nach zwei oder mehreren Teilnahmejahren; ein Ausstieg vor Ende eines Jahres macht die Maßnahme für dieses Jahr ungültig.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.o6_23.deregistration_date",
+          "description": "Abmeldedatum",
+          "input_paths": [
+            "farm.oepul.o6_23.deregistration_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exit_allowed",
+        "description": "Ausstieg ohne Rückforderung für Vorjahre (einjährige Maßnahme).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-21",
+        "CIT-MB-22",
+        "CIT-S-30b"
+      ],
+      "rego_symbols": [
+        "deregistered_effective_for_year"
+      ]
+    },
+    {
+      "id": "O6_23-EXIT-002",
+      "rule_type": "procedure",
+      "statement": "Der Ausstieg ist der AMA für das laufende Förderjahr online auf www.eama.at im Rahmen des aktuellen Mehrfachantrages bekanntzugeben.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Online-Meldung",
+          "input_paths": [
+            "farm.oepul.o6_23.deregistration_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "procedure",
+        "description": "Meldeweg.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-23"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-EXIT-003",
+      "rule_type": "contract",
+      "statement": "Wird die Abmeldung zwischen 1. Jänner und 31. Dezember durchgeführt, ist die Maßnahme im betroffenen Förderjahr nicht mehr gültig; werden die Auflagen bis 31. Dezember erfüllt, darf erst ab 1. Jänner des Folgejahres abgemeldet werden.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.o6_23.deregistration_date <= farm.year-12-31",
+          "description": "Abmeldung im oder vor dem Förderjahr",
+          "input_paths": [
+            "farm.oepul.o6_23.deregistration_date",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "measure_invalid_for_year",
+        "description": "farm_failures contract_not_active, keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-24",
+        "CIT-MB-25"
+      ],
+      "rego_symbols": [
+        "deregistered_effective_for_year",
+        "contract_active_in_year"
+      ]
+    },
+    {
+      "id": "O6_23-EXIT-004",
+      "rule_type": "obligation",
+      "statement": "Bis zum Ausstieg sind die Förderverpflichtungen einzuhalten.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "bis zur Abmeldung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "obligations_continue",
+        "description": "Verpflichtungen gelten bis zum Ausstieg.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-31"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-EXIT-005",
+      "rule_type": "deadline",
+      "statement": "Ein Maßnahmenausstieg ist bis zur Durchführung oder Ankündigung einer Vor-Ort-Kontrolle bzw. bis zur Mitteilung des Ergebnisses einer Verwaltungskontrolle möglich.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.o6_23.deregistration_date < farm.oepul.o6_23.control_notice_date",
+          "description": "Abmeldung vor Kontrollankündigung",
+          "input_paths": [
+            "farm.oepul.o6_23.deregistration_date",
+            "farm.oepul.o6_23.control_notice_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "deregistration_effective",
+        "description": "Spätere Abmeldung unwirksam.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-32"
+      ],
+      "rego_symbols": [
+        "deregistration_effective",
+        "deregistration_after_control_notice"
+      ]
+    },
+    {
+      "id": "O6_23-EXIT-006",
+      "rule_type": "procedure",
+      "statement": "Nach Ausstieg, Ausschluss oder einjähriger Nichtabgabe des Mehrfachantrages ist ein Wiedereinstieg nur mit neuerlichem Maßnahmenantrag möglich.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.o6_23.deregistration_date < farm.year-01-01",
+          "description": "früherer Ausstieg",
+          "input_paths": [
+            "farm.oepul.o6_23.deregistration_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "new_application_required",
+        "description": "Befund reentry_requires_new_application.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-33",
+        "CIT-S-32"
+      ],
+      "rego_symbols": [
+        "reentry_requires_new_application"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-001",
+      "rule_type": "interpretation",
+      "statement": "Rechtlich verbindlich sind allein die Rechtsgrundlagen (Sonderrichtlinie, MOG 2021, GSP-AV); Informationsblätter sind unverbindlich.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Quellenrang",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "source_precedence",
+        "description": "Bei Widerspruch gilt die Sonderrichtlinie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-01"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-GEN-002",
+      "rule_type": "legal_basis",
+      "statement": "Zusätzlich zur Sonderrichtlinie sind die Bestimmungen des MOG 2021 und der GSP-AV einzuhalten.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "allgemein",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "additional_legal_requirements",
+        "description": "Informativ.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-02"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-GEN-003",
+      "rule_type": "definition",
+      "statement": "Förderfähige landwirtschaftliche Flächen umfassen Ackerland, Grünland, Dauer- und Spezialkulturen, Weinflächen und Alm samt Landschaftselementen bis 5 m (§ 25 GSP-AV).",
+      "conditions": [
+        {
+          "expression": "parcel.land_use",
+          "description": "Nutzungsart",
+          "input_paths": [
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "definition",
+        "description": "Für o6_23 nur Grünland relevant.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-03"
+      ],
+      "rego_symbols": [
+        "access_grassland_failed"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-004",
+      "rule_type": "obligation",
+      "statement": "Alle teilnehmenden Betriebe müssen die Konditionalität (inkl. sozialer Konditionalität) einhalten, um die Förderung in voller Höhe zu erhalten; Sanktionen nach Art. 83–89 VO (EU) 2021/2116.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.conditionality_compliant == false",
+          "description": "Konditionalitätsverstoß",
+          "input_paths": [
+            "farm.oepul.conditionality_compliant"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "finding",
+        "description": "Befund conditionality_not_complied (Kürzungshöhe nicht aus Quellen berechenbar).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-04",
+        "CIT-S-39"
+      ],
+      "rego_symbols": [
+        "farm_findings"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-005",
+      "rule_type": "eligibility",
+      "statement": "Förderwerbend sind natürliche Personen, eingetragene Personengesellschaften sowie juristische Personen und Personenvereinigungen, sofern die Beteiligung von Gebietskörperschaften 25 % nicht übersteigt.",
+      "conditions": [
+        {
+          "expression": "farm.applicant.legal_form in eligible_legal_forms",
+          "description": "zulässige Rechtsform",
+          "input_paths": [
+            "farm.applicant.legal_form"
+          ]
+        },
+        {
+          "expression": "farm.applicant.public_body_share_percent <= 25",
+          "description": "Beteiligung Gebietskörperschaften",
+          "input_paths": [
+            "farm.applicant.public_body_share_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "applicant_failure",
+        "description": "legal_form_not_eligible bzw. public_body_share_above_25_percent.",
+        "value": {
+          "max_share": 25
+        }
+      },
+      "source_reference_ids": [
+        "CIT-AT-05",
+        "CIT-AT-06",
+        "CIT-S-04"
+      ],
+      "rego_symbols": [
+        "applicant_failures",
+        "applicant_eligible"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-006",
+      "rule_type": "eligibility",
+      "statement": "Der Betrieb muss im eigenen Namen und auf eigene Rechnung bewirtschaftet werden, Verfügungsgewalt über die Flächen muss bestehen; aktiver Landwirt und landwirtschaftliche Tätigkeit sind erforderlich.",
+      "conditions": [
+        {
+          "expression": "farm.applicant.is_active_farmer and performs_agricultural_activity and farms_in_own_name_and_account",
+          "description": "Anforderungen an die Person",
+          "input_paths": [
+            "farm.applicant.is_active_farmer",
+            "farm.applicant.performs_agricultural_activity",
+            "farm.applicant.farms_in_own_name_and_account"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "applicant_failure",
+        "description": "not_active_farmer / no_agricultural_activity / not_own_name_and_account.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-07",
+        "CIT-AT-07b"
+      ],
+      "rego_symbols": [
+        "applicant_failures"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-007",
+      "rule_type": "eligibility",
+      "statement": "Gebietskörperschaften und deren Einrichtungen (bzw. Einrichtungen mit bestimmendem Einfluss, > 25 %) kommen nicht als förderwerbende Personen in Betracht; Ausnahmen nur für Maßnahmen 6, 7, 10 (bis 2024), 20, 1C (ab 2025) – nicht für 23.",
+      "conditions": [
+        {
+          "expression": "farm.applicant.legal_form == 'public_body'",
+          "description": "Gebietskörperschaft",
+          "input_paths": [
+            "farm.applicant.legal_form"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "applicant_failure",
+        "description": "public_body_not_eligible_for_o6_23.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-08",
+        "CIT-S-03"
+      ],
+      "rego_symbols": [
+        "applicant_failures",
+        "public_body_exempt_measures"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-008",
+      "rule_type": "access_condition",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr muss der Betrieb mindestens 0,50 ha geschützten Anbau oder 1,50 ha landwirtschaftliche Fläche bewirtschaften, damit ein Vertrag zustande kommt.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.first_participation_year == farm.year",
+          "description": "erstes Teilnahmejahr",
+          "input_paths": [
+            "farm.oepul.first_participation_year",
+            "farm.year"
+          ]
+        },
+        {
+          "expression": "land.total_area_ha >= 1.5 or land.protected_cultivation_area_ha >= 0.5",
+          "description": "Mindestfläche",
+          "input_paths": [
+            "land.total_area_ha",
+            "land.protected_cultivation_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "farm_failure",
+        "description": "minimum_farm_size_not_met.",
+        "value": {
+          "ha": 1.5,
+          "protected_ha": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "CIT-AT-09",
+        "CIT-AT-09b",
+        "CIT-S-06"
+      ],
+      "rego_symbols": [
+        "minimum_farm_size_met",
+        "is_first_participation_year"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-009",
+      "rule_type": "exception",
+      "statement": "Ab dem zweiten ÖPUL-Teilnahmejahr ist die Betriebsmindestgröße nicht mehr erforderlich.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.first_participation_year < farm.year",
+          "description": "Folgejahr",
+          "input_paths": [
+            "farm.oepul.first_participation_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_minimum_size",
+        "description": "Mindestgröße entfällt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-10"
+      ],
+      "rego_symbols": [
+        "minimum_farm_size_met"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-010",
+      "rule_type": "obligation",
+      "statement": "Auf Grünland ist jährlich mindestens einmal eine vollflächige Mahd mit Verbringen des Mähgutes oder eine jährliche vollflächige Beweidung durchzuführen.",
+      "conditions": [
+        {
+          "expression": "count(cutting_dates) > 0 and mowing_material_removed or full_area_grazed",
+          "description": "Mindestbewirtschaftung",
+          "input_paths": [
+            "land.parcels[].operations.cutting_dates",
+            "land.parcels[].operations.mowing_material_removed",
+            "land.parcels[].operations.full_area_grazed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation_violation",
+        "description": "minimum_grassland_management_not_met.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-11",
+        "CIT-S-09"
+      ],
+      "rego_symbols": [
+        "grassland_minimum_management_met",
+        "obligation_violated"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-011",
+      "rule_type": "eligibility",
+      "statement": "Beantragte Flächen müssen aktiv für die landwirtschaftliche Produktion bewirtschaftet werden.",
+      "conditions": [
+        {
+          "expression": "land.parcels[].eligibility.actively_farmed == true",
+          "description": "aktive Bewirtschaftung",
+          "input_paths": [
+            "land.parcels[].eligibility.actively_farmed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_access_failure",
+        "description": "not_actively_farmed.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-12",
+        "CIT-S-10"
+      ],
+      "rego_symbols": [
+        "access_eligibility_failed"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-012",
+      "rule_type": "closed_list",
+      "statement": "Nicht förderfähig sind u. a. Energieholz/Kurzumtrieb, Reb- und Baumschulflächen, nicht aktiv bewirtschaftete Flächen, Sonstige Flächen, nicht oder falsch beantragte Flächen, nicht hauptsächlich landwirtschaftlich genutzte Flächen (§ 31 GSP-AV) und GLÖZ-Landschaftselemente.",
+      "conditions": [
+        {
+          "expression": "parcel.eligibility flags",
+          "description": "Ausschlusskategorien",
+          "input_paths": [
+            "land.parcels[].eligibility.is_other_area",
+            "land.parcels[].eligibility.is_gloez_landscape_element",
+            "land.parcels[].eligibility.mainly_agricultural_use",
+            "land.parcels[].eligibility.is_short_rotation_or_nursery"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_access_failure",
+        "description": "Kategorie-spezifischer Zugangsfehler.",
+        "value": {
+          "data": "data/o6_23/parameters.json#/non_eligible_area_categories"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-AT-13",
+        "CIT-AT-15b",
+        "CIT-S-07b"
+      ],
+      "rego_symbols": [
+        "access_eligibility_failed"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-013",
+      "rule_type": "exception",
+      "statement": "Flächen in Nationalparks sind in der Maßnahme 23 prämienfähig (Ausnahme vom Ausschluss; auch in Neusiedlersee und Donau-Auen).",
+      "conditions": [
+        {
+          "expression": "land.parcels[].constraints.natura2000.in_national_park == true",
+          "description": "Nationalparkfläche",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.in_national_park",
+            "land.parcels[].constraints.natura2000.national_park_name"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_allowed",
+        "description": "national_park_premium_allowed = true.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-14",
+        "CIT-AT-14b",
+        "CIT-S-07"
+      ],
+      "rego_symbols": [
+        "national_park_premium_allowed"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-014",
+      "rule_type": "exception",
+      "statement": "Flächen mit Code VF (genehmigte Versuche) erhalten im laufenden Jahr keine Prämie; Genehmigung und Dokumentation sind vorzuhalten.",
+      "conditions": [
+        {
+          "expression": "land.parcels[].eligibility.is_experimental_area_vf == true",
+          "description": "Versuchsfläche",
+          "input_paths": [
+            "land.parcels[].eligibility.is_experimental_area_vf"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_access_failure",
+        "description": "experimental_area_vf.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-15",
+        "CIT-S-20"
+      ],
+      "rego_symbols": [
+        "access_eligibility_failed"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-015",
+      "rule_type": "exception",
+      "statement": "Für Flächen mit Code OP (bzw. maßnahmenbezogenem OP-Code) wird im Förderjahr keine ÖPUL-Prämie gewährt.",
+      "conditions": [
+        {
+          "expression": "'OP' or 'OPN2' in land.parcels[].oepul.op_codes",
+          "description": "OP-Code gesetzt",
+          "input_paths": [
+            "land.parcels[].oepul.op_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_access_failure",
+        "description": "op_code_set.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-16"
+      ],
+      "rego_symbols": [
+        "access_eligibility_failed",
+        "blocking_op_codes"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-016",
+      "rule_type": "closed_list",
+      "statement": "Der OP-Code ist verpflichtend u. a. bei Leistungsüberschneidung mit anderen öffentlichen Titeln, behördlich vorgeschriebenen Ausgleichsflächen, nicht ganzjähriger oder nicht über den Vertragszeitraum erfüllbarer Verpflichtung zu setzen.",
+      "conditions": [
+        {
+          "expression": "case in op_code_cases",
+          "description": "OP-Fall",
+          "input_paths": [
+            "land.parcels[].oepul.op_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "op_code_required",
+        "description": "Fälle aus data/o6_23/parameters.json#/op_code_cases.",
+        "value": {
+          "data": "data/o6_23/parameters.json#/op_code_cases"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-AT-17",
+        "CIT-AT-19",
+        "CIT-AT-20"
+      ],
+      "rego_symbols": [
+        "blocking_op_codes"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-017",
+      "rule_type": "exception",
+      "statement": "Gesetzlich vorgeschriebene Auflagen begründen bei Maßnahme 23 keine Leistungsüberschneidung; die Abgeltung gesetzlich bzw. behördlich vorgeschriebener Maßnahmen ist nur bei den Maßnahmen 23 und 24 zulässig.",
+      "conditions": [
+        {
+          "expression": "measure in {'23','24'}",
+          "description": "Maßnahme 23",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "compensable",
+        "description": "statutory_requirements_compensable = true.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-18",
+        "CIT-S-08"
+      ],
+      "rego_symbols": [
+        "statutory_requirements_compensable"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-018",
+      "rule_type": "procedure",
+      "statement": "Bei reinem Fremdverschulden ist der maßnahmenbezogene OP-Code zu setzen; auf der Fläche keine Prämie für die Maßnahme, Nachweise sind aufzubewahren.",
+      "conditions": [
+        {
+          "expression": "third_party_fault",
+          "description": "Fremdverschulden",
+          "input_paths": [
+            "land.parcels[].oepul.op_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Prämie entfällt für den Schlag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-21"
+      ],
+      "rego_symbols": [
+        "access_eligibility_failed"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-019",
+      "rule_type": "sanction",
+      "statement": "Bei Nichterfüllung ohne Fremdverschulden ist der Code per Korrektur zu löschen oder eine Selbstanzeige zu erstatten; die Sanktion laut Verwaltungskontrolle ist grundsätzlich geringer als bei Vor-Ort-Feststellung.",
+      "conditions": [
+        {
+          "expression": "self_report",
+          "description": "Selbstanzeige",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "reduced_sanction",
+        "description": "Informativ.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-22"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-GEN-020",
+      "rule_type": "eligibility",
+      "statement": "Geförderte Flächen müssen in Österreich liegen.",
+      "conditions": [
+        {
+          "expression": "land.parcels[].eligibility.located_in_austria == true",
+          "description": "Lage",
+          "input_paths": [
+            "land.parcels[].eligibility.located_in_austria"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_access_failure",
+        "description": "located_outside_austria.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-23",
+        "CIT-S-05"
+      ],
+      "rego_symbols": [
+        "access_eligibility_failed"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-021",
+      "rule_type": "obligation",
+      "statement": "Die Verpflichtungsdauer erstreckt sich über das gesamte Kalenderjahr; förderfähig sind nur Flächen, die während der gesamten Verpflichtungsdauer entsprechend bewirtschaftet werden.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "ganzjährig",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "full_year_commitment",
+        "description": "Ganzjährige Pflicht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-24",
+        "CIT-S-10"
+      ],
+      "rego_symbols": [
+        "is_one_year_measure"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-022",
+      "rule_type": "exception",
+      "statement": "Flächen können unterjährig weitergegeben werden, wenn der Übernehmer die Auflagen bis zum Ende der Verpflichtungsdauer einhält; sonst Meldung, OP-Code und keine Prämie für das unvollendete Jahr.",
+      "conditions": [
+        {
+          "expression": "transferred_during_year and not successor_continues_until_year_end",
+          "description": "Weitergabe ohne Weiterführung",
+          "input_paths": [
+            "land.parcels[].oepul.transferred_during_year",
+            "land.parcels[].oepul.successor_continues_until_year_end"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_access_failure",
+        "description": "transfer_without_continuation.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-25",
+        "CIT-S-11",
+        "CIT-AT-20"
+      ],
+      "rego_symbols": [
+        "access_eligibility_failed"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-023",
+      "rule_type": "deadline",
+      "statement": "Flächenbezogene Maßnahmen können nach der Antragsfrist bis spätestens 15. April (2023 und 2028: 17. April) von einem bisher nicht teilnehmenden Betrieb für die Restlaufzeit übernommen werden; Antrag online, Genehmigung durch AMA, neuer Vertrag.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.o6_23.takeover.application_date <= takeover_deadline(year)",
+          "description": "Übernahmefrist",
+          "input_paths": [
+            "farm.oepul.o6_23.takeover.application_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "takeover_failure",
+        "description": "takeover_after_deadline.",
+        "value": {
+          "deadline": "04-15",
+          "exceptions": {
+            "2023": "04-17",
+            "2028": "04-17"
+          }
+        }
+      },
+      "source_reference_ids": [
+        "CIT-AT-36",
+        "CIT-AT-37b",
+        "CIT-S-15",
+        "CIT-S-15b"
+      ],
+      "rego_symbols": [
+        "takeover_deadline",
+        "takeover_failures",
+        "takeover_allowed"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-024",
+      "rule_type": "limit",
+      "statement": "Die Maßnahmenübernahme darf zu keiner Ausweitung der Verpflichtung auf andere Flächen um mehr als 50 % der übernommenen Fläche führen.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.o6_23.takeover.additional_area_ha <= 0.5 * taken_over_area_ha",
+          "description": "Ausweitung",
+          "input_paths": [
+            "farm.oepul.o6_23.takeover.additional_area_ha",
+            "farm.oepul.o6_23.takeover.taken_over_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "takeover_failure",
+        "description": "takeover_expansion_above_50_percent.",
+        "value": {
+          "max_share": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "CIT-AT-37",
+        "CIT-S-15"
+      ],
+      "rego_symbols": [
+        "takeover_failures"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-025",
+      "rule_type": "exception",
+      "statement": "Die Maßnahme 23 unterliegt keiner Beschränkung des prämienfähigen Flächenzugangs (nicht in der Liste der beschränkten Maßnahmen).",
+      "conditions": [
+        {
+          "expression": "'23' not in area_increase_restricted_measures",
+          "description": "nicht gelistet",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "no_restriction",
+        "description": "area_increase_restricted = false.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-38"
+      ],
+      "rego_symbols": [
+        "area_increase_restricted"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-026",
+      "rule_type": "procedure",
+      "statement": "Die Einhaltung wird über Verwaltungs-, Vor-Ort- und nachgängige Kontrollen geprüft.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Kontrollen",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "controls",
+        "description": "Informativ.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-39"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-GEN-027",
+      "rule_type": "obligation",
+      "statement": "Mit Beginn des Vertragszeitraumes ist die förderwerbende Person an die Förderbedingungen gebunden und hat Kontrollen zuzulassen.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "ab Vertragsbeginn",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "bound",
+        "description": "Informativ.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-28"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-GEN-028",
+      "rule_type": "sanction",
+      "statement": "Verweigert die förderwerbende Person die Auskunft oder verhindert die Vor-Ort-Kontrolle (außer höhere Gewalt), wird der Antrag abgelehnt, keine Prämie für das laufende Jahr, bestehende Verträge werden beendet.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.on_site_check_refused == true",
+          "description": "Kontrollverweigerung",
+          "input_paths": [
+            "farm.oepul.on_site_check_refused"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "farm_failure",
+        "description": "on_site_check_refused, keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-36"
+      ],
+      "rego_symbols": [
+        "farm_failures"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-029",
+      "rule_type": "sanction",
+      "statement": "Kürzungen/Einbehalt/Rückforderung resultieren aus Nichteinhaltung von Zugangsvoraussetzungen, Flächenabweichungen, inhaltlichen Förderverpflichtungen, Konditionalität und Vertragszeitraum.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Verstoßarten",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "sanction_grounds",
+        "description": "Informativ.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-40"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-GEN-030",
+      "rule_type": "sanction",
+      "statement": "Inhaltliche Verstöße werden nach Schwere, Ausmaß, Dauer und Häufigkeit maßnahmenbezogen in Stufen bewertet: Verwarnung, Kürzung um 2, 5, 10, 25, 50 oder 100 %.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.o6_23.content_violation_stage",
+          "description": "Sanktionsstufe",
+          "input_paths": [
+            "farm.oepul.o6_23.content_violation_stage"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_percent",
+        "description": "sanction_reduction_percent.",
+        "value": {
+          "data": "data/o6_23/parameters.json#/sanction_stages"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-AT-41",
+        "CIT-S-38"
+      ],
+      "rego_symbols": [
+        "sanction_reduction_percent",
+        "premium_after_sanctions_eur"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-031",
+      "rule_type": "sanction",
+      "statement": "Ab dem Jahr 2027 wird statt einer Verwarnung ein Einbehalt von 1 % der Maßnahmenprämie ausgesprochen.",
+      "conditions": [
+        {
+          "expression": "farm.year >= 2027 and stage == 'warning'",
+          "description": "Verwarnungsstufe ab 2027",
+          "input_paths": [
+            "farm.year",
+            "farm.oepul.o6_23.content_violation_stage"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_percent",
+        "description": "1 %.",
+        "value": 1
+      },
+      "source_reference_ids": [
+        "CIT-AT-42"
+      ],
+      "rego_symbols": [
+        "sanction_reduction_percent"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-032",
+      "rule_type": "sanction",
+      "statement": "Bei zweimaliger 100 %-Kürzung im Vertragszeitraum erfolgt Ausschluss aus der Maßnahme und Rückforderung der bisher gewährten Maßnahmenprämie.",
+      "conditions": [
+        {
+          "expression": "farm.oepul.o6_23.full_reductions_in_contract_period >= 2",
+          "description": "zwei 100 %-Kürzungen",
+          "input_paths": [
+            "farm.oepul.o6_23.full_reductions_in_contract_period"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exclusion",
+        "description": "excluded_from_measure.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-43"
+      ],
+      "rego_symbols": [
+        "excluded_from_measure",
+        "farm_failures"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-033",
+      "rule_type": "access_condition",
+      "statement": "Bei einjährigen Maßnahmen kommt bei Nichterfüllung von Förder- bzw. Zugangsvoraussetzungen keine gültige Verpflichtung (kein Vertrag) zustande.",
+      "conditions": [
+        {
+          "expression": "count(farm_failures) > 0",
+          "description": "Zugangsvoraussetzung verletzt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "no_contract",
+        "description": "contract_valid = false, Prämie 0.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-37"
+      ],
+      "rego_symbols": [
+        "contract_valid",
+        "premium_eur"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-034",
+      "rule_type": "calculation_order",
+      "statement": "Mehrfachkürzungen erfolgen in festgelegter Reihenfolge (Übererklärung, Zugangsvoraussetzungen, Fristversäumnis, Untererklärung, inhaltliche Kürzung, Förderobergrenze, Modulation, Obergrenze Flächenzahlungen, Vertragszeitraum, Zugangskürzung, Konditionalität).",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Reihenfolge",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "order",
+        "description": "data/o6_23/parameters.json#/multiple_reduction_order.",
+        "value": {
+          "data": "data/o6_23/parameters.json#/multiple_reduction_order"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-S-40"
+      ],
+      "rego_symbols": [
+        "premium_after_sanctions_eur",
+        "net_premium_eur"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-035",
+      "rule_type": "payment",
+      "statement": "Die Auszahlung erfolgt bis 30. Juni des auf das Antragsjahr folgenden Jahres.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Antragsjahr",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "payment_due",
+        "description": "payment_due_by = (year+1)-06-30.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-44"
+      ],
+      "rego_symbols": [
+        "payment_due_by"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-036",
+      "rule_type": "payment",
+      "statement": "Nach Abschluss der Verwaltungskontrollen kann eine Teilzahlung von maximal 75 % erfolgen.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Teilzahlung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "advance_max",
+        "description": "advance_payment_max_eur = 75 % der Nettoprämie.",
+        "value": 0.75
+      },
+      "source_reference_ids": [
+        "CIT-AT-45",
+        "CIT-S-35"
+      ],
+      "rego_symbols": [
+        "advance_payment_max_eur"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-037",
+      "rule_type": "payment",
+      "statement": "Von der Gewährung kann abgesehen werden, wenn der Auszahlungsbetrag 50 Euro nicht überschreitet.",
+      "conditions": [
+        {
+          "expression": "net_premium_eur <= 50",
+          "description": "Kleinbetrag",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "may_be_withheld",
+        "description": "Befund payout_may_be_withheld_below_50_eur.",
+        "value": 50
+      },
+      "source_reference_ids": [
+        "CIT-S-34"
+      ],
+      "rego_symbols": [
+        "payout_below_minimum",
+        "farm_findings"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-038",
+      "rule_type": "cap",
+      "statement": "Prämienobergrenze für die Summe der flächenbezogenen Zahlungen je Schlag (inkl. umgelegter LE-Zahlungen): 1.200 €/ha (2023), 1.300 €/ha (ab 2024); bei Teilnahme an Naturschutz oder EBW 1.300 €/ha (2023) bzw. 1.500 €/ha (ab 2024).",
+      "conditions": [
+        {
+          "expression": "rate + other_area_payments_eur_per_ha > cap",
+          "description": "Obergrenze überschritten",
+          "input_paths": [
+            "land.parcels[].oepul.other_area_payments_eur_per_ha",
+            "land.parcels[].oepul.measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "capped_rate",
+        "description": "parcel_capped_rate_eur_per_ha.",
+        "value": {
+          "data": "data/o6_23/parameters.json#/premium_caps"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-AT-46",
+        "CIT-AT-47",
+        "CIT-AT-47b",
+        "CIT-AT-47c",
+        "CIT-S-22"
+      ],
+      "rego_symbols": [
+        "cap_amount",
+        "parcel_cap_id",
+        "parcel_capped_rate_eur_per_ha",
+        "parcel_cap_exceeded"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-039",
+      "rule_type": "modulation",
+      "statement": "Betriebsgrößenmodulation: bis 200 ha 100 %, >200–300 ha 90 %, >300–1.000 ha 85 %, >1.000 ha 75 % der Prämie (Basis Gesamtfläche laut Mehrfachantrag).",
+      "conditions": [
+        {
+          "expression": "land.total_area_ha",
+          "description": "Gesamtfläche",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "modulation_factor",
+        "description": "gewichteter Faktor, z. B. 220 ha → 99,09 %.",
+        "value": {
+          "data": "data/o6_23/parameters.json#/modulation_bands"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-AT-48",
+        "CIT-AT-49",
+        "CIT-AT-50",
+        "CIT-S-23",
+        "CIT-S-23b"
+      ],
+      "rego_symbols": [
+        "modulation_factor",
+        "band_share_area",
+        "net_premium_eur"
+      ]
+    },
+    {
+      "id": "O6_23-GEN-040",
+      "rule_type": "exception",
+      "statement": "Für Fälle höherer Gewalt oder außergewöhnlicher Umstände gelten die Bestimmungen gemäß § 6 GSP-AV; Ansuchen über eAMA (Eingaben, Formular Anerkennung höherer Gewalt).",
+      "conditions": [
+        {
+          "expression": "force_majeure",
+          "description": "höhere Gewalt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "force_majeure",
+        "description": "Einzelfallentscheidung AMA (nicht ausführbar abgebildet).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-16",
+        "CIT-H-0522b",
+        "CIT-H-0805a"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-GEN-041",
+      "rule_type": "exception",
+      "statement": "Bei dauerhaften, nicht beeinflussbaren flächen- oder bewirtschaftungsverändernden Umständen kann die AMA die Verpflichtung vorzeitig beenden und auf Rückforderung verzichten.",
+      "conditions": [
+        {
+          "expression": "permanent_circumstance",
+          "description": "dauerhafter Umstand",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "early_termination",
+        "description": "Einzelfall.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-17"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-GEN-042",
+      "rule_type": "exception",
+      "statement": "Bei vorübergehenden Umständen kann von Rückforderung abgesehen werden; im Jahr der Nichteinhaltung grundsätzlich keine Prämie außer bei höherer Gewalt.",
+      "conditions": [
+        {
+          "expression": "temporary_circumstance",
+          "description": "vorübergehender Umstand",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "no_recovery",
+        "description": "Einzelfall.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-18"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-GEN-043",
+      "rule_type": "legal_basis",
+      "statement": "Das BML kann spezielle Festlegungen bei flächen- oder bewirtschaftungsverändernden Umständen treffen (Grundlage der Dürre-Erleichterungen 2026).",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "BML-Festlegung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "special_determination",
+        "description": "Grundlage für DRT-2026-Regeln.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-19"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-GEN-044",
+      "rule_type": "financing",
+      "statement": "Der Bundeszuschuss für Art.-70/72-Maßnahmen setzt einen Landeszuschuss im Ausmaß von 2/3 der Bundesmittel voraus.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Finanzierung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "financing_condition",
+        "description": "Informativ.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-S-24"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O6_23-DRT-2026-001",
+      "rule_type": "exception",
+      "statement": "Dürre 2026: Wird für Natura 2000-Flächen der Schnittzeitpunkt durch Anpassung der Landesverordnung verändert, darf gemäß den Verordnungsterminen genutzt werden; die Projektbestätigung bleibt unverändert und die Prämie wird trotzdem gewährt.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026 and land.parcels[].constraints.natura2000.earliest_cut_date_state_ordinance_2026 != null",
+          "description": "geänderter Verordnungstermin",
+          "input_paths": [
+            "farm.year",
+            "land.parcels[].constraints.natura2000.earliest_cut_date_state_ordinance_2026"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "effective_cut_date",
+        "description": "effective_earliest_cut_date = Verordnungstermin, Prämie bleibt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-H-0812a",
+        "CIT-H-0812b",
+        "CIT-H-0812c"
+      ],
+      "rego_symbols": [
+        "effective_earliest_cut_date",
+        "drought_2026_cut_date_release_used"
+      ]
+    },
+    {
+      "id": "O6_23-DRT-2026-002",
+      "rule_type": "exception",
+      "statement": "Die Freigabe der Nutzung ab 12. August 2026 gilt für Naturschutzflächen (Maßnahme 18), nicht automatisch für Natura 2000-Flächen; dort ist eine Anpassung der Landesverordnungen erforderlich.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026",
+          "description": "Dürrejahr",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_applicable",
+        "description": "Kein automatisches Freigabedatum für N2-Auflagen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-H-0812d",
+        "CIT-H-0812a"
+      ],
+      "rego_symbols": [
+        "effective_earliest_cut_date"
+      ]
+    },
+    {
+      "id": "O6_23-DRT-2026-003",
+      "rule_type": "exception",
+      "statement": "Die trockenheitsbedingten Ausnahmen für UBB/BIO-Biodiversitätsflächen gelten nicht für Flächen, für die auch andere Vorgaben gelten (z. B. Projektbestätigung); N2-Flächen mit DIVSZ bleiben an die Projektbestätigung gebunden.",
+      "conditions": [
+        {
+          "expression": "land.parcels[].constraints.natura2000.divsz_code_marked == true",
+          "description": "anrechenbare N2-Fläche",
+          "input_paths": [
+            "land.parcels[].constraints.natura2000.divsz_code_marked"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_applicable",
+        "description": "Keine DIV-Ausnahme für N2-Flächen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-H-0522a",
+        "CIT-MB-20"
+      ],
+      "rego_symbols": [
+        "obligation_violated"
+      ]
+    }
+  ]
+}
