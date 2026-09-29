@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 148,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-18-terra/runs/v2-o6_18-terra-retry-20260929/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_18/naturschutz.rego",
+    "tests/o6_18/naturschutz_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-18-terra/runs/v2-o6_18-terra-retry-20260929/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 15,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_18/naturschutz.rego",
+        "tests/o6_18/naturschutz_test.rego"
+      ],
+      "duration_ms": 25,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-18-terra/runs/v2-o6_18-terra-retry-20260929/workspace/tools/opa",
+            "fmt",
+            "policy/o6_18/naturschutz.rego"
+          ],
+          "duration_ms": 14,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_18\n\nimport data.o6_18 as o6data\n\ndefault eligible := false\n\n# Input is the proposed extension described in rules/profile_changes.json.\neligible if {\n\tinput.o6_18.participates\n\tinput.o6_18.project_confirmation.present\n\tcount(input.o6_18.parcels) > 0\n\tevery p in input.o6_18.parcels { p.nat_code }\n}\n\nviolations contains v if {\n\tinput.o6_18.participates\n\tnot input.o6_18.project_confirmation.present\n\tv := {\"rule_id\": \"o6_18.project_confirmation\", \"message\": \"Projektbestätigung der zuständigen Landesstelle fehlt.\"}\n}\n\nviolations contains v if {\n\tp := input.o6_18.parcels[_]\n\tp.nat_code\n\tnot p.project_operations_confirmed\n\tv := {\"rule_id\": \"o6_18.project_obligations\", \"parcel_id\": p.parcel_id, \"message\": \"Auflagen der Projektbestätigung sind nicht als erfüllt bestätigt.\"}\n}\n\nviolations contains v if {\n\tp := input.o6_18.parcels[_]\n\tp.nat_code\n\tp.land_use == \"grassland\"\n\tp.uses_per_year > 3\n\tv := {\"rule_id\": \"o6_18.max_grassland_uses\", \"parcel_id\": p.parcel_id, \"message\": \"Mehr als drei Grünlandnutzungen.\"}\n}\n\nviolations contains v if {\n\tp := input.o6_18.parcels[_]\n\tp.nat_code\n\tp.care_or_use_within_two_years == false\n\tv := {\"rule_id\": \"o6_18.min_care\", \"parcel_id\": p.parcel_id, \"message\": \"Nutzung/Pflege mindestens alle zwei Jahre fehlt.\"}\n}\n\nviolations contains v if {\n\tp := input.o6_18.parcels[_]\n\tp.nat_code\n\tp.prohibited_general_activity\n\tv := {\"rule_id\": \"o6_18.general_prohibitions\", \"parcel_id\": p.parcel_id, \"message\": \"Verbotene allgemeine Naturschutzhandlung.\"}\n}\n\nviolations contains v if {\n\tp := input.o6_18.parcels[_]\n\tp.nat_code\n\tp.requires_grazing_log\n\tnot p.grazing_log.current\n\tv := {\"rule_id\": \"o6_18.grazing_log\", \"parcel_id\": p.parcel_id, \"message\": \"Tagaktuelles Weidetagebuch fehlt.\"}\n}\n\nviolations contains v if {\n\tp := input.o6_18.parcels[_]\n\tcode := p.project_codes[_]\n\tnot code in o6data.annex_i_codes\n\tv := {\"rule_id\": \"o6_18.annex_code\", \"parcel_id\": p.parcel_id, \"code\": code, \"message\": \"Code ist nicht in Anhang I enthalten.\"}\n}\n\nviolations contains v if {\n\tp := input.o6_18.parcels[_]\n\tcode := p.project_codes[_]\n\tcode in o6data.special_code_sets.phenology_monitoring\n\tnot input.o6_18.monitoring.phenology\n\tv := {\"rule_id\": \"o6_18.phenology_monitoring\", \"parcel_id\": p.parcel_id, \"code\": code, \"message\": \"Monitoring Schnittzeit nach Phänologie fehlt.\"}\n}\n\nviolations contains v if {\n\tp := input.o6_18.parcels[_]\n\tcode := p.project_codes[_]\n\tcode in o6data.special_code_sets.great_bustard_monitoring\n\tnot input.o6_18.monitoring.great_bustard\n\tv := {\"rule_id\": \"o6_18.great_bustard_monitoring\", \"parcel_id\": p.parcel_id, \"code\": code, \"message\": \"Monitoring Beobachtung der Großtrappe fehlt.\"}\n}\n\nviolations contains v if {\n\tp := input.o6_18.parcels[_]\n\tcode := p.project_codes[_]\n\tcode in o6data.special_code_sets.fallow_care_requires_sa01\n\tnot \"SA01\" in p.project_codes\n\tv := {\"rule_id\": \"o6_18.fallow_combination\", \"parcel_id\": p.parcel_id, \"code\": code, \"message\": \"Pflegecode der Ackerstilllegung verlangt SA01.\"}\n}\n\nviolations contains v if {\n\tp := input.o6_18.parcels[_]\n\t\"AA06\" in p.project_codes\n\tcode := p.project_codes[_]\n\tcode in o6data.special_code_sets.mutually_exclusive_with_aa06\n\tv := {\"rule_id\": \"o6_18.aa06_combination\", \"parcel_id\": p.parcel_id, \"code\": code, \"message\": \"AA06 ist mit diesem Code nicht kombinierbar.\"}\n}\n\nregional_plan_premium_eur := 270 if {\n\tinput.o6_18.regional_plan.requested\n\tinput.o6_18.regional_plan.annual_confirmation\n}\n\nfallow_eligible_ha := min([input.o6_18.fallow_requested_ha, max([2, 0.25 * input.land.arable_area_ha])])\n\narea_modulation_factor := factor if {\n\tarea := input.land.total_area_ha\n\tfactor := (((min([area, 200]) + (0.9 * min([max([area - 200, 0]), 100]))) + (0.85 * min([max([area - 300, 0]), 700]))) + (0.75 * max([area - 1000, 0]))) / area\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-18-terra/runs/v2-o6_18-terra-retry-20260929/workspace/tools/opa",
+            "fmt",
+            "tests/o6_18/naturschutz_test.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_18_test\n\nimport data.oepul.o6_18\n\nbase := {\"land\": {\"arable_area_ha\": 10, \"total_area_ha\": 220}, \"o6_18\": {\"participates\": true, \"project_confirmation\": {\"present\": true}, \"monitoring\": {\"phenology\": true, \"great_bustard\": true}, \"regional_plan\": {\"requested\": true, \"annual_confirmation\": true}, \"fallow_requested_ha\": 4, \"parcels\": [{\"parcel_id\": \"p1\", \"nat_code\": true, \"land_use\": \"grassland\", \"uses_per_year\": 2, \"care_or_use_within_two_years\": true, \"prohibited_general_activity\": false, \"requires_grazing_log\": false, \"project_operations_confirmed\": true, \"project_codes\": [\"GL06\"]}]}}\n\ntest_eligible if o6_18.eligible with input as base\ntest_regional_plan_premium if o6_18.regional_plan_premium_eur == 270 with input as base\ntest_fallow_cap if o6_18.fallow_eligible_ha == 2.5 with input as base\ntest_modulation if o6_18.area_modulation_factor == 0.9909090909090909091 with input as base\n\ntest_missing_monitoring_violation if {\n\tv := o6_18.violations with input as object.union(base, {\"o6_18\": object.union(base.o6_18, {\"monitoring\": {\"phenology\": false, \"great_bustard\": true}})})\n\tv[_].rule_id == \"o6_18.phenology_monitoring\"\n}\n\ntest_invalid_annex_code_violation if {\n\tv := o6_18.violations with input as object.union(base, {\"o6_18\": object.union(base.o6_18, {\"parcels\": [object.union(base.o6_18.parcels[0], {\"project_codes\": [\"ZZ99\"]})]})})\n\tv[_].rule_id == \"o6_18.annex_code\"\n}\n\ntest_fallow_care_needs_sa01 if {\n\tv := o6_18.violations with input as object.union(base, {\"o6_18\": object.union(base.o6_18, {\"parcels\": [object.union(base.o6_18.parcels[0], {\"project_codes\": [\"SB01\"]})]})})\n\tv[_].rule_id == \"o6_18.fallow_combination\"\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-18-terra/runs/v2-o6_18-terra-retry-20260929/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 20,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 7/7\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-18-terra/runs/v2-o6_18-terra-retry-20260929/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 87,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-18-terra/runs/v2-o6_18-terra-retry-20260929/workspace"
+}
