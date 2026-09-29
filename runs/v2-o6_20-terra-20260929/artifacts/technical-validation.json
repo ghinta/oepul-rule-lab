@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 150,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-20-terra/runs/v2-o6_20-terra-20260929/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_20.rego",
+    "tests/o6_20_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-20-terra/runs/v2-o6_20-terra-20260929/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 15,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_20.rego",
+        "tests/o6_20_test.rego"
+      ],
+      "duration_ms": 28,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-20-terra/runs/v2-o6_20-terra-20260929/workspace/tools/opa",
+            "fmt",
+            "policy/o6_20.rego"
+          ],
+          "duration_ms": 16,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_20\n\nimport rego.v1\n\n# Input shape: input.o6_20.categories is an array of requested category records.\n# A record supplies id, avg_rgve, grazing_days, all_animals_grazed,\n# forage_mostly_grazed, substantial_day_grazing, water_access, shelter_access,\n# diary_complete, and optional_150_days. It deliberately models the evidence\n# that the canonical profile does not yet contain.\n\nrequired_days(category) := 150 if category.optional_150_days\nrequired_days(category) := 120 if not category.optional_150_days\n\ntotal_requested_rgve := sum([category.avg_rgve | category := input.o6_20.categories[_]; category.requested])\n\nminimum_participation_met if total_requested_rgve >= 2\n\ncategory_violations contains {\"category\": category.id, \"code\": \"minimum_grazing_days\", \"required\": needed, \"actual\": category.grazing_days} if {\n\tcategory := input.o6_20.categories[_]\n\tcategory.requested\n\tneeded := required_days(category)\n\tcategory.grazing_days < needed\n}\n\ncategory_violations contains {\"category\": category.id, \"code\": \"all_animals\", \"required\": true} if {\n\tcategory := input.o6_20.categories[_]\n\tcategory.requested\n\tnot category.all_animals_grazed\n}\n\ncategory_violations contains {\"category\": category.id, \"code\": \"forage_from_grazing\", \"required\": true} if {\n\tcategory := input.o6_20.categories[_]\n\tcategory.requested\n\tnot category.forage_mostly_grazed\n}\n\ncategory_violations contains {\"category\": category.id, \"code\": \"substantial_day_grazing\", \"required\": true} if {\n\tcategory := input.o6_20.categories[_]\n\tcategory.requested\n\tnot category.substantial_day_grazing\n}\n\ncategory_violations contains {\"category\": category.id, \"code\": \"water_access\", \"required\": true} if {\n\tcategory := input.o6_20.categories[_]\n\tcategory.requested\n\tnot category.water_access\n}\n\ncategory_violations contains {\"category\": category.id, \"code\": \"shelter_or_rapid_stabling\", \"required\": true} if {\n\tcategory := input.o6_20.categories[_]\n\tcategory.requested\n\tnot category.shelter_access\n}\n\ncategory_violations contains {\"category\": category.id, \"code\": \"grazing_diary\", \"required\": true} if {\n\tcategory := input.o6_20.categories[_]\n\tcategory.requested\n\tnot category.diary_complete\n}\n\nviolations contains {\"code\": \"minimum_rgve\", \"required\": 2, \"actual\": total_requested_rgve} if {\n\tnot minimum_participation_met\n}\n\nviolations contains violation if {\n\tviolation := category_violations[_]\n}\n\neligible if {\n\tminimum_participation_met\n\tcount(violations) == 0\n}\n\nrgve_factor(key) := factor.rgve if {\n\tfactor := data.o6_20.gve_factors[_]\n\tfactor.key == key\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-20-terra/runs/v2-o6_20-terra-20260929/workspace/tools/opa",
+            "fmt",
+            "tests/o6_20_test.rego"
+          ],
+          "duration_ms": 12,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_20_test\n\nimport data.oepul.o6_20\nimport rego.v1\n\ntest_eligible_base_category if {\n\to6_20.eligible with input as {\"o6_20\": {\"categories\": [{\"id\": \"cow\", \"requested\": true, \"avg_rgve\": 2.0, \"grazing_days\": 120, \"optional_150_days\": false, \"all_animals_grazed\": true, \"forage_mostly_grazed\": true, \"substantial_day_grazing\": true, \"water_access\": true, \"shelter_access\": true, \"diary_complete\": true}]}}\n}\n\ntest_150_day_option_is_enforced if {\n\tsome violation in o6_20.violations with input as {\"o6_20\": {\"categories\": [{\"id\": \"cow\", \"requested\": true, \"avg_rgve\": 2.0, \"grazing_days\": 149, \"optional_150_days\": true, \"all_animals_grazed\": true, \"forage_mostly_grazed\": true, \"substantial_day_grazing\": true, \"water_access\": true, \"shelter_access\": true, \"diary_complete\": true}]}}\n\tviolation.code == \"minimum_grazing_days\"\n\tviolation.required == 150\n}\n\ntest_two_rgve_minimum_is_enforced if {\n\tsome violation in o6_20.violations with input as {\"o6_20\": {\"categories\": [{\"id\": \"goat\", \"requested\": true, \"avg_rgve\": 1.95, \"grazing_days\": 120, \"optional_150_days\": false, \"all_animals_grazed\": true, \"forage_mostly_grazed\": true, \"substantial_day_grazing\": true, \"water_access\": true, \"shelter_access\": true, \"diary_complete\": true}]}}\n\tviolation.code == \"minimum_rgve\"\n}\n\ntest_gve_table_is_used if {\n\to6_20.rgve_factor(\"equine_large_adult\") == 1.0\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-20-terra/runs/v2-o6_20-terra-20260929/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 18,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 4/4\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-20-terra/runs/v2-o6_20-terra-20260929/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 87,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-20-terra/runs/v2-o6_20-terra-20260929/workspace"
+}
