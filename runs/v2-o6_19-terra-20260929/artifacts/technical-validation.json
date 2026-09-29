@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 59,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-19-terra/runs/v2-o6_19-terra-20260929/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_19.rego",
+    "tests/o6_19_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-19-terra/runs/v2-o6_19-terra-20260929/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 12,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_19.rego",
+        "tests/o6_19_test.rego"
+      ],
+      "duration_ms": 21,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-19-terra/runs/v2-o6_19-terra-20260929/workspace/tools/opa",
+            "fmt",
+            "policy/o6_19.rego"
+          ],
+          "duration_ms": 10,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_19\n\nimport rego.v1\n\n# Input contract: input.oepul.o6_19 holds the application and the EBW parcels.\n# A parcel's project_confirmation contains its binding indicators and observations.\n\ndefault eligible := false\n\neligible if {\n\tinput.oepul.o6_19.start_year >= 2023\n\tinput.oepul.o6_19.start_year <= 2025\n\tinput.oepul.o6_19.application_submitted_by_dec_31\n\tfirst_year_area >= 1\n\tevery parcel in input.oepul.o6_19.parcels {\n\t\tparcel.code_ebw\n\t\tparcel.reference_area_present\n\t\tparcel.project_confirmation.present\n\t\tparcel.land_use in {\"arable\", \"grassland\"}\n\t\tindicators_complied(parcel)\n\t\tregular_care_complied(parcel)\n\t}\n\ttraining_complied\n}\n\nfirst_year_area := sum([p.area_ha | some p in input.oepul.o6_19.parcels]) if input.oepul.o6_19.participation_year == 1\nfirst_year_area := 1 if input.oepul.o6_19.participation_year > 1\n\nindicators_complied(parcel) if {\n\tevery indicator in parcel.project_confirmation.indicators {\n\t\tindicator_satisfied(indicator)\n\t}\n}\n\nindicator_satisfied(indicator) if indicator.additional\n\nindicator_satisfied(indicator) if {\n\tnot indicator.additional\n\tindicator.observed\n}\n\nregular_care_complied(parcel) if {\n\tparcel.project_confirmation.requires_regular_care == false\n}\n\nregular_care_complied(parcel) if {\n\tparcel.project_confirmation.requires_regular_care\n\tparcel.years_since_last_use_or_care <= 2\n}\n\ntraining_complied if input.oepul.o6_19.training.completed_by_2026_12_31\ntraining_complied if input.oepul.o6_19.current_year < 2027\n\nregional_plan_eligible if {\n\teligible\n\tinput.oepul.o6_19.regional_plan.requested\n\tinput.oepul.o6_19.regional_plan.annual_confirmation_present\n}\n\ndenials contains reason if {\n\tnot input.oepul.o6_19.application_submitted_by_dec_31\n\treason := \"EBW muss vor Vertragsbeginn bis 31. Dezember beantragt sein\"\n}\n\ndenials contains reason if {\n\tinput.oepul.o6_19.participation_year == 1\n\tfirst_year_area < 1\n\treason := \"Im ersten Teilnahmejahr sind mindestens 1,00 ha erforderlich\"\n}\n\ndenials contains reason if {\n\tsome parcel in input.oepul.o6_19.parcels\n\tnot parcel.project_confirmation.present\n\treason := sprintf(\"Projektbestätigung fehlt für Schlag %s\", [parcel.parcel_id])\n}\n\ndenials contains reason if {\n\tsome parcel in input.oepul.o6_19.parcels\n\tnot indicators_complied(parcel)\n\treason := sprintf(\"Verbindlicher Projektindikator nicht erreicht: %s\", [parcel.parcel_id])\n}\n\ndenials contains reason if {\n\tsome parcel in input.oepul.o6_19.parcels\n\tparcel.project_confirmation.requires_regular_care\n\tparcel.years_since_last_use_or_care > 2\n\treason := sprintf(\"Regelmäßige Nutzung/Pflege mindestens jedes zweite Jahr fehlt: %s\", [parcel.parcel_id])\n}\n\ndenials contains reason if {\n\tinput.oepul.o6_19.current_year >= 2027\n\tnot input.oepul.o6_19.training.completed_by_2026_12_31\n\treason := \"Regionales Vernetzungstreffen bis 31.12.2026 fehlt\"\n}\n\ndenials contains reason if {\n\tinput.oepul.o6_19.regional_plan.requested\n\tnot input.oepul.o6_19.regional_plan.annual_confirmation_present\n\treason := \"Jährliche Teilnahmebestätigung für Regionalen Naturschutzplan fehlt\"\n}\n\npremium_per_ha(parcel) := rate if {\n\trow := data.base_premiums[_]\n\trow.land_use == parcel.premium.land_use\n\trow.habitat == parcel.premium.habitat\n\trate := row[parcel.premium.conservation_status]\n\tis_number(rate)\n}\n\npremium_per_ha(parcel) := rate if {\n\trow := data.base_premiums[_]\n\trow.land_use == \"wiese\"\n\trow.habitat == parcel.premium.habitat\n\tvalues := row[parcel.premium.conservation_status]\n\trate := values[parcel.premium.difficulty_index]\n\tis_number(rate)\n}\n\nspecial_effort_surcharge(parcel) := 162 if {\n\tparcel.premium.special_effort_code == \"EBBA02\"\n\tinput.oepul.o6_19.current_year >= 2025\n\tparcel.premium.conservation_status == \"A\"\n\tparcel.premium.special_effort_justified\n}\n\nspecial_effort_surcharge(parcel) := 108 if {\n\tparcel.premium.special_effort_code == \"EBBA01\"\n\tparcel.premium.special_effort_justified\n}\n\nhabitat_surcharge(parcel) := 108 if {\n\tparcel.premium.habitat_code in {\"EBHG01\", \"EBHG02\"}\n\tparcel.premium.protected_asset_layer_share >= 0.5\n\tparcel.premium.reported_by_state_and_gis_mapped\n}\n\nregional_plan_premium := 270 if regional_plan_eligible\n\nfallow_eligible_area_ha := min([input.oepul.o6_19.arable_fallow_area_ha, max([2, input.oepul.o6_19.total_arable_area_ha * 0.25])])\n\naccession_premium_eligible if input.oepul.o6_19.current_year <= 2025\n\naccession_premium_eligible if {\n\tinput.oepul.o6_19.current_year > 2025\n\tinput.oepul.o6_19.accession_area_ha <= max([5, input.oepul.o6_19.area_2025_ha * 0.5])\n}\n\nmodulation_factor := weighted / input.oepul.o6_19.total_farm_area_ha if {\n\tarea := input.oepul.o6_19.total_farm_area_ha\n\tarea > 0\n\tweighted := ((min([area, 200]) + (max([min([area, 300]) - 200, 0]) * 0.9)) + (max([min([area, 1000]) - 300, 0]) * 0.85)) + (max([area - 1000, 0]) * 0.75)\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-19-terra/runs/v2-o6_19-terra-20260929/workspace/tools/opa",
+            "fmt",
+            "tests/o6_19_test.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_19\n\nimport rego.v1\n\ntest_eligible_complete_application if {\n\teligible with input as {\"oepul\": {\"o6_19\": {\"start_year\": 2025, \"application_submitted_by_dec_31\": true, \"participation_year\": 1, \"current_year\": 2026, \"training\": {\"completed_by_2026_12_31\": true}, \"regional_plan\": {\"requested\": false, \"annual_confirmation_present\": false}, \"parcels\": [{\"parcel_id\": \"P1\", \"area_ha\": 1, \"code_ebw\": true, \"reference_area_present\": true, \"land_use\": \"grassland\", \"years_since_last_use_or_care\": 2, \"project_confirmation\": {\"present\": true, \"requires_regular_care\": true, \"indicators\": [{\"additional\": false, \"observed\": true}]}}]}}}\n}\n\ntest_missing_project_confirmation_denied if {\n\tdenials[\"Projektbestätigung fehlt für Schlag P1\"] with input as {\"oepul\": {\"o6_19\": {\"application_submitted_by_dec_31\": true, \"participation_year\": 2, \"current_year\": 2026, \"training\": {\"completed_by_2026_12_31\": true}, \"regional_plan\": {\"requested\": false, \"annual_confirmation_present\": false}, \"parcels\": [{\"parcel_id\": \"P1\", \"project_confirmation\": {\"present\": false}}]}}}\n}\n\ntest_wiesen_premium_table if {\n\tpremium_per_ha({\"premium\": {\"land_use\": \"wiese\", \"habitat\": \"Frische Magerwiese\", \"conservation_status\": \"B\", \"difficulty_index\": 1}}) == 961.2\n}\n\ntest_fallow_cap if {\n\tfallow_eligible_area_ha == 2 with input as {\"oepul\": {\"o6_19\": {\"arable_fallow_area_ha\": 3, \"total_arable_area_ha\": 4}}}\n}\n\ntest_modulation if {\n\tmodulation_factor == 109 / 110 with input as {\"oepul\": {\"o6_19\": {\"total_farm_area_ha\": 220}}}\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-19-terra/runs/v2-o6_19-terra-20260929/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 14,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 5/5\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-19-terra/runs/v2-o6_19-terra-20260929/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 11,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-19-terra/runs/v2-o6_19-terra-20260929/workspace"
+}
