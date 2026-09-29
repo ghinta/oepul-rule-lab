@@ -1,0 +1,433 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_21",
+  "rules": [
+    {
+      "id": "O621.CONTRACT.ANNUAL",
+      "rule_type": "contract_period",
+      "statement": "The obligation is a calendar year; an unwithdrawn measure and compost supplement renew automatically, but the measure contract ends if minimum participation is not met.",
+      "conditions": [
+        {
+          "expression": "participation.year == calendar year and participation.not_withdrawn",
+          "description": "Annual participation.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "annual_contract",
+        "description": "Valid 1 January through 31 December and automatic renewal."
+      },
+      "source_reference_ids": [
+        "CIT.MB.01"
+      ],
+      "rego_symbols": [
+        "measure_eligible"
+      ]
+    },
+    {
+      "id": "O621.MIN.RGVE",
+      "rule_type": "eligibility_threshold",
+      "statement": "At least 2.00 RGVE across all requested cattle categories is required as an annual average.",
+      "conditions": [
+        {
+          "expression": "average_rgve_all_categories >= 2.00",
+          "description": "Aggregate annual average, not each category.",
+          "input_paths": [
+            "participation.average_rgve_all_categories"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible",
+        "description": "Minimum participation is fulfilled."
+      },
+      "source_reference_ids": [
+        "CIT.MB.02",
+        "CIT.SRL.21"
+      ],
+      "rego_symbols": [
+        "measure_eligible"
+      ]
+    },
+    {
+      "id": "O621.CATEGORIES",
+      "rule_type": "scope",
+      "statement": "Only male cattle under 0.5 year, male cattle at least 0.5 year, female cattle under 0.5 year, and female cattle 0.5 to under 2 years are selectable categories.",
+      "conditions": [
+        {
+          "expression": "category.name in allowed_categories",
+          "description": "Requested category is one of the four published categories.",
+          "input_paths": [
+            "participation.categories[].name"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "in_scope",
+        "description": "Category may be enrolled."
+      },
+      "source_reference_ids": [
+        "CIT.MB.02"
+      ],
+      "rego_symbols": [
+        "eligible_category"
+      ]
+    },
+    {
+      "id": "O621.DAIRY.EXCLUSION",
+      "rule_type": "exclusion",
+      "statement": "A farm delivering milk to dairies, including seasonally on an alp, cannot participate with female cattle aged 0.5 to under 2 years.",
+      "conditions": [
+        {
+          "expression": "has_dairy_delivery and category.name == female_0_5_to_under_2",
+          "description": "Dairy delivery exclusion.",
+          "input_paths": [
+            "participation.has_dairy_delivery",
+            "participation.categories[].name"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "ineligible",
+        "description": "The female older category is excluded."
+      },
+      "source_reference_ids": [
+        "CIT.MB.02"
+      ],
+      "rego_symbols": [
+        "category_dairy_disallowed"
+      ]
+    },
+    {
+      "id": "O621.HEALTH.SERVICE",
+      "rule_type": "eligibility_requirement",
+      "statement": "Where more than 10.00 RGVE of eligible cattle are kept, participation in an approved cattle health service is required for the full funding year; evidence is supplied on request if not transmitted by the service.",
+      "conditions": [
+        {
+          "expression": "eligible_cattle_rgve > 10",
+          "description": "Threshold for cattle health service.",
+          "input_paths": [
+            "participation.eligible_cattle_rgve"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "evidence_required",
+        "description": "Recognised cattle health service participation is mandatory."
+      },
+      "source_reference_ids": [
+        "CIT.MB.03",
+        "CIT.SRL.21"
+      ],
+      "rego_symbols": [
+        "health_service_missing"
+      ]
+    },
+    {
+      "id": "O621.QPLUS.FEMALES",
+      "rule_type": "eligibility_requirement",
+      "statement": "Enrollment of female cattle requires full-year participation in Qplus Rind or a comparable female beef-cattle programme and evidence on request.",
+      "conditions": [
+        {
+          "expression": "category.name starts with female_",
+          "description": "A female category is requested.",
+          "input_paths": [
+            "participation.categories[].name",
+            "participation.qplus_or_equivalent_full_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "programme_required",
+        "description": "Qplus Rind or equivalent must be in force."
+      },
+      "source_reference_ids": [
+        "CIT.MB.03",
+        "CIT.SRL.21"
+      ],
+      "rego_symbols": [
+        "category_missing_qplus"
+      ]
+    },
+    {
+      "id": "O621.GROUP.LITTER",
+      "rule_type": "housing_requirement",
+      "statement": "Participating cattle are group-housed on littered systems with a closed lying surface; up to 5 percent perforation counts as closed, litter covers at least 40 percent of required usable total area, and the lying area is soft and dry.",
+      "conditions": [
+        {
+          "expression": "animal.group_housed and perforation <= 5 and littered_area >= 0.40 * required_total_area",
+          "description": "Core group-housing and litter conditions.",
+          "input_paths": [
+            "participation.categories[].animals[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "housing_compliant",
+        "description": "Animal meets the bedding requirement."
+      },
+      "source_reference_ids": [
+        "CIT.MB.04",
+        "CIT.SRL.21"
+      ],
+      "rego_symbols": [
+        "valid_litter",
+        "valid_group_housing"
+      ]
+    },
+    {
+      "id": "O621.SPACE.TABLE",
+      "rule_type": "calculation",
+      "statement": "Required usable total area per animal is 1.80, 2.50, 3.00, 3.60, and 4.20 m² for weights up to 150, 220, 350, 500, and above 500 kg respectively; published lying-area values are 0.72, 1.00, 1.20, 1.44, and 1.68 m².",
+      "conditions": [
+        {
+          "expression": "available_total_area_m2 >= published threshold by live weight",
+          "description": "Use the complete published weight table.",
+          "input_paths": [
+            "participation.categories[].animals[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "space_compliant",
+        "description": "Required total stall-compartment area is available."
+      },
+      "source_reference_ids": [
+        "CIT.MB.04"
+      ],
+      "rego_symbols": [
+        "space_requirement",
+        "valid_group_housing"
+      ]
+    },
+    {
+      "id": "O621.MIXED.GROUPS",
+      "rule_type": "housing_requirement",
+      "statement": "In mixed groups, the published space requirements apply to every animal; cows require 2.4 m² lying area and 6.00 m² total area, while only young cattle receive the premium.",
+      "conditions": [
+        {
+          "expression": "group contains eligible and ineligible cattle",
+          "description": "Mixed group space calculation.",
+          "input_paths": [
+            "participation.categories[].animals[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "all_animals_counted",
+        "description": "Space calculation includes every animal."
+      },
+      "source_reference_ids": [
+        "CIT.MB.05"
+      ],
+      "rego_symbols": [
+        "valid_group_housing"
+      ]
+    },
+    {
+      "id": "O621.SKETCH.LEGACY",
+      "rule_type": "documentation",
+      "statement": "Stall sketch and maximum-occupancy plan were required through application year 2024; from application year 2025 neither must be created.",
+      "conditions": [
+        {
+          "expression": "application_year <= 2024",
+          "description": "Historical documentation cutoff.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "legacy_documentation_required",
+        "description": "Sketch and occupancy plan are required only through 2024."
+      },
+      "source_reference_ids": [
+        "CIT.MB.05",
+        "CIT.MB.06"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O621.INDIVIDUAL.EXCEPTIONS",
+      "rule_type": "exception",
+      "statement": "Sick or injured cattle may be individually kept on litter for at most 10 days with documented reason and duration; calves under 21 days may be individually housed on litter with adequate social contact.",
+      "conditions": [
+        {
+          "expression": "individual housing due to illness/injury <= 10 days OR calf age < 21 days with social contact",
+          "description": "Narrow group-housing exceptions.",
+          "input_paths": [
+            "participation.categories[].animals[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exception_compliant",
+        "description": "Individual housing does not remove eligibility."
+      },
+      "source_reference_ids": [
+        "CIT.MB.06",
+        "CIT.SRL.22"
+      ],
+      "rego_symbols": [
+        "valid_group_housing"
+      ]
+    },
+    {
+      "id": "O621.COMPOST",
+      "rule_type": "optional_supplement",
+      "statement": "The compost supplement requires all farmyard manure from every animal species to be composted on-farm, normally with at least two compost-turner turns at least 14 days apart, or from 2025 an eligible layered/mixed manure-and-organic-material heap; establishment, turns, use or transfer are documented and compost barns are excluded.",
+      "conditions": [
+        {
+          "expression": "compost supplement requested",
+          "description": "Optional supplement requirements.",
+          "input_paths": [
+            "compost_supplement"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "supplement_eligible",
+        "description": "21.60 EUR/RGVE supplement can be paid from 2024."
+      },
+      "source_reference_ids": [
+        "CIT.MB.07",
+        "CIT.SRL.22"
+      ],
+      "rego_symbols": [
+        "compost_supplement_eligible",
+        "compost_supplement_eur"
+      ]
+    },
+    {
+      "id": "O621.DEREGISTRATION",
+      "rule_type": "notification",
+      "statement": "If requirements cannot be met for one or more animals, immediately deregister the animal by ear tag online; a deregistered animal is not premium-eligible for this measure in that funding year, while sale/slaughter database departures need no separate notice and are pro-rated.",
+      "conditions": [
+        {
+          "expression": "animal cannot meet holding conditions",
+          "description": "Animal-specific non-compliance.",
+          "input_paths": [
+            "participation.categories[].animals[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "immediate_deregistration",
+        "description": "No premium for a measure-deregistered animal."
+      },
+      "source_reference_ids": [
+        "CIT.MB.08"
+      ],
+      "rego_symbols": [
+        "category_eligible"
+      ]
+    },
+    {
+      "id": "O621.COMBINATION",
+      "rule_type": "combination",
+      "statement": "Combination with Tierwohl-Weide is animal-specific; pasture/alp time fulfils stall conditions but a qualifying home-farm stall remains necessary, and the premium is reduced to avoid overlap.",
+      "conditions": [
+        {
+          "expression": "animal participates in pasture, alp payment, or coupled alp support",
+          "description": "Overlapping animal-linked support.",
+          "input_paths": [
+            "payment.overlap_with_pasture_alp_or_coupled_support"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduced_rate",
+        "description": "Use 162.00 EUR/RGVE from 2024."
+      },
+      "source_reference_ids": [
+        "CIT.MB.09",
+        "CIT.SRL.22"
+      ],
+      "rego_symbols": [
+        "premium_rate_eur_per_rgve"
+      ]
+    },
+    {
+      "id": "O621.APPLICATION.EXIT",
+      "rule_type": "application_and_exit",
+      "statement": "Categories and supplement are requested before contract start by 31 December; last category entry is 2027 (apply by 31 December 2026), supplement entry is 2028 (apply by 31 December 2027), and a category contract lapses if no premium-eligible animal participates in a funding year.",
+      "conditions": [
+        {
+          "expression": "new category or supplement requested",
+          "description": "Application and continuation conditions.",
+          "input_paths": [
+            "farm.year",
+            "participation.categories[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "timely_application_required",
+        "description": "Late or lapsed category needs a new timely measure application."
+      },
+      "source_reference_ids": [
+        "CIT.MB.09",
+        "CIT.MB.10",
+        "CIT.GEN.02"
+      ],
+      "rego_symbols": [
+        "measure_eligible"
+      ]
+    },
+    {
+      "id": "O621.PREMIUM",
+      "rule_type": "payment_calculation",
+      "statement": "Eligible average RGVE from the cattle database are paid at 194.40 EUR/RGVE from 2024, 162.00 EUR/RGVE where named overlapping animal-linked payments apply, plus 21.60 EUR/RGVE for the eligible compost supplement; age entry is pro-rated.",
+      "conditions": [
+        {
+          "expression": "measure eligibility and eligible annual-average RGVE",
+          "description": "Annual payment calculation.",
+          "input_paths": [
+            "participation.eligible_cattle_rgve",
+            "payment.overlap_with_pasture_alp_or_coupled_support"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "annual_premium",
+        "description": "Multiply RGVE by the applicable published rate."
+      },
+      "source_reference_ids": [
+        "CIT.ANH.A",
+        "CIT.MB.11",
+        "CIT.MB.12",
+        "CIT.SRL.22"
+      ],
+      "rego_symbols": [
+        "premium_eur",
+        "compost_supplement_eur",
+        "rgve_factor"
+      ]
+    },
+    {
+      "id": "O621.GEOGRAPHY_SANCTIONS",
+      "rule_type": "general_condition",
+      "statement": "Funded animals must be kept in Austria; non-compliance can be sanctioned by warning or percentage reductions through exclusion and recovery after two 100-percent reductions in the contractual period.",
+      "conditions": [
+        {
+          "expression": "animal kept in Austria and general obligations fulfilled",
+          "description": "General participation and sanction conditions.",
+          "input_paths": [
+            "farm.region"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "general_eligibility",
+        "description": "Animals outside Austria are not considered; serious repeated breaches may cause exclusion."
+      },
+      "source_reference_ids": [
+        "CIT.GEN.01",
+        "CIT.GEN.03"
+      ],
+      "rego_symbols": []
+    }
+  ]
+}

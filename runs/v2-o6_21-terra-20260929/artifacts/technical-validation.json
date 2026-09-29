@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 142,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-21-terra/runs/v2-o6_21-terra-20260929/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_21.rego",
+    "tests/o6_21_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-21-terra/runs/v2-o6_21-terra-20260929/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 14,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_21.rego",
+        "tests/o6_21_test.rego"
+      ],
+      "duration_ms": 27,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-21-terra/runs/v2-o6_21-terra-20260929/workspace/tools/opa",
+            "fmt",
+            "policy/o6_21.rego"
+          ],
+          "duration_ms": 15,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_21\n\nimport rego.v1\n\n# Required values from data.o6_21_tables are intentionally kept in data so that\n# the published weight and conversion tables remain auditable data, not code.\nspace_requirement(weight_kg) := requirement if {\n\tweight_kg <= 150\n\trequirement := data.space_requirements_m2[0]\n}\n\nspace_requirement(weight_kg) := requirement if {\n\tweight_kg > 150\n\tweight_kg <= 220\n\trequirement := data.space_requirements_m2[1]\n}\n\nspace_requirement(weight_kg) := requirement if {\n\tweight_kg > 220\n\tweight_kg <= 350\n\trequirement := data.space_requirements_m2[2]\n}\n\nspace_requirement(weight_kg) := requirement if {\n\tweight_kg > 350\n\tweight_kg <= 500\n\trequirement := data.space_requirements_m2[3]\n}\n\nspace_requirement(weight_kg) := requirement if {\n\tweight_kg > 500\n\trequirement := data.space_requirements_m2[4]\n}\n\nrgve_factor(animal, age) := factor if {\n\tsome row in data.rgve_factors\n\trow.animal == animal\n\trow.age == age\n\tfactor := row.rgve_per_head\n}\n\neligible_category(category) if {\n\tcategory == \"male_under_0_5\"\n}\n\neligible_category(category) if {\n\tcategory == \"male_at_least_0_5\"\n}\n\neligible_category(category) if {\n\tcategory == \"female_under_0_5\"\n}\n\neligible_category(category) if {\n\tcategory == \"female_0_5_to_under_2\"\n}\n\nvalid_litter(animal) if {\n\tanimal.lying_surface_closed\n\tanimal.lying_surface_perforation_percent <= 5\n\tanimal.littered_lying_area_m2 >= 0.4 * animal.required_total_area_m2\n\tanimal.lying_area_soft_and_dry\n}\n\nvalid_group_housing(animal) if {\n\tanimal.group_housed\n\tvalid_litter(animal)\n\tanimal.available_total_area_m2 >= animal.required_total_area_m2\n}\n\nvalid_group_housing(animal) if {\n\tanimal.individually_housed\n\tanimal.individual_housing_health_reason\n\tanimal.individual_housing_days <= 10\n\tvalid_litter(animal)\n}\n\ncategory_dairy_disallowed(category) if {\n\tcategory.name == \"female_0_5_to_under_2\"\n\tinput.participation.has_dairy_delivery\n}\n\ncategory_missing_qplus(category) if {\n\tstartswith(category.name, \"female_\")\n\tnot input.participation.qplus_or_equivalent_full_year\n}\n\nhealth_service_missing if {\n\tinput.participation.eligible_cattle_rgve > 10\n\tnot input.participation.recognised_cattle_health_service_full_year\n}\n\ncompost_turning_method_eligible if {\n\tinput.compost_supplement.turns_with_compost_turner >= 2\n\tinput.compost_supplement.minimum_days_between_turns >= 14\n}\n\nvalid_group_housing(animal) if {\n\tanimal.age_days < 21\n\tanimal.individually_housed\n\tanimal.social_contact_with_calves\n\tvalid_litter(animal)\n}\n\ncategory_eligible(category) if {\n\teligible_category(category.name)\n\tcategory.all_animals_of_category_enrolled\n\tcategory.year_conditions_met\n\tcategory.average_rgve >= 0\n\tnot category_dairy_disallowed(category)\n\tnot category_missing_qplus(category)\n\tevery animal in category.animals { valid_group_housing(animal) }\n}\n\nmeasure_eligible if {\n\tinput.participation.average_rgve_all_categories >= 2\n\tevery category in input.participation.categories { category_eligible(category) }\n\tinput.participation.total_eligible_categories > 0\n\tinput.participation.animals_kept_in_austria\n\tnot health_service_missing\n}\n\ncompost_supplement_eligible if {\n\tinput.compost_supplement.requested\n\tinput.compost_supplement.all_farm_farmyard_manure_composted\n\tinput.compost_supplement.documentation_complete\n\tnot input.compost_supplement.compost_barn\n\tcompost_turning_method_eligible\n}\n\ncompost_supplement_eligible if {\n\tinput.compost_supplement.requested\n\tinput.compost_supplement.all_farm_farmyard_manure_composted\n\tinput.compost_supplement.documentation_complete\n\tnot input.compost_supplement.compost_barn\n\tinput.compost_supplement.eligible_unturned_mixture_from_2025\n}\n\npremium_rate_eur_per_rgve := data.premium_eur_per_rgve.standard_from_2024 if {\n\tnot input.payment.overlap_with_pasture_alp_or_coupled_support\n}\n\npremium_rate_eur_per_rgve := data.premium_eur_per_rgve.overlap_from_2024 if {\n\tinput.payment.overlap_with_pasture_alp_or_coupled_support\n}\n\npremium_eur := amount if {\n\tmeasure_eligible\n\tamount := input.participation.eligible_cattle_rgve * premium_rate_eur_per_rgve\n}\n\ncompost_supplement_eur := amount if {\n\tcompost_supplement_eligible\n\tamount := input.participation.eligible_cattle_rgve * data.premium_eur_per_rgve.compost_supplement_from_2024\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-21-terra/runs/v2-o6_21-terra-20260929/workspace/tools/opa",
+            "fmt",
+            "tests/o6_21_test.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_21_test\n\nimport data.oepul.o6_21\nimport rego.v1\n\ntest_space_table if {\n\to6_21.space_requirement(350).total_area_m2 == 3.0\n\to6_21.space_requirement(501).total_area_m2 == 4.2\n\to6_21.rgve_factor(\"cattle\", \"under_0_5_year\") == 0.4\n}\n\ntest_eligible_and_standard_premium if {\n\tcase_input := {\n\t\t\"participation\": {\"average_rgve_all_categories\": 2, \"eligible_cattle_rgve\": 3, \"total_eligible_categories\": 1, \"animals_kept_in_austria\": true, \"has_dairy_delivery\": false, \"qplus_or_equivalent_full_year\": true, \"recognised_cattle_health_service_full_year\": false, \"categories\": [{\"name\": \"male_at_least_0_5\", \"all_animals_of_category_enrolled\": true, \"year_conditions_met\": true, \"average_rgve\": 3, \"animals\": [{\"group_housed\": true, \"lying_surface_closed\": true, \"lying_surface_perforation_percent\": 5, \"littered_lying_area_m2\": 1.44, \"required_total_area_m2\": 3.6, \"lying_area_soft_and_dry\": true, \"available_total_area_m2\": 3.6}]}]},\n\t\t\"payment\": {\"overlap_with_pasture_alp_or_coupled_support\": false},\n\t\t\"compost_supplement\": {\"requested\": false},\n\t}\n\to6_21.category_eligible(case_input.participation.categories[0]) with input as case_input\n\to6_21.measure_eligible with input as case_input\n\trate := o6_21.premium_rate_eur_per_rgve with input as case_input\n\trate == 194.4\n\to6_21.premium_eur with input as case_input\n}\n\ntest_dairy_delivery_excludes_female_older_category if {\n\tcategory := {\"name\": \"female_0_5_to_under_2\", \"all_animals_of_category_enrolled\": true, \"year_conditions_met\": true, \"average_rgve\": 2, \"animals\": []}\n\tnot o6_21.category_eligible(category) with input.participation.has_dairy_delivery as true\n}\n\ntest_compost_alternative_from_2025 if {\n\tcase_input := {\"compost_supplement\": {\"requested\": true, \"all_farm_farmyard_manure_composted\": true, \"documentation_complete\": true, \"compost_barn\": false, \"eligible_unturned_mixture_from_2025\": true}}\n\to6_21.compost_supplement_eligible with input as case_input\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-21-terra/runs/v2-o6_21-terra-20260929/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 18,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 4/4\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-21-terra/runs/v2-o6_21-terra-20260929/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 83,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-21-terra/runs/v2-o6_21-terra-20260929/workspace"
+}
