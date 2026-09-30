@@ -1,0 +1,4799 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_1a",
+  "rules": [
+    {
+      "id": "UBB-GEN-001",
+      "rule_type": "scope",
+      "statement": "Die UBB-Prämie wird für Acker- und Grünlandflächen je ha, für punktförmige Landschaftselemente je Element und für den optionalen Monitoringzuschlag je Betrieb gewährt; gefördert werden Kosten und Einkommensverluste aus Grünlanderhalt, Anbaudiversifizierung, Biodiversitätsflächen, Weiterbildung und zusätzlichen Bewirtschaftungsweisen.",
+      "conditions": [
+        {
+          "expression": "land_use in {arable, grassland} or element or monitoring",
+          "description": "Fördereinheit je nach Förderkomponente",
+          "input_paths": [
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_basis",
+        "description": "Fördereinheit: ha Acker/Grünland, Stück LSE, Betrieb (Monitoring).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P02-UEB-01",
+        "REF-SRL-P28-UBB-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.premium.breakdown"
+      ]
+    },
+    {
+      "id": "UBB-GEN-002",
+      "rule_type": "scope",
+      "statement": "Die Förderverpflichtungen beziehen sich auf Acker- und Grünlandflächen sowie punktförmige Landschaftselemente und Mehrnutzenhecken des Betriebes.",
+      "conditions": [
+        {
+          "expression": "parcel is arable, grassland, point LSE or Mehrnutzenhecke",
+          "description": "Teilnahmefähige Flächen",
+          "input_paths": [
+            "land.parcels[].land_use",
+            "land.parcels[].area_kind"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "applies",
+        "description": "Flächen unterliegen den UBB-Verpflichtungen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P03-TF-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.common.is_arable",
+        "data.oepul.o6_1a.common.is_grassland"
+      ]
+    },
+    {
+      "id": "UBB-VZ-001",
+      "rule_type": "eligibility",
+      "statement": "Der Verpflichtungs- und Vertragszeitraum beträgt mindestens 4 Jahre und endet am 31.12.2028: Beginn 2023 = 6 Jahre, 2024 = 5 Jahre, 2025 = 4 Jahre.",
+      "conditions": [
+        {
+          "expression": "contract_start_year in {2023,2024,2025}",
+          "description": "Vertragsbeginn jeweils 1. Jänner",
+          "input_paths": [
+            "farm.oepul.ubb.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_period",
+        "description": "Vertragsende 31.12.2028, Laufzeit nach Tabelle.",
+        "value": {
+          "2023": 6,
+          "2024": 5,
+          "2025": 4
+        }
+      },
+      "source_reference_ids": [
+        "REF-UBB-P03-VZ-01",
+        "REF-UBB-P03-VZ-02",
+        "REF-ATB-P10-VZ-01",
+        "REF-SRL-P12-VZ-01"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_contract_periods",
+        "data.oepul.o6_1a.eligibility.contract_period",
+        "data.oepul.o6_1a.eligibility.violations"
+      ]
+    },
+    {
+      "id": "UBB-VZ-002",
+      "rule_type": "eligibility",
+      "statement": "Für sämtliche optionalen Zuschläge läuft der Verpflichtungs- und Vertragszeitraum über ein Kalenderjahr (1. Jänner bis 31. Dezember).",
+      "conditions": [
+        {
+          "expression": "component is optional supplement",
+          "description": "Optionaler Zuschlag",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "annual_contract",
+        "description": "Vertragszeitraum = Kalenderjahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P03-VZ-03",
+        "REF-SRL-P13-VZ-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.eligibility.optional_supplement_period"
+      ]
+    },
+    {
+      "id": "UBB-VZ-003",
+      "rule_type": "obligation",
+      "statement": "Mit der Maßnahme belegte Flächen des ersten Vertragsjahres sowie alle folgenden Flächenzugänge sind bis zum Ende des Vertragszeitraums gemäß den Förderverpflichtungen zu bewirtschaften.",
+      "conditions": [
+        {
+          "expression": "parcel committed in year 1 or later added",
+          "description": "Maßnahmenfläche",
+          "input_paths": [
+            "land.parcels[].parcel_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "must_manage_until_contract_end",
+        "description": "Bewirtschaftungspflicht bis 31.12.2028.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P11-VZ-02",
+        "REF-SRL-P13-VZ-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.eligibility.contract_active"
+      ]
+    },
+    {
+      "id": "UBB-ANT-001",
+      "rule_type": "deadline",
+      "statement": "Die Maßnahme muss vor Vertragsbeginn im Maßnahmenantrag des Mehrfachantrags bis spätestens 31. Dezember beantragt werden, um einen Vertrag ab dem Folgejahr zu begründen.",
+      "conditions": [
+        {
+          "expression": "measure_application_date <= (contract_start_year-1)-12-31",
+          "description": "Antragsfrist",
+          "input_paths": [
+            "farm.oepul.ubb.measure_application_date",
+            "farm.oepul.ubb.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_late",
+        "description": "Kein gültiger Vertrag bei verspäteter Beantragung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P29-ANT-01",
+        "REF-ATB-P12-ANT-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.eligibility.application_deadline",
+        "data.oepul.o6_1a.eligibility.violations"
+      ]
+    },
+    {
+      "id": "UBB-ANT-002",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg in UBB ist mit dem Förderjahr 2025 möglich (Beantragung bis 31.12.2024).",
+      "conditions": [
+        {
+          "expression": "contract_start_year <= 2025",
+          "description": "Letztes Einstiegsjahr",
+          "input_paths": [
+            "farm.oepul.ubb.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_after_2025",
+        "description": "Kein Einstieg ab 2026.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P29-ANT-02",
+        "REF-ATB-P12-VZ-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.eligibility.violations"
+      ]
+    },
+    {
+      "id": "UBB-ANT-003",
+      "rule_type": "deadline",
+      "statement": "Die jährlich optionalen Monitoring-Zuschläge sind vor Vertragsbeginn bis 31.12. im Maßnahmenantrag zu beantragen, verlängern sich automatisch, wenn sie nicht abgemeldet werden; letzter Einstieg Förderjahr 2028 (Beantragung bis 31.12.2027).",
+      "conditions": [
+        {
+          "expression": "monitoring.application_date <= (first_year-1)-12-31 and first_year <= 2028",
+          "description": "Antragsfrist Monitoring",
+          "input_paths": [
+            "farm.oepul.ubb.monitoring[].application_date",
+            "farm.oepul.ubb.monitoring[].first_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_late",
+        "description": "Kein Monitoring-Zuschlag bei verspäteter Beantragung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P29-ANT-03",
+        "REF-UBB-P29-ANT-04",
+        "REF-SRL-P21-ANT-01",
+        "REF-SRL-P21-ANT-02",
+        "REF-ATB-P13-ANT-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.options.monitoring_application_ok",
+        "data.oepul.o6_1a.options.violations"
+      ]
+    },
+    {
+      "id": "UBB-KOMB-001",
+      "rule_type": "combination",
+      "statement": "Eine betriebliche Kombination von UBB mit Biologischer Wirtschaftsweise ist ausgeschlossen, ausgenommen Bio-Teilbetrieb mit Kulturbereich Wein, Obst und Hopfen.",
+      "conditions": [
+        {
+          "expression": "'1A' in measures and '1B' in measures and not bio_teilbetrieb_wein_obst_hopfen",
+          "description": "Gleichzeitige Teilnahme",
+          "input_paths": [
+            "farm.oepul.measures[]",
+            "farm.oepul.bio_teilbetrieb_wein_obst_hopfen"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Unmögliche Maßnahmenkombination.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P29-KOMB-01",
+        "REF-SRL-P18-KOMB-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.eligibility.violations"
+      ]
+    },
+    {
+      "id": "UBB-KOMB-002",
+      "rule_type": "combination",
+      "statement": "UBB-Betriebe können nicht gleichzeitig an der Maßnahmenkategorie 'Nichtproduktive Ackerflächen' teilnehmen; eine Teilnahme an 'Agroforststreifen' ist möglich.",
+      "conditions": [
+        {
+          "expression": "'1A' in measures and '1C_nichtproduktive_ackerflaechen' in measures",
+          "description": "Kombination mit 1C",
+          "input_paths": [
+            "farm.oepul.measures[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Unmögliche Maßnahmenkombination.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P29-KOMB-02",
+        "REF-SRL-P18-KOMB-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.eligibility.violations"
+      ]
+    },
+    {
+      "id": "UBB-KOMB-003",
+      "rule_type": "combination",
+      "statement": "Die Kombinierbarkeit von UBB mit anderen Maßnahmen auf der Einzelfläche richtet sich nach Anhang L: mit 4, 10, 11, 12, 18, 19 nur betreffend Abgeltung der Landschaftselemente; mit 1B, 1C, 13, 14 nicht; mit 2, 3, 6, 7, 8, 9, 16, 17, 23, 24 kombinierbar (BAW und AG nur LSE).",
+      "conditions": [
+        {
+          "expression": "single_area_combination(measure)",
+          "description": "Tabellenwert aus Anhang L",
+          "input_paths": [
+            "farm.oepul.measures[]",
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "lookup",
+        "description": "x / lse_only / none",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-P18-KOMB-01",
+        "REF-ANH-P103-L-01",
+        "REF-ANH-P103-L-02",
+        "REF-ANH-P103-L-03",
+        "REF-ANH-P103-L-04"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_combination_1a",
+        "data.o6_1a.o6_1a_lse_only_parcel_codes",
+        "data.oepul.o6_1a.eligibility.single_area_combination",
+        "data.oepul.o6_1a.premium.lse_only"
+      ]
+    },
+    {
+      "id": "UBB-KOMB-004",
+      "rule_type": "combination",
+      "statement": "Prämien und Zuschläge sind – sofern nicht abweichend geregelt – auf der Einzelfläche kombinierbar.",
+      "conditions": [
+        {
+          "expression": "no explicit exclusion",
+          "description": "Kombination",
+          "input_paths": [
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combinable",
+        "description": "Kumulation zulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P31-PR-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.premium.breakdown"
+      ]
+    },
+    {
+      "id": "UBB-KOMB-005",
+      "rule_type": "combination",
+      "statement": "Mit UBB-Biodiversitätsflächen auf Acker sind keine Prämien anderer Maßnahmen auf der Einzelfläche kombinierbar, außer den bei Acker-DIV angeführten Zuschlägen und der LSE-Abgeltung; Acker-DIV können nicht auf andere Verpflichtungen der Maßnahme angerechnet werden.",
+      "conditions": [
+        {
+          "expression": "parcel has DIV/DIVRS",
+          "description": "Acker-Biodiversitätsfläche",
+          "input_paths": [
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exclusive_premium",
+        "description": "Nur DIV-bezogene Prämien.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P33-PR-16",
+        "REF-SRL-P35-UBB-25"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.arable_supplements.fwk_parcel"
+      ]
+    },
+    {
+      "id": "UBB-KOMB-006",
+      "rule_type": "combination",
+      "statement": "Biodiversitätsflächen, die aus anderen Maßnahmen angerechnet werden (NAT, EBW, BAW, AG, N2), erhalten keine UBB-Prämie, sondern die jeweilige Maßnahmenprämie.",
+      "conditions": [
+        {
+          "expression": "credited_from_other_measure(p)",
+          "description": "Anrechnung aus anderer Maßnahme",
+          "input_paths": [
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_ubb_premium",
+        "description": "Keine UBB-Prämie auf der Fläche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P33-PR-17",
+        "REF-SRL-P35-UBB-25"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.common.credited_from_other_measure",
+        "data.oepul.o6_1a.premium.not_eligible_area"
+      ]
+    },
+    {
+      "id": "UBB-TH-001",
+      "rule_type": "definition",
+      "statement": "Tierhaltender Betrieb ist, wer mindestens 0,30 RGVE je ha Futterfläche (Summe Grünland- und Ackerfutterflächen) mit Rindern, Schafen, Ziegen, Equiden, Rot-/Damwild oder Neuweltkamelen hält; andernfalls nicht-tierhaltend. Ein jährlicher Wechsel ist möglich.",
+      "conditions": [
+        {
+          "expression": "total_rgve / forage_area_ha >= 0.30",
+          "description": "Viehbesatz",
+          "input_paths": [
+            "livestock.species_groups[].rgve_category",
+            "livestock.species_groups[].animal_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "is_livestock_farm",
+        "description": "true/false",
+        "value": 0.3
+      },
+      "source_reference_ids": [
+        "REF-UBB-P03-TH-01",
+        "REF-ATB-P10-TH-01",
+        "REF-SRL-P10-TH-01"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_livestock_thresholds",
+        "data.oepul.o6_1a.livestock.is_livestock_farm",
+        "data.oepul.o6_1a.livestock.stocking_density"
+      ]
+    },
+    {
+      "id": "UBB-TH-002",
+      "rule_type": "calculation",
+      "statement": "Die RGVE werden mit den Umrechnungsfaktoren des RGVE-Schlüssels (Kapitel 12 / Anhang A) ermittelt; wachsen Rinder in eine Alterskategorie hinein, zählen die Werte anteilig. Rinder aus der Rinderdatenbank taggenau, andere Tiere Stichtag 1. April oder Durchschnittstierliste; nur im Inland gehaltene Tiere zählen.",
+      "conditions": [
+        {
+          "expression": "sum(average_count * rgve_factor(rgve_category)) for kept_in_austria",
+          "description": "RGVE-Summe",
+          "input_paths": [
+            "livestock.species_groups[].rgve_category",
+            "livestock.species_groups[].average_count",
+            "livestock.species_groups[].kept_in_austria"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "total_rgve",
+        "description": "RGVE",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P03-TH-02",
+        "REF-UBB-P35-RGVE-01",
+        "REF-UBB-P35-RGVE-02",
+        "REF-SRL-P10-GVE-01",
+        "REF-ANH-P03-A-01",
+        "REF-ANH-P03-A-02",
+        "REF-ANH-P03-A-03",
+        "REF-ATB-P10-TH-02",
+        "REF-ATB-P09-LAGE-02"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_rgve_key",
+        "data.oepul.o6_1a.livestock.group_rgve",
+        "data.oepul.o6_1a.livestock.rgve_factor",
+        "data.oepul.o6_1a.livestock.total_rgve"
+      ]
+    },
+    {
+      "id": "UBB-TH-003",
+      "rule_type": "calculation",
+      "statement": "Die Futterfläche umfasst sämtliche beantragten Grünland- und Ackerfutterflächen (Futtergräser, Wechselwiese, Kleegras, Klee, Luzerne, sonstiges Feldfutter, Ackerweide), auch solche in Naturschutz oder Bergmähdern.",
+      "conditions": [
+        {
+          "expression": "grassland_area + arable forage area",
+          "description": "Futterfläche",
+          "input_paths": [
+            "land.parcels[].land_use",
+            "land.parcels[].crop.schlagnutzungsart"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "forage_area_ha",
+        "description": "ha",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P04-TH-03",
+        "REF-UBB-P04-TH-04",
+        "REF-ATB-P03-DEF-03"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_arable_forage",
+        "data.oepul.o6_1a.common.forage_area_ha",
+        "data.oepul.o6_1a.common.is_arable_forage",
+        "data.oepul.o6_1a.livestock.forage_area_ha"
+      ]
+    },
+    {
+      "id": "UBB-TH-004",
+      "rule_type": "information",
+      "statement": "Bei unterjährigem Betriebsstrukturwechsel werden Rinder ab dem Tag des Wechsels der neuen Struktur zugerechnet, was zum Verlust der Tierhaltereigenschaft führen kann.",
+      "conditions": [
+        {
+          "expression": "structure change during year",
+          "description": "Betriebsstrukturwechsel",
+          "input_paths": [
+            "livestock.species_groups[].average_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "recalculate",
+        "description": "Neuberechnung RGVE.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P10-TH-03"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "UBB-GLE-001",
+      "rule_type": "obligation",
+      "statement": "Das Grünlandausmaß ist im Vertragszeitraum zu erhalten: Referenz = Grünland im 1. Teilnahmejahr plus im Vorjahr umgebrochene Fläche; höchstens 1,00 ha darf in Acker, Dauer-/Spezialkulturen, Wein oder geschützten Anbau umgewandelt werden, unabhängig vom Grünlandanteil.",
+      "conditions": [
+        {
+          "expression": "(first_year_grassland_ha + ploughed_previous_year_ha) - (current_grassland_ha - inter_farm_swap_gain_ha) <= 1.0",
+          "description": "Nettoumwandlung",
+          "input_paths": [
+            "farm.oepul.ubb.grassland_conservation.first_year_grassland_ha",
+            "farm.oepul.ubb.grassland_conservation.ploughed_previous_year_ha",
+            "farm.oepul.ubb.grassland_conservation.current_grassland_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_exceeded",
+        "description": "Verstoß bei Überschreitung der Toleranz.",
+        "value": 1.0
+      },
+      "source_reference_ids": [
+        "REF-UBB-P04-GLE-01",
+        "REF-UBB-P04-GLE-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.general_obligations.grassland_net_conversion_ha",
+        "data.oepul.o6_1a.general_obligations.grassland_reference_ha",
+        "data.oepul.o6_1a.general_obligations.violations"
+      ]
+    },
+    {
+      "id": "UBB-GLE-002",
+      "rule_type": "calculation",
+      "statement": "Grünlandneuanlagen werden berücksichtigt und können verbrauchte Toleranz wieder auffüllen; Zug-um-Zug-Tausche innerbetrieblich im gleichen MFA werden berücksichtigt.",
+      "conditions": [
+        {
+          "expression": "current_grassland_ha includes new grassland",
+          "description": "Neuanlagen",
+          "input_paths": [
+            "farm.oepul.ubb.grassland_conservation.current_grassland_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "tolerance_refilled",
+        "description": "Toleranz wird aufgefüllt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P04-GLE-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.general_obligations.grassland_current_creditable_ha"
+      ]
+    },
+    {
+      "id": "UBB-GLE-003",
+      "rule_type": "exception",
+      "statement": "Ein überbetrieblicher Flächentausch ist für die Grünlanderhaltung nicht anrechenbar.",
+      "conditions": [
+        {
+          "expression": "inter_farm_swap_gain_ha subtracted",
+          "description": "Überbetrieblicher Tausch",
+          "input_paths": [
+            "farm.oepul.ubb.grassland_conservation.inter_farm_swap_gain_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_creditable",
+        "description": "Tauschfläche zählt nicht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P04-GLE-04",
+        "REF-SRL-P29-UBB-08"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.general_obligations.grassland_current_creditable_ha"
+      ]
+    },
+    {
+      "id": "UBB-GLE-004",
+      "rule_type": "procedure",
+      "statement": "Wurde Grünland bereits vor Vertragsbeginn (z. B. 2022) umgebrochen, ist dies per einzelbetrieblicher Meldung auf eAMA nachzuweisen; nach positiver AMA-Bestätigung wird der Umbruch dem Vorjahr zugeordnet und belastet die Toleranz nicht.",
+      "conditions": [
+        {
+          "expression": "ploughed before contract start and confirmed by AMA",
+          "description": "Umbruchsnachweis",
+          "input_paths": [
+            "farm.oepul.ubb.grassland_conservation.ploughed_previous_year_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_tolerance_use",
+        "description": "Toleranz nicht belastet.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P04-GLE-05"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.general_obligations.grassland_reference_ha"
+      ]
+    },
+    {
+      "id": "UBB-AD-001",
+      "rule_type": "obligation",
+      "statement": "Beträgt die Ackerfläche mehr als 5,00 ha, sind maximal 75 % Getreide und Mais zulässig.",
+      "conditions": [
+        {
+          "expression": "arable_area_ha > 5 and cereal_maize_area/arable_area > 0.75",
+          "description": "Getreide-/Maisanteil",
+          "input_paths": [
+            "land.parcels[].crop.botanical_species",
+            "land.parcels[].crop.cereal_share_percent",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß Anbaudiversifizierung.",
+        "value": 0.75
+      },
+      "source_reference_ids": [
+        "REF-UBB-P04-AD-01",
+        "REF-UBB-P05-AD-04",
+        "REF-ATB-P03-DEF-02"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_cereals",
+        "data.o6_1a.o6_1a_maize",
+        "data.o6_1a.o6_1a_not_cereals",
+        "data.oepul.o6_1a.general_obligations.cereal_maize_share",
+        "data.oepul.o6_1a.general_obligations.violations"
+      ]
+    },
+    {
+      "id": "UBB-AD-002",
+      "rule_type": "obligation",
+      "statement": "Bei mehr als 5,00 ha Ackerfläche darf keine Kultur mehr als 55 % der Ackerfläche einnehmen; ausgenommen Ackerfutter und ab Antragsjahr 2025 Grünbrache und Spargel.",
+      "conditions": [
+        {
+          "expression": "arable_area_ha > 5 and culture_area/arable_area > 0.55 and culture not exempt",
+          "description": "Kulturanteil",
+          "input_paths": [
+            "land.parcels[].crop.botanical_species",
+            "land.parcels[].crop.schlagnutzungsart",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß Anbaudiversifizierung.",
+        "value": 0.55
+      },
+      "source_reference_ids": [
+        "REF-UBB-P04-AD-02",
+        "REF-UBB-P05-AD-05",
+        "REF-SRL-P29-UBB-08"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_arable_forage",
+        "data.o6_1a.o6_1a_diversification_exempt_from_2025",
+        "data.oepul.o6_1a.general_obligations.culture_area",
+        "data.oepul.o6_1a.general_obligations.exempt_from_55",
+        "data.oepul.o6_1a.general_obligations.violations"
+      ]
+    },
+    {
+      "id": "UBB-AD-003",
+      "rule_type": "definition",
+      "statement": "Bezugsgröße ist die gesamte Ackerfläche inkl. Naturschutz-, EBW-, K20-Ackerflächen, Grünbrache und Sonstige Ackerflächen; GLÖZ-Landschaftselemente, Mehrnutzenhecken und ab 2025 Agroforststreifen zählen nicht dazu.",
+      "conditions": [
+        {
+          "expression": "land_use == arable and area_kind == agricultural",
+          "description": "Berechnungsbasis",
+          "input_paths": [
+            "land.parcels[].land_use",
+            "land.parcels[].area_kind"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "arable_area_ha",
+        "description": "ha",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P05-AD-03",
+        "REF-UBB-P06-DIVA-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.common.arable_area_ha",
+        "data.oepul.o6_1a.common.is_arable"
+      ]
+    },
+    {
+      "id": "UBB-AD-004",
+      "rule_type": "definition",
+      "statement": "Maßgeblich ist die beantragte Kultur laut MFA; bei Doppelnutzungen zählt die Erstkultur. Eine Kultur ist die botanische Art (Körner- und Silomais eine Kultur, Winter- und Sommerform eine Kultur).",
+      "conditions": [
+        {
+          "expression": "culture(p) = botanical_species (Erstkultur)",
+          "description": "Kulturzuordnung",
+          "input_paths": [
+            "land.parcels[].crop.botanical_species"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "culture_key",
+        "description": "Botanische Art",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P05-AD-06"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.general_obligations.culture"
+      ]
+    },
+    {
+      "id": "UBB-AD-005",
+      "rule_type": "definition",
+      "statement": "Mischkulturen werden der Kulturart des Hauptanteils zugerechnet; Gemenge mit weniger als 50 % Getreide zählen nicht zum Getreideanteil.",
+      "conditions": [
+        {
+          "expression": "cereal_share_percent >= 50",
+          "description": "Getreidegemenge",
+          "input_paths": [
+            "land.parcels[].crop.cereal_share_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "is_cereal",
+        "description": "true/false",
+        "value": 50
+      },
+      "source_reference_ids": [
+        "REF-UBB-P05-AD-07",
+        "REF-ATB-P03-DEF-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.general_obligations.is_cereal"
+      ]
+    },
+    {
+      "id": "UBB-WB-001",
+      "rule_type": "obligation",
+      "statement": "Bis spätestens 31.12.2025 sind unabhängig von der Vorqualifikation fachspezifische Kurse zu biodiversitätsrelevanten Themen im Mindestausmaß von 3 Stunden bei einem vom BMLUK anerkannten Bildungsanbieter zu absolvieren.",
+      "conditions": [
+        {
+          "expression": "sum(hours of creditable courses 2022-01-01..2025-12-31) >= 3",
+          "description": "Weiterbildungsstunden",
+          "input_paths": [
+            "farm.oepul.ubb.training.courses[].hours",
+            "farm.oepul.ubb.training.courses[].date",
+            "farm.oepul.ubb.training.courses[].provider_recognized"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing",
+        "description": "Verstoß ab Antragsjahr 2026 feststellbar.",
+        "value": 3
+      },
+      "source_reference_ids": [
+        "REF-UBB-P05-WB-01",
+        "REF-UBB-P05-WB-02",
+        "REF-SRL-P31-UBB-18",
+        "REF-ATB-P17-SANK-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.general_obligations.training_fulfilled",
+        "data.oepul.o6_1a.general_obligations.training_hours",
+        "data.oepul.o6_1a.general_obligations.violations"
+      ]
+    },
+    {
+      "id": "UBB-WB-002",
+      "rule_type": "exception",
+      "statement": "Aufgrund betrieblicher Erfordernisse können die Kurse auch von einer am Betrieb maßgeblich tätigen und in die Bewirtschaftung eingebundenen Person besucht werden.",
+      "conditions": [
+        {
+          "expression": "attendee in {applicant, involved_person}",
+          "description": "Kursteilnehmer",
+          "input_paths": [
+            "farm.oepul.ubb.training.courses[].attendee"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "creditable",
+        "description": "Kurs anrechenbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P05-WB-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.general_obligations.creditable_course"
+      ]
+    },
+    {
+      "id": "UBB-WB-003",
+      "rule_type": "eligibility",
+      "statement": "Anrechenbar sind Kursbesuche ab 1.1.2022; ein Kursbesuch einer Person kann grundsätzlich nicht auf mehrere Betriebe angerechnet werden.",
+      "conditions": [
+        {
+          "expression": "course.date >= 2022-01-01 and not credited_to_other_farm",
+          "description": "Anrechenbarkeit",
+          "input_paths": [
+            "farm.oepul.ubb.training.courses[].date",
+            "farm.oepul.ubb.training.courses[].credited_to_other_farm"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "creditable",
+        "description": "Kurs anrechenbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P05-WB-04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.general_obligations.creditable_course"
+      ]
+    },
+    {
+      "id": "UBB-WB-004",
+      "rule_type": "obligation",
+      "statement": "Die Kursabsolvierung ist an die geschulte Person gebunden: verlässt sie den Betrieb vor dem 31.12.2025, sind die Kurse bis dahin nachzuholen; danach ist kein weiterer Kurs nötig.",
+      "conditions": [
+        {
+          "expression": "not attendee_left_before_deadline",
+          "description": "Personenbindung",
+          "input_paths": [
+            "farm.oepul.ubb.training.courses[].attendee_left_before_deadline"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_creditable_if_left",
+        "description": "Kurs nicht mehr anrechenbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P05-WB-05"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.general_obligations.creditable_course"
+      ]
+    },
+    {
+      "id": "UBB-WB-005",
+      "rule_type": "documentation",
+      "statement": "Schriftliche Kursbesuchsbestätigungen sind nach Aufforderung an die AMA zu übermitteln, sofern nicht der Bildungsanbieter übermittelt; gemeldete Stunden sind auf eAMA einsehbar.",
+      "conditions": [
+        {
+          "expression": "on AMA request",
+          "description": "Nachweis",
+          "input_paths": [
+            "farm.oepul.ubb.training.courses[].provider_recognized"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "submit_confirmation",
+        "description": "Übermittlung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P05-WB-06"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "UBB-WB-006",
+      "rule_type": "prohibition",
+      "statement": "Doppelanrechnungen derselben Bildungsveranstaltung auf mehrere Verpflichtungen sind nicht zulässig.",
+      "conditions": [
+        {
+          "expression": "not credited_to_other_obligation",
+          "description": "Doppelanrechnung",
+          "input_paths": [
+            "farm.oepul.ubb.training.courses[].credited_to_other_obligation"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_creditable",
+        "description": "Keine Doppelanrechnung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P06-WB-07"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.general_obligations.creditable_course"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-MIN-001",
+      "rule_type": "obligation",
+      "statement": "Ab einer Ackerfläche von mehr als 2,00 ha sind auf mindestens 7 % der Ackerflächen Biodiversitätsflächen oder anrechenbare Flächen anzulegen; GLÖZ-Landschaftselemente und Mehrnutzenhecken zählen nicht zur Berechnungsbasis. Die 7 % gelten auch bei Inanspruchnahme der AZR-Ausnahme.",
+      "conditions": [
+        {
+          "expression": "arable_area_ha > 2 and arable_div_area_ha < 0.07*arable_area_ha",
+          "description": "Mindestanlage Acker",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].area_ha",
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß Mindestanlage 7 %.",
+        "value": 0.07
+      },
+      "source_reference_ids": [
+        "REF-UBB-P06-DIVA-01",
+        "REF-UBB-P07-AZR-03",
+        "REF-N0522-01",
+        "REF-ATB-P17-SANK-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.minimum_met",
+        "data.oepul.o6_1a.biodiversity_arable.obligation_applies",
+        "data.oepul.o6_1a.biodiversity_arable.required_arable_div_ha",
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-MIN-002",
+      "rule_type": "exception",
+      "statement": "Bei Betrieben unter (laut SRL: bis) 10 ha Ackerfläche kann die 7 %-Verpflichtung auch über zusätzliche Grünland-Biodiversitätsflächen erfüllt werden: insgesamt mind. 7 % von (Acker + gemähtes Grünland), dabei auf Grünland mind. 7 % der gemähten Grünlandfläche.",
+      "conditions": [
+        {
+          "expression": "arable_area_ha <= 10 and arable_div + grassland_div >= 0.07*(arable + mown_grassland) and grassland_div >= grassland_requirement",
+          "description": "Ersatz durch Grünland-DIV",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "minimum_met",
+        "description": "Mindestanlage erfüllt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P06-DIVA-03",
+        "REF-UBB-P06-DIVA-04",
+        "REF-SRL-P29-UBB-09"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.minimum_met",
+        "data.oepul.o6_1a.biodiversity_grassland.required_grassland_div_ha_or_zero"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-MIN-003",
+      "rule_type": "option",
+      "statement": "Betriebe mit weniger als 2,00 ha Acker können freiwillig Acker-Biodiversitätsflächen anlegen und erhalten dafür Basismodulprämie und Zuschläge.",
+      "conditions": [
+        {
+          "expression": "arable_area_ha <= 2",
+          "description": "Freiwillige Anlage",
+          "input_paths": [
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "voluntary_premium",
+        "description": "Prämie auch ohne Verpflichtung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P06-DIVA-05"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.arable_supplements.ubb_div_area_ha"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-FS-001",
+      "rule_type": "obligation",
+      "statement": "Ab 10,00 ha Ackerfläche sind auf Acker-Feldstücken mit mehr als 5,00 ha am Feldstück insgesamt mindestens 0,15 ha Biodiversitätsflächen oder anrechenbare Flächen anzulegen (auf einem oder mehreren Schlägen).",
+      "conditions": [
+        {
+          "expression": "arable_area_ha >= 10 and fp_arable_area > 5 and fp_div_credit < 0.15",
+          "description": "Feldstücksverpflichtung",
+          "input_paths": [
+            "land.parcels[].field_piece_id",
+            "land.parcels[].codes[]",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß Feldstücksverpflichtung.",
+        "value": 0.15
+      },
+      "source_reference_ids": [
+        "REF-UBB-P06-DIVA-06",
+        "REF-UBB-P06-DIVA-07",
+        "REF-UBB-P07-DIVA-09",
+        "REF-SRL-P29-UBB-10"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.field_piece_obligation_applies",
+        "data.oepul.o6_1a.biodiversity_arable.fp_div_credit",
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-FS-002",
+      "rule_type": "calculation",
+      "statement": "Für die 0,15 ha am Feldstück werden auch zugeordnete GLÖZ-Landschaftselemente und ab 2025 zugeordnete Agroforststreifen (Maßnahme 1C) angerechnet, nicht jedoch für die 7 %-Grenze.",
+      "conditions": [
+        {
+          "expression": "area_kind in {gloez_landscape_element, agroforststreifen (>=2025)}",
+          "description": "Anrechnung am Feldstück",
+          "input_paths": [
+            "land.parcels[].area_kind",
+            "land.parcels[].field_piece_id",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "fp_credit_only",
+        "description": "Nur Feldstücksanrechnung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P07-DIVA-08"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.fp_credit_kind"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-FS-003",
+      "rule_type": "exception",
+      "statement": "2023: Feldstücke über 5 ha, auf denen 2022 Zuckerrüben mit Neonicotinoid-Beizung gesät wurden, sind von der 0,15 ha-Verpflichtung ausgenommen, wenn nicht mind. 0,15 ha andere Kulturen angebaut wurden; alle Schläge der Folgefrucht sind mit AZR zu kennzeichnen. Ab 2024 gilt die Ausnahme nicht mehr.",
+      "conditions": [
+        {
+          "expression": "year == 2023 and all parcels of field piece coded AZR",
+          "description": "AZR-Ausnahme",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].field_piece_id",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exempt",
+        "description": "Feldstück ausgenommen; AZR ab 2024 unzulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P07-AZR-01",
+        "REF-UBB-P07-AZR-02",
+        "REF-UBB-P08-AZR-04",
+        "REF-UBB-P30-ANT-09"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_azr_permitted_follow_crops_2023",
+        "data.oepul.o6_1a.biodiversity_arable.azr_exempt",
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-ANR-001",
+      "rule_type": "definition",
+      "statement": "Als Acker-Biodiversitätsflächen anrechenbar (mit DIV codiert) sind Ackerstilllegungen (Grünbrache) in Naturschutz (NAT, nur mit Auflage SA01, nicht genutzte Naturschutzflächen) und Ergebnisorientierter Bewirtschaftung (EBW); diese sind immer nach Projektbestätigung zu bewirtschaften.",
+      "conditions": [
+        {
+          "expression": "NAT: SA01 in project_conditions and not used; NAT/EBW: Schlagnutzungsart Grünbrache",
+          "description": "NAT/EBW-Anrechnung",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].project_conditions[]",
+            "land.parcels[].crop.schlagnutzungsart"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "creditable",
+        "description": "Fläche zählt für 7 %.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P08-ANR-01",
+        "REF-UBB-P08-ANR-03",
+        "REF-N0812-03"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_naturschutz_arable_set_aside_conditions",
+        "data.oepul.o6_1a.biodiversity_arable.creditable_arable_div",
+        "data.oepul.o6_1a.biodiversity_arable.creditable_blocked"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-ANR-002",
+      "rule_type": "exclusion",
+      "statement": "K20-Ackerflächen sind als Biodiversitätsflächen nicht anrechenbar.",
+      "conditions": [
+        {
+          "expression": "'K20' in codes",
+          "description": "K20",
+          "input_paths": [
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_creditable",
+        "description": "Keine Anrechnung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P08-ANR-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.creditable_blocked"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-ANR-003",
+      "rule_type": "definition",
+      "statement": "Mehrnutzenhecken sind als Acker-DIV anrechenbar, wenn für den krautigen Bereich die Pflege-/Nutzungsauflagen gemäß 6.1.4.2 erfüllt werden; bloßes Ausmähen von Gehölzen zählt nicht als Pflege der krautigen Zone.",
+      "conditions": [
+        {
+          "expression": "area_kind == mehrnutzenhecke and 'DIV' in codes and hedge.herbaceous_div_care_compliant",
+          "description": "Mehrnutzenhecke als DIV",
+          "input_paths": [
+            "land.parcels[].area_kind",
+            "land.parcels[].hedge.herbaceous_div_care_compliant"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "creditable",
+        "description": "Anrechenbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P08-ANR-04",
+        "REF-UBB-P08-ANR-05",
+        "REF-UBB-P30-ANT-10"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.creditable_arable_div"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-ANR-004",
+      "rule_type": "definition",
+      "statement": "Begrünte Abflusswege (BAW) und Auswaschungsgefährdete Ackerflächen (AG) sind anrechenbar, wenn die Pflege-/Nutzungsauflagen gemäß 6.1.4.2 eingehalten werden.",
+      "conditions": [
+        {
+          "expression": "code in {BAW, AG} and div_care_compliant",
+          "description": "BAW/AG",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].biodiversity.div_care_compliant"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "creditable",
+        "description": "Anrechenbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P08-ANR-06"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.creditable_blocked"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-ANR-005",
+      "rule_type": "definition",
+      "statement": "GLÖZ 8-Stilllegungen (nur bis Antragsjahr 2024) und GLÖZ 4-Gewässerrandstreifen sind anrechenbar, wenn alle Bewirtschaftungsauflagen für Acker-DIV eingehalten werden.",
+      "conditions": [
+        {
+          "expression": "GLOEZ8 and year <= 2024, or GLOEZ4; div_conditions_compliant",
+          "description": "GLÖZ-Flächen",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].biodiversity.div_conditions_compliant",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "creditable",
+        "description": "Anrechenbar für 7 %.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P08-ANR-07"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.creditable_blocked"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-ANS-001",
+      "rule_type": "obligation",
+      "statement": "Acker-DIV sind mit einer geeigneten Saatgutmischung mit mindestens 7 insektenblütigen Mischungspartnern aus mindestens 3 Pflanzenfamilien und höchstens 10 % nicht insektenblütigen Partnern neu anzusäen (winterharte oder abfrostende Arten zulässig; Gräser nicht insektenblütig).",
+      "conditions": [
+        {
+          "expression": "insect_pollinated_partners >= 7 and plant_families >= 3 and non_insect_share <= 10",
+          "description": "Bienenmischung",
+          "input_paths": [
+            "land.parcels[].biodiversity.seed_mixture.insect_pollinated_partners",
+            "land.parcels[].biodiversity.seed_mixture.plant_families",
+            "land.parcels[].biodiversity.seed_mixture.non_insect_pollinated_share_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß Ansaat.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P08-ANS-01",
+        "REF-UBB-P09-ANS-02"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_insect_pollinated_examples",
+        "data.oepul.o6_1a.biodiversity_arable.seed_mix_ok",
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-ANS-002",
+      "rule_type": "deadline",
+      "statement": "Die Neuansaat mit der Bienenmischung hat bis spätestens 15. Mai des Kalenderjahres zu erfolgen.",
+      "conditions": [
+        {
+          "expression": "sowing_date <= year-05-15",
+          "description": "Ansaattermin",
+          "input_paths": [
+            "land.parcels[].biodiversity.sowing_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß Ansaattermin.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P09-ANS-05"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.sown_in_time",
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-ANS-003",
+      "rule_type": "deadline",
+      "statement": "Ein Umbruch ist frühestens am 15. September des 2. Jahres erlaubt, bei Anbau einer Winterung oder Zwischenfrucht bereits nach dem 31. Juli des 2. Jahres; bei Übernahme ab dem 2. Jahr zählt das Anlagejahr des Vorbewirtschafters. Ausnahmen von der Zweijährigkeit nur bei Verlust der Verfügungsgewalt oder Umwandlung in Grünland.",
+      "conditions": [
+        {
+          "expression": "breakup_date >= earliest_breakup(p) or breakup_reason in {loss_of_control, conversion_to_grassland}",
+          "description": "Zweijährigkeit",
+          "input_paths": [
+            "land.parcels[].biodiversity.breakup_date",
+            "land.parcels[].biodiversity.followed_by_winter_crop_or_catch_crop",
+            "land.parcels[].biodiversity.establishment_year",
+            "land.parcels[].biodiversity.breakup_reason"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verfrühter Umbruch.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P09-ANS-06",
+        "REF-UBB-P09-ANS-07",
+        "REF-UBB-P09-ANS-09",
+        "REF-UBB-P10-ANS-10"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.breakup_exception",
+        "data.oepul.o6_1a.biodiversity_arable.earliest_breakup",
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-ANS-004",
+      "rule_type": "prohibition",
+      "statement": "Nach dem Umbruch beantragter Grünbrache-Biodiversitätsflächen gilt bis 31. Dezember ein Nutzungsverbot.",
+      "conditions": [
+        {
+          "expression": "schlagnutzungsart == Grünbrache and breakup_date != null and used_after_breakup_same_year",
+          "description": "Nutzungsverbot",
+          "input_paths": [
+            "land.parcels[].biodiversity.breakup_date",
+            "land.parcels[].biodiversity.used_after_breakup_same_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß Nutzungsverbot.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P09-ANS-08"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-ANS-005",
+      "rule_type": "procedure",
+      "statement": "Werden DIV durch unabwendbare Elementarereignisse oder Wildschweine zerstört, ist ein begründetes Ansuchen auf Anerkennung höherer Gewalt mit Nachweis an die AMA zu richten; nach Anerkennung darf mit der Bienenmischung saniert werden.",
+      "conditions": [
+        {
+          "expression": "resown_after_destruction implies force_majeure_recognized",
+          "description": "Sanierung nach Zerstörung",
+          "input_paths": [
+            "land.parcels[].biodiversity.resown_after_destruction",
+            "land.parcels[].biodiversity.force_majeure_recognized"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_unrecognized",
+        "description": "Verstoß ohne Anerkennung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P10-ANS-12"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-ANS-006",
+      "rule_type": "exception",
+      "statement": "Eine Sanierung (Neuanlage) stark verunkrauteter DIV ist Zug um Zug ohne Meldepflicht zulässig; ordnungsgemäße Anlage und Verunkrautung sind mit Nachweisen (z. B. Fotos) glaubhaft zu machen.",
+      "conditions": [
+        {
+          "expression": "resown_due_to_weeds implies weed_evidence_kept",
+          "description": "Sanierung",
+          "input_paths": [
+            "land.parcels[].biodiversity.resown_due_to_weeds",
+            "land.parcels[].biodiversity.weed_evidence_kept"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "allowed_with_evidence",
+        "description": "Zulässig mit Nachweis.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P10-ANS-11"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-ANS-007",
+      "rule_type": "obligation",
+      "statement": "Biodiversitätsflächen müssen mindestens zwei Jahre an derselben Stelle verbleiben und in zwei aufeinanderfolgenden MFA lagegenau beantragt werden (auch nicht neu eingesäte anrechenbare Flächen); die Ansaat muss per Saatgutnachweis nachvollziehbar sein (zertifizierte Bienenmischung empfohlen).",
+      "conditions": [
+        {
+          "expression": "consecutive_years_same_location >= 2",
+          "description": "Lagegenauigkeit",
+          "input_paths": [
+            "land.parcels[].biodiversity.consecutive_years_same_location"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß Zweijährigkeit.",
+        "value": 2
+      },
+      "source_reference_ids": [
+        "REF-UBB-P10-ANS-13",
+        "REF-UBB-P10-ANS-14"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-ANS-008",
+      "rule_type": "exception",
+      "statement": "Von der Neuansaat ausgenommen sind seit MFA 2020 durchgehend bestehende Grünbrachen bzw. im ÖPUL 2015 dauerhaft begrünte Ackerflächen (Codes DIV, AG, OG, ZOG, WF, ENP, K20, Acker-Bodengesundung) sowie ÖPUL 2015-DIV-Neuansaaten 2021/2022, jeweils ohne Umbruch; nicht Wein/Obst/Hopfen-Bodengesundung.",
+      "conditions": [
+        {
+          "expression": "sowing_exemption in {existing_fallow_since_2020, oepul2015_div_sown_2021_2022} and evidence and not ploughed",
+          "description": "Ansaatausnahme",
+          "input_paths": [
+            "land.parcels[].biodiversity.sowing_exemption",
+            "land.parcels[].biodiversity.exemption_evidence_ok",
+            "land.parcels[].biodiversity.ploughed_since"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exempt_from_sowing",
+        "description": "Keine Neuansaat nötig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P09-ANS-03",
+        "REF-UBB-P09-ANS-04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.exemption_valid"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-PFL-001",
+      "rule_type": "obligation",
+      "statement": "Bis 2024 ist die Acker-DIV mindestens 1 x jedes zweite Jahr zu mähen oder häckseln; ab 2025 mindestens 1 x jedes zweite Jahr zu mähen, häckseln oder beweiden.",
+      "conditions": [
+        {
+          "expression": "use_count(year)==0 and used_previous_year==false implies violation",
+          "description": "Mindestnutzung",
+          "input_paths": [
+            "land.parcels[].operations.use_events[].type",
+            "land.parcels[].biodiversity.used_previous_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß Mindestpflege.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P10-PFL-01",
+        "REF-UBB-P11-PFL-04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.use_count",
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-PFL-002",
+      "rule_type": "obligation",
+      "statement": "Mähen/Häckseln (ab 2025 auch Weide) ist maximal 2 x pro Jahr erlaubt; Häckseln/Pflegemahd ohne Verbringung unmittelbar nach dem Weidegang (ab 2025) und ein nicht verbrachter Reinigungsschnitt zählen nicht zur Maximalanzahl.",
+      "conditions": [
+        {
+          "expression": "use_count(p) <= max_uses(p)",
+          "description": "Maximalnutzung",
+          "input_paths": [
+            "land.parcels[].operations.use_events[].type",
+            "land.parcels[].operations.use_events[].material_removed",
+            "land.parcels[].operations.use_events[].post_grazing_care"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß Nutzungshäufigkeit.",
+        "value": 2
+      },
+      "source_reference_ids": [
+        "REF-UBB-P10-PFL-01",
+        "REF-UBB-P11-PFL-04",
+        "REF-UBB-P11-PFL-05",
+        "REF-N0522-08"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.counts_as_use",
+        "data.oepul.o6_1a.biodiversity_arable.max_uses",
+        "data.oepul.o6_1a.biodiversity_arable.use_count",
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-PFL-003",
+      "rule_type": "prohibition",
+      "statement": "Drusch ist auf Acker-Biodiversitätsflächen nicht erlaubt; das Mähgut darf verbracht und genutzt werden.",
+      "conditions": [
+        {
+          "expression": "no use event of type thresh",
+          "description": "Druschverbot",
+          "input_paths": [
+            "land.parcels[].operations.use_events[].type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P11-PFL-02",
+        "REF-SRL-P30-UBB-11"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-PFL-004",
+      "rule_type": "prohibition",
+      "statement": "Bis einschließlich Antragsjahr 2024 ist die Beweidung von Acker-Biodiversitätsflächen nicht erlaubt.",
+      "conditions": [
+        {
+          "expression": "year <= 2024 and graze event",
+          "description": "Beweidungsverbot",
+          "input_paths": [
+            "land.parcels[].operations.use_events[].type",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P11-PFL-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-PFL-005",
+      "rule_type": "prohibition",
+      "statement": "Ab 2025 ist eine Beweidung von Acker-Biodiversitätsflächen generell erst ab 1. August zulässig; bei ausschließlicher Beweidung max. 2 Weidegänge (Schlagnutzungsart Ackerweide).",
+      "conditions": [
+        {
+          "expression": "year >= 2025 and graze event before 08-01",
+          "description": "Weidebeginn",
+          "input_paths": [
+            "land.parcels[].operations.use_events[].type",
+            "land.parcels[].operations.use_events[].date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P11-PFL-06",
+        "REF-SRL-P30-UBB-11"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-PFL-006",
+      "rule_type": "obligation",
+      "statement": "Wurde vor dem 1. August gemäht/gehäckselt (max. 25 % der DIV), darf ab 1. August nur maximal 1 x beweidet werden (Schlagnutzungsart Sonstiges Feldfutter).",
+      "conditions": [
+        {
+          "expression": "mowed_before_august and grazings_after_august > 1",
+          "description": "Weide nach früher Mahd",
+          "input_paths": [
+            "land.parcels[].operations.use_events[].type",
+            "land.parcels[].operations.use_events[].date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": 1
+      },
+      "source_reference_ids": [
+        "REF-UBB-P11-PFL-07"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.grazings_after_august",
+        "data.oepul.o6_1a.biodiversity_arable.mowed_before_august",
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-PFL-007",
+      "rule_type": "obligation",
+      "statement": "Auf 75 % der Acker-Biodiversitätsflächen ist Mähen/Häckseln (ab 2025 auch Weide) je Kalenderjahr frühestens am 1. August erlaubt; für die Berechnung zählen alle DIV-Flächen inkl. BAW, AG, NAT, EBW und DIV-Ackerweiden; Projektbestätigungen haben Vorrang und verbrauchen das 25 %-Kontingent.",
+      "conditions": [
+        {
+          "expression": "ubb_early_area_ha <= max(0, 0.25*all_div_area_ha - project_early_area_ha)",
+          "description": "25 %-Kontingent",
+          "input_paths": [
+            "land.parcels[].operations.use_events[].date",
+            "land.parcels[].operations.use_events[].type",
+            "land.parcels[].codes[]",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß 75 %-Regel.",
+        "value": 0.25
+      },
+      "source_reference_ids": [
+        "REF-UBB-P11-PFL-02",
+        "REF-UBB-P11-PFL-03",
+        "REF-UBB-P11-PFL-08",
+        "REF-ATB-P09-OP-05"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.all_div_area_ha",
+        "data.oepul.o6_1a.biodiversity_arable.early_quota_ha",
+        "data.oepul.o6_1a.biodiversity_arable.ubb_early_area_ha",
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-PFL-008",
+      "rule_type": "exception",
+      "statement": "Ab 2025 ist ein Reinigungsschnitt zur Beikrautbekämpfung im Jahr der ersten Beantragung auch vor dem 1. August zulässig, nur auf Flächen mit Neuansaat (Herbst- oder Frühjahrsansaat); auf bestehenden DIV-Flächen nicht; ohne Verbringung zählt er nicht als Nutzung und nicht zur 25 %-Grenze.",
+      "conditions": [
+        {
+          "expression": "cleaning_cut before 08-01 only if first_year_new_sowing",
+          "description": "Reinigungsschnitt",
+          "input_paths": [
+            "land.parcels[].operations.use_events[].type",
+            "land.parcels[].operations.use_events[].material_removed",
+            "land.parcels[].biodiversity.first_declared_year",
+            "land.parcels[].biodiversity.sowing_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "allowed_or_violation",
+        "description": "Zulässig nur im ersten Jahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P12-PFL-11",
+        "REF-UBB-P12-PFL-12",
+        "REF-SRL-P30-UBB-11"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.first_year_new_sowing",
+        "data.oepul.o6_1a.biodiversity_arable.free_cleaning_cut",
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-PFL-009",
+      "rule_type": "exception",
+      "statement": "Treten Stechapfel, Kleeseide, Gefleckter Schierling oder Ragweed auf mehr als 25 % der Acker-DIV auf, ist Mahd/Häckseln der betroffenen Fläche vor dem 1. August und innerhalb der zweijährigen Mindestanlagedauer auch öfter als 2 x zulässig; Nachweise sind aufzubewahren.",
+      "conditions": [
+        {
+          "expression": "invasive_share > 25 and invasive_species_present and within two-year period",
+          "description": "Problempflanzen",
+          "input_paths": [
+            "farm.oepul.ubb.arable_div_invasive_share_percent",
+            "land.parcels[].biodiversity.invasive_species_present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exception",
+        "description": "Frühe/häufigere Mahd zulässig.",
+        "value": 25
+      },
+      "source_reference_ids": [
+        "REF-UBB-P12-PFL-09",
+        "REF-UBB-P12-PFL-10"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_invasive_species_early_cut",
+        "data.oepul.o6_1a.biodiversity_arable.invasive_exception"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-BM-001",
+      "rule_type": "prohibition",
+      "statement": "Jegliche Düngung ist vom 1. Jänner des Jahres der ersten Angabe als Biodiversitätsfläche bis zum Umbruch oder einer anderen Deklaration verboten.",
+      "conditions": [
+        {
+          "expression": "no fertilization_event >= first_declared_year-01-01",
+          "description": "Düngeverbot",
+          "input_paths": [
+            "land.parcels[].operations.fertilization_events[].date",
+            "land.parcels[].biodiversity.first_declared_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P12-BM-01",
+        "REF-SRL-P30-UBB-12"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-BM-002",
+      "rule_type": "prohibition",
+      "statement": "Pflanzenschutzmittel sind auf Acker-DIV verboten; zulässig nur Mittel ausschließlich mit Wirkstoffen gemäß VO (EU) 2018/848.",
+      "conditions": [
+        {
+          "expression": "psm_applications[].organic_approved_only == true",
+          "description": "PSM",
+          "input_paths": [
+            "land.parcels[].operations.psm_applications[].organic_approved_only"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P12-BM-01",
+        "REF-UBB-P12-BM-02",
+        "REF-SRL-P30-UBB-12"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-BM-003",
+      "rule_type": "obligation",
+      "statement": "Die Beseitigung von Biodiversitätsflächen darf nur mechanisch (Häckseln oder Einarbeiten mit Pflug, Grubber, Kreiselegge, Scheibenegge, Messerwalze) erfolgen.",
+      "conditions": [
+        {
+          "expression": "removal_method == mechanical",
+          "description": "Beseitigung",
+          "input_paths": [
+            "land.parcels[].biodiversity.removal_method"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P12-BM-03"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_mechanical_removal_tools",
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVA-BEF-001",
+      "rule_type": "prohibition",
+      "statement": "Aufstellen von Beregnungsanlagen, Befahren (außer Überqueren zu Nachbarkulturen), Nutzung als Maschinenabstell-, Anhänger- oder Lagerplatz sowie als Wendefläche sind auf Acker-DIV nicht erlaubt.",
+      "conditions": [
+        {
+          "expression": "driving_events[].purpose == crossing",
+          "description": "Befahren",
+          "input_paths": [
+            "land.parcels[].operations.driving_events[].purpose"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P12-BEF-01",
+        "REF-UBB-P12-BEF-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVRSA-001",
+      "rule_type": "eligibility",
+      "statement": "Zuschlag Neuansaat mit regionaler Acker-Saatgutmischung (DIVRS): mind. 30 Arten aus 7 Familien laut Artenliste Kapitel 14, Saatstärke mind. 20 kg/ha, je Art max. 5 Gewichtsprozent, regionale Herkunft (REWISA, G-Zert o. ä., biogeografische Region in Österreich) für alle Partner, dokumentiert durch Etiketten und Rechnungen; zertifiziertes Ökotypensaatgut darf zusätzlich Arten außerhalb der Liste enthalten und von 5 % abweichen.",
+      "conditions": [
+        {
+          "expression": "regional_list_species>=30 and families>=7 and seed_rate>=20 and (max_single<=5 or ecotype) and certified and documented",
+          "description": "Regionale Mischung",
+          "input_paths": [
+            "land.parcels[].biodiversity.seed_mixture.regional_list_species",
+            "land.parcels[].biodiversity.seed_mixture.regional_list_families",
+            "land.parcels[].biodiversity.seed_mixture.seed_rate_kg_per_ha",
+            "land.parcels[].biodiversity.seed_mixture.max_single_species_weight_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "supplement_eligible",
+        "description": "DIVRS-Zuschlag möglich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P13-RSA-02",
+        "REF-UBB-P13-RSA-03",
+        "REF-UBB-P13-RSA-04",
+        "REF-UBB-P13-RSA-05",
+        "REF-UBB-P13-RSA-06",
+        "REF-UBB-P38-ART-01",
+        "REF-UBB-P38-ART-02",
+        "REF-ANH-P05-C-01"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_regional_seed_requirements",
+        "data.o6_1a.o6_1a_regional_seed_species_arable",
+        "data.oepul.o6_1a.biodiversity_arable.regional_mix_ok",
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVRSA-002",
+      "rule_type": "deadline",
+      "statement": "Die Beantragung mit DIVRS ist jährlich bis längstens 2028 ohne neuerliche Ansaat möglich; abgesehen von der Zweijährigkeit gibt es keine mehrjährige Verpflichtung.",
+      "conditions": [
+        {
+          "expression": "year <= 2028",
+          "description": "Laufzeit",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_after_2028",
+        "description": "Kein DIVRS nach 2028.",
+        "value": 2028
+      },
+      "source_reference_ids": [
+        "REF-UBB-P13-RSA-07",
+        "REF-SRL-P33-UBB-22"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVRSA-003",
+      "rule_type": "obligation",
+      "statement": "Wird die DIVRS-Beantragung unterbrochen, ist für einen erneuten Zuschlag wieder eine Neuansaat in der beschriebenen Form nötig.",
+      "conditions": [
+        {
+          "expression": "divrs_continuous_since_sowing",
+          "description": "Kontinuität",
+          "input_paths": [
+            "land.parcels[].biodiversity.divrs_continuous_since_sowing"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Keine Förderung ohne Neuansaat.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P13-RSA-08"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVRSA-004",
+      "rule_type": "obligation",
+      "statement": "DIVRS-Pflege bis 2024: Mahd 1–2 x jährlich mit Verbringung, kein Häckseln. Ab 2025 Variante 'Sonstiges Feldfutter': Mahd 1–2 x jährlich mit Verbringung, kein Häckseln, keine Weide, Pflegeschnitt ohne Verbringung im ersten Jahr zählt nicht; Variante 'Grünbrache': Häckseln mind. 1 x in 2 Jahren, max. 1 x jährlich, frühestens ab 1. Oktober, Reinigungsschnitt im ersten Jahr vor 1.10. zulässig, zählt aber als Häckseln. Reinigungsschnitt nur auf Neuansaaten.",
+      "conditions": [
+        {
+          "expression": "not divrs_care_violation(p)",
+          "description": "DIVRS-Pflege",
+          "input_paths": [
+            "land.parcels[].operations.use_events[].type",
+            "land.parcels[].operations.use_events[].date",
+            "land.parcels[].operations.use_events[].material_removed",
+            "land.parcels[].crop.schlagnutzungsart"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Kein DIVRS-Zuschlag, Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P13-RSA-09",
+        "REF-UBB-P13-RSA-10",
+        "REF-UBB-P14-RSA-11",
+        "REF-UBB-P14-RSA-12",
+        "REF-UBB-P14-RSA-13",
+        "REF-SRL-P30-UBB-13"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.divrs_care_violation",
+        "data.oepul.o6_1a.biodiversity_arable.divrs_variant",
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVRSA-005",
+      "rule_type": "cap",
+      "statement": "Der DIVRS-Acker-Zuschlag wird bis maximal 20 % der Ackerfläche gewährt; Umbruch- und Nutzungsverbotsregeln wie bei Acker-DIV gelten.",
+      "conditions": [
+        {
+          "expression": "min(divrs area, 0.20*arable_area_ha)",
+          "description": "Deckelung",
+          "input_paths": [
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "capped_area",
+        "description": "ha",
+        "value": 0.2
+      },
+      "source_reference_ids": [
+        "REF-UBB-P13-RSA-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.arable_supplements.divrs_feldfutter_ha",
+        "data.oepul.o6_1a.arable_supplements.divrs_gruenbrache_ha"
+      ]
+    },
+    {
+      "id": "UBB-ANT-010",
+      "rule_type": "application",
+      "statement": "Acker-Biodiversitätsflächen sind bis 2024 als 'Grünbrache' oder 'Sonstiges Feldfutter', ab 2025 auch als 'Ackerweide' mit Code DIV zu beantragen; DIVRS-Flächen bis 2024 als 'Sonstiges Feldfutter', ab 2025 auch als 'Grünbrache'.",
+      "conditions": [
+        {
+          "expression": "schlagnutzungsart in allowed_div_sna(code)",
+          "description": "Zulässige Schlagnutzungsart",
+          "input_paths": [
+            "land.parcels[].crop.schlagnutzungsart",
+            "land.parcels[].codes[]",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Falsche Kennzeichnung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P29-ANT-05",
+        "REF-UBB-P29-ANT-06"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_arable_div_schlagnutzungsarten",
+        "data.oepul.o6_1a.biodiversity_arable.allowed_div_sna",
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-ANT-011",
+      "rule_type": "application",
+      "statement": "Aus Naturschutz oder EBW angerechnete Acker-DIV sind als 'Grünbrache' mit Maßnahmencode (NAT, EBW) und zusätzlich Code DIV zu beantragen.",
+      "conditions": [
+        {
+          "expression": "codes contain DIV and NAT/EBW implies schlagnutzungsart == Grünbrache",
+          "description": "NAT/EBW-Kennzeichnung",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].crop.schlagnutzungsart"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Falsche Kennzeichnung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P30-ANT-07"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-ANT-012",
+      "rule_type": "application",
+      "statement": "Aus BAW oder AG angerechnete DIV sind als 'Grünbrache' oder 'Sonstiges Feldfutter' mit Maßnahmencode und zusätzlich Code DIV zu beantragen.",
+      "conditions": [
+        {
+          "expression": "codes contain DIV and BAW/AG implies schlagnutzungsart in {Grünbrache, Sonstiges Feldfutter}",
+          "description": "BAW/AG-Kennzeichnung",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].crop.schlagnutzungsart"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Falsche Kennzeichnung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P30-ANT-08"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVG-MIN-001",
+      "rule_type": "obligation",
+      "statement": "Ab einer gemähten Grünlandfläche (ohne Bergmähder) von mehr als 2,00 ha sind auf mindestens 7 % der gemähten Grünlandfläche Biodiversitätsflächen oder anrechenbare Flächen anzulegen.",
+      "conditions": [
+        {
+          "expression": "mown_grassland_area_ha > 2 and grassland_div_area_ha < 0.07*mown_grassland_area_ha",
+          "description": "Mindestanlage Grünland",
+          "input_paths": [
+            "land.parcels[].crop.schlagnutzungsart",
+            "land.parcels[].codes[]",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß Mindestanlage.",
+        "value": 0.07
+      },
+      "source_reference_ids": [
+        "REF-UBB-P14-DIVG-01",
+        "REF-N0522-01"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_mown_grassland_schlagnutzungsarten",
+        "data.oepul.o6_1a.biodiversity_grassland.obligation_applies",
+        "data.oepul.o6_1a.biodiversity_grassland.required_grassland_div_ha",
+        "data.oepul.o6_1a.biodiversity_grassland.violations",
+        "data.oepul.o6_1a.common.mown_grassland_area_ha"
+      ]
+    },
+    {
+      "id": "UBB-DIVG-MIN-002",
+      "rule_type": "option",
+      "statement": "Betriebe mit weniger als 2,00 ha gemähtem Grünland können freiwillig Grünland-DIV anlegen und erhalten Basismodulprämie und Zuschläge.",
+      "conditions": [
+        {
+          "expression": "mown_grassland_area_ha <= 2",
+          "description": "Freiwillig",
+          "input_paths": [
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "voluntary_premium",
+        "description": "Prämie ohne Verpflichtung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P14-DIVG-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.grassland_supplements.ubb_div_area_ha"
+      ]
+    },
+    {
+      "id": "UBB-DIVG-FS-001",
+      "rule_type": "obligation",
+      "statement": "Ab 10,00 ha gemähter Grünlandfläche sind auf Grünland-Feldstücken mit mehr als 5,00 ha gemähter Fläche (ohne Bergmähder) mind. 0,15 ha DIV oder anrechenbare Flächen anzulegen; zugeordnete GLÖZ-Landschaftselemente zählen für die 0,15 ha, nicht für die 7 %.",
+      "conditions": [
+        {
+          "expression": "mown_grassland >= 10 and fp_mown_area > 5 and fp_div_credit < 0.15",
+          "description": "Feldstücksverpflichtung Grünland",
+          "input_paths": [
+            "land.parcels[].field_piece_id",
+            "land.parcels[].area_kind",
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": 0.15
+      },
+      "source_reference_ids": [
+        "REF-UBB-P14-DIVG-03",
+        "REF-UBB-P14-DIVG-04",
+        "REF-UBB-P14-DIVG-05",
+        "REF-UBB-P15-DIVG-06"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_grassland.fp_div_credit",
+        "data.oepul.o6_1a.biodiversity_grassland.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVG-ANR-001",
+      "rule_type": "definition",
+      "statement": "Als Grünland-DIV anrechenbar sind Naturschutzflächen mit Schnittzeitpunktauflage (GA09–GA11, GL01–GL25, GL36, GL37, GN03, NM05) und Natura 2000-Flächen mit N2GL02–N2GL05, N2GL36, N2GL37; sie sind nach Projektbestätigung zu bewirtschaften.",
+      "conditions": [
+        {
+          "expression": "NAT: conditions ∩ nat_codes != ∅; N2: conditions ∩ n2_codes != ∅",
+          "description": "Schnittzeitpunktauflagen",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].project_conditions[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "creditable",
+        "description": "Anrechenbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P15-DIVG-07",
+        "REF-UBB-P15-DIVG-09",
+        "REF-UBB-P15-DIVG-10"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_natura2000_grassland_cut_date_conditions",
+        "data.o6_1a.o6_1a_naturschutz_grassland_cut_date_conditions",
+        "data.oepul.o6_1a.biodiversity_grassland.creditable_blocked",
+        "data.oepul.o6_1a.biodiversity_grassland.creditable_grassland_div"
+      ]
+    },
+    {
+      "id": "UBB-DIVG-ANR-002",
+      "rule_type": "definition",
+      "statement": "EBW-Grünlandflächen sind anrechenbar, sofern sie einem Lebensraumtyp mit anrechenbarer (ein- oder zweimähdiger) Schlagnutzungsart zugeordnet sind; Weiden und Bergmähder nicht.",
+      "conditions": [
+        {
+          "expression": "EBW implies ebw_habitat_type_eligible and is_mown_grassland",
+          "description": "EBW",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].biodiversity.ebw_habitat_type_eligible"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "creditable",
+        "description": "Anrechenbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P15-DIVG-08"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_grassland.creditable_blocked"
+      ]
+    },
+    {
+      "id": "UBB-DIVG-BW-001",
+      "rule_type": "prohibition",
+      "statement": "Pflanzenschutzmittel sind auf Grünland-Biodiversitätsflächen nicht erlaubt, ausgenommen Mittel mit ausschließlich gemäß VO (EU) 2018/848 zulässigen Wirkstoffen.",
+      "conditions": [
+        {
+          "expression": "psm organic_approved_only",
+          "description": "PSM",
+          "input_paths": [
+            "land.parcels[].operations.psm_applications[].organic_approved_only"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P16-DIVG-11"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_grassland.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVG-BW-002",
+      "rule_type": "obligation",
+      "statement": "Grünland-DIV sind jährlich nach einer der vier Varianten (DIVSZ, DIVNFZ, DIVAGF, DIVRS) zu bewirtschaften und zu kennzeichnen; bei jeder Variante ist mindestens einmal im Vertragsjahr eine Mahd mit Verbringung des Mähgutes durchzuführen.",
+      "conditions": [
+        {
+          "expression": "exists mow event with material_removed",
+          "description": "Mahd mit Verbringung",
+          "input_paths": [
+            "land.parcels[].operations.use_events[].type",
+            "land.parcels[].operations.use_events[].material_removed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P16-DIVG-12",
+        "REF-UBB-P16-DIVG-13",
+        "REF-UBB-P20-DIVG-14"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_grassland.mow_with_removal",
+        "data.oepul.o6_1a.biodiversity_grassland.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVG-SZ-001",
+      "rule_type": "deadline",
+      "statement": "DIVSZ: Die erste Nutzung darf frühestens mit der zweiten Mahd vergleichbarer Schläge erfolgen (oder einmähdige Wiese), frühestens ab 15. Juni und jedenfalls ab 15. Juli; bei einmähdigen Wiesen gilt nur der 15. Juni. Vergleichbarkeit muss plausibel sein (beweidete Schläge und Heumilch vs. Silobetrieb nicht vergleichbar); Seehöhe kein Kriterium.",
+      "conditions": [
+        {
+          "expression": "first_use_date >= later(jun15, earlier(comparable_second_cut, jul15))",
+          "description": "Erster Nutzungstermin",
+          "input_paths": [
+            "land.parcels[].operations.use_events[].date",
+            "land.parcels[].biodiversity.comparable_second_cut_date",
+            "land.parcels[].crop.schlagnutzungsart"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verfrühte Nutzung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P16-SZ-01",
+        "REF-UBB-P16-SZ-02",
+        "REF-UBB-P16-SZ-03",
+        "REF-UBB-P16-SZ-04",
+        "REF-UBB-P16-SZ-05",
+        "REF-UBB-P17-SZ-06"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_grassland.divsz_earliest",
+        "data.oepul.o6_1a.biodiversity_grassland.first_use_date",
+        "data.oepul.o6_1a.biodiversity_grassland.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVG-SZ-004",
+      "rule_type": "exception",
+      "statement": "DIVSZ: Der frühestmögliche (15.6.) bzw. jedenfalls mögliche Termin (15.7.) kann aufgrund phänologischer Beobachtungen (Vorverlegungskarte) um bis zu 10 Kalendertage vorverlegt werden.",
+      "conditions": [
+        {
+          "expression": "advance_days = min(phenology_advance_days, 10)",
+          "description": "Vorverlegung",
+          "input_paths": [
+            "land.parcels[].biodiversity.phenology_advance_days"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "shift_dates",
+        "description": "Termine vorverlegt.",
+        "value": 10
+      },
+      "source_reference_ids": [
+        "REF-UBB-P17-SZ-07",
+        "REF-SRL-P31-UBB-14",
+        "REF-N0522-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_grassland.advance_days",
+        "data.oepul.o6_1a.biodiversity_grassland.jul15",
+        "data.oepul.o6_1a.biodiversity_grassland.jun15"
+      ]
+    },
+    {
+      "id": "UBB-DIVG-SZ-002",
+      "rule_type": "prohibition",
+      "statement": "DIVSZ: Vor der ersten Nutzung ist auf die Ausbringung von Düngemitteln zu verzichten.",
+      "conditions": [
+        {
+          "expression": "no fertilization before first_use_date",
+          "description": "Düngung",
+          "input_paths": [
+            "land.parcels[].operations.fertilization_events[].date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P17-SZ-08"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_grassland.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVG-SZ-003",
+      "rule_type": "prohibition",
+      "statement": "DIVSZ: Beweidung ist möglich, aber eine Mahd mit Abtransport ist im Antragsjahr verpflichtend; Häckseln ist frühestens nach der ersten Nutzung erlaubt.",
+      "conditions": [
+        {
+          "expression": "no mulch event on or before first_use_date",
+          "description": "Häckseln",
+          "input_paths": [
+            "land.parcels[].operations.use_events[].type",
+            "land.parcels[].operations.use_events[].date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P17-SZ-09"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_grassland.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVG-NFZ-001",
+      "rule_type": "obligation",
+      "statement": "DIVNFZ: Nach der ersten Nutzung (Weide oder Mahd) ist ein nutzungsfreier Zeitraum von mind. 9 Wochen (63 Kalendertagen) einzuhalten; weder Befahren noch Düngung, Überqueren zulässig; nächste Befahrung am 64. Tag. Beginn am Tag nach der letzten Überfahrt/Ballenabtransport bzw. nach der Weidepflege.",
+      "conditions": [
+        {
+          "expression": "days_between(first_use_completed_date, activity_date) > 63",
+          "description": "Nutzungsfreier Zeitraum",
+          "input_paths": [
+            "land.parcels[].biodiversity.first_use_completed_date",
+            "land.parcels[].operations.use_events[].date",
+            "land.parcels[].operations.driving_events[].purpose",
+            "land.parcels[].operations.fertilization_events[].date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": 63
+      },
+      "source_reference_ids": [
+        "REF-UBB-P17-NFZ-01",
+        "REF-UBB-P17-NFZ-03",
+        "REF-UBB-P17-NFZ-04",
+        "REF-UBB-P18-NFZ-08"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_grassland.activity_dates",
+        "data.oepul.o6_1a.biodiversity_grassland.rest_days",
+        "data.oepul.o6_1a.biodiversity_grassland.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVG-NFZ-002",
+      "rule_type": "obligation",
+      "statement": "DIVNFZ: Eine zweite Nutzung im Kalenderjahr hat jedenfalls zu erfolgen; bei einmähdiger Wiese auch als Weide nach dem 15. September.",
+      "conditions": [
+        {
+          "expression": "exists use after first_use_completed_date",
+          "description": "Zweite Nutzung",
+          "input_paths": [
+            "land.parcels[].operations.use_events[].date",
+            "land.parcels[].biodiversity.first_use_completed_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P18-NFZ-06"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_grassland.second_use",
+        "data.oepul.o6_1a.biodiversity_grassland.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVG-NFZ-003",
+      "rule_type": "prohibition",
+      "statement": "DIVNFZ: Der Aufwuchs der ersten und zweiten Nutzung ist abzutransportieren oder zu beweiden, Häckseln ist nicht erlaubt; frühe Beweidung muss in Masse und Bestoß einem vollwertigen Schnitt entsprechen.",
+      "conditions": [
+        {
+          "expression": "no mulch event (except post grazing care)",
+          "description": "Häckselverbot",
+          "input_paths": [
+            "land.parcels[].operations.use_events[].type",
+            "land.parcels[].operations.use_events[].post_grazing_care"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P17-NFZ-02",
+        "REF-UBB-P17-NFZ-05"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_grassland.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVG-NFZ-004",
+      "rule_type": "documentation",
+      "statement": "DIVNFZ: Abschluss der ersten Bewirtschaftung und Beginn der zweiten Nutzung sind bis einschließlich Antragsjahr 2024 zu dokumentieren; ab 2025 entfällt die Dokumentationspflicht.",
+      "conditions": [
+        {
+          "expression": "year <= 2024 implies use_dates_documented",
+          "description": "Dokumentation",
+          "input_paths": [
+            "land.parcels[].biodiversity.use_dates_documented",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß bis 2024.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P18-NFZ-07",
+        "REF-SRL-P31-UBB-15"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_grassland.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVG-AGF-001",
+      "rule_type": "prohibition",
+      "statement": "DIVAGF: Altgras ist über den Winter stehen zu lassen; die letzte Nutzung ist bis 15. August zulässig; Befahren und Düngung nach dem 15. August sind bis zur nächsten Nutzung im Folgejahr verboten (Überqueren zulässig); mind. 1 Mahd mit Abtransport.",
+      "conditions": [
+        {
+          "expression": "no activity after year-08-15",
+          "description": "Altgras",
+          "input_paths": [
+            "land.parcels[].operations.use_events[].date",
+            "land.parcels[].operations.driving_events[].date",
+            "land.parcels[].operations.fertilization_events[].date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P18-AGF-01",
+        "REF-UBB-P18-AGF-02",
+        "REF-UBB-P18-AGF-03",
+        "REF-SRL-P31-UBB-16"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_grassland.aug15",
+        "data.oepul.o6_1a.biodiversity_grassland.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVG-AGF-003",
+      "rule_type": "obligation",
+      "statement": "Im Folgejahr sind Altgras-Biodiversitätsflächen lagegenau mit DIVSZ zu beantragen und zu bewirtschaften, ausgenommen bei Verlust der Verfügungsgewalt.",
+      "conditions": [
+        {
+          "expression": "previous_year_code == DIVAGF implies DIVSZ in codes or loss_of_control",
+          "description": "Folgejahr",
+          "input_paths": [
+            "land.parcels[].biodiversity.previous_year_code",
+            "land.parcels[].codes[]",
+            "land.parcels[].biodiversity.loss_of_control"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P18-AGF-04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_grassland.violations"
+      ]
+    },
+    {
+      "id": "UBB-DIVRSG-001",
+      "rule_type": "eligibility",
+      "statement": "Zuschlag Neueinsaat mit dauerhafter regionaler Grünland-Saatgutmischung (DIVRS, bis max. 20 % der gemähten Grünlandfläche): Grünlandzahl mind. 30, Hangneigung unter 18 %, mind. 30 Arten aus 7 Familien laut Kapitel 14, Saatstärke mind. 20 kg/ha, je Art max. 5 % (außer Ökotypensaatgut), regionale Herkunft, Dokumentation; Neuansaat bis 15. Mai nach Saatbettvorbereitung mit geeigneten Geräten; max. 2 Nutzungen, erste frühestens 15. Juli (außer Reinigungsschnitt im 1. Jahr), mind. 1 Mahd mit Abtransport, kein Häckseln; keine Düngung außer Festmist/-kompost; bis längstens 2028, Unterbrechung erfordert Neueinsaat.",
+      "conditions": [
+        {
+          "expression": "not divrs_violation(p)",
+          "description": "DIVRS Grünland",
+          "input_paths": [
+            "land.parcels[].soil_index.gruenlandzahl",
+            "land.parcels[].slope_percent",
+            "land.parcels[].biodiversity.seed_mixture.regional_list_species",
+            "land.parcels[].biodiversity.sowing_date",
+            "land.parcels[].operations.use_events[].date",
+            "land.parcels[].operations.fertilization_events[].type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "supplement_eligible_or_violation",
+        "description": "Zuschlag oder Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P19-RSG-01",
+        "REF-UBB-P19-RSG-02",
+        "REF-UBB-P19-RSG-03",
+        "REF-UBB-P19-RSG-04",
+        "REF-UBB-P19-RSG-05",
+        "REF-UBB-P19-RSG-06",
+        "REF-UBB-P20-RSG-07",
+        "REF-SRL-P31-UBB-17",
+        "REF-UBB-P41-ART-03",
+        "REF-ANH-P07-C-02"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_regional_seed_requirements",
+        "data.o6_1a.o6_1a_regional_seed_species_grassland",
+        "data.oepul.o6_1a.biodiversity_grassland.divrs_eligible",
+        "data.oepul.o6_1a.biodiversity_grassland.divrs_violation",
+        "data.oepul.o6_1a.biodiversity_grassland.regional_mix_ok",
+        "data.oepul.o6_1a.biodiversity_grassland.site_ok",
+        "data.oepul.o6_1a.biodiversity_grassland.violations"
+      ]
+    },
+    {
+      "id": "UBB-ANT-020",
+      "rule_type": "application",
+      "statement": "Grünland-Biodiversitätsflächen sind als 'Einmähdige Wiese', 'Streuwiese', 'Mähwiese/-weide zwei Nutzungen' oder 'Mähwiese/-weide drei und mehr Nutzungen' zu beantragen und je nach Variante mit DIVSZ, DIVNFZ, DIVAGF oder DIVRS zu kennzeichnen.",
+      "conditions": [
+        {
+          "expression": "schlagnutzungsart in grassland_div_schlagnutzungsarten",
+          "description": "Schlagnutzungsart",
+          "input_paths": [
+            "land.parcels[].crop.schlagnutzungsart",
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Falsche Kennzeichnung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P30-ANT-11"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_grassland_div_schlagnutzungsarten",
+        "data.oepul.o6_1a.biodiversity_grassland.violations"
+      ]
+    },
+    {
+      "id": "UBB-ANT-021",
+      "rule_type": "application",
+      "statement": "Aus Naturschutz, EBW oder Natura 2000 angerechnete Grünland-DIV sind mit Schlagnutzungsart und Maßnahmencode (NAT, EBW, N2) sowie zusätzlich mit DIVSZ zu kennzeichnen.",
+      "conditions": [
+        {
+          "expression": "NAT/EBW/N2 with grassland DIV implies DIVSZ",
+          "description": "Kennzeichnung",
+          "input_paths": [
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Falsche Kennzeichnung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P30-ANT-12"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_grassland.violations"
+      ]
+    },
+    {
+      "id": "UBB-LSE-001",
+      "rule_type": "definition",
+      "statement": "Punktförmige Landschaftselemente sind auf oder max. 5 m neben landwirtschaftlichen Flächen befindliche, in Verfügungsgewalt stehende Bäume, Büsche und Baum-/Buschgruppen (inkl. Streuobstbäume) mit Kronendurchmesser mind. 2 m, max. 100 m² und mind. 5 m Abstand zueinander, im MFA beantragt und das gesamte Verpflichtungsjahr erhalten; nicht auf Almen/Hutweiden; Ersatzbäume und auf Stock gesetzte Elemente nur mit mind. 2 m Kronendurchmesser.",
+      "conditions": [
+        {
+          "expression": "crown>=2 and area<=100 and distance>=5 and dist_to_field<=5 and control and applied and maintained and not alm and not gloez",
+          "description": "LSE-Definition",
+          "input_paths": [
+            "farm.oepul.ubb.point_landscape_elements[].crown_diameter_m",
+            "farm.oepul.ubb.point_landscape_elements[].area_m2",
+            "farm.oepul.ubb.point_landscape_elements[].min_distance_to_other_m"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_or_violation",
+        "description": "Förderfähig oder Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P21-LSE-01",
+        "REF-UBB-P21-LSE-02",
+        "REF-UBB-P21-LSE-03",
+        "REF-UBB-P21-LSE-04",
+        "REF-SRL-P28-UBB-02",
+        "REF-ATB-P03-DEF-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.options.lse_eligible",
+        "data.oepul.o6_1a.options.violations"
+      ]
+    },
+    {
+      "id": "UBB-LSE-002",
+      "rule_type": "exclusion",
+      "statement": "Landschaftselemente sind nur förderfähig, wenn sie nicht als GLÖZ(-8)-Landschaftselemente ausgewiesen sind; GLÖZ-LSE sind generell nicht förderfähig.",
+      "conditions": [
+        {
+          "expression": "not is_gloez",
+          "description": "GLÖZ",
+          "input_paths": [
+            "farm.oepul.ubb.point_landscape_elements[].is_gloez"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P32-PR-06",
+        "REF-SRL-P35-UBB-28",
+        "REF-SRL-P11-NFF-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.options.lse_eligible"
+      ]
+    },
+    {
+      "id": "UBB-LSE-003",
+      "rule_type": "cap",
+      "statement": "Die LSE-Prämie wird für max. 80 punktförmige Landschaftselemente je ha am Feldstück gewährt: Streuobst 13,0 €/PLSE, andere 8,6 €/PLSE (2023: 12,0 bzw. 8,0 €).",
+      "conditions": [
+        {
+          "expression": "paid = min(eligible, floor(80*fp_area))",
+          "description": "Deckelung",
+          "input_paths": [
+            "farm.oepul.ubb.point_landscape_elements[].field_piece_id",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "lse_premium",
+        "description": "EUR",
+        "value": 80
+      },
+      "source_reference_ids": [
+        "REF-UBB-P31-PR-02",
+        "REF-UBB-P31-PR-03",
+        "REF-SRL-P34-UBB-24"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_premium_rates",
+        "data.oepul.o6_1a.options.fp_cap",
+        "data.oepul.o6_1a.options.lse_premium",
+        "data.oepul.o6_1a.options.paid_other",
+        "data.oepul.o6_1a.options.paid_streuobst",
+        "data.oepul.o6_1a.options.violations"
+      ]
+    },
+    {
+      "id": "UBB-SO-001",
+      "rule_type": "definition",
+      "statement": "Förderfähige Streuobstbäume sind ausschließlich stark wüchsige, großkronige Hoch- oder Halbstammbäume der Obstarten Apfel, Birne, Elsbeere, Kirsche, Marille, Pflaume, Ringlotte, Weichsel, Zwetschke, Eberesche, Kornelkirsche, Kriecherl, Quitte, ab 2025 auch Maulbeere und Pfirsich; Wildformen von Apfel, Birne, Kirsche förderbar; keine dauerhaften Stützgerüste über mehrere Bäume; einzeln, in Gruppen oder Reihen.",
+      "conditions": [
+        {
+          "expression": "fruit_species in streuobst_species(year) and tree_form in {hochstamm, halbstamm} and strong_growing and not support_frame and (not wild_form or species in {Apfel,Birne,Kirsche})",
+          "description": "Streuobst",
+          "input_paths": [
+            "farm.oepul.ubb.point_landscape_elements[].fruit_species",
+            "farm.oepul.ubb.point_landscape_elements[].tree_form",
+            "farm.oepul.ubb.point_landscape_elements[].wild_form"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_or_violation",
+        "description": "Streuobstsatz oder Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P21-SO-01",
+        "REF-UBB-P21-SO-02",
+        "REF-UBB-P21-SO-03",
+        "REF-UBB-P21-SO-04"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_streuobst_species",
+        "data.oepul.o6_1a.options.streuobst_eligible",
+        "data.oepul.o6_1a.options.violations",
+        "data.oepul.o6_1a.options.wild_form_ok"
+      ]
+    },
+    {
+      "id": "UBB-SO-002",
+      "rule_type": "application",
+      "statement": "Streuobstbäume sind als 'LSE Bäume/Büsche' zu beantragen und zusätzlich mit Code SO zu kennzeichnen; andere punktförmige LSE ohne zusätzliche Codierung.",
+      "conditions": [
+        {
+          "expression": "streuobst implies coded_so",
+          "description": "Code SO",
+          "input_paths": [
+            "farm.oepul.ubb.point_landscape_elements[].coded_so"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "required_code",
+        "description": "Code SO.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P31-ANT-17",
+        "REF-UBB-P31-ANT-18"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.options.streuobst_eligible"
+      ]
+    },
+    {
+      "id": "UBB-MNH-001",
+      "rule_type": "eligibility",
+      "statement": "Förderfähige Mehrnutzenhecken: direkt an eigenes Ackerfeldstück angrenzend (jedes Jahr), ab 1.1.2023 bis 15.5. des Förderjahres neu angelegt, überwiegend Sträucher/Obstbäume, im Rahmen eines Konzepts der Landesdienststelle, Längsseite nicht an Wald/flächiges LSE, Breite 5–20 m, krautiger Bereich mind. 20 % dauerhaft begrünt ohne Nutzung (Pflegemahd/Häckseln erlaubt), keine Dünge- und PSM (außer Bio-Verbissschutz), Gehölzpflege, als 'LSE Mehrnutzenhecke' beantragt und im INVEKOS-GIS bestätigt.",
+      "conditions": [
+        {
+          "expression": "hedge_eligible(p)",
+          "description": "Mehrnutzenhecke",
+          "input_paths": [
+            "land.parcels[].hedge.planted_date",
+            "land.parcels[].hedge.average_width_m",
+            "land.parcels[].hedge.herbaceous_share_percent",
+            "land.parcels[].hedge.gis_confirmed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_or_violation",
+        "description": "Zuschlag oder Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P21-MNH-01",
+        "REF-UBB-P21-MNH-02",
+        "REF-UBB-P21-MNH-03",
+        "REF-UBB-P21-MNH-04",
+        "REF-UBB-P22-MNH-05",
+        "REF-UBB-P22-MNH-06",
+        "REF-SRL-P29-UBB-07",
+        "REF-SRL-P19-MNH-01",
+        "REF-UBB-P30-ANT-10"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.options.hedge_eligible",
+        "data.oepul.o6_1a.options.violations"
+      ]
+    },
+    {
+      "id": "UBB-MNH-002",
+      "rule_type": "premium_rate",
+      "statement": "Der Zuschlag für Mehrnutzenhecken beträgt 1.000 €/ha (2023: 800 €/ha).",
+      "conditions": [
+        {
+          "expression": "hedge_area_ha * rate(mehrnutzenhecken)",
+          "description": "Prämie",
+          "input_paths": [
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "hedge_premium",
+        "description": "EUR",
+        "value": 1000.0
+      },
+      "source_reference_ids": [
+        "REF-UBB-P31-PR-04"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_premium_rates",
+        "data.oepul.o6_1a.options.hedge_premium"
+      ]
+    },
+    {
+      "id": "UBB-MON-001",
+      "rule_type": "eligibility",
+      "statement": "Naturschutz-Monitoring: Voraussetzung ist eine Teilnahmebestätigung der zuständigen Stelle inkl. Bestätigung einer Einführungsveranstaltung im ersten Teilnahmejahr; die Daten sind jährlich, zeitgerecht und vollständig in der vorgegebenen Datenbank zu erfassen.",
+      "conditions": [
+        {
+          "expression": "participation_confirmation and intro_ok and data_recorded_timely_complete",
+          "description": "Monitoring",
+          "input_paths": [
+            "farm.oepul.ubb.monitoring[].participation_confirmation",
+            "farm.oepul.ubb.monitoring[].intro_event_completed",
+            "farm.oepul.ubb.monitoring[].data_recorded_timely_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_or_violation",
+        "description": "Zuschlag oder Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P22-MON-01",
+        "REF-UBB-P22-MON-02",
+        "REF-SRL-P32-UBB-19",
+        "REF-SRL-P19-MON-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.options.intro_ok",
+        "data.oepul.o6_1a.options.monitoring_eligible",
+        "data.oepul.o6_1a.options.violations"
+      ]
+    },
+    {
+      "id": "UBB-MON-002",
+      "rule_type": "combination",
+      "statement": "Großtrappe-Monitoring nur bei Teilnahme an Naturschutz mit Auflage TA01 auf mind. einem Schlag; Schnittzeit nach Phänologie nur bei Naturschutz mit GL06, GL15 oder GL25; Biodiversitätsmonitoring und Phänoflex ohne Kombinationsverpflichtung.",
+      "conditions": [
+        {
+          "expression": "combination_ok(m)",
+          "description": "Kombinationsverpflichtung",
+          "input_paths": [
+            "farm.oepul.measures[]",
+            "land.parcels[].project_conditions[]",
+            "farm.oepul.ubb.monitoring[].program"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_or_violation",
+        "description": "Zuschlag oder Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P22-MON-03",
+        "REF-UBB-P22-MON-04"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_monitoring_programs",
+        "data.oepul.o6_1a.options.combination_ok"
+      ]
+    },
+    {
+      "id": "UBB-MON-003",
+      "rule_type": "premium_rate",
+      "statement": "Monitoring-Zuschläge je Betrieb und Jahr: Großtrappe 237,6 €, Biodiversitätsmonitoring 297,0 €, Phänoflex 108,0 €, Schnittzeit nach Phänologie 108,0 € (2023: 220/275/100/100 €).",
+      "conditions": [
+        {
+          "expression": "sum(rate(program))",
+          "description": "Prämie",
+          "input_paths": [
+            "farm.oepul.ubb.monitoring[].program"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "monitoring_premium",
+        "description": "EUR",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P32-PR-05"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_premium_rates",
+        "data.oepul.o6_1a.options.monitoring_premium"
+      ]
+    },
+    {
+      "id": "UBB-ZA7-001",
+      "rule_type": "premium_rate",
+      "statement": "Zuschlag für über 7 % hinausgehende Acker-Biodiversitätsflächen bis max. 20 % der Ackerfläche: 410,4 €/ha (2023: 380 €/ha); aus anderen Maßnahmen angerechnete DIV (BAW, AG, NAT, EBW) und GLÖZ 4-Pufferstreifen zählen für die 7 %, nicht aber für den Zuschlag.",
+      "conditions": [
+        {
+          "expression": "max(0, min(pure_div, 0.20*A) - 0.07*A)",
+          "description": "Zuschlagsfläche",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "over7_premium",
+        "description": "EUR",
+        "value": 410.4
+      },
+      "source_reference_ids": [
+        "REF-UBB-P22-Z7A-01",
+        "REF-UBB-P23-Z7A-02",
+        "REF-UBB-P23-Z7A-03",
+        "REF-UBB-P32-PR-08",
+        "REF-UBB-P33-PR-18",
+        "REF-SRL-P35-UBB-26"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_premium_rates",
+        "data.oepul.o6_1a.arable_supplements.over7_area_ha",
+        "data.oepul.o6_1a.arable_supplements.over7_premium",
+        "data.oepul.o6_1a.arable_supplements.pure_div_area_ha"
+      ]
+    },
+    {
+      "id": "UBB-ZAZ-001",
+      "rule_type": "premium_rate",
+      "statement": "Acker-DIV auf Schlägen mit durchschnittlicher (aliquot gemittelter) Ackerzahl von mind. 50 erhalten automatisch einen Zuschlag bis max. 20 % der Ackerfläche: 2023 70 €/ha, 2024 75,6 €/ha, ab 2025 140 €/ha.",
+      "conditions": [
+        {
+          "expression": "min(sum(area where ackerzahl>=50), 0.20*A) * rate",
+          "description": "Ackerzahl",
+          "input_paths": [
+            "land.parcels[].soil_index.ackerzahl",
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "ackerzahl_premium",
+        "description": "EUR",
+        "value": 140.0
+      },
+      "source_reference_ids": [
+        "REF-UBB-P23-AZ-01",
+        "REF-UBB-P32-PR-09"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_premium_limits",
+        "data.oepul.o6_1a.arable_supplements.ackerzahl_area_ha",
+        "data.oepul.o6_1a.arable_supplements.ackerzahl_premium"
+      ]
+    },
+    {
+      "id": "UBB-Z3HA-001",
+      "rule_type": "premium_rate",
+      "statement": "Zuschlag auf Acker-DIV bis max. 20 % der Ackerfläche (54 €/ha, 2023: 50 €/ha), wenn mind. 1 Biodiversitätsfläche größer 0,05 ha je angefangene 3,00 ha Ackerfläche besteht (immer aufrunden, z. B. 3 DIV-Schläge bei 6,01 ha).",
+      "conditions": [
+        {
+          "expression": "count(div parcels > 0.05 ha) >= ceil(A/3)",
+          "description": "Anzahl DIV-Schläge",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "per_3ha_premium",
+        "description": "EUR",
+        "value": 54.0
+      },
+      "source_reference_ids": [
+        "REF-UBB-P23-Z3-01",
+        "REF-SRL-P33-UBB-22"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.arable_supplements.per_3ha_condition_met",
+        "data.oepul.o6_1a.arable_supplements.per_3ha_premium",
+        "data.oepul.o6_1a.arable_supplements.required_div_parcels"
+      ]
+    },
+    {
+      "id": "UBB-DIVRSA-006",
+      "rule_type": "premium_rate",
+      "statement": "DIVRS-Acker-Zuschlag: 424 €/ha (Variante Sonstiges Feldfutter; 2023: 300 €/ha), ab 2025 Variante Grünbrache 324 €/ha.",
+      "conditions": [
+        {
+          "expression": "area * rate(variant)",
+          "description": "DIVRS-Prämie",
+          "input_paths": [
+            "land.parcels[].crop.schlagnutzungsart",
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "divrs_premium",
+        "description": "EUR",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P32-PR-10"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_premium_rates",
+        "data.oepul.o6_1a.arable_supplements.divrs_premium"
+      ]
+    },
+    {
+      "id": "UBB-SLK-001",
+      "rule_type": "eligibility",
+      "statement": "Zuschlag seltene, regional wertvolle Kulturpflanzen: sortenreiner Anbau einer Sorte laut Sortenliste (Kapitel 13 / Anhang B), Kornernte nicht nötig (auch Futternutzung); Sorte und Saatgutmenge zu dokumentieren und am Betrieb aufzubewahren; Gemenge/nicht sortenreiner Anbau ausgeschlossen (untergeordnete, nicht mitgeerntete Untersaat zulässig; Streifenanbau Edel-Rot/Edel-Weiß zulässig, bei ungetrennter Ernte kein Nachbau).",
+      "conditions": [
+        {
+          "expression": "SLK in codes and variety in list(year) and pure and documented",
+          "description": "SLK",
+          "input_paths": [
+            "land.parcels[].crop.variety",
+            "land.parcels[].crop.pure_variety",
+            "land.parcels[].crop.seed_documentation",
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_or_violation",
+        "description": "Zuschlag oder Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P24-SLK-01",
+        "REF-UBB-P24-SLK-02",
+        "REF-UBB-P24-SLK-03",
+        "REF-UBB-P24-SLK-04",
+        "REF-UBB-P24-SLK-05",
+        "REF-UBB-P36-SLK-06",
+        "REF-UBB-P37-SLK-07",
+        "REF-SRL-P28-UBB-03",
+        "REF-ANH-P04-B-01",
+        "REF-ANH-P04-B-02"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_rare_crop_striped_exception_varieties",
+        "data.o6_1a.o6_1a_rare_crop_varieties",
+        "data.oepul.o6_1a.arable_supplements.slk_eligible",
+        "data.oepul.o6_1a.arable_supplements.slk_pure",
+        "data.oepul.o6_1a.arable_supplements.variety_row",
+        "data.oepul.o6_1a.arable_supplements.violations"
+      ]
+    },
+    {
+      "id": "UBB-SLK-002",
+      "rule_type": "cap",
+      "statement": "SLK-Prämie: Stufe A 129,6 €/ha, Stufe B 270 €/ha (2023: 120/250), max. 10 ha je Sorte, auf einer Fläche einmal je Förderjahr; bei mehrjährigen Kulturen nur im Jahr der ersten Nutzung (SLK-Code nur im ersten Jahr); Sorte im MFA anzugeben.",
+      "conditions": [
+        {
+          "expression": "min(area per variety, 10) * rate(level); perennial only first_use_year",
+          "description": "SLK-Prämie",
+          "input_paths": [
+            "land.parcels[].crop.variety",
+            "land.parcels[].crop.is_perennial",
+            "land.parcels[].crop.first_use_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "slk_premium",
+        "description": "EUR",
+        "value": 10.0
+      },
+      "source_reference_ids": [
+        "REF-UBB-P32-PR-11",
+        "REF-UBB-P34-PR-20",
+        "REF-UBB-P30-ANT-13",
+        "REF-SRL-P35-UBB-27"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.arable_supplements.slk_area",
+        "data.oepul.o6_1a.arable_supplements.slk_first_use_ok",
+        "data.oepul.o6_1a.arable_supplements.slk_premium",
+        "data.oepul.o6_1a.arable_supplements.slk_rate"
+      ]
+    },
+    {
+      "id": "UBB-FWK-001",
+      "rule_type": "premium_rate",
+      "statement": "Zuschlag förderwürdige Ackerkulturen, sofern ihr Flächenanteil (inkl. über 7 % hinausgehender DIV) mehr als 15 % der Ackerfläche beträgt, bis max. 40 % der Ackerfläche; Reihung nach Prämienhöhe (höchste zuerst). Sätze ab 2024: Feldfutter 64,8; Leguminosen 129,6; Kresse/Ölrettich/Rübsen/Senf/Raps 86,4; Sonnenblume 86,4; BHG 162 €/ha. Automatisch bei Beantragung der Schlagnutzungsart.",
+      "conditions": [
+        {
+          "expression": "(fwk_area + max(0, div_area - 0.07*A))/A > 0.15; paid by descending rate up to 0.40*A",
+          "description": "FWK",
+          "input_paths": [
+            "land.parcels[].crop.schlagnutzungsart",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "fwk_premium",
+        "description": "EUR",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P24-FWK-01",
+        "REF-UBB-P24-FWK-02",
+        "REF-UBB-P24-FWK-03",
+        "REF-UBB-P25-FWK-04",
+        "REF-UBB-P25-FWK-07",
+        "REF-UBB-P25-FWK-08",
+        "REF-UBB-P33-PR-12",
+        "REF-UBB-P31-ANT-19"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_foerderwuerdige_kulturen",
+        "data.oepul.o6_1a.arable_supplements.fwk_paid_at",
+        "data.oepul.o6_1a.arable_supplements.fwk_premium",
+        "data.oepul.o6_1a.arable_supplements.fwk_share",
+        "data.oepul.o6_1a.arable_supplements.fwk_threshold_met"
+      ]
+    },
+    {
+      "id": "UBB-FWK-002",
+      "rule_type": "definition",
+      "statement": "Leguminosenmischungen gelten als förderwürdig, wenn sie überwiegend aus förderwürdigen Leguminosen bestehen; Feldfuttermischungen mit überwiegend Leguminosen, die gemäht und verfüttert werden, sind als 'Sonstiges Feldfutter' zu beantragen.",
+      "conditions": [
+        {
+          "expression": "fwk_main_component in legumes",
+          "description": "Mischungen",
+          "input_paths": [
+            "land.parcels[].crop.fwk_main_component"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "group",
+        "description": "Förderwürdige Gruppe.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P25-FWK-05"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.arable_supplements.main_crop"
+      ]
+    },
+    {
+      "id": "UBB-FWK-003",
+      "rule_type": "calculation",
+      "statement": "Zweitkulturen können einen Zuschlag erhalten; sind Haupt- und Zweitkultur förderwürdig, wird der höhere Zuschlag gewährt; für die 15 % zählt die Fläche nur einmal.",
+      "conditions": [
+        {
+          "expression": "rate = max(rate(main), rate(second))",
+          "description": "Zweitkultur",
+          "input_paths": [
+            "land.parcels[].crop.second_crop_name"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_rate",
+        "description": "EUR/ha",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P25-FWK-06"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.arable_supplements.fwk_parcel_rate",
+        "data.oepul.o6_1a.arable_supplements.parcel_groups"
+      ]
+    },
+    {
+      "id": "UBB-FWK-004",
+      "rule_type": "exclusion",
+      "statement": "Bis einschließlich Antragsjahr 2024 wird der Zuschlag nicht für Kulturen ausbezahlt, die im Rahmen GLÖZ 8 mit Code NPF beantragt werden.",
+      "conditions": [
+        {
+          "expression": "year <= 2024 and NPF in codes",
+          "description": "NPF",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "excluded",
+        "description": "Kein Zuschlag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P33-PR-19"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.arable_supplements.npf_excluded"
+      ]
+    },
+    {
+      "id": "UBB-FWK-005",
+      "rule_type": "definition",
+      "statement": "Als Blühpflanzen, Heil- und Gewürzpflanzen sind ausschließlich die gelisteten Kulturen (Acker-Stiefmütterchen bis Zuckerwurzel) sowie Saatgutproduktion autochthoner Wildpflanzen laut Kapitel 14 anrechenbar; sie zählen zu den förderwürdigen Ackerkulturen.",
+      "conditions": [
+        {
+          "expression": "crop_name in bhg_crops or autochthonous seed production",
+          "description": "BHG",
+          "input_paths": [
+            "land.parcels[].crop.crop_name",
+            "land.parcels[].crop.autochthonous_seed_production"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "fwk_bhg",
+        "description": "Gruppe BHG.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P25-BHG-01",
+        "REF-UBB-P26-BHG-02",
+        "REF-SRL-P28-UBB-04"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_bhg_crops",
+        "data.oepul.o6_1a.arable_supplements.bhg_crops",
+        "data.oepul.o6_1a.arable_supplements.bhg_ok"
+      ]
+    },
+    {
+      "id": "UBB-ANT-030",
+      "rule_type": "application",
+      "statement": "BHG-Code nur, wenn für die Kultur keine eigene Schlagnutzungsart existiert; bei 'Heilpflanzen', 'Gewürzpflanzen' oder 'Sonstige Ackerkulturen' ist die BHG-Kultur im Zusatztext einzutragen und BHG zu kennzeichnen.",
+      "conditions": [
+        {
+          "expression": "generic schlagnutzungsart implies BHG code and crop in bhg list",
+          "description": "BHG-Kennzeichnung",
+          "input_paths": [
+            "land.parcels[].crop.schlagnutzungsart",
+            "land.parcels[].crop.crop_name",
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Falsche Kennzeichnung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P30-ANT-14"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_bhg_generic_schlagnutzungsarten",
+        "data.oepul.o6_1a.arable_supplements.bhg_generic",
+        "data.oepul.o6_1a.arable_supplements.violations"
+      ]
+    },
+    {
+      "id": "UBB-ANT-031",
+      "rule_type": "application",
+      "statement": "Der Zuschlag für Saatgutproduktion autochthoner Wildpflanzen wird nur im Jahr der Samenernte gewährt; in Jahren ohne Samenernte darf kein BHG-Code angegeben werden.",
+      "conditions": [
+        {
+          "expression": "BHG and autochthonous implies seed_harvest_this_year",
+          "description": "Samenernte",
+          "input_paths": [
+            "land.parcels[].crop.seed_harvest_this_year",
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P31-ANT-15"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.arable_supplements.violations"
+      ]
+    },
+    {
+      "id": "UBB-WBF-001",
+      "rule_type": "eligibility",
+      "statement": "Wildkräuter- und Brutflächen: Getreide (Anteil >= 50 %) mit doppeltem Reihenabstand (mind. 20 cm) ohne Untersaat; von 15.3. bis 30.6. (bzw. bis zum früheren Drusch) Befahrungsverbot (Überqueren zulässig), kein Dünger, PSM, keine mechanische Beikrautregulierung; Sommergetreide vor 15.3. anbauen; bis 30.6. nur Drusch; Code WB.",
+      "conditions": [
+        {
+          "expression": "not wb_violation(p)",
+          "description": "WB-Bedingungen",
+          "input_paths": [
+            "land.parcels[].wildkraut.row_spacing_cm",
+            "land.parcels[].wildkraut.undersown",
+            "land.parcels[].wildkraut.sowing_date",
+            "land.parcels[].operations.fertilization_events[].date",
+            "land.parcels[].operations.driving_events[].purpose"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_or_violation",
+        "description": "Zuschlag oder Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P26-WBF-01",
+        "REF-UBB-P26-WBF-02",
+        "REF-UBB-P26-WBF-03",
+        "REF-UBB-P26-WBF-04",
+        "REF-UBB-P26-WBF-05",
+        "REF-UBB-P31-ANT-16",
+        "REF-SRL-P29-UBB-05"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.arable_supplements.violations",
+        "data.oepul.o6_1a.arable_supplements.wb_eligible",
+        "data.oepul.o6_1a.arable_supplements.wb_violation"
+      ]
+    },
+    {
+      "id": "UBB-WBF-002",
+      "rule_type": "cap",
+      "statement": "Der Zuschlag für Wildkräuter- und Brutflächen beträgt 270 €/ha (2023: 250) und wird bis max. 20,00 ha je Betrieb gewährt.",
+      "conditions": [
+        {
+          "expression": "min(area, 20) * 270",
+          "description": "WB-Prämie",
+          "input_paths": [
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "wb_premium",
+        "description": "EUR",
+        "value": 20.0
+      },
+      "source_reference_ids": [
+        "REF-UBB-P34-PR-21",
+        "REF-SRL-P34-UBB-23"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.arable_supplements.wb_area_ha",
+        "data.oepul.o6_1a.arable_supplements.wb_premium"
+      ]
+    },
+    {
+      "id": "UBB-PZR-001",
+      "rule_type": "eligibility",
+      "statement": "Ab 2025 Zuschlag Pheromonfallen bei Zuckerrüben (ohne Futterrüben): mind. 15 Fallen/ha gegen Rübenderbrüssler auf Zuckerrüben- oder Vorjahres-Zuckerrübenschlägen (Code PZR, Zuckerrüben/Rübenvermehrung oder Vorjahr); Falle = Fangbehälter mit Pheromon; Lockstoffe jährlich beziehen; Verteilung beliebig; Anlage spätestens 14 Kalendertage nach Anbau bzw. vergleichbarem Zeitpunkt; mind. 5 Wochen am Feld, mind. 2 x leeren, vor der Ernte entfernen; Aufzeichnungen, Bezugsbelege, Fallen bis 30.9. aufbewahren; bei Umbruch Dokumentation, bei Nachbau Fallen belassen/neu anlegen, ohne Nachbau muss die Verpflichtung erfüllt sein.",
+      "conditions": [
+        {
+          "expression": "not pzr_violation(p)",
+          "description": "PZR-Bedingungen",
+          "input_paths": [
+            "land.parcels[].pheromone_traps.traps_per_ha",
+            "land.parcels[].pheromone_traps.installation_date",
+            "land.parcels[].pheromone_traps.days_in_field",
+            "land.parcels[].pheromone_traps.emptied_count",
+            "land.parcels[].crop.schlagnutzungsart"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_or_violation",
+        "description": "Zuschlag oder Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P26-PZR-01",
+        "REF-UBB-P26-PZR-02",
+        "REF-UBB-P26-PZR-03",
+        "REF-UBB-P26-PZR-04",
+        "REF-UBB-P27-PZR-05",
+        "REF-UBB-P27-PZR-06",
+        "REF-UBB-P27-PZR-07",
+        "REF-UBB-P27-PZR-08",
+        "REF-UBB-P27-PZR-09",
+        "REF-UBB-P31-ANT-20",
+        "REF-SRL-P32-UBB-20"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_pzr_schlagnutzungsarten",
+        "data.oepul.o6_1a.arable_supplements.pzr_eligible",
+        "data.oepul.o6_1a.arable_supplements.pzr_violation",
+        "data.oepul.o6_1a.arable_supplements.violations"
+      ]
+    },
+    {
+      "id": "UBB-PZR-002",
+      "rule_type": "premium_rate",
+      "statement": "Pheromonfallen-Zuschlag ab 2025: 150 €/ha; gesetzliche Vorschriften sind zusätzlich zu beachten.",
+      "conditions": [
+        {
+          "expression": "area * 150",
+          "description": "PZR-Prämie",
+          "input_paths": [
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "pzr_premium",
+        "description": "EUR",
+        "value": 150.0
+      },
+      "source_reference_ids": [
+        "REF-UBB-P33-PR-13",
+        "REF-UBB-P27-PZR-10"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.arable_supplements.pzr_premium"
+      ]
+    },
+    {
+      "id": "UBB-ZG7-001",
+      "rule_type": "premium_rate",
+      "statement": "Zuschlag für über 7 % hinausgehende Grünland-DIV bis max. 20 % der gemähten Grünlandfläche (ohne Bergmähder): 108 €/ha (2023: 100); NAT, EBW, N2 und GLÖZ 4 zählen für die 7 %, nicht für den Zuschlag.",
+      "conditions": [
+        {
+          "expression": "max(0, min(pure_div, 0.20*G) - 0.07*G)",
+          "description": "Zuschlag Grünland",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "over7_premium",
+        "description": "EUR",
+        "value": 108.0
+      },
+      "source_reference_ids": [
+        "REF-UBB-P27-Z7G-01",
+        "REF-UBB-P27-Z7G-02",
+        "REF-UBB-P28-Z7G-03",
+        "REF-UBB-P34-PR-23"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.grassland_supplements.over7_area_ha",
+        "data.oepul.o6_1a.grassland_supplements.over7_premium",
+        "data.oepul.o6_1a.grassland_supplements.pure_div_area_ha"
+      ]
+    },
+    {
+      "id": "UBB-ZGZ-001",
+      "rule_type": "premium_rate",
+      "statement": "Grünland-DIV auf Schlägen mit durchschnittlicher Grünlandzahl von mind. 30 erhalten automatisch einen Zuschlag bis max. 20 % der gemähten Grünlandfläche: 2023 50, 2024 54, ab 2025 100 €/ha.",
+      "conditions": [
+        {
+          "expression": "min(sum(area where gruenlandzahl>=30), 0.20*G) * rate",
+          "description": "Grünlandzahl",
+          "input_paths": [
+            "land.parcels[].soil_index.gruenlandzahl"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "gruenlandzahl_premium",
+        "description": "EUR",
+        "value": 100.0
+      },
+      "source_reference_ids": [
+        "REF-UBB-P28-GZ-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.grassland_supplements.gruenlandzahl_area_ha",
+        "data.oepul.o6_1a.grassland_supplements.gruenlandzahl_premium"
+      ]
+    },
+    {
+      "id": "UBB-ZG3HA-001",
+      "rule_type": "premium_rate",
+      "statement": "Zuschlag auf Grünland-DIV bis max. 20 % der gemähten Grünlandfläche (54 €/ha), wenn mind. 1 DIV größer 0,05 ha je angefangene 3,00 ha gemähte Grünlandfläche (aufrunden, z. B. 7 bei 18,01 ha).",
+      "conditions": [
+        {
+          "expression": "count(div parcels > 0.05) >= ceil(G/3)",
+          "description": "Anzahl",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "per_3ha_premium",
+        "description": "EUR",
+        "value": 54.0
+      },
+      "source_reference_ids": [
+        "REF-UBB-P28-Z3G-01",
+        "REF-SRL-P33-UBB-22"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.grassland_supplements.per_3ha_condition_met",
+        "data.oepul.o6_1a.grassland_supplements.per_3ha_premium",
+        "data.oepul.o6_1a.grassland_supplements.required_div_parcels"
+      ]
+    },
+    {
+      "id": "UBB-ZAGF-001",
+      "rule_type": "premium_rate",
+      "statement": "Ab 2025 wird für das Belassen von Altgrasflächen (DIVAGF) ein gesonderter Zuschlag von 150 €/ha bis max. 20 % der gemähten Grünlandfläche gewährt.",
+      "conditions": [
+        {
+          "expression": "year >= 2025 and DIVAGF compliant",
+          "description": "Altgras",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "altgras_premium",
+        "description": "EUR",
+        "value": 150.0
+      },
+      "source_reference_ids": [
+        "REF-UBB-P18-AGF-05",
+        "REF-UBB-P34-PR-23"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.grassland_supplements.altgras_area_ha",
+        "data.oepul.o6_1a.grassland_supplements.altgras_premium"
+      ]
+    },
+    {
+      "id": "UBB-DIVRSG-002",
+      "rule_type": "premium_rate",
+      "statement": "DIVRS-Grünland-Zuschlag: 424 €/ha (2023: 300), max. bis zum Ende des Vertragszeitraums, bis 20 % der gemähten Grünlandfläche.",
+      "conditions": [
+        {
+          "expression": "min(area, 0.20*G) * 424",
+          "description": "DIVRS Grünland",
+          "input_paths": [
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "divrs_premium",
+        "description": "EUR",
+        "value": 424.0
+      },
+      "source_reference_ids": [
+        "REF-UBB-P19-RSG-01",
+        "REF-UBB-P34-PR-23"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.grassland_supplements.divrs_area_ha",
+        "data.oepul.o6_1a.grassland_supplements.divrs_premium"
+      ]
+    },
+    {
+      "id": "UBB-STEIL-001",
+      "rule_type": "premium_rate",
+      "statement": "Zuschlag gemähte Steilflächen: mind. einmal jährlich gemähte Grünlandflächen mit Hangneigung mind. 50 % (Einmähdige Wiese, Streuwiese, Mähwiese/-weide zwei bzw. drei und mehr Nutzungen), automatisch über Hangneigungslayer: 432 €/ha (2023: 400).",
+      "conditions": [
+        {
+          "expression": "slope_percent >= 50 and schlagnutzungsart in list and mown_at_least_once",
+          "description": "Steilfläche",
+          "input_paths": [
+            "land.parcels[].slope_percent",
+            "land.parcels[].crop.schlagnutzungsart",
+            "land.parcels[].operations.use_events[].type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "steep_premium",
+        "description": "EUR",
+        "value": 432.0
+      },
+      "source_reference_ids": [
+        "REF-UBB-P28-ST-01",
+        "REF-UBB-P28-ST-02",
+        "REF-UBB-P29-ST-03",
+        "REF-UBB-P34-PR-24",
+        "REF-SRL-P29-UBB-06"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_steep_slope_schlagnutzungsarten",
+        "data.oepul.o6_1a.grassland_supplements.steep_eligible",
+        "data.oepul.o6_1a.grassland_supplements.steep_premium"
+      ]
+    },
+    {
+      "id": "SRL-TOPUP-001",
+      "rule_type": "option",
+      "statement": "Die Bundesländer können zusätzlich 50 €/ha zum Zuschlag gemähte Steilflächen aus Landesmitteln gewähren, sofern bis 15.05. gemeldet und Mittel bereitgestellt; es gelten die gleichen Bestimmungen (Modulation, Obergrenzen, Kürzungen).",
+      "conditions": [
+        {
+          "expression": "land_top_up_steilflaechen_granted",
+          "description": "Landes-Top-up",
+          "input_paths": [
+            "farm.oepul.land_top_up_steilflaechen_granted"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "top_up",
+        "description": "EUR",
+        "value": 50.0
+      },
+      "source_reference_ids": [
+        "REF-SRL-P18-TOP-01",
+        "REF-SRL-P18-TOP-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.grassland_supplements.land_top_up_premium"
+      ]
+    },
+    {
+      "id": "UBB-PR-ACK-001",
+      "rule_type": "premium_rate",
+      "statement": "Basismodulprämie Acker (inkl. Biodiversitätsflächen, bei Grünbrache bis max. 20 % der Ackerfläche): 2023 70, 2024 75,6, ab 2025 85 €/ha.",
+      "conditions": [
+        {
+          "expression": "(non-fallow eligible arable + min(DIV fallow, 0.20*A)) * rate",
+          "description": "Basis Acker",
+          "input_paths": [
+            "land.parcels[].crop.schlagnutzungsart",
+            "land.parcels[].codes[]",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "arable_base_premium",
+        "description": "EUR",
+        "value": 85.0
+      },
+      "source_reference_ids": [
+        "REF-UBB-P32-PR-07",
+        "REF-SRL-P32-UBB-21",
+        "REF-SRL-P27-INK-01"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_premium_rates",
+        "data.oepul.o6_1a.common.rate",
+        "data.oepul.o6_1a.premium.arable_base_area_ha",
+        "data.oepul.o6_1a.premium.arable_base_premium"
+      ]
+    },
+    {
+      "id": "UBB-PR-ERO-001",
+      "rule_type": "exclusion",
+      "statement": "Schläge größer 0,50 ha auf Ackerflächen mit überwiegender Hangneigung ab 10 %, auf denen erosionsgefährdete Kulturen (Ackerbohnen, Kartoffeln, Kürbisse, Mais, Rüben, Sojabohnen, Sonnenblumen, Sorghum) ohne erosionsmindernde Verfahren gemäß 'Erosionsschutz Acker' angebaut werden, erhalten keine Acker-Basismodulprämie; bei Mulch-, Direktsaat oder Strip-Till ist zusätzlich Teilnahme an Zwischenfruchtanbau oder System Immergrün nötig.",
+      "conditions": [
+        {
+          "expression": "area > 0.5 and slope >= 10 and erosion_prone and not erosion_protected",
+          "description": "Erosion",
+          "input_paths": [
+            "land.parcels[].area_ha",
+            "land.parcels[].slope_percent",
+            "land.parcels[].crop.schlagnutzungsart",
+            "land.parcels[].operations.erosion_protection_method",
+            "farm.oepul.measures[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_arable_base",
+        "description": "Keine Basisprämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P33-PR-14",
+        "REF-UBB-P33-PR-15"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_erosion_prone_crops",
+        "data.oepul.o6_1a.premium.erosion_excluded",
+        "data.oepul.o6_1a.premium.erosion_protected"
+      ]
+    },
+    {
+      "id": "UBB-PR-GL-001",
+      "rule_type": "premium_rate",
+      "statement": "Basismodulprämie Grünland (inkl. Biodiversitätsflächen): nicht-tierhaltender Betrieb 27 €/ha, tierhaltender Betrieb 75,6 €/ha (2023: 25 bzw. 70).",
+      "conditions": [
+        {
+          "expression": "grassland_base_area * (is_livestock_farm ? 75.6 : 27.0)",
+          "description": "Basis Grünland",
+          "input_paths": [
+            "land.parcels[].area_ha",
+            "livestock.species_groups[].rgve_category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "grassland_base_premium",
+        "description": "EUR",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-UBB-P34-PR-22"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.premium.grassland_base_premium",
+        "data.oepul.o6_1a.premium.grassland_rate"
+      ]
+    },
+    {
+      "id": "UBB-PR-EXC-001",
+      "rule_type": "exclusion",
+      "statement": "Keine UBB-Flächenprämie auf Schlägen mit Code OP/OPUBB/VF, in Nationalparks Neusiedlersee und Donau-Auen bzw. mit relevanten Nationalparkauflagen, auf Flächen nur LSE-kombinierbarer Maßnahmen (NAT, EBW, BAW, AG, Bergmähder-Maßnahme), K20, Sonstigen Flächen und Flächen außerhalb Österreichs.",
+      "conditions": [
+        {
+          "expression": "not_eligible_area(p)",
+          "description": "Ausschluss",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].national_park",
+            "land.parcels[].crop.schlagnutzungsart",
+            "land.parcels[].in_austria"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P07-OP-01",
+        "REF-ATB-P07-NFF-02",
+        "REF-ATB-P07-NFF-03",
+        "REF-ATB-P07-NFF-04",
+        "REF-SRL-P16-VF-01",
+        "REF-SRL-P51-BM-01",
+        "REF-SRL-P60-BAW-01",
+        "REF-SRL-P77-AG-01",
+        "REF-SRL-P81-NAT-01"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_national_parks_no_premium",
+        "data.o6_1a.o6_1a_no_premium_codes",
+        "data.oepul.o6_1a.common.no_premium",
+        "data.oepul.o6_1a.premium.not_eligible_area"
+      ]
+    },
+    {
+      "id": "ATB-MOD-001",
+      "rule_type": "calculation",
+      "statement": "Betriebsgrößenmodulation: bis 200 ha 100 %, über 200 bis 300 ha 90 %, über 300 bis 1.000 ha 85 %, über 1.000 ha 75 % der Prämie; Faktor auf Basis MFA auf alle Maßnahmenprämien (Beispiel 220 ha: 99,09 %).",
+      "conditions": [
+        {
+          "expression": "modulated_area(T)/T",
+          "description": "Modulationsfaktor",
+          "input_paths": [
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "modulation_factor",
+        "description": "Faktor",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P19-MOD-01",
+        "REF-ATB-P19-MOD-02",
+        "REF-SRL-P17-MOD-01"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_modulation_brackets",
+        "data.oepul.o6_1a.premium.modulated_area",
+        "data.oepul.o6_1a.premium.modulation_factor",
+        "data.oepul.o6_1a.premium.net_premium"
+      ]
+    },
+    {
+      "id": "ATB-OG-001",
+      "rule_type": "cap",
+      "statement": "Prämienobergrenzen je ha für die Summe flächenbezogener Zahlungen am Schlag inkl. umgelegter LSE-Zahlungen: 1.300 €/ha (2023: 1.200), bei Naturschutz/EBW 1.500 €/ha (2023: 1.300), K20 970 €/ha, Nützlinge 2.160 €/ha.",
+      "conditions": [
+        {
+          "expression": "total_area_payments_eur_per_ha <= payment_cap_per_ha(p)",
+          "description": "Obergrenze",
+          "input_paths": [
+            "land.parcels[].total_area_payments_eur_per_ha",
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Kürzung auf Obergrenze.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P19-OG-01",
+        "REF-ATB-P19-OG-02",
+        "REF-SRL-P17-OG-01"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_payment_caps_eur_per_ha",
+        "data.oepul.o6_1a.premium.payment_cap_per_ha",
+        "data.oepul.o6_1a.premium.violations"
+      ]
+    },
+    {
+      "id": "ATB-FWP-001",
+      "rule_type": "eligibility",
+      "statement": "Förderwerbend sind natürliche Personen, eingetragene Personengesellschaften, juristische Personen und Personenvereinigungen mit höchstens 25 % Beteiligung von Gebietskörperschaften; Gebietskörperschaften sind bei UBB ausgeschlossen. Betrieb im eigenen Namen, Verfügungsgewalt, aktiver Landwirt.",
+      "conditions": [
+        {
+          "expression": "applicant_type in {natural_person, registered_partnership} or (legal/association and public_body_share <= 0.25)",
+          "description": "Förderwerber",
+          "input_paths": [
+            "farm.oepul.applicant_type",
+            "farm.oepul.public_body_share"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Nicht teilnahmeberechtigt.",
+        "value": 0.25
+      },
+      "source_reference_ids": [
+        "REF-ATB-P04-FWP-01",
+        "REF-ATB-P05-FWP-02"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_applicant_limits",
+        "data.o6_1a.o6_1a_eligible_applicant_types",
+        "data.oepul.o6_1a.eligibility.applicant_eligible",
+        "data.oepul.o6_1a.eligibility.violations"
+      ]
+    },
+    {
+      "id": "ATB-MIN-001",
+      "rule_type": "eligibility",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr muss der Betrieb mind. 0,50 ha geschützten Anbau oder 1,50 ha landwirtschaftliche Fläche (inkl. GLÖZ-LSE, Mehrnutzenhecken, Agroforststreifen) bewirtschaften; ab dem zweiten Jahr entfällt die Mindestgröße.",
+      "conditions": [
+        {
+          "expression": "year == first_oepul_year implies (protected >= 0.5 or area >= 1.5)",
+          "description": "Betriebsmindestgröße",
+          "input_paths": [
+            "farm.oepul.first_oepul_year",
+            "farm.oepul.protected_cultivation_area_ha",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Kein Vertrag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P05-MIN-01",
+        "REF-ATB-P05-MIN-02",
+        "REF-SRL-P10-MIN-01"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_minimum_farm_size",
+        "data.oepul.o6_1a.eligibility.minimum_farm_size_met",
+        "data.oepul.o6_1a.eligibility.violations"
+      ]
+    },
+    {
+      "id": "ATB-LAGE-001",
+      "rule_type": "eligibility",
+      "statement": "Geförderte Flächen müssen in Österreich liegen; Flächen außerhalb werden nicht gefördert und bei Begrenzungen nicht berücksichtigt.",
+      "conditions": [
+        {
+          "expression": "in_austria",
+          "description": "Lage",
+          "input_paths": [
+            "land.parcels[].in_austria"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Nicht förderfähig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P09-LAGE-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.eligibility.minimum_size_area_ha",
+        "data.oepul.o6_1a.eligibility.violations"
+      ]
+    },
+    {
+      "id": "ATB-KOND-001",
+      "rule_type": "obligation",
+      "statement": "Alle ÖPUL-Betriebe müssen die Konditionalität (GLÖZ/GAB) und die soziale Konditionalität einhalten, um die Förderung in voller Höhe zu erhalten.",
+      "conditions": [
+        {
+          "expression": "conditionality complied",
+          "description": "Konditionalität",
+          "input_paths": [
+            "documentation.audit_last_year_noncompliance"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_if_breached",
+        "description": "Kürzung nach VO (EU) 2021/2116.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P04-KOND-01"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "ATB-MBK-001",
+      "rule_type": "obligation",
+      "statement": "Mindestbewirtschaftung Acker (außer Ackerfutter) und geschützter Anbau: ordnungsgemäßer Anbau, jährliche Pflege, Ernte und Verbringen des Ernteguts auf mind. 85 % des Schlages; DIV, Mehrnutzenhecken, BAW, AG, NAT/EBW-Grünbrachen und K20 sind ausgenommen.",
+      "conditions": [
+        {
+          "expression": "harvested_share_percent >= 85 unless exempt or drought exemption or force majeure",
+          "description": "Ernteverpflichtung",
+          "input_paths": [
+            "land.parcels[].harvest.harvested_share_percent",
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß; Code OP bei Nichternte.",
+        "value": 85
+      },
+      "source_reference_ids": [
+        "REF-ATB-P05-MBK-01",
+        "REF-ATB-P06-MBK-02",
+        "REF-ATB-P06-MBK-05",
+        "REF-SRL-P10-FF-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.general_conditions.exempt_from_minimum_management",
+        "data.oepul.o6_1a.general_conditions.violations"
+      ]
+    },
+    {
+      "id": "ATB-MBK-002",
+      "rule_type": "obligation",
+      "statement": "Mindestbewirtschaftung Grünland und Ackerfutter: jährlich mind. einmal vollflächige Mahd mit Verbringung oder vollflächige Beweidung; Bergmähder mind. alle 2 Jahre Mahd; aus der Produktion genommene Flächen: Gründecke und Häckseln/Pflegemahd mind. jedes zweite Jahr.",
+      "conditions": [
+        {
+          "expression": "grassland_used(p)",
+          "description": "Nutzung",
+          "input_paths": [
+            "land.parcels[].operations.use_events[].type",
+            "land.parcels[].operations.use_events[].material_removed",
+            "land.parcels[].operations.bergmaehder_mown_previous_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P06-MBK-03",
+        "REF-ATB-P06-MBK-04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.general_conditions.grassland_used",
+        "data.oepul.o6_1a.general_conditions.violations"
+      ]
+    },
+    {
+      "id": "ATB-NFF-001",
+      "rule_type": "exclusion",
+      "statement": "Nicht förderfähig sind u. a. Flächen, die nicht aktiv bewirtschaftet werden (z. B. Grünbrachen ohne DIV), Sonstige Flächen, GLÖZ-Landschaftselemente, Reb- und Baumschulen, Energieholz und Versuchsflächen mit Code VF.",
+      "conditions": [
+        {
+          "expression": "schlagnutzungsart Grünbrache without DIV or Sonstige or GLÖZ-LSE",
+          "description": "Nicht förderfähig",
+          "input_paths": [
+            "land.parcels[].crop.schlagnutzungsart",
+            "land.parcels[].area_kind",
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P07-NFF-01",
+        "REF-ATB-P07-NFF-02",
+        "REF-ATB-P07-NFF-04",
+        "REF-SRL-P11-NFF-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.premium.arable_base_parcel",
+        "data.oepul.o6_1a.premium.not_eligible_area"
+      ]
+    },
+    {
+      "id": "ATB-VD-001",
+      "rule_type": "obligation",
+      "statement": "Die Verpflichtungsdauer umfasst das Kalenderjahr; förderfähig sind nur Flächen mit ganzjähriger Erfüllung. Unterjährig weitergegebene Flächen sind mit OP/OPUBB zu codieren, wenn der Übernehmer die Auflagen nicht bis Jahresende weiterführt.",
+      "conditions": [
+        {
+          "expression": "transferred_during_year and not successor_continues implies OP/OPUBB",
+          "description": "Weitergabe",
+          "input_paths": [
+            "land.parcels[].transfer.transferred_during_year",
+            "land.parcels[].transfer.successor_continues_until_year_end",
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Keine Prämie ohne Codierung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P10-VD-01",
+        "REF-ATB-P10-VD-02",
+        "REF-ATB-P08-OP-02",
+        "REF-SRL-P12-VD-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.general_conditions.violations"
+      ]
+    },
+    {
+      "id": "ATB-OP-002",
+      "rule_type": "procedure",
+      "statement": "Nichterfüllung wegen reinem Fremdverschulden: maßnahmenbezogener OP-Code (keine Prämie für die Maßnahme), Nachweise aufbewahren; ohne Fremdverschulden ist der Code (z. B. DIV) zu löschen oder eine Selbstanzeige einzubringen (geringere Sanktion als bei Vor-Ort-Kontrolle), z. B. bei irrtümlichem Häckseln von mehr als 25 % der Acker-DIV vor 1.8.",
+      "conditions": [
+        {
+          "expression": "obligation_not_met implies OPUBB or OP or self_reported",
+          "description": "Selbstanzeige",
+          "input_paths": [
+            "land.parcels[].compliance.obligation_not_met",
+            "land.parcels[].compliance.self_reported",
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Beanstandung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P08-OP-03",
+        "REF-ATB-P09-OP-04",
+        "REF-ATB-P09-OP-05"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.general_conditions.violations"
+      ]
+    },
+    {
+      "id": "ATB-ABG-001",
+      "rule_type": "sanction",
+      "statement": "Flächenverringerungen sind jährlich bis 5 %, höchstens 5 ha, jedenfalls 0,50 ha zulässig (Basis: Vorjahresfläche); darüber besteht für die gesamte Differenzfläche Rückzahlungspflicht. Verlust der Verfügungsgewalt, Umwandlung Acker->Grünland, Grünland->Alm und in LSE Mehrnutzenhecke sind zulässig.",
+      "conditions": [
+        {
+          "expression": "relevant_reduction > max(min(0.05*prev, 5), 0.5)",
+          "description": "Toleranz",
+          "input_paths": [
+            "farm.oepul.ubb.area_history.previous_year_ha",
+            "farm.oepul.ubb.area_history.current_year_ha",
+            "farm.oepul.ubb.area_history.loss_of_control_ha",
+            "farm.oepul.ubb.area_history.permitted_conversion_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "repayment",
+        "description": "Rückzahlung Differenzfläche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P15-ABG-01",
+        "REF-ATB-P15-ABG-02",
+        "REF-ATB-P16-ABG-04",
+        "REF-ATB-P16-ABG-05",
+        "REF-ATB-P16-ABG-06",
+        "REF-SRL-P13-VFG-01",
+        "REF-SRL-P13-ABG-01"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_area_reduction_tolerance",
+        "data.oepul.o6_1a.general_conditions.allowed_reduction_ha",
+        "data.oepul.o6_1a.general_conditions.relevant_reduction_ha",
+        "data.oepul.o6_1a.general_conditions.repayment_area_ha",
+        "data.oepul.o6_1a.general_conditions.violations"
+      ]
+    },
+    {
+      "id": "ATB-ABG-002",
+      "rule_type": "obligation",
+      "statement": "Bei Wechsel der bewirtschaftenden Person sind die Maßnahmenflächen jedenfalls weiterzuführen; der Nachfolger tritt dem Fördervertrag bei, beide haften solidarisch.",
+      "conditions": [
+        {
+          "expression": "change of operator",
+          "description": "Betriebsübertragung",
+          "input_paths": [
+            "farm.oepul.ubb.exit_reason"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "continue_contract",
+        "description": "Vertrag weiterführen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P16-ABG-03",
+        "REF-SRL-P13-BUE-01"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "ATB-ZUG-001",
+      "rule_type": "cap",
+      "statement": "Flächenzugänge sind 2024 und 2025 zur Gänze prämienfähig; danach auf max. 50 % auf Basis 2025 beschränkt, eine Vergrößerung um bis zu 5 ha ist jedenfalls zulässig; bereits mit der gleichen Maßnahme belegte Flächen gelten nicht als Zugang.",
+      "conditions": [
+        {
+          "expression": "current <= base_2025 + max(0.5*base_2025, 5) + previously_committed",
+          "description": "Zugang",
+          "input_paths": [
+            "farm.oepul.ubb.area_history.base_2025_ha",
+            "farm.oepul.ubb.area_history.current_year_ha",
+            "farm.oepul.ubb.area_history.increase_previously_committed_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "max_premium_eligible_area",
+        "description": "ha",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P17-ZUG-01",
+        "REF-ATB-P17-ZUG-02",
+        "REF-ATB-P17-ZUG-03",
+        "REF-SRL-P14-ZUG-01"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_area_increase_limit",
+        "data.oepul.o6_1a.general_conditions.max_premium_eligible_area_ha",
+        "data.oepul.o6_1a.general_conditions.violations"
+      ]
+    },
+    {
+      "id": "ATB-WECH-001",
+      "rule_type": "option",
+      "statement": "Bis spätestens 31.12.2025 kann UBB in Biologische Wirtschaftsweise umgewandelt werden, ohne Rückzahlung; die Bio-Verpflichtungen gelten für die Restlaufzeit.",
+      "conditions": [
+        {
+          "expression": "conversion_to_bio_date <= 2025-12-31",
+          "description": "Umwandlung",
+          "input_paths": [
+            "farm.oepul.ubb.conversion_to_bio_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_repayment",
+        "description": "Keine Rückzahlung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P13-WECH-01",
+        "REF-ATB-P14-WECH-02",
+        "REF-SRL-P15-UMW-01"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_measure_conversions",
+        "data.oepul.o6_1a.eligibility.conversion_to_bio_without_repayment"
+      ]
+    },
+    {
+      "id": "ATB-UEB-001",
+      "rule_type": "deadline",
+      "statement": "Flächenbezogene Maßnahmen können nach der Antragsfrist bis 15.04. (2023 und 2028: 17.04.) von einem bisher nicht teilnehmenden Betrieb für die Restlaufzeit übernommen werden (auch nach letztem Einstiegsjahr); Antrag online, Genehmigung durch AMA, neuer Vertrag bis Ende des ursprünglichen Zeitraums.",
+      "conditions": [
+        {
+          "expression": "application_date <= takeover_deadline(year)",
+          "description": "Frist",
+          "input_paths": [
+            "farm.oepul.ubb.takeover.application_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Übernahme verspätet.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P14-UEB-01",
+        "REF-SRL-P14-UEB-01"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_takeover_deadlines",
+        "data.oepul.o6_1a.eligibility.takeover_deadline",
+        "data.oepul.o6_1a.eligibility.violations"
+      ]
+    },
+    {
+      "id": "ATB-UEB-002",
+      "rule_type": "prohibition",
+      "statement": "Die Maßnahmenübernahme darf nicht zu einer Ausweitung auf andere Flächen um mehr als 50 % führen.",
+      "conditions": [
+        {
+          "expression": "additional_area <= 0.5*taken_over_area",
+          "description": "Ausweitung",
+          "input_paths": [
+            "farm.oepul.ubb.takeover.additional_area_ha",
+            "farm.oepul.ubb.takeover.taken_over_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Unzulässig.",
+        "value": 0.5
+      },
+      "source_reference_ids": [
+        "REF-ATB-P14-UEB-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.eligibility.violations"
+      ]
+    },
+    {
+      "id": "ATB-UEB-003",
+      "rule_type": "procedure",
+      "statement": "Die Übernahme des optionalen Zuschlags Naturschutz-Monitoring ist nur in Einzelfällen bei Betriebsauflösung, -teilung oder -zusammenlegung möglich.",
+      "conditions": [
+        {
+          "expression": "includes_monitoring implies reason in {betriebsaufloesung, betriebsteilung, betriebszusammenlegung}",
+          "description": "Monitoring-Übernahme",
+          "input_paths": [
+            "farm.oepul.ubb.takeover.includes_monitoring",
+            "farm.oepul.ubb.takeover.reason"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Unzulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P15-UEB-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.eligibility.violations"
+      ]
+    },
+    {
+      "id": "ATB-AUS-001",
+      "rule_type": "sanction",
+      "statement": "Ein Ausstieg aus UBB vor Ende des Vertragszeitraums führt zur Rückforderung bereits gewährter Prämien (ausgenommen Verlust der Verfügungsgewalt, Umwandlung in Bio, Revisionsklausel, anerkannte dauerhafte Umstände); Abmeldung im laufenden Jahr macht die Maßnahme im Jahr ungültig; Ausstieg bis zur Kontrolle möglich; Wiedereinstieg nur mit neuem Maßnahmenantrag.",
+      "conditions": [
+        {
+          "expression": "exit_before_contract_end and exit_reason not in exempt reasons",
+          "description": "Ausstieg",
+          "input_paths": [
+            "farm.oepul.ubb.exit_before_contract_end",
+            "farm.oepul.ubb.exit_reason"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "repayment",
+        "description": "Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P13-ANT-03",
+        "REF-ATB-P13-ANT-04",
+        "REF-ATB-P13-ANT-05",
+        "REF-ATB-P13-ANT-06",
+        "REF-SRL-P16-REV-01",
+        "REF-SRL-P15-HG-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.eligibility.repayment_due_to_exit"
+      ]
+    },
+    {
+      "id": "ATB-KOMB-001",
+      "rule_type": "procedure",
+      "statement": "Unmögliche Maßnahmenkombinationen können bis zum Erhalt der Auszahlungsmitteilung korrigiert werden, sofern keine Beanstandung vorliegt; bis zur Abmeldung sind alle Verpflichtungen einzuhalten.",
+      "conditions": [
+        {
+          "expression": "correction before payment notice",
+          "description": "Korrektur",
+          "input_paths": [
+            "farm.oepul.measures[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "correction_allowed",
+        "description": "Korrektur zulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P13-KOMB-01"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "ATB-SANK-001",
+      "rule_type": "sanction",
+      "statement": "Verstöße gegen inhaltliche Auflagen (z. B. Düngeverbote, Weiterbildung, 7 % DIV) werden nach Schwere, Ausmaß, Dauer und Häufigkeit maßnahmenbezogen inkl. Zuschlägen gestuft: Verwarnung (ab 2027: Einbehalt 1 %), 2, 5, 10, 25, 50, 100 % Kürzung; Ausschluss und Rückforderung bei zweimaliger 100 %-Kürzung.",
+      "conditions": [
+        {
+          "expression": "sanction_reduction_percent(level)",
+          "description": "Kürzungsstufe",
+          "input_paths": [
+            "farm.year",
+            "farm.oepul.ubb.full_reductions_in_contract_period"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_percent",
+        "description": "%",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-ATB-P17-SANK-01",
+        "REF-ATB-P18-SANK-02",
+        "REF-ATB-P18-SANK-03",
+        "REF-ATB-P18-SANK-04",
+        "REF-ATB-P17-KON-01"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_sanction_levels",
+        "data.oepul.o6_1a.general_conditions.exclusion_due_to_repeated_full_reduction",
+        "data.oepul.o6_1a.general_conditions.sanction_reduction_percent"
+      ]
+    },
+    {
+      "id": "ATB-AUSZ-001",
+      "rule_type": "procedure",
+      "statement": "Die Auszahlung erfolgt bis 30. Juni des Folgejahres auf das Namenskonto; vorab ist nach Verwaltungskontrolle eine Teilzahlung von max. 75 % möglich.",
+      "conditions": [
+        {
+          "expression": "payment_date <= (year+1)-06-30; advance <= 0.75",
+          "description": "Auszahlung",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "payment_schedule",
+        "description": "Termin/Anteil.",
+        "value": 0.75
+      },
+      "source_reference_ids": [
+        "REF-ATB-P18-AUSZ-01",
+        "REF-ATB-P18-AUSZ-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.general_conditions.max_advance_share",
+        "data.oepul.o6_1a.general_conditions.payment_deadline"
+      ]
+    },
+    {
+      "id": "SRL-ZA-001",
+      "rule_type": "procedure",
+      "statement": "Wird in einem weiteren Verpflichtungsjahr kein Zahlungsantrag gestellt, bleibt die Verpflichtung aufrecht, es erfolgt aber keine Zahlung; ohne Nachreichung binnen einem Jahr endet die Verpflichtung und alle bisherigen Prämien sind zurückzuzahlen.",
+      "conditions": [
+        {
+          "expression": "payment_application_submitted == false",
+          "description": "Zahlungsantrag",
+          "input_paths": [
+            "farm.oepul.ubb.payment_application_submitted",
+            "farm.oepul.ubb.payment_application_overdue_more_than_one_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_payment_or_repayment",
+        "description": "Keine Zahlung / Rückzahlung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-P22-ZA-01",
+        "REF-SRL-P22-ZA-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.eligibility.obligation_ended_missing_application",
+        "data.oepul.o6_1a.eligibility.payment_application_missing"
+      ]
+    },
+    {
+      "id": "SRL-AUSZ-003",
+      "rule_type": "procedure",
+      "statement": "Von der Gewährung kann abgesehen werden, wenn der Auszahlungsbetrag 50 Euro nicht überschreitet.",
+      "conditions": [
+        {
+          "expression": "amount <= 50",
+          "description": "Bagatellgrenze",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "may_be_waived",
+        "description": "Keine Auszahlung möglich.",
+        "value": 50
+      },
+      "source_reference_ids": [
+        "REF-SRL-P22-AUSZ-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.eligibility.payment_may_be_waived"
+      ]
+    },
+    {
+      "id": "SRL-RF-001",
+      "rule_type": "sanction",
+      "statement": "Bei Nichterfüllung von Zugangsvoraussetzungen kommt im 1. Jahr kein Vertrag zustande; ab dem 2. Verpflichtungsjahr wird im betroffenen Jahr keine Prämie gewährt. Mehrfachkürzungen erfolgen in festgelegter Reihenfolge (Übererklärung, Zugang, Fristen, Inhalt, Obergrenzen, Modulation, Vertragszeitraum, Zugangskürzung, Konditionalität).",
+      "conditions": [
+        {
+          "expression": "access rule violated",
+          "description": "Zugangsvoraussetzung",
+          "input_paths": [
+            "farm.oepul.measures[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Keine Prämie im Jahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-P24-RF-01",
+        "REF-SRL-P25-RF-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.access_conditions_met"
+      ]
+    },
+    {
+      "id": "SRL-HG-001",
+      "rule_type": "exception",
+      "statement": "Bei höherer Gewalt gilt § 6 GSP-AV; bei dauerhaften, nicht beeinflussbaren Umständen kann die AMA die Verpflichtung ohne Rückforderung beenden (Prämie im Eintrittsjahr nur bei Eintritt nach 15.04.); bei vorübergehenden Umständen (z. B. Bodenordnung, verordnete Schädlingsbekämpfung) kann von Rückforderung abgesehen werden; das BML kann spezielle Festlegungen treffen.",
+      "conditions": [
+        {
+          "expression": "recognized circumstances",
+          "description": "Umstände",
+          "input_paths": [
+            "farm.oepul.ubb.exit_reason"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_repayment",
+        "description": "Keine Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-P15-HG-01",
+        "REF-SRL-P15-HG-02",
+        "REF-SRL-P16-HG-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.eligibility.repayment_due_to_exit"
+      ]
+    },
+    {
+      "id": "SRL-KON-001",
+      "rule_type": "sanction",
+      "statement": "Verweigert die förderwerbende Person die Auskunft oder verhindert die Vor-Ort-Kontrolle, wird der Antrag abgelehnt, keine Prämie gewährt und bestehende Verträge rückabgewickelt.",
+      "conditions": [
+        {
+          "expression": "control refused",
+          "description": "Kontrollverweigerung",
+          "input_paths": [
+            "documentation.audit_last_year_noncompliance"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reject",
+        "description": "Ablehnung und Rückabwicklung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-P23-KON-01"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "N26-TR-001",
+      "rule_type": "exception",
+      "statement": "2026 dürfen Acker-Biodiversitätsflächen vor dem 1. August genutzt werden, wenn auf den betroffenen Flächen per MFA-Korrektur OPUBB/OPBIO gesetzt wird (keine UBB-Prämie); beim Mähen betrifft dies nur die über die 25 % hinausgehenden Flächen, bei Beweidung vor 1.8. ist die Codierung jedenfalls erforderlich; max. zweimalige Nutzung und alle übrigen Auflagen bleiben.",
+      "conditions": [
+        {
+          "expression": "year == 2026 and code in {OPUBB, OPBIO}",
+          "description": "Vorzeitige Nutzung Acker-DIV",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].operations.use_events[].date",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exception_without_premium",
+        "description": "Keine Beanstandung, keine Prämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-N0522-04",
+        "REF-N0522-05",
+        "REF-N0522-06",
+        "REF-N0522-07",
+        "REF-N0522-08"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_drought_2026_parameters",
+        "data.oepul.o6_1a.biodiversity_arable.no_premium_2026_code",
+        "data.oepul.o6_1a.notices_2026.early_use_exception_2026"
+      ]
+    },
+    {
+      "id": "N26-TR-003",
+      "rule_type": "exception",
+      "statement": "2026 kann die Nutzung von Grünland-DIV mit OPUBB/OPBIO (ohne Prämie) um 14 Tage vorverlegt werden; bei DIVSZ nur wenn die zweite Mahd vergleichbarer Schläge stattfindet oder stattgefunden hat (zusätzlich 4–7 Tage Vorverlegungskarte, z. B. Tirol/Vorarlberg ab 25.5.); bei DIVNFZ Verkürzung des nutzungsfreien Zeitraums auf 7 Wochen (49 Kalendertage).",
+      "conditions": [
+        {
+          "expression": "year == 2026 and code in {OPUBB, OPBIO}",
+          "description": "Vorzeitige Nutzung Grünland-DIV",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].biodiversity.comparable_second_cut_date",
+            "land.parcels[].biodiversity.phenology_advance_days"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exception_without_premium",
+        "description": "Termine/Ruhezeit verkürzt, keine Prämie.",
+        "value": 14
+      },
+      "source_reference_ids": [
+        "REF-N0522-09",
+        "REF-N0522-10",
+        "REF-N0522-11",
+        "REF-N0522-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_grassland.drought_advance",
+        "data.oepul.o6_1a.biodiversity_grassland.rest_days",
+        "data.oepul.o6_1a.notices_2026.grassland_advance_exception_2026"
+      ]
+    },
+    {
+      "id": "N26-TR-006",
+      "rule_type": "exclusion",
+      "statement": "Flächen, für die auch andere Vorgaben gelten (z. B. Naturschutz, EBW mit Projektbestätigung), sind von den Trockenheitsausnahmen nicht umfasst und weiterhin nach Projektbestätigung zu bewirtschaften.",
+      "conditions": [
+        {
+          "expression": "OPUBB and NAT/EBW and drought_early_use",
+          "description": "Projektflächen",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].biodiversity.drought_early_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Keine Ausnahme.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-N0522-16",
+        "REF-N0812-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.notices_2026.project_bound",
+        "data.oepul.o6_1a.notices_2026.violations"
+      ]
+    },
+    {
+      "id": "N26-TR-007",
+      "rule_type": "procedure",
+      "statement": "Nicht codierte, vorzeitig genutzte Flächen führen zu einer Beanstandung; die Meldung kann nachträglich per MFA-Korrektur erfolgen (zeitnah); Trockenheit wird bei Vor-Ort-Kontrollen berücksichtigt; bei Unmöglichkeit der Auflagen kann höhere Gewalt über eAMA beantragt werden.",
+      "conditions": [
+        {
+          "expression": "early use without OPUBB",
+          "description": "Beanstandung",
+          "input_paths": [
+            "land.parcels[].codes[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Beanstandung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-N0522-15",
+        "REF-N0522-17",
+        "REF-N0522-18"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.violations"
+      ]
+    },
+    {
+      "id": "N26-TR-008",
+      "rule_type": "deadline",
+      "statement": "Nach dem 15. April sind Variantenwechsel bei Grünland-DIV ohne Prämieneinbußen möglich: DIVSZ auf DIVNFZ oder DIVAGF bis einschließlich 15. Juni, DIVNFZ auf DIVAGF bis einschließlich 15. August; DIVNFZ auf DIVSZ ist nach dem 15. April nicht zulässig (Beantragung der Variante bis 15. April).",
+      "conditions": [
+        {
+          "expression": "variant_change_allowed(ch)",
+          "description": "Variantenwechsel",
+          "input_paths": [
+            "land.parcels[].biodiversity.variant_change.from",
+            "land.parcels[].biodiversity.variant_change.to",
+            "land.parcels[].biodiversity.variant_change.date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Unzulässiger Wechsel.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-N0522-02",
+        "REF-N0522-12",
+        "REF-N0522-13",
+        "REF-N0522-14"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_grassland_div_variant_changes_after_april_15",
+        "data.oepul.o6_1a.biodiversity_grassland.variant_change_allowed",
+        "data.oepul.o6_1a.biodiversity_grassland.violations"
+      ]
+    },
+    {
+      "id": "N26-DU-001",
+      "rule_type": "exception",
+      "statement": "2026: In besonders dürrebetroffenen Gebieten (Burgenland, Wien alle Bezirke; genannte Bezirke NÖ, OÖ; ab 12.08. Steiermark: Graz, Graz-Umgebung, Hartberg-Fürstenfeld, Leibnitz, Südoststeiermark, Weiz) gilt die Dürre automatisch als höhere Gewalt: die Ernte auf 85 % muss bei Spätsommer-/Herbstkulturen ohne erntbaren Bestand nicht erfolgen, die Prämie wird gewährt, keine Einzelmeldung nötig; sonst einzelflächenbezogenes Ansuchen.",
+      "conditions": [
+        {
+          "expression": "year == 2026 and district listed and late_summer_autumn_crop and no_harvestable_stand",
+          "description": "Dürregebiet",
+          "input_paths": [
+            "farm.region.federal_state",
+            "farm.region.district",
+            "land.parcels[].harvest.late_summer_autumn_crop",
+            "land.parcels[].harvest.no_harvestable_stand_due_to_drought"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "harvest_obligation_waived",
+        "description": "Keine Beanstandung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-N0805-01",
+        "REF-N0805-02",
+        "REF-N0805-03",
+        "REF-N0805-04",
+        "REF-N0812-04"
+      ],
+      "rego_symbols": [
+        "data.o6_1a.o6_1a_drought_2026_harvest_exemption_districts",
+        "data.oepul.o6_1a.notices_2026.district_listed",
+        "data.oepul.o6_1a.notices_2026.harvest_exemption_2026"
+      ]
+    },
+    {
+      "id": "N26-DU-006",
+      "rule_type": "exception",
+      "statement": "2026 ist auf Acker-Biodiversitätsflächen zusätzlich eine dritte Nutzung zulässig, wenn die Flächen mit OPUBB/OPBIO codiert sind; für diese Flächen wird keine Prämie gewährt; NAT-/EBW-DIV weiterhin nur nach Projektbestätigung.",
+      "conditions": [
+        {
+          "expression": "year == 2026 and OPUBB implies max_uses = 3",
+          "description": "Dritte Nutzung",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].operations.use_events[].type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exception_without_premium",
+        "description": "3 Nutzungen zulässig.",
+        "value": 3
+      },
+      "source_reference_ids": [
+        "REF-N0812-01",
+        "REF-N0812-02",
+        "REF-N0812-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_1a.biodiversity_arable.max_uses"
+      ]
+    },
+    {
+      "id": "N26-DU-008",
+      "rule_type": "information",
+      "statement": "2026 dürfen Naturschutzflächen mit festgelegtem Nutzungstermin ab 12. August genutzt werden (Prämie bleibt); für aus NAT angerechnete Grünland-DIV gilt damit die freigegebene Projektbestätigung.",
+      "conditions": [
+        {
+          "expression": "NAT parcel with cut date condition, year 2026, date >= 08-12",
+          "description": "Freigabe",
+          "input_paths": [
+            "land.parcels[].codes[]",
+            "land.parcels[].project_conditions[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "use_allowed",
+        "description": "Nutzung zulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-N0812-05"
+      ],
+      "rego_symbols": []
+    }
+  ]
+}
