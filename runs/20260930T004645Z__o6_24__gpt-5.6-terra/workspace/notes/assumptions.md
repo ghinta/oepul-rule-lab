@@ -1,0 +1,5 @@
+# Fachliche Annahmen und offene Punkte
+
+- Die im Maßnahmenblatt und in der Sonderrichtlinie verbindlich gemachte Höchstmenge für Stickstoff verweist auf § 4 sowie Anlage 2B und Anlage 3 des **Grundwasserschutzprogramms Graz bis Bad Radkersburg 2018**. Diese Verordnung und ihre Tabellen sind nicht unter den bereitgestellten Quellen. Deshalb enthält `data/` bewusst keine erfundene Klassengrenzentabelle. Die Rego-Regel benötigt je Schlag den aus dem GIS/der Verordnung abgeleiteten `nitrogen_limit_kg_ha` sowie die jahreswirksame Menge.
+- Die Schreibweise österreichischer Bezirksnamen im Dürre-Datensatz ist ASCII-normalisiert, weil die kanonische Profilnotation keine amtliche Kodierung vorgibt. Produktive Eingaben müssen dieselbe Normalisierung verwenden oder vor der Auswertung normalisiert werden.
+- Die Dürre-Hinweise nennen Maßnahmen teilweise nur allgemein. Die nur auf UBB/BIO, Insektizidverzicht, Immergrün, Erosionsschutz, Naturschutz oder Nutztierrassen bezogenen Ausnahmen wurden nicht als WRRL-Pflicht verändert. Die breit formulierte Ausnahme von der Acker-Erntepflicht wird für o6_24 als allgemeine ÖPUL-Bedingung modelliert.

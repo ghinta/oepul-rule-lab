@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 157,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-24-terra/runs/20260930T004645Z__o6_24__gpt-5.6-terra/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_24.rego",
+    "tests/o6_24_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-24-terra/runs/20260930T004645Z__o6_24__gpt-5.6-terra/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 14,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_24.rego",
+        "tests/o6_24_test.rego"
+      ],
+      "duration_ms": 28,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-24-terra/runs/20260930T004645Z__o6_24__gpt-5.6-terra/workspace/tools/opa",
+            "fmt",
+            "policy/o6_24.rego"
+          ],
+          "duration_ms": 16,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_24\n\nimport rego.v1\n\n# Required extensions are proposed in rules/profile_changes.json.\nrequired_area_ha := 2.0\npremium_per_ha_eur := 54.0\n\neligible_parcels contains parcel if {\n\tparcel := input.land.parcels[_]\n\tparcel.land_use == \"arable\"\n\tparcel.o6_24.in_wrrl_area\n\tnot parcel.o6_24.is_fallow\n\tnot parcel.o6_24.has_higher_n_permission\n}\n\neligible_area_ha := sum([parcel.area_ha | parcel := eligible_parcels[_]])\n\nminimum_area_met if {\n\teligible_area_ha >= required_area_ha\n}\n\npremium_eur := eligible_area_ha * premium_per_ha_eur if {\n\tminimum_area_met\n}\n\nassigned_nitrogen_class(parcel) := parcel.o6_24.nitrogen_class if {\n\tparcel.o6_24.nitrogen_class != \"\"\n}\n\nassigned_nitrogen_class(parcel) := \"C\" if {\n\tparcel.o6_24.nitrogen_class == \"\"\n}\n\nnitrogen_compliant if {\n\tevery parcel in eligible_parcels {\n\t\tparcel.o6_24.annual_effective_n_kg_ha <= parcel.o6_24.nitrogen_limit_kg_ha\n\t\tparcel.o6_24.n_application_in_permitted_period\n\t}\n}\n\nrecordkeeping_compliant if {\n\tevery parcel in input.land.parcels {\n\t\tparcel.o6_24.farm_book_recorded\n\t}\n\tinput.documentation.o6_24.farm_book_retained_at_farm\n}\n\ndrought_harvest_exception_2026 if {\n\tinput.farm.year == 2026\n\tparcel := input.land.parcels[_]\n\tparcel.o6_24.no_harvest_due_to_drought\n\tstate := input.farm.region.federal_state\n\tallowed := data.automatic_higher_force_harvest_exception_2026[state]\n\tallowed[_] == \"all\"\n}\n\ndrought_harvest_exception_2026 if {\n\tinput.farm.year == 2026\n\tparcel := input.land.parcels[_]\n\tparcel.o6_24.no_harvest_due_to_drought\n\tstate := input.farm.region.federal_state\n\tdistrict := input.farm.region.district\n\tallowed := data.automatic_higher_force_harvest_exception_2026[state]\n\tallowed[_] == district\n}\n\nviolations contains {\"code\": \"minimum_area\", \"message\": \"At least 2.00 ha arable land in the WRRL area is required in every participation year.\"} if {\n\tnot minimum_area_met\n}\n\nviolations contains {\"code\": \"nitrogen\", \"message\": \"Annual effective nitrogen or the legal application period is not compliant on an eligible parcel.\"} if {\n\tnot nitrogen_compliant\n}\n\nviolations contains {\"code\": \"farm_book\", \"message\": \"The farm book must cover every parcel, including parcels without fertilisation, and be retained on the farm.\"} if {\n\tnot recordkeeping_compliant\n}\n\nviolations contains {\"code\": \"high_n_permission\", \"message\": \"Arable land with an approval for increased nitrogen application is not eligible and must be coded OPWRRL.\"} if {\n\tparcel := input.land.parcels[_]\n\tparcel.o6_24.in_wrrl_area\n\tparcel.o6_24.has_higher_n_permission\n\tnot parcel.o6_24.opwrrl_code\n}\n\neligible if {\n\tminimum_area_met\n\tnitrogen_compliant\n\trecordkeeping_compliant\n\tcount(violations) == 0\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-24-terra/runs/20260930T004645Z__o6_24__gpt-5.6-terra/workspace/tools/opa",
+            "fmt",
+            "tests/o6_24_test.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_24_test\n\nimport data.oepul.o6_24\nimport rego.v1\n\nbase_input := {\n\t\"farm\": {\"year\": 2026, \"region\": {\"federal_state\": \"Steiermark\", \"district\": \"Graz\"}},\n\t\"documentation\": {\"o6_24\": {\"farm_book_retained_at_farm\": true}},\n\t\"land\": {\n\t\t\"parcels\": [\n\t\t\t{\"area_ha\": 1.2, \"land_use\": \"arable\", \"o6_24\": {\"in_wrrl_area\": true, \"is_fallow\": false, \"has_higher_n_permission\": false, \"nitrogen_class\": \"C\", \"annual_effective_n_kg_ha\": 100, \"nitrogen_limit_kg_ha\": 120, \"n_application_in_permitted_period\": true, \"farm_book_recorded\": true, \"opwrrl_code\": false, \"no_harvest_due_to_drought\": false}},\n\t\t\t{\"area_ha\": 0.8, \"land_use\": \"arable\", \"o6_24\": {\"in_wrrl_area\": true, \"is_fallow\": false, \"has_higher_n_permission\": false, \"nitrogen_class\": \"D\", \"annual_effective_n_kg_ha\": 130, \"nitrogen_limit_kg_ha\": 144, \"n_application_in_permitted_period\": true, \"farm_book_recorded\": true, \"opwrrl_code\": false, \"no_harvest_due_to_drought\": false}},\n\t\t],\n\t},\n}\n\ntest_eligible_and_premium if {\n\to6_24.eligible with input as base_input\n\to6_24.eligible_area_ha == 2 with input as base_input\n\to6_24.premium_eur == 108 with input as base_input\n}\n\ntest_minimum_area_failure if {\n\ttoo_small := object.union(base_input, {\"land\": {\"parcels\": [base_input.land.parcels[0]]}})\n\tnot o6_24.minimum_area_met with input as too_small\n}\n\ntest_high_n_approval_needs_code if {\n\twith_approval := object.union(base_input, {\"land\": {\"parcels\": array.concat(base_input.land.parcels, [{\"area_ha\": 1, \"land_use\": \"arable\", \"o6_24\": {\"in_wrrl_area\": true, \"is_fallow\": false, \"has_higher_n_permission\": true, \"nitrogen_class\": \"C\", \"annual_effective_n_kg_ha\": 100, \"nitrogen_limit_kg_ha\": 120, \"n_application_in_permitted_period\": true, \"farm_book_recorded\": true, \"opwrrl_code\": false, \"no_harvest_due_to_drought\": false}}])}})\n\to6_24.violations[_].code == \"high_n_permission\" with input as with_approval\n}\n\ntest_drought_exception_for_graz_2026 if {\n\tdrought := object.union(base_input, {\"land\": {\"parcels\": [{\"area_ha\": 1.2, \"land_use\": \"arable\", \"o6_24\": {\"in_wrrl_area\": true, \"is_fallow\": false, \"has_higher_n_permission\": false, \"nitrogen_class\": \"C\", \"annual_effective_n_kg_ha\": 100, \"nitrogen_limit_kg_ha\": 120, \"n_application_in_permitted_period\": true, \"farm_book_recorded\": true, \"opwrrl_code\": false, \"no_harvest_due_to_drought\": true}}]}})\n\to6_24.drought_harvest_exception_2026 with input as drought\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-24-terra/runs/20260930T004645Z__o6_24__gpt-5.6-terra/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 20,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 4/4\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-24-terra/runs/20260930T004645Z__o6_24__gpt-5.6-terra/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 94,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-24-terra/runs/20260930T004645Z__o6_24__gpt-5.6-terra/workspace"
+}
