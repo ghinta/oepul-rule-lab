@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 134,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1c-luna-high-20260930/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_1c.rego",
+    "tests/o6_1c_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1c-luna-high-20260930/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 16,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_1c.rego",
+        "tests/o6_1c_test.rego"
+      ],
+      "duration_ms": 26,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1c-luna-high-20260930/workspace/tools/opa",
+            "fmt",
+            "policy/o6_1c.rego"
+          ],
+          "duration_ms": 14,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package policy.o6_1c\n\nimport rego.v1\n\ndefault eligible := false\n\nmeasure_declared if input.measure.id == \"o6_1c\"\n\neligible if {\n\tmeasure_declared\n\tinput.farm.year >= 2025\n\tinput.farm.region.nUTS != \"\"\n}\n\nnpa_parcels := [p |\n\tsome p in input.land.parcels\n\tp.measure_category == \"nonproductive_arable\"\n]\n\nagro_parcels := [p |\n\tsome p in input.land.parcels\n\tp.measure_category == \"agroforestry_strip\"\n]\n\nagro_species_names contains name if {\n\tsome p in agro_parcels\n\tsome tree in p.agroforestry.trees\n\tname := tree.scientific_name\n}\n\nagro_species_names contains name if {\n\tsome p in agro_parcels\n\tsome name in p.agroforestry.natural_ingress_species\n}\n\nnegative_species contains item if {\n\titem := data.o6_1c_agroforst_negative_list.agroforst_negative_list[_]\n\tagro_species_names[item.scientific_name]\n}\n\nnonproductive_area_ha := sum([p.area_ha | some p in npa_parcels])\n\nnpa_area_limit_ha := input.land.arable_area_ha * 0.04\n\nnpa_area_within_limit if nonproductive_area_ha <= npa_area_limit_ha\n\nnpa_sowing_deadline_ok[p] if {\n\tp := npa_parcels[_]\n\tp.npa.sowing_date != null\n\tp.npa.sowing_date <= sprintf(\"%d-05-15\", [input.farm.year])\n}\n\nnpa_break_early_allowed[p] if {\n\tp := npa_parcels[_]\n\tp.npa.following_crop in {\"wintering\", \"cover_crop\"}\n}\n\nnpa_chemical_prohibition if {\n\tsome p in npa_parcels\n\tp.operations.psm_used == true\n}\n\nnpa_mineral_fertilizer_used if {\n\tsome p in npa_parcels\n\tp.operations.fertilizer.mineral_n_kg_per_ha != null\n\tp.operations.fertilizer.mineral_n_kg_per_ha > 0\n}\n\nnpa_organic_fertilizer_used if {\n\tsome p in npa_parcels\n\tp.operations.fertilizer.organic_n_kg_per_ha != null\n\tp.operations.fertilizer.organic_n_kg_per_ha > 0\n}\n\nnpa_fertilizer_prohibition if {\n\tnpa_mineral_fertilizer_used\n}\n\nnpa_fertilizer_prohibition if {\n\tnpa_organic_fertilizer_used\n}\n\nnpa_mechanical_clearance_only if {\n\tsome p in npa_parcels\n\tp.npa.clearance_method != \"mechanical\"\n}\n\nnpa_grazing_prohibited if {\n\tsome p in npa_parcels\n\tp.npa.grazing == true\n}\n\nnpa_care_frequency_ok[p] if {\n\tp := npa_parcels[_]\n\tp.npa.care_events_last_two_years >= 1\n\tp.npa.care_events_current_year <= 2\n}\n\nnpa_august_share_ok if {\n\tinput.measure.npa_area_with_care_before_august_ha <= nonproductive_area_ha * 0.5\n}\n\nagro_dimensions_ok[p] if {\n\tp := agro_parcels[_]\n\tp.agroforestry.average_width_m >= 2\n\tp.agroforestry.average_width_m <= 10\n\tp.agroforestry.trees_per_100m >= 10\n\tp.agroforestry.trees_per_100m <= 25\n\tp.agroforestry.max_tree_distance_m <= 15\n}\n\nagro_establishment_deadline_ok[p] if {\n\tp := agro_parcels[_]\n\tp.agroforestry.establishment_date != null\n\tp.agroforestry.establishment_date <= sprintf(\"%d-05-15\", [input.farm.year])\n}\n\nagro_perimeter_ok[p] if {\n\tp := agro_parcels[_]\n\tp.agroforestry.long_side_adjacent_to_forest == false\n\tp.agroforestry.long_side_adjacent_to_landscape_element == false\n}\n\nagro_inputs_prohibited if {\n\tsome p in agro_parcels\n\tp.operations.psm_used == true\n}\n\nagro_mineral_fertilizer_used if {\n\tsome p in agro_parcels\n\tp.operations.fertilizer.mineral_n_kg_per_ha != null\n\tp.operations.fertilizer.mineral_n_kg_per_ha > 0\n}\n\nagro_organic_fertilizer_used if {\n\tsome p in agro_parcels\n\tp.operations.fertilizer.organic_n_kg_per_ha != null\n\tp.operations.fertilizer.organic_n_kg_per_ha > 0\n}\n\nagro_inputs_prohibited if {\n\tagro_mineral_fertilizer_used\n}\n\nagro_inputs_prohibited if {\n\tagro_organic_fertilizer_used\n}\n\nrequired_category_selection if {\n\tsome p in npa_parcels\n}\n\nrequired_category_selection if {\n\tsome p in agro_parcels\n}\n\nannual_contract if {\n\tinput.measure.contract_start == sprintf(\"%d-01-01\", [input.farm.year])\n\tinput.measure.contract_end == sprintf(\"%d-12-31\", [input.farm.year])\n}\n\npremium_band[parcel_id] := band if {\n\tsome p in input.land.parcels\n\tparcel_id := p.parcel_id\n\tp.measure_category == \"nonproductive_arable\"\n\tband := {\"min_eur_per_ha\": 350, \"max_eur_per_ha\": 450}\n}\n\npremium_band[parcel_id] := band if {\n\tsome p in input.land.parcels\n\tparcel_id := p.parcel_id\n\tp.measure_category == \"agroforestry_strip\"\n\tband := {\"min_eur_per_ha\": 600, \"max_eur_per_ha\": 800}\n}\n\ndecisions contains {\"code\": \"NPA_AREA_LIMIT\", \"status\": \"pass\"} if npa_area_within_limit\ndecisions contains {\"code\": \"NPA_AREA_LIMIT\", \"status\": \"fail\"} if not npa_area_within_limit\n\ndecisions contains {\"code\": \"NPA_CHEMICAL_INPUTS\", \"status\": \"fail\"} if npa_chemical_prohibition\ndecisions contains {\"code\": \"NPA_FERTILIZER\", \"status\": \"fail\"} if npa_fertilizer_prohibition\ndecisions contains {\"code\": \"NPA_CLEARANCE\", \"status\": \"fail\"} if npa_mechanical_clearance_only\ndecisions contains {\"code\": \"NPA_GRAZING\", \"status\": \"fail\"} if npa_grazing_prohibited\ndecisions contains {\"code\": \"AGRO_SPECIES\", \"status\": \"fail\"} if count(negative_species) > 0\n\nnpa_care_violation if {\n\tsome p in npa_parcels\n\tnot npa_care_frequency_ok[p]\n}\n\ndecisions contains {\"code\": \"NPA_CARE_FREQUENCY\", \"status\": \"fail\"} if npa_care_violation\n\nagro_dimension_violation if {\n\tsome p in agro_parcels\n\tnot agro_dimensions_ok[p]\n}\n\nagro_perimeter_violation if {\n\tsome p in agro_parcels\n\tnot agro_perimeter_ok[p]\n}\n\ndecisions contains {\"code\": \"AGRO_DIMENSIONS\", \"status\": \"fail\"} if agro_dimension_violation\ndecisions contains {\"code\": \"AGRO_PERIMETER\", \"status\": \"fail\"} if agro_perimeter_violation\n\ndata_source := \"data/o6_1c_agroforst_negative_list.json\"\n\ncombination_row := data.o6_1c_combination_row\n\nnpa_combination_violations contains other_measure if {\n\tsome p in npa_parcels\n\tsome other_measure in p.combination.other_measure_ids\n\tcombination_row.row_values[other_measure] == false\n}\n\ndecisions contains {\"code\": \"NPA_COMBINATION\", \"status\": \"fail\"} if count(npa_combination_violations) > 0\n\ncombination_data_source := \"data/o6_1c_combination_row.json\"\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1c-luna-high-20260930/workspace/tools/opa",
+            "fmt",
+            "tests/o6_1c_test.rego"
+          ],
+          "duration_ms": 12,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package policy.o6_1c_test\n\nimport data.policy.o6_1c as o6_1c\nimport rego.v1\n\ntest_npa_limit_passes if {\n\ttest_input := {\n\t\t\"farm\": {\"year\": 2026, \"region\": {\"nUTS\": \"AT11\"}},\n\t\t\"measure\": {\"id\": \"o6_1c\", \"npa_area_with_care_before_august_ha\": 0.4},\n\t\t\"land\": {\"arable_area_ha\": 10, \"parcels\": [{\"parcel_id\": \"p1\", \"area_ha\": 0.3, \"measure_category\": \"nonproductive_arable\"}]},\n\t}\n\to6_1c.eligible with input as test_input\n\to6_1c.npa_area_within_limit with input as test_input\n}\n\ntest_npa_limit_fails if {\n\ttest_input := {\n\t\t\"farm\": {\"year\": 2026, \"region\": {\"nUTS\": \"AT11\"}},\n\t\t\"measure\": {\"id\": \"o6_1c\", \"npa_area_with_care_before_august_ha\": 0},\n\t\t\"land\": {\"arable_area_ha\": 5, \"parcels\": [{\"parcel_id\": \"p1\", \"area_ha\": 0.3, \"measure_category\": \"nonproductive_arable\"}]},\n\t}\n\tnot o6_1c.npa_area_within_limit with input as test_input\n}\n\ntest_agroforst_negative_species_and_dimensions if {\n\ttest_input := {\n\t\t\"farm\": {\"year\": 2026, \"region\": {\"nUTS\": \"AT11\"}},\n\t\t\"measure\": {\"id\": \"o6_1c\"},\n\t\t\"land\": {\"arable_area_ha\": 10, \"parcels\": [{\n\t\t\t\"parcel_id\": \"p2\",\n\t\t\t\"area_ha\": 0.2,\n\t\t\t\"measure_category\": \"agroforestry_strip\",\n\t\t\t\"agroforestry\": {\n\t\t\t\t\"average_width_m\": 12,\n\t\t\t\t\"trees_per_100m\": 30,\n\t\t\t\t\"max_tree_distance_m\": 20,\n\t\t\t\t\"long_side_adjacent_to_forest\": false,\n\t\t\t\t\"long_side_adjacent_to_landscape_element\": false,\n\t\t\t\t\"trees\": [{\"scientific_name\": \"Robinia pseudoacacia\"}],\n\t\t\t},\n\t\t}]},\n\t}\n\tnegative := o6_1c.negative_species with input as test_input\n\tcount(negative) == 1\n\tdecision := o6_1c.decisions[_] with input as test_input\n\tdecision.code == \"AGRO_SPECIES\"\n\tdecision.status == \"fail\"\n}\n\ntest_agroforst_natural_ingress_negative_species if {\n\ttest_input := {\n\t\t\"land\": {\"parcels\": [{\n\t\t\t\"parcel_id\": \"p3\",\n\t\t\t\"measure_category\": \"agroforestry_strip\",\n\t\t\t\"agroforestry\": {\n\t\t\t\t\"trees\": [],\n\t\t\t\t\"natural_ingress_species\": [\"Ailanthus altissima\"],\n\t\t\t},\n\t\t}]},\n\t}\n\tnegative := o6_1c.negative_species with input as test_input\n\tcount(negative) == 1\n}\n\ntest_premium_bands if {\n\ttest_input := {\n\t\t\"land\": {\"parcels\": [\n\t\t\t{\"parcel_id\": \"npa\", \"measure_category\": \"nonproductive_arable\"},\n\t\t\t{\"parcel_id\": \"agro\", \"measure_category\": \"agroforestry_strip\"},\n\t\t]},\n\t}\n\tnpa_band := o6_1c.premium_band.npa with input as test_input\n\tagro_band := o6_1c.premium_band.agro with input as test_input\n\tnpa_band == {\"min_eur_per_ha\": 350, \"max_eur_per_ha\": 450}\n\tagro_band == {\"min_eur_per_ha\": 600, \"max_eur_per_ha\": 800}\n}\n\ntest_combination_row_is_enforced if {\n\ttest_input := {\n\t\t\"land\": {\"parcels\": [{\n\t\t\t\"parcel_id\": \"npa\",\n\t\t\t\"measure_category\": \"nonproductive_arable\",\n\t\t\t\"combination\": {\"other_measure_ids\": [\"o6_1a\"]},\n\t\t}]},\n\t}\n\tviolation := o6_1c.npa_combination_violations[_] with input as test_input\n\tviolation == \"o6_1a\"\n\tdecision := o6_1c.decisions[_] with input as test_input\n\tdecision == {\"code\": \"NPA_COMBINATION\", \"status\": \"fail\"}\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1c-luna-high-20260930/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 22,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 6/6\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1c-luna-high-20260930/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 69,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1c-luna-high-20260930/workspace"
+}
