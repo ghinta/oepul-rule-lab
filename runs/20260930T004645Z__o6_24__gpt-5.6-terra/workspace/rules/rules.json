@@ -1,0 +1,195 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_24",
+  "rules": [
+    {
+      "id": "o6_24.area.minimum",
+      "rule_type": "eligibility",
+      "statement": "In every participation year, at least 2.00 ha of arable land in the Graz to Bad Radkersburg groundwater-protection-programme area must be farmed.",
+      "conditions": [{"expression": "eligible_wrrl_arable_area_ha >= 2.00", "description": "Eligible area is arable land in the WRRL GIS area and is not excluded.", "input_paths": ["land.parcels[]"]}],
+      "result": {"outcome": "eligible", "description": "The measure's minimum participation condition is met.", "value": 2.0},
+      "source_reference_ids": ["src.srl.24", "src.measure.minimum"],
+      "rego_symbols": ["data.oepul.o6_24.minimum_area_met", "data.oepul.o6_24.eligible_area_ha"]
+    },
+    {
+      "id": "o6_24.area.contract_lapse",
+      "rule_type": "contract consequence",
+      "statement": "If the 2.00 ha minimum participation condition is not met, the measure contract lapses; later participation requires a new timely measure application.",
+      "conditions": [{"expression": "eligible_wrrl_arable_area_ha < 2.00", "description": "Minimum area is missed in a participation year.", "input_paths": ["land.parcels[]"]}],
+      "result": {"outcome": "contract_lapses", "description": "No continuing contract; a new timely application is required for future participation."},
+      "source_reference_ids": ["src.measure.contract", "src.measure.minimum"],
+      "rego_symbols": ["data.oepul.o6_24.violations"]
+    },
+    {
+      "id": "o6_24.eligible.area_and_rate",
+      "rule_type": "payment",
+      "statement": "Eligible arable land in the programme area receives EUR 54.00 per ha from 1 January 2024, subject to all conditions and general payment limits.",
+      "conditions": [{"expression": "parcel.land_use = arable AND parcel.in_wrrl_area AND not excluded", "description": "The parcel is eligible WRRL arable land.", "input_paths": ["land.parcels[]"]}],
+      "result": {"outcome": "premium", "description": "Base area premium is EUR 54.00/ha.", "value": 54.0},
+      "source_reference_ids": ["src.srl.24", "src.measure.premium"],
+      "rego_symbols": ["data.oepul.o6_24.eligible_parcels", "data.oepul.o6_24.premium_eur"]
+    },
+    {
+      "id": "o6_24.exclusion.fallow_and_high_n",
+      "rule_type": "exclusion",
+      "statement": "Fallow land and land with an approval for increased nitrogen applications under section 4(7) of the groundwater programme are ineligible; the latter must be coded OPWRRL in the application.",
+      "conditions": [{"expression": "parcel.is_fallow OR parcel.has_higher_n_permission", "description": "A stated exclusion applies.", "input_paths": ["land.parcels[].o6_24"]}],
+      "result": {"outcome": "ineligible", "description": "No WRRL premium; high-N approved land must carry OPWRRL."},
+      "source_reference_ids": ["src.srl.24", "src.measure.application", "src.measure.premium"],
+      "rego_symbols": ["data.oepul.o6_24.eligible_parcels", "data.oepul.o6_24.violations"]
+    },
+    {
+      "id": "o6_24.nitrogen.maximum",
+      "rule_type": "management obligation",
+      "statement": "The maximum annual effective nitrogen amount per hectare for the applicable fertilisation class under Annex 3 points 1 and 2, read with Annex 2B of the groundwater programme, must be observed.",
+      "conditions": [{"expression": "annual_effective_n_kg_ha <= nitrogen_limit_kg_ha", "description": "The parcel-specific legal annual limit supplied from the programme class is not exceeded.", "input_paths": ["land.parcels[].o6_24"]}],
+      "result": {"outcome": "compliant", "description": "Nitrogen quantity obligation is met."},
+      "source_reference_ids": ["src.srl.24", "src.measure.nitrogen"],
+      "rego_symbols": ["data.oepul.o6_24.nitrogen_compliant"]
+    },
+    {
+      "id": "o6_24.nitrogen.classification",
+      "rule_type": "classification",
+      "statement": "Unassigned land in the area is classified as fertilisation class C; GIS displays classes, and a parcel spanning several classes uses the weighted mean of the stated limits unless separately applied for and recorded as subparcels.",
+      "conditions": [{"expression": "nitrogen_class is absent OR parcel spans multiple classes", "description": "The legal class or multi-class treatment must be determined.", "input_paths": ["land.parcels[].o6_24"]}],
+      "result": {"outcome": "nitrogen_limit_determined", "description": "Use class C for unassigned land; otherwise weighted limit or separately recorded subparcels."},
+      "source_reference_ids": ["src.measure.nitrogen"],
+      "rego_symbols": ["data.oepul.o6_24.assigned_nitrogen_class"]
+    },
+    {
+      "id": "o6_24.nitrogen.application_periods",
+      "rule_type": "management obligation",
+      "statement": "Nitrogen-containing fertiliser may only be applied during the periods permitted by Annex 3 point 3 of the groundwater programme.",
+      "conditions": [{"expression": "n_application_in_permitted_period = true", "description": "All application dates are in the legally permitted periods.", "input_paths": ["land.parcels[].o6_24"]}],
+      "result": {"outcome": "compliant", "description": "Application timing obligation is met."},
+      "source_reference_ids": ["src.srl.24", "src.measure.nitrogen"],
+      "rego_symbols": ["data.oepul.o6_24.nitrogen_compliant"]
+    },
+    {
+      "id": "o6_24.records.farm_book",
+      "rule_type": "recordkeeping",
+      "statement": "A farm book complying with section 5 of the groundwater programme must be maintained for every parcel, including parcels without fertilisation, and retained on the farm.",
+      "conditions": [{"expression": "every parcel has farm_book_recorded AND farm_book_retained_at_farm", "description": "The complete farm book exists and is retained.", "input_paths": ["land.parcels[].o6_24", "documentation.o6_24"]}],
+      "result": {"outcome": "compliant", "description": "Recordkeeping obligation is met."},
+      "source_reference_ids": ["src.srl.24", "src.measure.records"],
+      "rego_symbols": ["data.oepul.o6_24.recordkeeping_compliant"]
+    },
+    {
+      "id": "o6_24.contract.calendar_year",
+      "rule_type": "contract",
+      "statement": "The commitment and contract period is one calendar year, 1 January through 31 December; it renews automatically unless deregistered.",
+      "conditions": [{"expression": "measure is applied and not deregistered", "description": "An active annual measure contract exists.", "input_paths": ["farm.o6_24"]}],
+      "result": {"outcome": "annual_contract", "description": "The contract continues into the next funding year automatically."},
+      "source_reference_ids": ["src.measure.contract", "src.general.contract"],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_24.application.deadline_and_last_entry",
+      "rule_type": "deadline",
+      "statement": "The measure application must be filed in the multiple application by 31 December before the contract starts; the final entry is funding year 2027, requiring application by 31 December 2026.",
+      "conditions": [{"expression": "application_date <= 31 December before funding year AND funding_year <= 2027", "description": "Application timing and last-entry condition.", "input_paths": ["farm.o6_24"]}],
+      "result": {"outcome": "valid_contract", "description": "A valid measure contract can be formed."},
+      "source_reference_ids": ["src.measure.application", "src.general.contract"],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_24.exit.deregistration",
+      "rule_type": "exit",
+      "statement": "Exit is possible after the annual period and must be notified online in the current multiple application; deregistration from 1 January through 31 December invalidates the measure for that funding year, so a fulfilled year may only be deregistered from 1 January of the next year.",
+      "conditions": [{"expression": "deregistration_date is set", "description": "The operator seeks to exit the annual measure.", "input_paths": ["farm.o6_24"]}],
+      "result": {"outcome": "exit_effect", "description": "The timing determines whether the current year is invalid."},
+      "source_reference_ids": ["src.measure.exit", "src.general.exit"],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_24.general.applicant",
+      "rule_type": "applicant eligibility",
+      "statement": "The applicant must operate an agricultural holding in its own name and for its own account, control the applied-for land, and meet active-farmer and agricultural-activity requirements; eligible legal forms and public-body limits apply.",
+      "conditions": [{"expression": "applicant and holding requirements are true", "description": "General participant prerequisites.", "input_paths": ["farm.o6_24"]}],
+      "result": {"outcome": "eligible_applicant", "description": "Applicant may participate subject to the other conditions."},
+      "source_reference_ids": ["src.general.applicant"],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_24.general.first_year_size",
+      "rule_type": "general eligibility",
+      "statement": "In the first ÖPUL participation year the holding must have either 0.50 ha protected cultivation or 1.50 ha total qualifying agricultural land; the general holding minimum no longer applies from the second year, while the measure's own 2.00 ha minimum remains annual.",
+      "conditions": [{"expression": "first_oepul_year implies protected_area_ha >= 0.50 OR qualifying_area_ha >= 1.50", "description": "General first-year holding size.", "input_paths": ["land"]}],
+      "result": {"outcome": "general_size_met", "description": "General first-year size condition is met."},
+      "source_reference_ids": ["src.general.minimum_size", "src.measure.minimum"],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_24.general.cultivation",
+      "rule_type": "general management obligation",
+      "statement": "For arable land other than forage, proper establishment and annual care are required and harvest plus removal of the produce is required on at least 85% of each parcel, unless a recognised exception applies.",
+      "conditions": [{"expression": "proper_establishment AND annual_care AND harvested_share >= 0.85", "description": "General arable minimum management.", "input_paths": ["land.parcels[]"]}],
+      "result": {"outcome": "management_compliant", "description": "General minimum cultivation is met."},
+      "source_reference_ids": ["src.general.cultivation"],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_24.general.national_park",
+      "rule_type": "area eligibility",
+      "statement": "National-park land is generally ineligible, but Water Framework Directive – Agriculture is expressly excepted from that exclusion.",
+      "conditions": [{"expression": "parcel.is_national_park", "description": "Applied land is in a National Park.", "input_paths": ["land.parcels[].o6_24"]}],
+      "result": {"outcome": "not_excluded_by_national_park_rule", "description": "The National Park exclusion itself does not bar this measure."},
+      "source_reference_ids": ["src.general.national_park"],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_24.general.austria_and_commitment",
+      "rule_type": "general eligibility",
+      "statement": "Funded land must be in Austria and fulfil all funding obligations for the entire calendar-year commitment period; an under-year transfer is possible only if the transferee fulfils them to period end, otherwise OP or a measure-specific OP code is required.",
+      "conditions": [{"expression": "parcel.country = AT AND obligations_met_for_full_commitment", "description": "Location and whole-period condition.", "input_paths": ["land.parcels[]"]}],
+      "result": {"outcome": "eligible_area", "description": "Land can remain premium-eligible."},
+      "source_reference_ids": ["src.general.location", "src.general.commitment"],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_24.general.conditionality",
+      "rule_type": "cross-cutting obligation",
+      "statement": "All participating holdings must comply with conditionality rules on climate/environment, public health, plant health, animal welfare and social conditionality to receive the full ÖPUL payment.",
+      "conditions": [{"expression": "conditionality_compliant = true", "description": "Cross-cutting conditionality is met.", "input_paths": ["documentation"]}],
+      "result": {"outcome": "full_payment_possible", "description": "No conditionality-based reduction is triggered."},
+      "source_reference_ids": ["src.general.conditionality"],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_24.general.payment_limits",
+      "rule_type": "payment cap",
+      "statement": "Annual ÖPUL premiums are subject to the EUR 1,300/ha aggregate field-payment ceiling from 2025 and holding-size modulation: 100% to 200 ha, 90% over 200–300 ha, 85% over 300–1,000 ha and 75% over 1,000 ha.",
+      "conditions": [{"expression": "aggregate_area_payment and total_holding_area are known", "description": "General cap and modulation calculation inputs.", "input_paths": ["land.total_area_ha", "farm.o6_24"]}],
+      "result": {"outcome": "adjusted_payment", "description": "Base premium is capped/modulated where applicable."},
+      "source_reference_ids": ["src.general.payment_limits", "src.general.modulation"],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_24.general.controls_and_sanctions",
+      "rule_type": "enforcement",
+      "statement": "Conditions are checked through administrative, on-site and subsequent controls; content breaches can lead from warning (or 1% retention from 2027) through 2–100% reductions, and two 100% reductions during the contract cause exclusion and recovery of prior contract payments.",
+      "conditions": [{"expression": "breach is established", "description": "A funding-condition breach is found.", "input_paths": ["documentation"]}],
+      "result": {"outcome": "sanction_assessed", "description": "Severity, scope, duration and frequency determine sanction."},
+      "source_reference_ids": ["src.general.controls", "src.general.sanctions"],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_24.drought.harvest_exception_2026",
+      "rule_type": "temporary exception",
+      "statement": "For 2026 drought, when no harvestable crop exists, the 85% harvest/removal requirement is automatically treated as force majeure and payment remains available in all Burgenland and Vienna districts, listed districts in Lower Austria and Upper Austria, and from 12 August also listed Styria districts; no individual notice is needed.",
+      "conditions": [{"expression": "year = 2026 AND no_harvest_due_to_drought AND district is listed", "description": "The temporary district-based drought exception applies.", "input_paths": ["farm.year", "farm.region.federal_state", "farm.region.district", "land.parcels[]"]}],
+      "result": {"outcome": "harvest_exception", "description": "No individual force-majeure report and payment may remain available."},
+      "source_reference_ids": ["src.notice.drought05", "src.notice.drought12"],
+      "rego_symbols": ["data.oepul.o6_24.drought_harvest_exception_2026"]
+    },
+    {
+      "id": "o6_24.notice.other_2026_not_applicable",
+      "rule_type": "scope determination",
+      "statement": "The 2026 biodiversity, evergreen-cover, erosion-control, nature-conservation, livestock-race and insecticide-waiver notices do not alter the substantive WRRL nitrogen, farm-book, area or premium rules, except for the generally worded drought harvest exception separately catalogued.",
+      "conditions": [{"expression": "notice subject is not this measure", "description": "The notice concerns a named different measure or obligation.", "input_paths": []}],
+      "result": {"outcome": "no_direct_measure_change", "description": "No separate o6_24 rule is created from the unrelated notice content."},
+      "source_reference_ids": ["src.notice.biodiversity", "src.notice.insecticide", "src.notice.drought12"],
+      "rego_symbols": []
+    }
+  ]
+}
