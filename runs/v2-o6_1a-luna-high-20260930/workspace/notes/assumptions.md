@@ -1,0 +1,8 @@
+# Fachliche Annahmen und offene Punkte
+
+- Das Canonical Farm Profile enthält keine maßnahmenspezifischen Codes, Feldstück-IDs, DIV-Flächen, Prämienoptionen, Saatgutnachweise, Monitoringdaten oder 2026-Ausnahmecodes. Diese Werte werden im Modus `discover` ausschließlich in `rules/profile_changes.json` vorgeschlagen; das Canonical Farm Profile bleibt unverändert.
+- Die Rego-Prüfungen erwarten für diese fehlenden Werte ein angereichertes Laufzeit-Inputobjekt. Die Regelbedingungen und die Profilpfade im Katalog bleiben quellengebunden; eine fehlende Variable darf nicht als fachliche Nichterfüllung interpretiert werden.
+- Die 2026-Dürremeldungen sind zeitlich begrenzte Verwaltungserleichterungen. `o6_1a.drought_early_use` bildet deren Vorliegen als explizite Tatsachenvariable ab, weil die HTML-Meldung die konkrete Vorabnutzungsfreigabe nicht für jeden Schlag algorithmisch parametrisiert.
+- Die dritte Acker-DIV-Nutzung 2026 ist als Sonderfall mit OPUBB/OPBIO und Prämie 0 modelliert. Für zusätzlich in NAT/EBW eingebrachte Flächen bleibt die Projektbestätigung vorrangig.
+- Für seltene Sorten und regionale Saatgutarten wurde die vollständige in den bereitgestellten Anhängen enthaltene Liste in `data/o6_1a_tables.json` übernommen. Schreibvarianten wissenschaftlicher Namen werden als Datenwert beibehalten; die fachliche Listenmitgliedschaft ist maßgeblich.
+- Die Rechtsgrundlage ist gezielt auf UBB, die allgemeinen Teilnahme-/Flächenregeln, die UBB-relevanten Anhänge A–C und die Kombinationsmatrix geprüft. Nicht UBB-spezifische Maßnahmenteile wurden als `not_rule` im Coverage-Ledger vermerkt.
