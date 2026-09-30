@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 143,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/private/tmp/oepul-rule-lab-o6-23-terra/runs/20260930T002730Z__o6_23__gpt-5.6-terra/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_23.rego",
+    "tests/o6_23_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-23-terra/runs/20260930T002730Z__o6_23__gpt-5.6-terra/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 14,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_23.rego",
+        "tests/o6_23_test.rego"
+      ],
+      "duration_ms": 26,
+      "executions": [
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-23-terra/runs/20260930T002730Z__o6_23__gpt-5.6-terra/workspace/tools/opa",
+            "fmt",
+            "policy/o6_23.rego"
+          ],
+          "duration_ms": 12,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_23\n\nimport data.o6_23_tables\n\ndefault eligible := false\n\n# A parcel is eligible only when it has been applied for, has a valid land-authority\n# project confirmation and carries one of the nine Natura-2000 management codes.\neligible if {\n\tinput.application.o6_23.applied\n\tsome parcel in input.land.parcels\n\tparcel.natura2000.selected\n\tparcel.natura2000.project_confirmation_present\n\to6_23_tables.premiums_eur_per_ha[parcel.natura2000.management_code]\n}\n\neligible_parcels contains parcel.parcel_id if {\n\tinput.application.o6_23.applied\n\tparcel := input.land.parcels[_]\n\tparcel.natura2000.selected\n\tparcel.natura2000.project_confirmation_present\n\to6_23_tables.premiums_eur_per_ha[parcel.natura2000.management_code]\n}\n\npremium_eur[parcel.parcel_id] := amount if {\n\tparcel := input.land.parcels[_]\n\tparcel.parcel_id in eligible_parcels\n\trate := o6_23_tables.premiums_eur_per_ha[parcel.natura2000.management_code].amount\n\tamount := parcel.area_ha * rate\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"code\": \"missing_project_confirmation\"} if {\n\tparcel := input.land.parcels[_]\n\tparcel.natura2000.selected\n\tnot parcel.natura2000.project_confirmation_present\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"code\": \"unknown_management_code\"} if {\n\tparcel := input.land.parcels[_]\n\tparcel.natura2000.selected\n\tnot o6_23_tables.premiums_eur_per_ha[parcel.natura2000.management_code]\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"code\": \"project_requirements_not_met\"} if {\n\tparcel := input.land.parcels[_]\n\tparcel.natura2000.selected\n\tnot parcel.natura2000.project_requirements_met\n}\n\n# Chapter letters in the combination table must be compatible when two obligations\n# are declared for the same parcel.\nviolations contains {\"parcel_id\": parcel.parcel_id, \"code\": \"incompatible_obligation_combination\"} if {\n\tparcel := input.land.parcels[_]\n\tparcel.natura2000.selected\n\ta := parcel.natura2000.obligation_chapters[_]\n\tb := parcel.natura2000.obligation_chapters[_]\n\ta != b\n\tnot o6_23_tables.combination_matrix[a][b]\n}\n\ncan_use_2026_drought_cut_exception(parcel) if {\n\tparcel.natura2000.selected\n\tparcel.natura2000.cut_date_changed_by_land_regulation\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/private/tmp/oepul-rule-lab-o6-23-terra/runs/20260930T002730Z__o6_23__gpt-5.6-terra/workspace/tools/opa",
+            "fmt",
+            "tests/o6_23_test.rego"
+          ],
+          "duration_ms": 13,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_23_test\n\nimport data.oepul.o6_23\nimport rego.v1\n\ntest_eligible_parcel_and_premium if {\n\ttest_input := {\"application\": {\"o6_23\": {\"applied\": true}}, \"land\": {\"parcels\": [{\"parcel_id\": \"p1\", \"area_ha\": 2, \"natura2000\": {\"selected\": true, \"project_confirmation_present\": true, \"project_requirements_met\": true, \"management_code\": \"N2GL04\", \"obligation_chapters\": [\"G\", \"L\"]}}]}}\n\to6_23.eligible with input as test_input\n\to6_23.premium_eur.p1 == 453.6 with input as test_input\n\tviolations := o6_23.violations with input as test_input\n\tcount(violations) == 0\n}\n\ntest_missing_confirmation_is_violation if {\n\ttest_input := {\"application\": {\"o6_23\": {\"applied\": true}}, \"land\": {\"parcels\": [{\"parcel_id\": \"p1\", \"area_ha\": 1, \"natura2000\": {\"selected\": true, \"project_confirmation_present\": false, \"project_requirements_met\": true, \"management_code\": \"N2GI05\", \"obligation_chapters\": [\"G\"]}}]}}\n\tnot o6_23.eligible with input as test_input\n\tviolations := o6_23.violations with input as test_input\n\t{\"parcel_id\": \"p1\", \"code\": \"missing_project_confirmation\"} in violations\n}\n\ntest_incompatible_combination_is_flagged if {\n\ttest_input := {\"application\": {\"o6_23\": {\"applied\": true}}, \"land\": {\"parcels\": [{\"parcel_id\": \"p1\", \"area_ha\": 1, \"natura2000\": {\"selected\": true, \"project_confirmation_present\": true, \"project_requirements_met\": true, \"management_code\": \"N2GI05\", \"obligation_chapters\": [\"G\", \"W\"]}}]}}\n\tviolations := o6_23.violations with input as test_input\n\t{\"parcel_id\": \"p1\", \"code\": \"incompatible_obligation_combination\"} in violations\n}\n\ntest_2026_exception_needs_regulation_change if {\n\tparcel := {\"natura2000\": {\"selected\": true, \"cut_date_changed_by_land_regulation\": true}}\n\to6_23.can_use_2026_drought_cut_exception(parcel)\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-23-terra/runs/20260930T002730Z__o6_23__gpt-5.6-terra/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 16,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 4/4\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/private/tmp/oepul-rule-lab-o6-23-terra/runs/20260930T002730Z__o6_23__gpt-5.6-terra/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 86,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/private/tmp/oepul-rule-lab-o6-23-terra/runs/20260930T002730Z__o6_23__gpt-5.6-terra/workspace"
+}
