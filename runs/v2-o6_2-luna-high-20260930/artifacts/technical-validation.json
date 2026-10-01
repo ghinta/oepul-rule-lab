@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 154,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_2-luna-high-20260930/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_2.rego",
+    "tests/o6_2_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_2-luna-high-20260930/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 17,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_2.rego",
+        "tests/o6_2_test.rego"
+      ],
+      "duration_ms": 29,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_2-luna-high-20260930/workspace/tools/opa",
+            "fmt",
+            "policy/o6_2.rego"
+          ],
+          "duration_ms": 18,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_2\n\nimport rego.v1\n\ndefault eligible_surface := false\n\ndefault external_n_ok := false\n\ndefault livestock_n_ok := false\n\ndefault course_ok := false\n\ndefault ubb_combination_ok := false\n\ndefault application_ok := false\n\ndefault eligible_for_drought_harvest_exception := false\n\ndefault all_psm_ok := true\n\ndefault organic_combination_ok := false\n\ndefault purchase_storage_ok := false\n\ndefault premium_cap_ok := false\n\neligible_surface if {\n\tparcel := input.land.parcels[0]\n\tparcel.land_use in data.crop_lists.eligible_land_use\n\tparcel.land_use != \"special_crop\"\n}\n\neligible_surface if {\n\tparcel := input.land.parcels[0]\n\tparcel.land_use == \"special_crop\"\n\tparcel.crop.crop_category in data.crop_lists.eligible_special_crop_categories\n}\n\nis_ackerfutter(parcel) if {\n\tparcel.crop.crop_name in data.crop_lists.ackerfutter\n}\n\nneeds_flach_psm_restriction(parcel) if {\n\tparcel.land_use == \"grassland\"\n}\n\nneeds_flach_psm_restriction(parcel) if {\n\tparcel.land_use == \"arable\"\n\tis_ackerfutter(parcel)\n}\n\nfodder_or_grassland(parcel) if {\n\tis_ackerfutter(parcel)\n}\n\nfodder_or_grassland(parcel) if {\n\tparcel.land_use == \"grassland\"\n}\n\nnon_fodder_or_grassland(parcel) if {\n\tparcel.land_use == \"grassland\"\n}\n\nnon_fodder_or_grassland(parcel) if {\n\tparcel.land_use == \"arable\"\n\tnot is_ackerfutter(parcel)\n}\n\ndistrict_in_exception(location) if {\n\tlocation == \"all\"\n}\n\ndistrict_in_exception(location) if {\n\tlocation != \"all\"\n\tinput.region.district in location\n}\n\nexternal_n_ok if {\n\tinput.farm.compliance.external_n_fertilizer_kg == 0\n}\n\nlivestock_n_ok if {\n\tinput.farm.compliance.livestock_n_kg_per_ha <= 170\n}\n\nfertilizer_source_allowed(source) if {\n\tsource in {\"external_manure\", \"permitted_compost\", \"biogas_return\", \"non_nitrogen\", \"domestic_wastewater\"}\n}\n\nfertilizer_source_prohibited(source) if {\n\tsource in {\"other_organic_residue\", \"sewage_sludge\"}\n}\n\npurchase_storage_ok if {\n\tinput.farm.compliance.purchase_storage_records_complete\n}\n\norganic_combination_ok if {\n\tnot input.program.o6_1b.participates\n}\n\norganic_combination_ok if {\n\tinput.program.o6_1b.participates\n\tinput.program.o6_1b.partial_farm\n\tinput.land.parcels[0].crop.crop_category in {\"orchard\", \"vineyard\", \"hop\"}\n}\n\norchard_premium_eligible if {\n\tinput.land.parcels[0].crop.crop_category != \"orchard\"\n}\n\norchard_premium_eligible if {\n\tinput.land.parcels[0].crop.crop_category == \"orchard\"\n\tinput.land.parcels[0].crop.planting_material_quality in {\"grafted\", \"high_quality_grafted\"}\n}\n\nanimal_rgve(animal) := value if {\n\tsome entry in data.rgve_key.entries\n\tentry.id == animal.category\n\tvalue := animal.animal_count * entry.rgve\n}\n\ntotal_rgve := value if {\n\tvalues := [animal_rgve(animal) | some animal in input.livestock.species_groups]\n\tvalue := sum(values)\n}\n\nrgve_per_forage_ha := value if {\n\tinput.farm.forage_area_ha > 0\n\tvalue := total_rgve / input.farm.forage_area_ha\n}\n\nanimal_holding if {\n\trgge := rgve_per_forage_ha\n\trgge >= 0.3\n}\n\npremium_tier := \"not_animal_holding\" if {\n\tnot animal_holding\n}\n\npremium_tier := \"animal_holding_below_1_40\" if {\n\tanimal_holding\n\trgge := rgve_per_forage_ha\n\trgge < 1.4\n}\n\npremium_tier := \"animal_holding_at_least_1_40\" if {\n\tanimal_holding\n\trgge := rgve_per_forage_ha\n\trgge >= 1.4\n}\n\npremium_rate(parcel) := 0 if {\n\tinput.application_year >= 2023\n\tinput.application_year <= 2028\n\tparcel.land_use in {\"arable\", \"grassland\"}\n\tfodder_or_grassland(parcel)\n\tpremium_tier == \"not_animal_holding\"\n}\n\npremium_rate(parcel) := 70 if {\n\tinput.application_year == 2023\n\tparcel.land_use in {\"arable\", \"grassland\"}\n\tfodder_or_grassland(parcel)\n\tpremium_tier == \"animal_holding_below_1_40\"\n}\n\npremium_rate(parcel) := 75.6 if {\n\tinput.application_year >= 2024\n\tinput.application_year <= 2028\n\tparcel.land_use in {\"arable\", \"grassland\"}\n\tfodder_or_grassland(parcel)\n\tpremium_tier == \"animal_holding_below_1_40\"\n}\n\npremium_rate(parcel) := 60 if {\n\tinput.application_year == 2023\n\tparcel.land_use in {\"arable\", \"grassland\"}\n\tnon_fodder_or_grassland(parcel)\n\tpremium_tier == \"animal_holding_at_least_1_40\"\n}\n\npremium_rate(parcel) := 64.8 if {\n\tinput.application_year >= 2024\n\tinput.application_year <= 2028\n\tparcel.land_use in {\"arable\", \"grassland\"}\n\tnon_fodder_or_grassland(parcel)\n\tpremium_tier == \"animal_holding_at_least_1_40\"\n}\n\npremium_rate(parcel) := 60 if {\n\tinput.application_year == 2023\n\tparcel.land_use in {\"arable\", \"grassland\"}\n\tfodder_or_grassland(parcel)\n\tpremium_tier == \"animal_holding_at_least_1_40\"\n}\n\npremium_rate(parcel) := 64.8 if {\n\tinput.application_year >= 2024\n\tinput.application_year <= 2028\n\tparcel.land_use in {\"arable\", \"grassland\"}\n\tfodder_or_grassland(parcel)\n\tpremium_tier == \"animal_holding_at_least_1_40\"\n}\n\npremium_rate(parcel) := 60 if {\n\tinput.application_year == 2023\n\tparcel.land_use == \"arable\"\n\tnot is_ackerfutter(parcel)\n}\n\npremium_rate(parcel) := 64.8 if {\n\tinput.application_year >= 2024\n\tinput.application_year <= 2028\n\tparcel.land_use == \"arable\"\n\tnot is_ackerfutter(parcel)\n}\n\npremium_rate(parcel) := 60 if {\n\tinput.application_year == 2023\n\tparcel.land_use == \"special_crop\"\n\tparcel.crop.crop_category in {\"orchard\", \"vineyard\", \"hop\"}\n}\n\npremium_rate(parcel) := 64.8 if {\n\tinput.application_year >= 2024\n\tinput.application_year <= 2028\n\tparcel.land_use == \"special_crop\"\n\tparcel.crop.crop_category in {\"orchard\", \"vineyard\", \"hop\"}\n}\n\ncourse_ok if {\n\tinput.farm.training.hours >= 3\n\tinput.farm.training.completed_by <= \"2025-12-31\"\n\tinput.farm.training.course_date >= \"2022-01-01\"\n\tinput.farm.training.provider_approved\n\tinput.farm.training.double_counted == false\n}\n\nubb_combination_ok if {\n\tinput.program.o6_2.participates\n\tinput.program.o6_1a.participates\n}\n\napplication_ok if {\n\tinput.program.o6_2.participates\n\tinput.program.o6_2.application_date <= sprintf(\"%d-12-31\", [input.program.o6_2.application_year - 1])\n\tinput.program.o6_2.application_year >= 2023\n\tinput.program.o6_2.application_year <= 2025\n}\n\npsm_application_allowed(application) if {\n\tapplication.bio_allowed\n}\n\npsm_application_allowed(application) if {\n\tapplication.individual_plant_treatment\n}\n\nparcel_psm_ok(parcel) if {\n\tnot needs_flach_psm_restriction(parcel)\n}\n\nparcel_psm_ok(parcel) if {\n\tneeds_flach_psm_restriction(parcel)\n\tnot parcel.operations.psm_used\n}\n\nparcel_psm_ok(parcel) if {\n\tneeds_flach_psm_restriction(parcel)\n\tparcel.operations.seed_treatment == false\n\tapplications := parcel.operations.psm_applications\n\tcount(applications) > 0\n\tnot disallowed_application(applications)\n}\n\ndisallowed_application(applications) if {\n\tsome application in applications\n\tnot psm_application_allowed(application)\n}\n\nall_psm_ok if {\n\tall_ok := [parcel_psm_ok(parcel) | some parcel in input.land.parcels]\n\tevery ok in all_ok { ok }\n}\n\neligible_for_drought_harvest_exception if {\n\tinput.application_year == 2026\n\tinput.region.federal_state in object.keys(data.drought_2026.automatic_higher_force_states)\n\tlocation := data.drought_2026.automatic_higher_force_states[input.region.federal_state]\n\tdistrict_in_exception(location)\n\tparcel := input.land.parcels[0]\n\tparcel.land_use == \"arable\"\n\tparcel.late_summer_or_autumn_harvest_crop\n\tparcel.no_harvestable_stand_due_to_drought\n}\n\npremium_cap_ok if {\n\tparcel := input.land.parcels[0]\n\tparcel.combined_area_payments_eur_per_ha <= 1300\n}\n\nmodulation_factor := 1 if {\n\tinput.land.total_area_ha <= 200\n}\n\nmodulation_factor := 0.9 if {\n\tinput.land.total_area_ha > 200\n\tinput.land.total_area_ha <= 300\n}\n\nmodulation_factor := 0.85 if {\n\tinput.land.total_area_ha > 300\n\tinput.land.total_area_ha <= 1000\n}\n\nmodulation_factor := 0.75 if {\n\tinput.land.total_area_ha > 1000\n}\n\ndecision := {\n\t\"eligible_surface\": eligible_surface,\n\t\"external_n_ok\": external_n_ok,\n\t\"livestock_n_ok\": livestock_n_ok,\n\t\"all_psm_ok\": all_psm_ok,\n\t\"course_ok\": course_ok,\n\t\"ubb_combination_ok\": ubb_combination_ok,\n\t\"application_ok\": application_ok,\n\t\"organic_combination_ok\": organic_combination_ok,\n\t\"purchase_storage_ok\": purchase_storage_ok,\n\t\"premium_cap_ok\": premium_cap_ok,\n\t\"modulation_factor\": modulation_factor,\n\t\"premium_tier\": premium_tier,\n\t\"drought_harvest_exception\": eligible_for_drought_harvest_exception,\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_2-luna-high-20260930/workspace/tools/opa",
+            "fmt",
+            "tests/o6_2_test.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_2_test\n\nimport data.oepul.o6_2\nimport rego.v1\n\nbase := {\n\t\"year\": 2026,\n\t\"application_year\": 2026,\n\t\"program\": {\n\t\t\"o6_2\": {\"participates\": true, \"application_year\": 2025, \"application_date\": \"2024-12-31\"},\n\t\t\"o6_1a\": {\"participates\": true},\n\t\t\"o6_1b\": {\"participates\": false, \"partial_farm\": false},\n\t},\n\t\"farm\": {\n\t\t\"forage_area_ha\": 10,\n\t\t\"compliance\": {\"external_n_fertilizer_kg\": 0, \"livestock_n_kg_per_ha\": 170},\n\t\t\"training\": {\"hours\": 3, \"completed_by\": \"2025-12-31\", \"course_date\": \"2022-01-01\", \"provider_approved\": true, \"double_counted\": false},\n\t},\n\t\"livestock\": {\"species_groups\": [{\"category\": \"cattle_from_two_years\", \"animal_count\": 5}]},\n\t\"region\": {\"federal_state\": \"Burgenland\", \"district\": \"Eisenstadt\"},\n\t\"land\": {\"parcels\": [], \"total_area_ha\": 100},\n}\n\nwith_parcel(parcel) := object.union(base, {\"land\": object.union(base.land, {\"parcels\": [parcel]})})\n\ntest_rgve_animal_holding if {\n\ttest_input := with_parcel({\"land_use\": \"grassland\", \"crop\": {\"crop_category\": \"other\", \"crop_name\": null}})\n\tresult := o6_2.decision with input as test_input\n\tresult.premium_tier == \"animal_holding_below_1_40\"\n}\n\ntest_non_animal_fodder_has_zero_premium if {\n\ttest_input := object.union(base, {\n\t\t\"farm\": object.union(base.farm, {\"forage_area_ha\": 20}),\n\t\t\"livestock\": {\"species_groups\": []},\n\t\t\"land\": object.union(base.land, {\"parcels\": [{\"land_use\": \"grassland\", \"crop\": {\"crop_category\": \"other\", \"crop_name\": null}}]}),\n\t})\n\to6_2.premium_rate(test_input.land.parcels[0]) == 0 with input as test_input\n}\n\ntest_arable_non_fodder_rate_2026 if {\n\ttest_input := with_parcel({\"land_use\": \"arable\", \"crop\": {\"crop_category\": \"cereal\", \"crop_name\": \"Weizen\"}})\n\to6_2.premium_rate(test_input.land.parcels[0]) == 64.8 with input as test_input\n}\n\ntest_fodder_rate_below_140_2026 if {\n\ttest_input := with_parcel({\"land_use\": \"arable\", \"crop\": {\"crop_category\": \"legume\", \"crop_name\": \"Kleegras\"}})\n\to6_2.premium_rate(test_input.land.parcels[0]) == 75.6 with input as test_input\n}\n\ntest_banned_flach_psm_fails if {\n\tparcel := {\"land_use\": \"grassland\", \"crop\": {\"crop_category\": \"other\", \"crop_name\": null}, \"operations\": {\"psm_used\": true, \"seed_treatment\": false, \"psm_applications\": [{\"bio_allowed\": false, \"individual_plant_treatment\": false}]}}\n\tnot o6_2.parcel_psm_ok(parcel)\n}\n\ntest_bio_psm_is_allowed if {\n\tparcel := {\"land_use\": \"grassland\", \"crop\": {\"crop_category\": \"other\", \"crop_name\": null}, \"operations\": {\"psm_used\": true, \"seed_treatment\": false, \"psm_applications\": [{\"bio_allowed\": true, \"individual_plant_treatment\": false}]}}\n\to6_2.parcel_psm_ok(parcel)\n}\n\ntest_drought_exception_for_listed_2026_district if {\n\ttest_input := with_parcel({\"land_use\": \"arable\", \"late_summer_or_autumn_harvest_crop\": true, \"no_harvestable_stand_due_to_drought\": true})\n\to6_2.eligible_for_drought_harvest_exception with input as test_input\n}\n\ntest_drought_exception_requires_late_crop if {\n\ttest_input := with_parcel({\"land_use\": \"arable\", \"late_summer_or_autumn_harvest_crop\": false, \"no_harvestable_stand_due_to_drought\": true})\n\tnot o6_2.eligible_for_drought_harvest_exception with input as test_input\n}\n\ntest_course_and_application_and_combination if {\n\tresult := o6_2.decision with input as base\n\tresult.course_ok\n\tresult.application_ok\n\tresult.ubb_combination_ok\n}\n\ntest_fertilizer_exceptions if {\n\to6_2.fertilizer_source_allowed(\"external_manure\")\n\to6_2.fertilizer_source_allowed(\"permitted_compost\")\n\to6_2.fertilizer_source_allowed(\"non_nitrogen\")\n\tnot o6_2.fertilizer_source_allowed(\"sewage_sludge\")\n\to6_2.fertilizer_source_prohibited(\"other_organic_residue\")\n}\n\ntest_partial_farm_bio_combination if {\n\ttest_input := object.union(\n\t\twith_parcel({\"crop\": {\"crop_category\": \"vineyard\"}}),\n\t\t{\"program\": object.union(base.program, {\"o6_1b\": {\"participates\": true, \"partial_farm\": true}})},\n\t)\n\to6_2.organic_combination_ok with input as test_input\n}\n\ntest_orchard_material_and_cap if {\n\ttest_input := with_parcel({\"crop\": {\"crop_category\": \"orchard\", \"planting_material_quality\": \"grafted\"}, \"combined_area_payments_eur_per_ha\": 1300})\n\to6_2.orchard_premium_eligible with input as test_input\n\to6_2.premium_cap_ok with input as test_input\n}\n\ntest_modulation_bands if {\n\ttest_input := object.union(base, {\"land\": {\"parcels\": [], \"total_area_ha\": 250}})\n\to6_2.modulation_factor == 0.9 with input as test_input\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_2-luna-high-20260930/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 22,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 13/13\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_2-luna-high-20260930/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 84,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_2-luna-high-20260930/workspace"
+}
