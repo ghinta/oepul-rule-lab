@@ -1,0 +1,2213 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_3",
+  "rules": [
+    {
+      "id": "O6_3-OVR-01",
+      "rule_type": "scope",
+      "statement": "Die Heuwirtschaftsprämie wird für gemähte Grünlandflächen und gemähte Ackerfutterflächen gewährt; abgegolten werden Kosten und Einkommensverluste aus Silageverzicht und mosaikartiger Grünlandnutzung, differenziert nach Einsatz von Mähaufbereitern.",
+      "conditions": [
+        {
+          "expression": "land_use in {grassland, arable} and count(operations.cutting_dates) > 0",
+          "description": "Fläche ist Grünland oder Ackerfutterfläche und wird gemäht",
+          "input_paths": [
+            "land.parcels[].land_use",
+            "land.parcels[].operations.cutting_dates"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_area_scope",
+        "description": "Nur gemähte Grünland- und Ackerfutterflächen sind Fördergegenstand.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-01",
+        "REF-MB-02",
+        "REF-SRL-40"
+      ],
+      "rego_symbols": [
+        "data.o6_3.premium_area_class"
+      ]
+    },
+    {
+      "id": "O6_3-CP-01",
+      "rule_type": "contract_period",
+      "statement": "Der Verpflichtungs- und Vertragszeitraum der Heuwirtschaft beträgt mindestens 4 Jahre und läuft bis 31.12.2028 (Beginn 2023: 6 Jahre, 2024: 5 Jahre, 2025: 4 Jahre); die Verpflichtungsdauer umfasst jeweils das ganze Kalenderjahr.",
+      "conditions": [
+        {
+          "expression": "contract_start_year in {2023, 2024, 2025}",
+          "description": "Vertragsbeginn am 1. Jänner des Startjahres",
+          "input_paths": [
+            "farm.oepul.o6_3.contract_start_year"
+          ]
+        },
+        {
+          "expression": "contract_start_year <= farm.year <= 2028",
+          "description": "Antragsjahr liegt im Vertragszeitraum",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_period_lookup",
+        "description": "Laufzeit laut Tabelle data.o6_3.contract_periods.rows; Vertragsende 31.12.2028.",
+        "value": {
+          "2023": 6,
+          "2024": 5,
+          "2025": 4
+        }
+      },
+      "source_reference_ids": [
+        "REF-MB-03",
+        "REF-MB-04",
+        "REF-AT-25",
+        "REF-SRL-10",
+        "REF-SRL-11"
+      ],
+      "rego_symbols": [
+        "data.o6_3.contract_period",
+        "data.o6_3.within_contract_period"
+      ]
+    },
+    {
+      "id": "O6_3-CP-02",
+      "rule_type": "contract_period",
+      "statement": "Für die zusätzlich beantragbare Option 'Verzicht auf Mähaufbereiter' läuft der Verpflichtungs- und Vertragszeitraum über ein Kalenderjahr (1. Jänner bis 31. Dezember).",
+      "conditions": [
+        {
+          "expression": "option_no_mower_conditioner.applied == true",
+          "description": "Option beantragt",
+          "input_paths": [
+            "farm.oepul.o6_3.option_no_mower_conditioner.applied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "annual_option",
+        "description": "Option gilt jeweils für ein Kalenderjahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-05"
+      ],
+      "rego_symbols": [
+        "data.o6_3.option_active"
+      ]
+    },
+    {
+      "id": "O6_3-COMB-01",
+      "rule_type": "access_requirement",
+      "statement": "Es muss zeitgleich an 'Umweltgerechte und biodiversitätsfördernde Bewirtschaftung' (UBB) oder 'Biologische Wirtschaftsweise' bzw. 'Biologische Wirtschaftsweise – Teilbetrieb' teilgenommen werden (Kombinationsverpflichtung).",
+      "conditions": [
+        {
+          "expression": "some m in participating_measures; m in {o6_1a, o6_1b, o6_1b_teilbetrieb}",
+          "description": "Teilnahme an UBB, BIO oder BIO-Teilbetrieb im selben Jahr",
+          "input_paths": [
+            "farm.oepul.participating_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_requirement_failed_if_missing",
+        "description": "Fehlt die Kombination, ist die Zugangsvoraussetzung nicht erfüllt (Jahr 1: kein Vertrag; ab Jahr 2: keine Prämie).",
+        "value": "O6_3-COMB-01"
+      },
+      "source_reference_ids": [
+        "REF-MB-06"
+      ],
+      "rego_symbols": [
+        "data.o6_3.combination_obligation_met",
+        "data.o6_3.access_requirement_failures"
+      ]
+    },
+    {
+      "id": "SRL-COMB-02",
+      "rule_type": "combination",
+      "statement": "Eine gleichzeitige betriebliche Teilnahme an UBB (bzw. 2, 11, 12) und Biologischer Wirtschaftsweise ist – ausgenommen Bio-Teilbetriebe – nicht möglich; ebenso nicht 6 und 7. Unmögliche Kombinationen sind bis zur Auszahlungsmitteilung korrigierbar.",
+      "conditions": [
+        {
+          "expression": "measure_a in participating_measures and measure_b in participating_measures",
+          "description": "beide ausgeschlossenen Maßnahmen beantragt",
+          "input_paths": [
+            "farm.oepul.participating_measures"
+          ]
+        },
+        {
+          "expression": "not o6_1b_teilbetrieb in participating_measures",
+          "description": "keine Bio-Teilbetriebsausnahme",
+          "input_paths": [
+            "farm.oepul.participating_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "farm_level_combination_excluded",
+        "description": "Unzulässige betriebliche Kombination; Kombinationsverpflichtung der Heuwirtschaft nicht korrekt erfüllbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-29",
+        "REF-AT-37"
+      ],
+      "rego_symbols": [
+        "data.o6_3.farm_level_exclusion_violations"
+      ]
+    },
+    {
+      "id": "O6_3-MIN-01",
+      "rule_type": "access_requirement",
+      "statement": "Im ersten Teilnahmejahr müssen zumindest 2,00 ha Mähwiesen und Mähweiden (ohne Streuwiesen und Bergmähder) bewirtschaftet werden; gemähte Grünlandflächen in der Maßnahme 'Naturschutz' zählen mit.",
+      "conditions": [
+        {
+          "expression": "is_first_contract_year",
+          "description": "erstes Verpflichtungsjahr",
+          "input_paths": [
+            "farm.year",
+            "farm.oepul.o6_3.contract_start_year"
+          ]
+        },
+        {
+          "expression": "sum(area_ha | grassland_type == maehwiese_maehweide) >= 2.0",
+          "description": "Summe Mähwiesen/Mähweiden inkl. Naturschutzflächen",
+          "input_paths": [
+            "land.parcels[].grassland_type",
+            "land.parcels[].area_ha",
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_requirement_failed_if_below",
+        "description": "Unterschreitung: Zugangsvoraussetzung im 1. Jahr nicht erfüllt, kein Vertrag.",
+        "value": 2.0
+      },
+      "source_reference_ids": [
+        "REF-MB-07",
+        "REF-MB-08",
+        "REF-SRL-41"
+      ],
+      "rego_symbols": [
+        "data.o6_3.min_participation_area_ha",
+        "data.o6_3.min_participation_area_met",
+        "data.o6_3.access_requirement_failures"
+      ]
+    },
+    {
+      "id": "O6_3-MIN-02",
+      "rule_type": "exception",
+      "statement": "In den Folgejahren können weniger als 2,00 ha Mähwiesen und Mähweiden bewirtschaftet werden.",
+      "conditions": [
+        {
+          "expression": "not is_first_contract_year",
+          "description": "Folgejahr",
+          "input_paths": [
+            "farm.year",
+            "farm.oepul.o6_3.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_minimum_area_in_following_years",
+        "description": "Mindestfläche wird ab dem 2. Vertragsjahr nicht geprüft.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-09"
+      ],
+      "rego_symbols": [
+        "data.o6_3.access_requirement_failures"
+      ]
+    },
+    {
+      "id": "O6_3-LH-01",
+      "rule_type": "access_requirement",
+      "statement": "Im ersten Jahr der Teilnahme muss die Eigenschaft als tierhaltender Betrieb erfüllt sein.",
+      "conditions": [
+        {
+          "expression": "is_first_contract_year",
+          "description": "erstes Verpflichtungsjahr",
+          "input_paths": [
+            "farm.year",
+            "farm.oepul.o6_3.contract_start_year"
+          ]
+        },
+        {
+          "expression": "is_livestock_farm",
+          "description": "mind. 0,30 RGVE/ha Futterfläche",
+          "input_paths": [
+            "livestock.species_groups[].rgve_category",
+            "livestock.species_groups[].animal_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_requirement_failed_if_not_livestock",
+        "description": "Nicht-tierhaltender Betrieb im 1. Jahr: kein Vertrag.",
+        "value": "O6_3-LH-01"
+      },
+      "source_reference_ids": [
+        "REF-MB-10",
+        "REF-SRL-41"
+      ],
+      "rego_symbols": [
+        "data.o6_3.access_requirement_failures",
+        "data.o6_3.is_livestock_farm"
+      ]
+    },
+    {
+      "id": "O6_3-LH-02",
+      "rule_type": "definition",
+      "statement": "Als tierhaltender Betrieb gilt ein Betrieb mit mindestens 0,30 RGVE je ha Futterfläche (Summe Grünland- und Ackerfutterflächen) aus Rindern, Schafen, Ziegen, Equiden, Rot- und Damwild oder Neuweltkamelen; andernfalls nicht-tierhaltend.",
+      "conditions": [
+        {
+          "expression": "total_rgve / forage_area_ha >= 0.30",
+          "description": "Viehbesatz in RGVE/ha Futterfläche",
+          "input_paths": [
+            "livestock.species_groups[].rgve_category",
+            "livestock.species_groups[].animal_count",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "livestock_status",
+        "description": "tierhaltend bzw. nicht_tierhaltend",
+        "value": 0.3
+      },
+      "source_reference_ids": [
+        "REF-MB-11",
+        "REF-MB-12",
+        "REF-SRL-04"
+      ],
+      "rego_symbols": [
+        "data.o6_3.livestock_density",
+        "data.o6_3.is_livestock_farm",
+        "data.o6_3.livestock_status"
+      ]
+    },
+    {
+      "id": "O6_3-LH-03",
+      "rule_type": "calculation",
+      "statement": "Bei der Ermittlung der RGVE sind die Umrechnungsfaktoren des RGVE-Schlüssels (Merkblatt Kap. 8 bzw. Anhang A) je Tierkategorie anzuwenden; Zwergrinder sind die Rassen Dahomey, Dexter, Kerry und Zwergzebu; Schweine zählen nicht als RGVE.",
+      "conditions": [
+        {
+          "expression": "rgve_factor(rgve_category)",
+          "description": "Faktor je Kategorie aus data.o6_3.rgve_key.rows",
+          "input_paths": [
+            "livestock.species_groups[].rgve_category"
+          ]
+        },
+        {
+          "expression": "head_count * factor",
+          "description": "Stückzahl mal Faktor",
+          "input_paths": [
+            "livestock.species_groups[].animal_count",
+            "livestock.species_groups[].average_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rgve_sum",
+        "description": "Summe der RGVE aller zählenden Tiergruppen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-13",
+        "REF-MB-54",
+        "REF-MB-55",
+        "REF-ANH-01",
+        "REF-ANH-02",
+        "REF-ANH-03",
+        "REF-ANH-04"
+      ],
+      "rego_symbols": [
+        "data.o6_3.rgve_factor",
+        "data.o6_3.group_rgve",
+        "data.o6_3.total_rgve"
+      ]
+    },
+    {
+      "id": "O6_3-LH-04",
+      "rule_type": "calculation",
+      "statement": "Die Berechnung als tierhaltender Betrieb bezieht sich auf sämtliche beantragte Futterflächen des Betriebes, auch auf Futterflächen in 'Naturschutz' oder 'Bewirtschaftung von Bergmähdern'.",
+      "conditions": [
+        {
+          "expression": "land_use == grassland",
+          "description": "jede Grünlandfläche zählt als Futterfläche",
+          "input_paths": [
+            "land.parcels[].land_use",
+            "land.parcels[].enrolled_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "forage_area",
+        "description": "Futterfläche = Grünland + Ackerfutterflächen des gesamten Betriebes.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-14"
+      ],
+      "rego_symbols": [
+        "data.o6_3.counts_as_forage_area",
+        "data.o6_3.forage_area_ha"
+      ]
+    },
+    {
+      "id": "O6_3-LH-05",
+      "rule_type": "definition",
+      "statement": "Als Ackerfutterflächen für die Berechnung als tierhaltender Betrieb gelten Futtergräser, Wechselwiese, Kleegras, Klee, Luzerne, sonstiges Feldfutter und Ackerweide.",
+      "conditions": [
+        {
+          "expression": "forage_crop_type in density_forage_crop_ids",
+          "description": "Schlagnutzungsart laut Liste",
+          "input_paths": [
+            "land.parcels[].crop.forage_crop_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "arable_forage_counts",
+        "description": "Ackerfläche zählt zur Futterfläche.",
+        "value": [
+          "futtergraeser",
+          "wechselwiese",
+          "kleegras",
+          "klee",
+          "luzerne",
+          "sonstiges_feldfutter",
+          "ackerweide"
+        ]
+      },
+      "source_reference_ids": [
+        "REF-MB-15",
+        "REF-AT-01",
+        "REF-SRL-03"
+      ],
+      "rego_symbols": [
+        "data.o6_3.density_forage_crop_ids",
+        "data.o6_3.counts_as_forage_area"
+      ]
+    },
+    {
+      "id": "O6_3-LH-06",
+      "rule_type": "exception",
+      "statement": "Wird eine Ackerfutterfläche als Zweitkultur (z. B. Wintergerste/Klee) beantragt, wird dafür keine Prämie gewährt und sie zählt nicht als Ackerfutterfläche bei der Ermittlung als tierhaltender Betrieb.",
+      "conditions": [
+        {
+          "expression": "crop.is_second_crop == true",
+          "description": "Ackerfutter als Zweitkultur",
+          "input_paths": [
+            "land.parcels[].crop.is_second_crop"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "excluded",
+        "description": "Weder prämienfähig noch Futterfläche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-53"
+      ],
+      "rego_symbols": [
+        "data.o6_3.counts_as_forage_area",
+        "data.o6_3.premium_area_class"
+      ]
+    },
+    {
+      "id": "GEN-LH-01",
+      "rule_type": "calculation",
+      "statement": "Ein jährlicher Wechsel zwischen tierhaltend und nicht-tierhaltend ist möglich. Rinder: Durchschnittsbestand taggenau aus der Rinderdatenbank; andere Tiere: Tierliste zum Stichtag 1. April bzw. eingereichte Durchschnittstierliste (vorrangig).",
+      "conditions": [
+        {
+          "expression": "average_count present",
+          "description": "Durchschnittsbestand vorhanden → verwenden, sonst Stichtagszahl",
+          "input_paths": [
+            "livestock.species_groups[].average_count",
+            "livestock.species_groups[].animal_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "head_count_basis",
+        "description": "Tierzahl für die RGVE-Berechnung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-20",
+        "REF-AT-21",
+        "REF-AT-22",
+        "REF-SRL-05"
+      ],
+      "rego_symbols": [
+        "data.o6_3.group_head_count",
+        "data.o6_3.livestock_status"
+      ]
+    },
+    {
+      "id": "GEN-LH-02",
+      "rule_type": "calculation",
+      "statement": "Bei unterjährigem Betriebsstrukturwechsel werden Rinder ab dem Tag des Wechsels der neuen Betriebsstruktur zugerechnet; dies kann zum Verlust der Tierhaltereigenschaft führen.",
+      "conditions": [
+        {
+          "expression": "structure_change_date",
+          "description": "Rinder ab Wechseltag der neuen Struktur zugerechnet (im Durchschnittsbestand abzubilden)",
+          "input_paths": [
+            "livestock.species_groups[].average_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "cattle_reassigned",
+        "description": "Durchschnittsbestand des Antragstellers entsprechend reduziert.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-23"
+      ],
+      "rego_symbols": [
+        "data.o6_3.group_head_count"
+      ]
+    },
+    {
+      "id": "O6_3-OBL-01",
+      "rule_type": "obligation",
+      "statement": "Am gesamten Betrieb muss auf Silagebereitung und Silagefütterung verzichtet werden, unabhängig von der Tierart und auch bei weiter entfernten Betriebsgebäuden.",
+      "conditions": [
+        {
+          "expression": "feeding.silage_produced == true",
+          "description": "Silage bereitet",
+          "input_paths": [
+            "farm.feeding.silage_produced"
+          ]
+        },
+        {
+          "expression": "feeding.silage_fed == true",
+          "description": "Silage verfüttert",
+          "input_paths": [
+            "farm.feeding.silage_fed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Förderverpflichtung (Kürzung nach Sanktionsschema).",
+        "value": "O6_3-OBL-01"
+      },
+      "source_reference_ids": [
+        "REF-MB-16",
+        "REF-MB-17",
+        "REF-SRL-42"
+      ],
+      "rego_symbols": [
+        "data.o6_3.violations"
+      ]
+    },
+    {
+      "id": "O6_3-OBL-02",
+      "rule_type": "obligation",
+      "statement": "Das Pressen von nicht ohne Folie lagerfähigem Mähgut ist nicht zulässig.",
+      "conditions": [
+        {
+          "expression": "feeding.non_storable_without_foil_pressed == true",
+          "description": "folienpflichtige Ballen gepresst",
+          "input_paths": [
+            "farm.feeding.non_storable_without_foil_pressed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Förderverpflichtung.",
+        "value": "O6_3-OBL-02"
+      },
+      "source_reference_ids": [
+        "REF-MB-18"
+      ],
+      "rego_symbols": [
+        "data.o6_3.violations"
+      ]
+    },
+    {
+      "id": "O6_3-OBL-03",
+      "rule_type": "obligation",
+      "statement": "Erlaubt sind Grünmais zur sofortigen Verfütterung, rasche Verbringung von gehäckseltem Grünmais/Grünfutter zur Trocknung und Pelletierung für den eigenen Betrieb sowie Eingrasen; das Einsetzen eines Gärungsprozesses muss ausgeschlossen werden.",
+      "conditions": [
+        {
+          "expression": "feeding.green_forage_fermentation_occurred == true",
+          "description": "Gärungsprozess bei Grünfutter eingetreten",
+          "input_paths": [
+            "farm.feeding.green_forage_fermentation_occurred"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß, wenn Gärung eintritt; sonst zulässige Praxis.",
+        "value": "O6_3-OBL-03"
+      },
+      "source_reference_ids": [
+        "REF-MB-19",
+        "REF-MB-20"
+      ],
+      "rego_symbols": [
+        "data.o6_3.violations"
+      ]
+    },
+    {
+      "id": "O6_3-OBL-04",
+      "rule_type": "obligation",
+      "statement": "Futtermittel (auch Neben-/Koppelprodukte aus Zucker-, Stärke-, Bioethanolproduktion), bei deren Produktion eine Gärung (Silierung) stattfindet, sind nicht zugelassen (z. B. nasse Zuckerrüben-Schnitzel, Biertrebern); Flüssigmelasse und Rüben-Schnitzelpellets sind zulässig.",
+      "conditions": [
+        {
+          "expression": "feedstuff.fermentation_in_production == true or feedstuff.feed_id in not_permitted_feed_examples",
+          "description": "Futtermittel mit Gärung",
+          "input_paths": [
+            "farm.feeding.feedstuffs[].fermentation_in_production",
+            "farm.feeding.feedstuffs[].feed_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Förderverpflichtung.",
+        "value": "O6_3-OBL-04"
+      },
+      "source_reference_ids": [
+        "REF-MB-21",
+        "REF-MB-22",
+        "REF-MB-23"
+      ],
+      "rego_symbols": [
+        "data.o6_3.fermented_feed",
+        "data.o6_3.violations"
+      ]
+    },
+    {
+      "id": "O6_3-OBL-05",
+      "rule_type": "obligation",
+      "statement": "Die Heugewinnung muss mit Grünfütterung (Eingrasen oder Weide) im überwiegenden Teil der Vegetationsperiode (1. April bis 30. September) für alle raufutterverzehrenden Tiere kombiniert werden; Weidedauer auf Gemeinschaftsweide oder Alm ist anrechenbar.",
+      "conditions": [
+        {
+          "expression": "green_feeding_days > 183 * 0.5",
+          "description": "Grünfütterungstage (inkl. Gemeinschaftsweide/Alm) im überwiegenden Teil der Vegetationsperiode",
+          "input_paths": [
+            "farm.feeding.green_feeding.eingrasen_or_pasture_days_apr_sep",
+            "farm.feeding.green_feeding.communal_pasture_or_alm_days_apr_sep"
+          ]
+        },
+        {
+          "expression": "all_roughage_animals_included == true",
+          "description": "alle Raufutterverzehrer",
+          "input_paths": [
+            "farm.feeding.green_feeding.all_roughage_animals_included"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_not_met",
+        "description": "Verstoß, wenn nicht erfüllt und RGVE vorhanden.",
+        "value": "O6_3-OBL-05"
+      },
+      "source_reference_ids": [
+        "REF-MB-24",
+        "REF-MB-25",
+        "REF-MB-26",
+        "REF-SRL-43"
+      ],
+      "rego_symbols": [
+        "data.o6_3.green_feeding_days",
+        "data.o6_3.green_feeding_majority_met",
+        "data.o6_3.violations"
+      ]
+    },
+    {
+      "id": "O6_3-OBL-06",
+      "rule_type": "obligation",
+      "statement": "Generelles Lagerungsverbot von Silage: ab 1. Jänner des ersten Vertragsjahres darf weder Silage am Betrieb gelagert noch dürfen betriebseigene Silagevorräte aufgebraucht werden.",
+      "conditions": [
+        {
+          "expression": "feeding.silage_stored == true",
+          "description": "Silage gelagert",
+          "input_paths": [
+            "farm.feeding.silage_stored"
+          ]
+        },
+        {
+          "expression": "feeding.own_silage_stock_used_after_contract_start == true",
+          "description": "Silagevorräte nach Vertragsbeginn aufgebraucht",
+          "input_paths": [
+            "farm.feeding.own_silage_stock_used_after_contract_start"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Förderverpflichtung.",
+        "value": "O6_3-OBL-06"
+      },
+      "source_reference_ids": [
+        "REF-MB-27",
+        "REF-MB-28",
+        "REF-SRL-44"
+      ],
+      "rego_symbols": [
+        "data.o6_3.violations"
+      ]
+    },
+    {
+      "id": "O6_3-OBL-07",
+      "rule_type": "obligation",
+      "statement": "Die Abgabe von Mähgut an Dritte darf nur in Form von trockenem Heu erfolgen; die weitere Verwertung des Heus (anderer Betrieb, Pellets, Kompost, Biogas) ist nicht prämienrelevant.",
+      "conditions": [
+        {
+          "expression": "forage_transfer.form != dry_hay",
+          "description": "Abgabe in anderer Form",
+          "input_paths": [
+            "farm.forage_transfers[].form"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Förderverpflichtung.",
+        "value": "O6_3-OBL-07"
+      },
+      "source_reference_ids": [
+        "REF-MB-29",
+        "REF-MB-30",
+        "REF-SRL-45"
+      ],
+      "rego_symbols": [
+        "data.o6_3.violations"
+      ]
+    },
+    {
+      "id": "O6_3-OBL-08",
+      "rule_type": "obligation",
+      "statement": "Das einmalige Kreiseln von Gras mit anschließendem Wegfahren ist nicht zulässig.",
+      "conditions": [
+        {
+          "expression": "forage_transfer.one_time_tedding_then_removed == true",
+          "description": "einmal gekreiselt und abgefahren",
+          "input_paths": [
+            "farm.forage_transfers[].one_time_tedding_then_removed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Förderverpflichtung.",
+        "value": "O6_3-OBL-08"
+      },
+      "source_reference_ids": [
+        "REF-MB-31"
+      ],
+      "rego_symbols": [
+        "data.o6_3.violations"
+      ]
+    },
+    {
+      "id": "O6_3-OBL-09",
+      "rule_type": "obligation",
+      "statement": "Alle Maßnahmen, die auf eine Verwendung als Silage schließen lassen (auch außerhalb des Betriebes), sind nicht erlaubt.",
+      "conditions": [
+        {
+          "expression": "forage_transfer.indicates_silage_use == true",
+          "description": "Hinweis auf Silageverwendung",
+          "input_paths": [
+            "farm.forage_transfers[].indicates_silage_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Förderverpflichtung.",
+        "value": "O6_3-OBL-09"
+      },
+      "source_reference_ids": [
+        "REF-MB-32"
+      ],
+      "rego_symbols": [
+        "data.o6_3.violations"
+      ]
+    },
+    {
+      "id": "O6_3-OBL-10",
+      "rule_type": "obligation",
+      "statement": "Die Abgabe von Grünfutter zwischen zwei Heuwirtschaftsbetrieben ist nicht zulässig.",
+      "conditions": [
+        {
+          "expression": "forage_transfer.form == green_forage and recipient_is_hay_farm",
+          "description": "Grünfutter an Heuwirtschaftsbetrieb",
+          "input_paths": [
+            "farm.forage_transfers[].form",
+            "farm.forage_transfers[].recipient_is_hay_farm"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Förderverpflichtung.",
+        "value": "O6_3-OBL-10"
+      },
+      "source_reference_ids": [
+        "REF-MB-33"
+      ],
+      "rego_symbols": [
+        "data.o6_3.violations"
+      ]
+    },
+    {
+      "id": "O6_3-OBL-11",
+      "rule_type": "obligation",
+      "statement": "Vom Aufwuchs der Grünlandflächen eines Heuwirtschaftsbetriebes darf keine Silage produziert werden; auch Gärheu bzw. Heulage ist nicht zulässig.",
+      "conditions": [
+        {
+          "expression": "feeding.haylage_or_fermented_hay_produced == true",
+          "description": "Gärheu/Heulage produziert",
+          "input_paths": [
+            "farm.feeding.haylage_or_fermented_hay_produced"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Förderverpflichtung.",
+        "value": "O6_3-OBL-11"
+      },
+      "source_reference_ids": [
+        "REF-MB-34"
+      ],
+      "rego_symbols": [
+        "data.o6_3.violations"
+      ]
+    },
+    {
+      "id": "O6_3-OPT-01",
+      "rule_type": "option_obligation",
+      "statement": "Bei beantragter Option 'Verzicht auf Mähaufbereiter' muss auf der gesamten Betriebsfläche auf Mähaufbereiter verzichtet werden, unabhängig davon, ob für Eingrasen oder Heuernte gemäht wird; es darf kein entsprechendes Gerät am Betrieb vorhanden sein.",
+      "conditions": [
+        {
+          "expression": "option_requested",
+          "description": "Option beantragt",
+          "input_paths": [
+            "farm.oepul.o6_3.option_no_mower_conditioner.applied"
+          ]
+        },
+        {
+          "expression": "machinery.mower_conditioner_used or machinery.mower_conditioner_present",
+          "description": "Gerät eingesetzt oder vorhanden",
+          "input_paths": [
+            "farm.machinery.mower_conditioner_used",
+            "farm.machinery.mower_conditioner_present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Optionsverpflichtung.",
+        "value": "O6_3-OPT-01"
+      },
+      "source_reference_ids": [
+        "REF-MB-35",
+        "REF-MB-36",
+        "REF-MB-37",
+        "REF-SRL-46"
+      ],
+      "rego_symbols": [
+        "data.o6_3.violations"
+      ]
+    },
+    {
+      "id": "O6_3-OPT-02",
+      "rule_type": "definition",
+      "statement": "Mähaufbereiter sind Geräte, die kombiniert mit dem Mähwerk oder in einem separaten Arbeitsschritt eingesetzt werden und das Schnittgut quetschen, knicken oder zerkleinern, um die Trocknung zu erleichtern.",
+      "conditions": [
+        {
+          "expression": "device crushes/bends/chops cut material to ease drying",
+          "description": "Gerätedefinition",
+          "input_paths": [
+            "farm.machinery.mower_conditioner_present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "definition",
+        "description": "Klassifikation eines Geräts als Mähaufbereiter.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-38"
+      ],
+      "rego_symbols": [
+        "data.o6_3.machinery"
+      ]
+    },
+    {
+      "id": "O6_3-APP-01",
+      "rule_type": "deadline",
+      "statement": "Die Heuwirtschaft muss vor Vertragsbeginn im Maßnahmenantrag des Mehrfachantrages bis spätestens 31. Dezember beantragt werden, um einen Vertrag ab dem Folgejahr zu begründen.",
+      "conditions": [
+        {
+          "expression": "measure_application_date <= (contract_start_year - 1)-12-31",
+          "description": "fristgerechter Maßnahmenantrag",
+          "input_paths": [
+            "farm.oepul.o6_3.measure_application_date",
+            "farm.oepul.o6_3.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_requirement_failed_if_late",
+        "description": "Verspäteter Antrag: kein Vertrag für das Jahr.",
+        "value": "O6_3-APP-01"
+      },
+      "source_reference_ids": [
+        "REF-MB-39",
+        "REF-AT-30",
+        "REF-SRL-30"
+      ],
+      "rego_symbols": [
+        "data.o6_3.application_timely",
+        "data.o6_3.access_requirement_failures"
+      ]
+    },
+    {
+      "id": "O6_3-APP-02",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg in die Heuwirtschaft ist mit dem Förderjahr 2025 möglich (Beantragung bis 31.12.2024).",
+      "conditions": [
+        {
+          "expression": "contract_start_year <= 2025",
+          "description": "Vertragsbeginn spätestens 2025",
+          "input_paths": [
+            "farm.oepul.o6_3.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_requirement_failed_if_later",
+        "description": "Kein Neueinstieg ab 2026.",
+        "value": 2025
+      },
+      "source_reference_ids": [
+        "REF-MB-40",
+        "REF-AT-28"
+      ],
+      "rego_symbols": [
+        "data.o6_3.access_requirement_failures"
+      ]
+    },
+    {
+      "id": "O6_3-APP-03",
+      "rule_type": "procedure",
+      "statement": "Für die Option 'Verzicht auf Mähaufbereiter' ist in der Beilage 'MFA-Angaben' des Mehrfachantrages ein Kreuz zu setzen.",
+      "conditions": [
+        {
+          "expression": "option_requested and not marked_in_mfa_details",
+          "description": "Option ohne Kreuz in MFA-Angaben",
+          "input_paths": [
+            "farm.oepul.o6_3.option_no_mower_conditioner.marked_in_mfa_details"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "option_not_active",
+        "description": "Option nicht wirksam beantragt, Grundprämiensatz.",
+        "value": "O6_3-APP-03"
+      },
+      "source_reference_ids": [
+        "REF-MB-41"
+      ],
+      "rego_symbols": [
+        "data.o6_3.option_application_issues",
+        "data.o6_3.option_active"
+      ]
+    },
+    {
+      "id": "O6_3-APP-04",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg für die Option 'Verzicht auf Mähaufbereiter' ist mit dem Förderjahr 2028 möglich; einjährige Optionen bei mehrjährigen Maßnahmen sind bis inklusive 2028 beantragbar.",
+      "conditions": [
+        {
+          "expression": "farm.year <= 2028",
+          "description": "Optionsjahr bis 2028",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "option_not_available_after_2028",
+        "description": "Option ab 2029 nicht möglich.",
+        "value": 2028
+      },
+      "source_reference_ids": [
+        "REF-MB-42",
+        "REF-AT-29"
+      ],
+      "rego_symbols": [
+        "data.o6_3.option_application_issues",
+        "data.o6_3.option_active"
+      ]
+    },
+    {
+      "id": "GEN-APP-02",
+      "rule_type": "procedure",
+      "statement": "Einjährige Optionen verlängern sich automatisch um ein weiteres Förderjahr, wenn sie nicht abgemeldet werden; eine Abmeldung im laufenden Jahr macht sie für dieses Jahr ungültig.",
+      "conditions": [
+        {
+          "expression": "option applied in previous year and not deregistered",
+          "description": "automatische Verlängerung",
+          "input_paths": [
+            "farm.oepul.o6_3.option_no_mower_conditioner.applied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "option_renewed",
+        "description": "Option gilt im Folgejahr weiter.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-31",
+        "REF-AT-32"
+      ],
+      "rego_symbols": [
+        "data.o6_3.option_active"
+      ]
+    },
+    {
+      "id": "O6_3-PREM-01",
+      "rule_type": "premium_rate",
+      "statement": "Prämiensätze: nicht-tierhaltender Betrieb 0,0 €/ha; tierhaltender Betrieb 135,0 €/ha (2023) bzw. 145,8 €/ha (ab 2024); tierhaltender Betrieb mit Verzicht auf Mähaufbereiter 155,0 €/ha (2023) bzw. 167,4 €/ha (ab 2024) – jeweils für Grünland- und Ackerfutterflächen.",
+      "conditions": [
+        {
+          "expression": "rate_for(year, is_livestock_farm, option_active)",
+          "description": "Tabellenlookup data.o6_3.premium_rates.rows",
+          "input_paths": [
+            "farm.year",
+            "farm.oepul.o6_3.option_no_mower_conditioner.applied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rate_eur_per_ha",
+        "description": "Prämiensatz in €/ha.",
+        "value": {
+          "2023": [
+            0.0,
+            135.0,
+            155.0
+          ],
+          "2024-2028": [
+            0.0,
+            145.8,
+            167.4
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "REF-MB-43",
+        "REF-MB-44",
+        "REF-MB-45",
+        "REF-MB-46",
+        "REF-SRL-47",
+        "REF-SRL-49"
+      ],
+      "rego_symbols": [
+        "data.o6_3.rate_for",
+        "data.o6_3.current_rate"
+      ]
+    },
+    {
+      "id": "O6_3-PREM-02",
+      "rule_type": "premium_eligibility",
+      "statement": "Prämienfähig sind Mähwiesen und Mähweiden (ohne Streuwiesen und Bergmähder) sowie gemähte Ackerfutterflächen (Futtergräser, Wechselwiese, Kleegras, Klee, Luzerne, sonstiges Feldfutter; ohne Ackerweide); Dauerweiden sind nicht prämienfähig.",
+      "conditions": [
+        {
+          "expression": "grassland_type == maehwiese_maehweide and mown",
+          "description": "Grünland",
+          "input_paths": [
+            "land.parcels[].grassland_type",
+            "land.parcels[].operations.cutting_dates"
+          ]
+        },
+        {
+          "expression": "forage_crop_type in premium_forage_crop_ids and mown and not second crop",
+          "description": "Ackerfutter",
+          "input_paths": [
+            "land.parcels[].crop.forage_crop_type",
+            "land.parcels[].crop.is_second_crop"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_area_ha",
+        "description": "Summe der prämienfähigen Fläche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MB-47",
+        "REF-SRL-48",
+        "REF-MB-01"
+      ],
+      "rego_symbols": [
+        "data.o6_3.premium_area_class",
+        "data.o6_3.premium_parcels",
+        "data.o6_3.eligible_area_ha"
+      ]
+    },
+    {
+      "id": "O6_3-PREM-03",
+      "rule_type": "premium_rate",
+      "statement": "Mit Ausnahme des ersten Vertragsjahres hängt von der Tierhaltereigenschaft nur die Prämienhöhe ab; sinkt der Tierbesatz unter 0,30 RGVE/ha, gibt es keine Rückforderung für Jahre mit Einstufung als tierhaltend; die Förderbedingungen sind trotz Nicht-Gewährung der Prämie einzuhalten.",
+      "conditions": [
+        {
+          "expression": "not is_first_contract_year and not is_livestock_farm",
+          "description": "Folgejahr, nicht tierhaltend",
+          "input_paths": [
+            "farm.year",
+            "livestock.species_groups[].animal_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "zero_rate_obligations_continue",
+        "description": "Prämiensatz 0 €/ha, Verpflichtungen weiter aufrecht, keine Rückforderung für Vorjahre.",
+        "value": 0.0
+      },
+      "source_reference_ids": [
+        "REF-MB-48",
+        "REF-MB-49",
+        "REF-MB-50"
+      ],
+      "rego_symbols": [
+        "data.o6_3.is_livestock_farm_bool",
+        "data.o6_3.obligations_apply",
+        "data.o6_3.recovery_for_prior_years_due_to_livestock_change"
+      ]
+    },
+    {
+      "id": "O6_3-PREM-04",
+      "rule_type": "calculation",
+      "statement": "Prämie = prämienfähige Fläche × Prämiensatz; Beispiel: 8 ha gemähtes Grünland, 2 ha Dauerweide, 3 ha gemähte Ackerfutterfläche, 5 RGVE → 5/13 = 0,38 RGVE/ha (tierhaltend); 11 ha × 145,8 € = 1.603,8 €.",
+      "conditions": [
+        {
+          "expression": "eligible_area_ha * current_rate",
+          "description": "Bruttoprämie vor Kürzungen/Modulation",
+          "input_paths": [
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_gross_eur",
+        "description": "Bruttoprämie in Euro.",
+        "value": 1603.8
+      },
+      "source_reference_ids": [
+        "REF-MB-51",
+        "REF-MB-52"
+      ],
+      "rego_symbols": [
+        "data.o6_3.premium_gross_eur",
+        "data.o6_3.livestock_density"
+      ]
+    },
+    {
+      "id": "GEN-ELIG-01",
+      "rule_type": "eligibility",
+      "statement": "Förderwerbende Personen: natürliche Personen, eingetragene Personengesellschaften, juristische Personen und Personenvereinigungen mit höchstens 25 % Beteiligung von Gebietskörperschaften; Bewirtschaftung im eigenen Namen und auf eigene Rechnung als aktiver Landwirt; Gebietskörperschaften sind bei Heuwirtschaft ausgeschlossen.",
+      "conditions": [
+        {
+          "expression": "legal_form allowed and public_body_share_percent <= 25 and not is_public_body and is_active_farmer",
+          "description": "förderwerbende Person zulässig",
+          "input_paths": [
+            "farm.applicant.legal_form",
+            "farm.applicant.public_body_share_percent",
+            "farm.applicant.is_public_body",
+            "farm.applicant.is_active_farmer"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_requirement_failed_if_ineligible",
+        "description": "Nicht förderfähige Person.",
+        "value": "GEN-ELIG-01"
+      },
+      "source_reference_ids": [
+        "REF-AT-03",
+        "REF-AT-04",
+        "REF-AT-05",
+        "REF-SRL-01"
+      ],
+      "rego_symbols": [
+        "data.o6_3.applicant_eligible",
+        "data.o6_3.public_body_dominated"
+      ]
+    },
+    {
+      "id": "GEN-KOND-01",
+      "rule_type": "obligation",
+      "statement": "Alle teilnehmenden Betriebe müssen die Konditionalität (Klima/Umwelt, öffentliche Gesundheit, Pflanzengesundheit, Tierwohl) und die soziale Konditionalität einhalten, um die Förderung in voller Höhe zu erhalten.",
+      "conditions": [
+        {
+          "expression": "conditionality_compliant",
+          "description": "Einhaltung der Konditionalität (außerhalb dieses Regelwerks geprüft)",
+          "input_paths": [
+            "documentation.audit_last_year_noncompliance"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_if_breached",
+        "description": "Kürzung nach Konditionalitätsregeln.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-02"
+      ],
+      "rego_symbols": [
+        "data.o6_3.decision"
+      ]
+    },
+    {
+      "id": "GEN-MIN-01",
+      "rule_type": "access_requirement",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr muss der Betrieb mindestens 0,50 ha geschützten Anbau oder 1,50 ha landwirtschaftliche Fläche (inkl. GA, K20, Landschaftselemente) bewirtschaften; ab dem zweiten ÖPUL-Jahr entfällt die Betriebsmindestgröße.",
+      "conditions": [
+        {
+          "expression": "is_first_oepul_year",
+          "description": "erstes ÖPUL-Jahr",
+          "input_paths": [
+            "farm.oepul.first_participation_year",
+            "farm.year"
+          ]
+        },
+        {
+          "expression": "protected_ha >= 0.5 or total_ha >= 1.5",
+          "description": "Mindestgröße",
+          "input_paths": [
+            "land.protected_cultivation_area_ha",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_requirement_failed_if_below",
+        "description": "Kein Vertrag bei Unterschreitung im ersten ÖPUL-Jahr.",
+        "value": {
+          "protected_cultivation_ha": 0.5,
+          "agricultural_area_ha": 1.5
+        }
+      },
+      "source_reference_ids": [
+        "REF-AT-06",
+        "REF-AT-07",
+        "REF-SRL-06"
+      ],
+      "rego_symbols": [
+        "data.o6_3.farm_min_size_met",
+        "data.o6_3.is_first_oepul_year"
+      ]
+    },
+    {
+      "id": "GEN-MBK-01",
+      "rule_type": "obligation",
+      "statement": "Auf Grünland- und Ackerfutterflächen ist jährlich mindestens einmal vollflächig zu mähen und das Mähgut zu verbringen oder jährlich vollflächig zu beweiden; Bergmähder mindestens alle 2 Jahre einmal mähen.",
+      "conditions": [
+        {
+          "expression": "not mown and not grazed",
+          "description": "keine Nutzung im Jahr",
+          "input_paths": [
+            "land.parcels[].operations.cutting_dates",
+            "land.parcels[].operations.grazed"
+          ]
+        },
+        {
+          "expression": "bergmaehder and not mown and not mown_previous_year",
+          "description": "Bergmähder 2 Jahre ungenutzt",
+          "input_paths": [
+            "land.parcels[].operations.mown_previous_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Mindestbewirtschaftung nicht erfüllt; Fläche nicht förderfähig.",
+        "value": "GEN-MBK-01"
+      },
+      "source_reference_ids": [
+        "REF-AT-08",
+        "REF-AT-09",
+        "REF-SRL-09"
+      ],
+      "rego_symbols": [
+        "data.o6_3.violations"
+      ]
+    },
+    {
+      "id": "GEN-AREA-01",
+      "rule_type": "exclusion",
+      "statement": "Nicht förderfähig sind u. a. Energieholz/Kurzumtrieb, Palmkätzchen, Reb- und Baumschulen, nicht aktiv bewirtschaftete Flächen (Grünlandbrachen), sonstige Flächen, nicht beantragte oder falsch identifizierte Flächen, nicht hauptsächlich landwirtschaftlich genutzte Flächen, GLÖZ-Landschaftselemente und Versuchsflächen (Code VF); keine Förderung derselben Leistung aus anderem öffentlichen Titel.",
+      "conditions": [
+        {
+          "expression": "non_eligible_area_type != null",
+          "description": "Fläche in Ausschlussliste",
+          "input_paths": [
+            "land.parcels[].non_eligible_area_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium_on_parcel",
+        "description": "Keine Heuwirtschaftsprämie für die Fläche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-10",
+        "REF-SRL-24",
+        "REF-SRL-08"
+      ],
+      "rego_symbols": [
+        "data.o6_3.parcel_excluded_by",
+        "data.o6_3.parcel_exclusions",
+        "data.o6_3.non_eligible_area_type_ids"
+      ]
+    },
+    {
+      "id": "GEN-AREA-02",
+      "rule_type": "exclusion",
+      "statement": "In den Nationalparks Neusiedlersee und Donau-Auen werden (außer Maßnahmen 23/24) keine flächenbezogenen ÖPUL-Prämien gewährt; in anderen Nationalparks nur, wenn keine relevanten Bewirtschaftungsauflagen bestehen; gesamtbetriebliche Verpflichtungen gelten auch auf Nationalparkflächen.",
+      "conditions": [
+        {
+          "expression": "national_park.name in {Neusiedler See – Seewinkel, Donau-Auen} or has_relevant_management_restrictions",
+          "description": "Nationalparkfläche ohne Prämienanspruch",
+          "input_paths": [
+            "land.parcels[].national_park.name",
+            "land.parcels[].national_park.has_relevant_management_restrictions"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium_on_parcel",
+        "description": "Keine Prämie, Verpflichtungen bleiben.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-11",
+        "REF-AT-12",
+        "REF-SRL-07"
+      ],
+      "rego_symbols": [
+        "data.o6_3.parcel_excluded_by"
+      ]
+    },
+    {
+      "id": "GEN-OP-01",
+      "rule_type": "exclusion",
+      "statement": "Für Flächen mit Code OP (bzw. maßnahmenbezogenem OP-Code) wird im Förderjahr keine Prämie gewährt; OP ist u. a. verpflichtend bei Leistungsüberschneidung, behördlichen Ausgleichsflächen, nicht ganzjähriger oder nicht über den Vertragszeitraum erfüllbarer Verpflichtung.",
+      "conditions": [
+        {
+          "expression": "OP in oepul_codes or o6_3 in op_measures",
+          "description": "OP-Codierung",
+          "input_paths": [
+            "land.parcels[].oepul_codes",
+            "land.parcels[].op_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium_on_parcel",
+        "description": "Keine Heuwirtschaftsprämie auf der Fläche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-13",
+        "REF-AT-14",
+        "REF-AT-24"
+      ],
+      "rego_symbols": [
+        "data.o6_3.parcel_excluded_by"
+      ]
+    },
+    {
+      "id": "GEN-OP-02",
+      "rule_type": "procedure",
+      "statement": "Bei reinem Fremdverschulden ist das betroffene Flächenausmaß mit dem maßnahmenbezogenen OP-Code zu versehen und Nachweise aufzubewahren; ohne Fremdverschulden ist der Code zu löschen oder eine Selbstanzeige zu erstatten (geringere Sanktion als bei VOK-Feststellung).",
+      "conditions": [
+        {
+          "expression": "non_compliance_due_to_third_party",
+          "description": "Fremdverschulden",
+          "input_paths": [
+            "land.parcels[].op_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "measure_specific_op",
+        "description": "Keine Prämie auf betroffener Fläche für die Maßnahme.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-15",
+        "REF-AT-16"
+      ],
+      "rego_symbols": [
+        "data.o6_3.parcel_excluded_by",
+        "data.o6_3.sanction_share"
+      ]
+    },
+    {
+      "id": "GEN-OP-03",
+      "rule_type": "exception",
+      "statement": "Ein maßnahmenbezogener OP-Code einer anderen Maßnahme (z. B. OPBIO nach Spritzschaden) lässt die Prämienfähigkeit des Schlages für die Heuwirtschaft unberührt.",
+      "conditions": [
+        {
+          "expression": "op_measures does not contain o6_3",
+          "description": "OP-Code nur für andere Maßnahme",
+          "input_paths": [
+            "land.parcels[].op_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_unaffected",
+        "description": "Heuwirtschaftsprämie bleibt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-17"
+      ],
+      "rego_symbols": [
+        "data.o6_3.parcel_excluded_by"
+      ]
+    },
+    {
+      "id": "GEN-LOC-01",
+      "rule_type": "eligibility",
+      "statement": "Geförderte Flächen müssen in Österreich liegen und geförderte bzw. für den Viehbesatz maßgebliche Tiere in Österreich gehalten werden.",
+      "conditions": [
+        {
+          "expression": "located_in_austria and kept_in_austria",
+          "description": "Lage/Haltungsort Österreich",
+          "input_paths": [
+            "land.parcels[].located_in_austria",
+            "livestock.species_groups[].kept_in_austria"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "excluded_if_abroad",
+        "description": "Auslandsflächen/-tiere bleiben unberücksichtigt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-18",
+        "REF-AT-19",
+        "REF-SRL-02"
+      ],
+      "rego_symbols": [
+        "data.o6_3.parcel_in_austria",
+        "data.o6_3.rgve_group"
+      ]
+    },
+    {
+      "id": "GEN-DUR-01",
+      "rule_type": "contract_period",
+      "statement": "Die Verpflichtungsdauer umfasst das gesamte Kalenderjahr; förderfähig sind nur Flächen, auf denen die Verpflichtungen während der gesamten Dauer erfüllt werden; unterjährige Weitergabe nur bei Weiterführung durch den Übernehmer, sonst OP-Code.",
+      "conditions": [
+        {
+          "expression": "obligations fulfilled 01-01..12-31",
+          "description": "ganzjährige Einhaltung",
+          "input_paths": [
+            "land.parcels[].oepul_codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium_if_not_full_year",
+        "description": "Fläche mit OP zu codieren.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-24",
+        "REF-SRL-10"
+      ],
+      "rego_symbols": [
+        "data.o6_3.parcel_excluded_by",
+        "data.o6_3.within_contract_period"
+      ]
+    },
+    {
+      "id": "GEN-CP-02",
+      "rule_type": "contract_period",
+      "statement": "Die im ersten Vertragsjahr mit der Maßnahme belegten Flächen sowie alle Flächenzugänge sind bis zum Ende des Vertragszeitraumes gemäß den Förderverpflichtungen zu bewirtschaften.",
+      "conditions": [
+        {
+          "expression": "grassland measure area maintained",
+          "description": "Flächenbindung",
+          "input_paths": [
+            "farm.oepul.o6_3.area_change.previous_year_grassland_measure_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "area_commitment",
+        "description": "Flächenabgänge nur im Toleranzrahmen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-26"
+      ],
+      "rego_symbols": [
+        "data.o6_3.area_decrease_repayment_ha"
+      ]
+    },
+    {
+      "id": "GEN-CP-03",
+      "rule_type": "contract_period",
+      "statement": "Heuwirtschaft auf Acker ist an die jährlich verfügbaren Flächen gebunden und kann jährlich unterschiedlich sein.",
+      "conditions": [
+        {
+          "expression": "land_use == arable",
+          "description": "Ackerfutterfläche",
+          "input_paths": [
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "annual_area",
+        "description": "Keine Flächenbindung/Zugangsbeschränkung für Ackerfutter.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-27",
+        "REF-SRL-18"
+      ],
+      "rego_symbols": [
+        "data.o6_3.premium_arable_area_ha"
+      ]
+    },
+    {
+      "id": "GEN-EXIT-01",
+      "rule_type": "procedure",
+      "statement": "Bis zum Ausstieg sind die Förderverpflichtungen einzuhalten; ein Ausstieg ist grundsätzlich bis zur Durchführung/Ankündigung einer Vor-Ort-Kontrolle oder bis zur Mitteilung einer Verwaltungskontrolle möglich.",
+      "conditions": [
+        {
+          "expression": "exit before control announcement",
+          "description": "zulässiger Ausstiegszeitpunkt",
+          "input_paths": [
+            "farm.oepul.o6_3.exit.exited"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exit_possible",
+        "description": "Ausstieg wirksam.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-33",
+        "REF-AT-34"
+      ],
+      "rego_symbols": [
+        "data.o6_3.obligations_apply",
+        "data.o6_3.exited_without_recognition"
+      ]
+    },
+    {
+      "id": "GEN-EXIT-02",
+      "rule_type": "consequence",
+      "statement": "Ein Ausstieg aus der mehrjährigen Heuwirtschaft vor Ende des Vertragszeitraumes führt zur Rückforderung der bereits gewährten Prämien (sofern nicht höhere Gewalt/außergewöhnliche Umstände anerkannt) und kann Kombinationsverpflichtungen verletzen.",
+      "conditions": [
+        {
+          "expression": "exit.exited and exit_year <= 2028 and not recognised",
+          "description": "vorzeitiger Ausstieg",
+          "input_paths": [
+            "farm.oepul.o6_3.exit.exited",
+            "farm.oepul.o6_3.exit.exit_year",
+            "farm.oepul.o6_3.exit.force_majeure_or_exceptional_circumstances_recognised"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "full_recovery",
+        "description": "Rückforderung aller bisher gewährten Heuwirtschaftsprämien.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-35",
+        "REF-SRL-12",
+        "REF-SRL-11"
+      ],
+      "rego_symbols": [
+        "data.o6_3.is_multi_year_measure",
+        "data.o6_3.exited_without_recognition",
+        "data.o6_3.full_recovery_required"
+      ]
+    },
+    {
+      "id": "GEN-EXIT-03",
+      "rule_type": "procedure",
+      "statement": "Nach Ausstieg, Ausschluss oder einjähriger Nichtabgabe des Mehrfachantrages ist ein Wiedereinstieg nur mit neuerlichem Maßnahmenantrag möglich (für Heuwirtschaft nach 2025 nicht mehr möglich).",
+      "conditions": [
+        {
+          "expression": "exited or excluded",
+          "description": "Ausstieg/Ausschluss",
+          "input_paths": [
+            "farm.oepul.o6_3.exit.exited"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reentry_requires_new_application",
+        "description": "Neuer Maßnahmenantrag erforderlich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-36"
+      ],
+      "rego_symbols": [
+        "data.o6_3.full_recovery_required"
+      ]
+    },
+    {
+      "id": "GEN-COMB-02",
+      "rule_type": "combination",
+      "statement": "Auf der Einzelfläche ist die Heuwirtschaft laut Anhang L prämienmäßig nur mit 1A, 1B, 2, 6, 7, 9, 16, 17 und 24 kombinierbar; mit 1C, 4, 8, 10–14, 18, 19 und 23 nicht.",
+      "conditions": [
+        {
+          "expression": "some m in enrolled_measures; not single_parcel_combinable(o6_3, m)",
+          "description": "nicht kombinierbare Maßnahme auf derselben Fläche",
+          "input_paths": [
+            "land.parcels[].enrolled_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_o6_3_premium_on_parcel",
+        "description": "Keine Heuwirtschaftsprämie auf dieser Fläche (Fläche zählt dennoch für Mindestfläche und Futterfläche).",
+        "value": [
+          "o6_1a",
+          "o6_1b",
+          "o6_2",
+          "o6_6",
+          "o6_7",
+          "o6_9",
+          "o6_16",
+          "o6_17",
+          "o6_24"
+        ]
+      },
+      "source_reference_ids": [
+        "REF-SRL-28",
+        "REF-ANH-06",
+        "REF-ANH-07",
+        "REF-ANH-08"
+      ],
+      "rego_symbols": [
+        "data.o6_3.single_parcel_combinable",
+        "data.o6_3.parcel_excluded_by"
+      ]
+    },
+    {
+      "id": "GEN-SWITCH-01",
+      "rule_type": "transition",
+      "statement": "Bis 31.12.2025 konnte eine Maßnahme in eine höherwertige umgewandelt werden (u. a. UBB → Biologische Wirtschaftsweise) ohne Rückzahlung; die Kombinationsverpflichtung der Heuwirtschaft bleibt damit erfüllt.",
+      "conditions": [
+        {
+          "expression": "conversion o6_1a -> o6_1b by 2025-12-31",
+          "description": "Umwandlung",
+          "input_paths": [
+            "farm.oepul.participating_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_repayment",
+        "description": "Keine Rückzahlung; Verpflichtungen der höherwertigen Maßnahme für Restlaufzeit.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-38",
+        "REF-SRL-20"
+      ],
+      "rego_symbols": [
+        "data.o6_3.combination_obligation_met"
+      ]
+    },
+    {
+      "id": "GEN-TAKEOVER-01",
+      "rule_type": "procedure",
+      "statement": "Eine Maßnahmenübernahme durch einen bisher nicht teilnehmenden Betrieb ist nach der Antragsfrist bis 15. April (2023 und 2028: 17. April) für die Restlaufzeit möglich, auch nach dem letzten Einstiegsjahr; die Ausweitung auf andere Flächen darf 50 % nicht übersteigen; Genehmigung durch die AMA.",
+      "conditions": [
+        {
+          "expression": "takeover_date <= deadline",
+          "description": "fristgerecht",
+          "input_paths": [
+            "farm.oepul.o6_3.takeover.takeover_date"
+          ]
+        },
+        {
+          "expression": "extension_share <= 0.5",
+          "description": "max. 50 % Ausweitung",
+          "input_paths": [
+            "farm.oepul.o6_3.takeover.extension_share"
+          ]
+        },
+        {
+          "expression": "not taker_already_participating",
+          "description": "Übernehmer bisher nicht teilnehmend",
+          "input_paths": [
+            "farm.oepul.o6_3.takeover.taker_already_participating"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "takeover_invalid_if_failed",
+        "description": "Übernahme nicht zulässig.",
+        "value": "GEN-TAKEOVER-01"
+      },
+      "source_reference_ids": [
+        "REF-AT-39",
+        "REF-AT-40",
+        "REF-SRL-19"
+      ],
+      "rego_symbols": [
+        "data.o6_3.takeover_deadline",
+        "data.o6_3.takeover_issues"
+      ]
+    },
+    {
+      "id": "GEN-AREA-DEC-01",
+      "rule_type": "area_change",
+      "statement": "Flächenabgänge bei der Heuwirtschaft (Grünland) sind jährlich bis 5 %, höchstens 5,00 ha, jedenfalls 0,50 ha zulässig (Basis Vorjahresfläche); bei Überschreitung sind für die gesamten Differenzflächen die Prämien zurückzuzahlen.",
+      "conditions": [
+        {
+          "expression": "decrease > max(min(prev*0.05, 5), 0.5)",
+          "description": "Überschreitung der Toleranz",
+          "input_paths": [
+            "farm.oepul.o6_3.area_change.previous_year_grassland_measure_area_ha",
+            "farm.oepul.o6_3.area_change.current_grassland_measure_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "repayment_difference_area",
+        "description": "Rückzahlung für die gesamte Differenzfläche.",
+        "value": {
+          "max_share": 0.05,
+          "max_ha": 5.0,
+          "always_allowed_ha": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "REF-AT-43",
+        "REF-SRL-15"
+      ],
+      "rego_symbols": [
+        "data.o6_3.allowed_decrease_ha",
+        "data.o6_3.area_decrease_repayment_ha",
+        "data.o6_3.area_decrease_repayment_required"
+      ]
+    },
+    {
+      "id": "GEN-AREA-DEC-02",
+      "rule_type": "exception",
+      "statement": "Verlust der Verfügungsgewalt (Übertragung an andere Person/Betrieb) führt zu keiner Rückzahlung; beim Wechsel der bewirtschaftenden Person sind die Flächen weiterzuführen, der Nachfolger tritt dem Vertrag bei (solidarische Haftung).",
+      "conditions": [
+        {
+          "expression": "decrease_loss_of_disposal_ha",
+          "description": "Abgang durch Verlust der Verfügungsgewalt",
+          "input_paths": [
+            "farm.oepul.o6_3.area_change.decrease_loss_of_disposal_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_repayment_for_share",
+        "description": "Nicht auf Toleranz angerechnet.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-41",
+        "REF-AT-42",
+        "REF-SRL-13",
+        "REF-SRL-14"
+      ],
+      "rego_symbols": [
+        "data.o6_3.tolerated_exempt_decrease_ha"
+      ]
+    },
+    {
+      "id": "GEN-AREA-DEC-03",
+      "rule_type": "exception",
+      "statement": "Zulässig sind Umwandlungen von Acker/Dauerkultur/Wein in Grünland oder Gemeinschaftsweide, von Grünland/Gemeinschaftsweide in Almweidefläche sowie in LSE Mehrnutzenhecke bzw. Agroforststreifen.",
+      "conditions": [
+        {
+          "expression": "decrease_permitted_conversion_ha",
+          "description": "Abgang durch zulässige Umwandlung",
+          "input_paths": [
+            "farm.oepul.o6_3.area_change.decrease_permitted_conversion_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_repayment_for_share",
+        "description": "Nicht rückzahlungspflichtig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-44"
+      ],
+      "rego_symbols": [
+        "data.o6_3.tolerated_exempt_decrease_ha"
+      ]
+    },
+    {
+      "id": "GEN-AREA-INC-01",
+      "rule_type": "area_change",
+      "statement": "Flächenzugänge bei Heuwirtschaft auf Grünland sind 2024 und 2025 voll prämienfähig; ab 2026 ist die Prämienfähigkeit von Flächenausweitungen auf max. 50 % auf Basis 2025 beschränkt, eine Vergrößerung um bis zu 5,00 ha ist jedenfalls zulässig; bereits vorher mit derselben Maßnahme belegte Flächen gelten nicht als Zugang.",
+      "conditions": [
+        {
+          "expression": "year > 2025",
+          "description": "Folgejahre",
+          "input_paths": [
+            "farm.year"
+          ]
+        },
+        {
+          "expression": "eligible_grassland <= base_2025 + max(0.5*base_2025, 5)",
+          "description": "Deckel",
+          "input_paths": [
+            "farm.oepul.o6_3.area_change.base_2025_grassland_measure_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "capped_grassland_area",
+        "description": "Prämienfähige Grünlandfläche gedeckelt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-45",
+        "REF-AT-46",
+        "REF-SRL-16",
+        "REF-SRL-17"
+      ],
+      "rego_symbols": [
+        "data.o6_3.allowed_grassland_increase_ha",
+        "data.o6_3.eligible_grassland_area_ha"
+      ]
+    },
+    {
+      "id": "GEN-SANC-01",
+      "rule_type": "sanction",
+      "statement": "Rückforderungs-/Kürzungsgründe: Zugangsvoraussetzungen, Flächen-/Tierabweichungen, inhaltliche Verpflichtungen, Konditionalität, Vertragszeitraum; Beurteilung nach Schwere, Ausmaß, Dauer, Häufigkeit in Stufen Verwarnung (ab 2027: 1 % Einbehalt), 2, 5, 10, 25, 50, 100 %; Ausschluss und Rückforderung bei zweimaliger 100 %-Kürzung.",
+      "conditions": [
+        {
+          "expression": "sanction_share(level, year)",
+          "description": "Kürzungsanteil je Stufe",
+          "input_paths": [
+            "farm.year"
+          ]
+        },
+        {
+          "expression": "hundred_percent_reductions_in_contract_period >= 2",
+          "description": "Ausschluss",
+          "input_paths": [
+            "farm.oepul.o6_3.hundred_percent_reductions_in_contract_period"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_share",
+        "description": "Kürzungsanteil bzw. Ausschluss.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-47",
+        "REF-AT-48",
+        "REF-AT-49",
+        "REF-AT-50",
+        "REF-SRL-38"
+      ],
+      "rego_symbols": [
+        "data.o6_3.sanction_share",
+        "data.o6_3.excluded_from_measure"
+      ]
+    },
+    {
+      "id": "GEN-SANC-02",
+      "rule_type": "sanction",
+      "statement": "Mehrfachkürzungen werden in der Reihenfolge Übererklärung, Zugangsvoraussetzungen, Fristversäumnis, Untererklärung, inhaltliche Kürzungen, Förderobergrenze je Maßnahme, Modulation, Obergrenze Flächenzahlungen, Vertragszeitraumüberprüfung, Zugangskürzung, Konditionalität angewendet.",
+      "conditions": [
+        {
+          "expression": "ordered application of reductions",
+          "description": "Reihenfolge laut data.o6_3.sanctions.reduction_order",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_order",
+        "description": "Reihenfolge der Kürzungen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-39"
+      ],
+      "rego_symbols": [
+        "data.o6_3.premium_after_modulation_eur"
+      ]
+    },
+    {
+      "id": "GEN-PAY-01",
+      "rule_type": "payment",
+      "statement": "Die Auszahlung erfolgt bis 30. Juni des Folgejahres; nach Abschluss der Verwaltungskontrolle ist eine Teilzahlung bis 75 % möglich.",
+      "conditions": [
+        {
+          "expression": "payment_date <= (year+1)-06-30",
+          "description": "Zahlungsfrist",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "payment_schedule",
+        "description": "Zahlungstermin und Vorschusshöchstbetrag.",
+        "value": {
+          "advance_max_share": 0.75
+        }
+      },
+      "source_reference_ids": [
+        "REF-AT-51",
+        "REF-SRL-33"
+      ],
+      "rego_symbols": [
+        "data.o6_3.payment_deadline",
+        "data.o6_3.max_advance_payment_eur"
+      ]
+    },
+    {
+      "id": "SRL-PAY-02",
+      "rule_type": "payment",
+      "statement": "Von der Gewährung einer Förderung kann abgesehen werden, wenn der Auszahlungsbetrag 50 Euro nicht überschreitet.",
+      "conditions": [
+        {
+          "expression": "premium_after_modulation_eur <= 50",
+          "description": "Kleinstbetrag",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "payout_may_be_waived",
+        "description": "Auszahlung kann entfallen.",
+        "value": 50.0
+      },
+      "source_reference_ids": [
+        "REF-SRL-34"
+      ],
+      "rego_symbols": [
+        "data.o6_3.payout_may_be_waived"
+      ]
+    },
+    {
+      "id": "GEN-CAP-01",
+      "rule_type": "premium_cap",
+      "statement": "Die Summe der flächenbezogenen Zahlungen je Schlag (inkl. umgelegter Landschaftselemente) ist begrenzt: 1.200 €/ha (2023), 1.300 €/ha (ab 2024; ohne Zwischenfrucht/Immergrün und bis 2024 Erosionsschutz Wein-Obst-Hopfen bzw. ab 2025 NPA), bei Naturschutz/EBW 1.300 €/ha (2023) bzw. 1.500 €/ha (ab 2024).",
+      "conditions": [
+        {
+          "expression": "other_capped_payments + rate > cap_for(year, cap_type)",
+          "description": "Überschreitung",
+          "input_paths": [
+            "land.parcels[].other_capped_oepul_payments_eur_per_ha",
+            "land.parcels[].enrolled_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "cap_exceeded",
+        "description": "Kürzung auf die Obergrenze.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-52",
+        "REF-SRL-26"
+      ],
+      "rego_symbols": [
+        "data.o6_3.cap_for",
+        "data.o6_3.cap_type",
+        "data.o6_3.cap_exceeded_parcels"
+      ]
+    },
+    {
+      "id": "GEN-MOD-01",
+      "rule_type": "calculation",
+      "statement": "Das Prämienausmaß wird nach der Gesamtfläche des Betriebes moduliert: bis 200 ha 100 %, >200–300 ha 90 %, >300–1.000 ha 85 %, >1.000 ha 75 % (Beispiel 220 ha → 99,09 %); Basis sind die Angaben im Mehrfachantrag.",
+      "conditions": [
+        {
+          "expression": "modulation_factor(land.total_area_ha)",
+          "description": "gewichteter Faktor",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "modulated_premium",
+        "description": "Prämie nach Modulation.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-AT-53",
+        "REF-AT-54",
+        "REF-SRL-27"
+      ],
+      "rego_symbols": [
+        "data.o6_3.modulation_factor",
+        "data.o6_3.premium_after_modulation_eur"
+      ]
+    },
+    {
+      "id": "SRL-ACC-01",
+      "rule_type": "consequence",
+      "statement": "Bei mehrjährigen Maßnahmen kommt bei Nichterfüllung der Zugangsvoraussetzungen im 1. Jahr kein Vertrag zustande; ab dem 2. Verpflichtungsjahr wird im betroffenen Jahr keine Prämie gewährt.",
+      "conditions": [
+        {
+          "expression": "is_first_contract_year and not access_requirements_met",
+          "description": "Jahr 1",
+          "input_paths": [
+            "farm.year"
+          ]
+        },
+        {
+          "expression": "not is_first_contract_year and not access_requirements_met",
+          "description": "Folgejahr",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_contract_or_no_premium",
+        "description": "Kein Vertrag bzw. keine Prämie im Jahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-36",
+        "REF-SRL-37"
+      ],
+      "rego_symbols": [
+        "data.o6_3.no_contract_first_year",
+        "data.o6_3.no_premium_access_failure_later_year",
+        "data.o6_3.premium_payable_year"
+      ]
+    },
+    {
+      "id": "SRL-ZA-01",
+      "rule_type": "consequence",
+      "statement": "Wird in einem Folgejahr die Maßnahme/Fläche nicht beantragt, bleibt die Verpflichtung aufrecht, aber es erfolgt keine Zahlung; wird der Zahlungsantrag nicht binnen 1 Jahr nachgereicht, endet die Verpflichtung und alle bisher gewährten Prämien sind zurückzuzahlen.",
+      "conditions": [
+        {
+          "expression": "payment_application_submitted == false",
+          "description": "kein Zahlungsantrag",
+          "input_paths": [
+            "farm.oepul.o6_3.payment_application_submitted"
+          ]
+        },
+        {
+          "expression": "payment_application_missing_over_one_year == true",
+          "description": "über 1 Jahr fehlend",
+          "input_paths": [
+            "farm.oepul.o6_3.payment_application_missing_over_one_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_payment_or_full_recovery",
+        "description": "Keine Zahlung bzw. Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-31",
+        "REF-SRL-32"
+      ],
+      "rego_symbols": [
+        "data.o6_3.no_payment_missing_application",
+        "data.o6_3.full_recovery_required"
+      ]
+    },
+    {
+      "id": "SRL-HG-01",
+      "rule_type": "exception",
+      "statement": "Für höhere Gewalt und außergewöhnliche Umstände gilt § 6 GSP-AV; bei dauerhaft unmöglich machenden Umständen kann die AMA die Verpflichtung vorzeitig ohne Rückforderung beenden, bei vorübergehenden Umständen von Rückforderung absehen (im Jahr grundsätzlich keine Prämie, außer bei höherer Gewalt).",
+      "conditions": [
+        {
+          "expression": "force_majeure.recognised == true",
+          "description": "anerkannte höhere Gewalt",
+          "input_paths": [
+            "farm.oepul.force_majeure.recognised",
+            "farm.oepul.o6_3.exit.force_majeure_or_exceptional_circumstances_recognised"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_sanction_no_recovery",
+        "description": "Keine Sanktion/Rückforderung für die betroffenen Verpflichtungen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-21",
+        "REF-SRL-22",
+        "REF-SRL-23"
+      ],
+      "rego_symbols": [
+        "data.o6_3.effective_violations",
+        "data.o6_3.exited_without_recognition"
+      ]
+    },
+    {
+      "id": "SRL-REV-01",
+      "rule_type": "exception",
+      "statement": "Bei Änderungen des verbindlichen Rechtsrahmens (Revisionsklausel Art. 70 Abs. 7 VO (EU) 2021/2115) kann die förderwerbende Person die Vertragsanpassung ablehnen; der Vertrag endet dann ohne Rückforderung für die Vergangenheit.",
+      "conditions": [
+        {
+          "expression": "revision_adjustment_rejected",
+          "description": "Ablehnung der Anpassung",
+          "input_paths": [
+            "farm.oepul.o6_3.exit.force_majeure_or_exceptional_circumstances_recognised"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_ends_without_recovery",
+        "description": "Vertragsende ohne Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-25"
+      ],
+      "rego_symbols": [
+        "data.o6_3.exited_without_recognition"
+      ]
+    },
+    {
+      "id": "SRL-VOK-01",
+      "rule_type": "consequence",
+      "statement": "Verweigert die förderwerbende Person die Auskunft oder verhindert sie die Vor-Ort-Kontrolle (außer höhere Gewalt), wird der Antrag abgelehnt, keine Prämie für das laufende Jahr gewährt und bestehende Verträge beendet und rückabgewickelt.",
+      "conditions": [
+        {
+          "expression": "control_refused == true",
+          "description": "Kontrolle verhindert",
+          "input_paths": [
+            "farm.oepul.control_refused"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "application_rejected",
+        "description": "Keine Prämie, Rückabwicklung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-35"
+      ],
+      "rego_symbols": [
+        "data.o6_3.control_refused",
+        "data.o6_3.premium_payable_year"
+      ]
+    },
+    {
+      "id": "NAT-GM01",
+      "rule_type": "interaction",
+      "statement": "Im Naturschutz-Auflagencode GM01 (Silageverzicht bei zwei- oder mehrmaliger Nutzung) wird bei Teilnahme an der Heuwirtschaft ein Prämienzuschlag von 108 €/ha zur Naturschutzprämie gewährt.",
+      "conditions": [
+        {
+          "expression": "o6_3 in participating_measures and parcel has GM01",
+          "description": "Heuwirtschaftsteilnahme",
+          "input_paths": [
+            "farm.oepul.participating_measures",
+            "land.parcels[].enrolled_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "naturschutz_surcharge",
+        "description": "Zuschlag im Naturschutz (nicht Heuwirtschaftsprämie).",
+        "value": 108.0
+      },
+      "source_reference_ids": [
+        "REF-ANH-05"
+      ],
+      "rego_symbols": [
+        "data.o6_3.naturschutz_gm01_surcharge_eur_per_ha"
+      ]
+    },
+    {
+      "id": "N26-HG-01",
+      "rule_type": "exception",
+      "statement": "Sind Förderverpflichtungen 2026 aufgrund der Trockenheit nicht einhaltbar, kann ein Antrag auf Anerkennung höherer Gewalt über eAMA (Register 'Eingaben') gestellt werden.",
+      "conditions": [
+        {
+          "expression": "year == 2026 and force_majeure.cause == drought_2026 and obligations_not_maintainable",
+          "description": "Dürre 2026",
+          "input_paths": [
+            "farm.year",
+            "farm.oepul.force_majeure.cause",
+            "farm.oepul.force_majeure.obligations_not_maintainable"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "force_majeure_claim_possible",
+        "description": "Antrag möglich; bei Anerkennung keine Sanktion.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-N0522-01",
+        "REF-N0522-03"
+      ],
+      "rego_symbols": [
+        "data.o6_3.drought_force_majeure_claim_possible",
+        "data.o6_3.force_majeure_submission_channel"
+      ]
+    },
+    {
+      "id": "N26-VOK-01",
+      "rule_type": "exception",
+      "statement": "Bei Vor-Ort-Kontrollen 2026 wird die besondere Situation aufgrund der Trockenheit berücksichtigt (z. B. Grundfutterbedarf auf der Weide).",
+      "conditions": [
+        {
+          "expression": "year == 2026",
+          "description": "Kontrolljahr 2026",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "control_consideration",
+        "description": "Trockenheit fließt in die Beurteilung ein (z. B. Grünfütterung/Weide).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-N0522-02"
+      ],
+      "rego_symbols": [
+        "data.o6_3.effective_violations"
+      ]
+    }
+  ]
+}
