@@ -1,0 +1,198 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_4",
+  "rules": [
+    {
+      "id": "O64-ELIG-001",
+      "rule_type": "eligibility",
+      "statement": "Teilnahme ist nur mit Bergmahdflächen oberhalb der örtlichen Dauersiedlungsgrenze zulässig, die wegen Hangneigung, Lage oder Erreichbarkeit schwierig zu bewirtschaften sind.",
+      "conditions": [{"expression": "parcel.land_use == 'Bergmähder' && parcel.above_local_settlement_boundary == true && parcel.difficult_to_manage == true", "description": "Die Fläche ist als Bergmähder qualifiziert und erfüllt die Lage-/Erschwernismerkmale.", "input_paths": ["land.parcels[].land_use", "land.parcels[].above_local_settlement_boundary", "land.parcels[].difficult_to_manage"]}],
+      "result": {"outcome": "eligible", "description": "Die Fläche ist für o6_4 zugangsberechtigt."},
+      "source_reference_ids": ["C-O64-ELIGIBILITY"]
+    },
+    {
+      "id": "O64-ELIG-002",
+      "rule_type": "eligibility_threshold",
+      "statement": "Mehr als die Hälfte der Schlagfläche muss über 1.200 m Seehöhe liegen.",
+      "conditions": [{"expression": "parcel.elevation_above_1200_area_ha > parcel.area_ha / 2", "description": "Die Fläche oberhalb 1.200 m überschreitet die Hälfte der Schlagfläche.", "input_paths": ["land.parcels[].area_ha", "land.parcels[].elevation_above_1200_area_ha"]}],
+      "result": {"outcome": "eligible", "description": "Die 1.200-m-Mehrheitsschwelle ist erfüllt."},
+      "source_reference_ids": ["C-O64-1200M", "C-O64-SRL-ELIGIBILITY"]
+    },
+    {
+      "id": "O64-ELIG-003",
+      "rule_type": "eligibility_location",
+      "statement": "Bergmähder müssen über der Seehöhe des Heimbetriebes liegen; bei Almbetrieben darf die Bergmahdfläche unter der Almbetriebsstätte liegen.",
+      "conditions": [{"expression": "parcel.elevation_m > land.home_farm_elevation_m || parcel.is_alpine_farm_exception == true", "description": "Die Heimbetriebshöhenbedingung oder die Almbetriebs-Ausnahme ist erfüllt.", "input_paths": ["land.parcels[].elevation_m", "land.parcels[].is_alpine_farm_exception", "land.home_farm_elevation_m"]}],
+      "result": {"outcome": "eligible", "description": "Die relative Lage zum Betrieb ist zulässig."},
+      "source_reference_ids": ["C-O64-1200M"]
+    },
+    {
+      "id": "O64-PART-001",
+      "rule_type": "participation_option",
+      "statement": "Es besteht keine Kombinationspflicht mit anderen Maßnahmen, es müssen nicht alle Bergmahdflächen des Betriebes einbezogen werden und es gibt keine Mindestteilnahmefläche.",
+      "conditions": [],
+      "result": {"outcome": "allowed", "description": "Teilnahme kann auf ausgewählten Bergmahdflächen ohne Mindestfläche erfolgen."},
+      "source_reference_ids": ["C-O64-PARTICIPATION"]
+    },
+    {
+      "id": "O64-CONTRACT-001",
+      "rule_type": "contract_duration",
+      "statement": "Der Verpflichtungs- und Vertragszeitraum läuft bis 31. Dezember 2028 und beträgt bei Einstieg 2023 sechs, 2024 fünf und 2025 vier Jahre.",
+      "conditions": [{"expression": "farm.o6_4.contract_start_year in [2023, 2024, 2025]", "description": "Der Vertragsbeginn liegt in einem zulässigen Einstiegsjahr.", "input_paths": ["farm.o6_4.contract_start_year"]}],
+      "result": {"outcome": "contract_until", "description": "Verpflichtung endet am 31.12.2028.", "value": {"end_date": "2028-12-31", "duration_years_by_start": {"2023": 6, "2024": 5, "2025": 4}}},
+      "source_reference_ids": ["C-O64-CONTRACT-DURATION", "C-O64-CONTRACT-END"]
+    },
+    {
+      "id": "O64-MOW-001",
+      "rule_type": "management_obligation",
+      "statement": "Mindestens jedes zweite Jahr muss eine vollflächige Mahd einschließlich Verbringung des Mähgutes erfolgen.",
+      "conditions": [{"expression": "every_rolling_two_year_period_contains_full_mowing_and_removal == true", "description": "Jeder zweijährige Zeitraum enthält eine vollständige Mahd mit Abtransport.", "input_paths": ["land.parcels[].operations.mowing_years"]}],
+      "result": {"outcome": "compliance_required", "description": "Die zweijährliche Mahd- und Verbringungspflicht ist einzuhalten."},
+      "source_reference_ids": ["C-O64-MOWING", "C-O64-SRL-OBLIGATIONS", "C-GENERAL-BERGMAEHD"]
+    },
+    {
+      "id": "O64-MOW-002",
+      "rule_type": "management_limit",
+      "statement": "Es darf höchstens eine Mahd pro Jahr erfolgen; Liegenlassen des Mähgutes und Häckseln der Fläche sind nicht zulässig.",
+      "conditions": [{"expression": "annual_mowing_count <= 1 && mowed_material_removed == true && mulching == false", "description": "Jahresanzahl, Verbringung und Nicht-Häckseln entsprechen der Auflage.", "input_paths": ["land.parcels[].operations.mowing_years", "land.parcels[].operations.mulching"]}],
+      "result": {"outcome": "compliance_required", "description": "Die jährliche Mahdobergrenze und die Verbringungspflicht gelten."},
+      "source_reference_ids": ["C-O64-MOWING-LIMIT"]
+    },
+    {
+      "id": "O64-GRAZE-001",
+      "rule_type": "grazing_restriction",
+      "statement": "Bergmähder dürfen grundsätzlich nicht beweidet werden; eine jährliche Nachweide ist erst ab dem 16. August zulässig.",
+      "conditions": [{"expression": "all_grazing_periods.start_date >= 'YYYY-08-16' && grazing_type == 'aftermath'", "description": "Jede Beweidung ist als Nachweide ab dem zulässigen Termin dokumentiert.", "input_paths": ["land.parcels[].operations.grazing_periods"]}],
+      "result": {"outcome": "compliance_required", "description": "Vorzeitige oder nicht als Nachweide qualifizierte Beweidung ist unzulässig."},
+      "source_reference_ids": ["C-O64-AFTERGRAZE", "C-O64-SRL-OBLIGATIONS"]
+    },
+    {
+      "id": "O64-FERT-001",
+      "rule_type": "fertilizer_restriction",
+      "statement": "Auf Maßnahmenflächen sind Düngemittel, Klärschlamm und kompostierter Klärschlamm verboten; bedarfsgerechter Festmist in ursprünglicher Form und eigene häusliche Abwässer sind zulässig.",
+      "conditions": [{"expression": "application.material in ['solid_manure', 'household_wastewater'] || application.material == null", "description": "Nur die ausdrücklich genannten Ausnahmen werden zugelassen; Festmist darf nicht aufgelöst sein.", "input_paths": ["land.parcels[].operations.fertilizer_applications"]}],
+      "result": {"outcome": "compliance_required", "description": "Verbotene Düngemittel und Schlämme dürfen nicht ausgebracht werden."},
+      "source_reference_ids": ["C-O64-FERTILIZER"]
+    },
+    {
+      "id": "O64-PSM-001",
+      "rule_type": "plant_protection_restriction",
+      "statement": "Pflanzenschutzmittel sind verboten, außer sie enthalten ausschließlich nach der Bio-Verordnung (EU) 2018/848 erlaubte Wirkstoffe.",
+      "conditions": [{"expression": "application.bio_regulation_2018_848_allowed == true", "description": "Das eingesetzte Mittel enthält ausschließlich zugelassene Wirkstoffe.", "input_paths": ["land.parcels[].operations.plant_protection_applications"]}],
+      "result": {"outcome": "compliance_required", "description": "Nur die Bio-Ausnahme ist zulässig."},
+      "source_reference_ids": ["C-O64-PSM"]
+    },
+    {
+      "id": "O64-APP-001",
+      "rule_type": "application_deadline",
+      "statement": "Die Maßnahme ist vor Vertragsbeginn im Maßnahmenantrag bis spätestens 31. Dezember zu beantragen; der letzte Einstieg war Förderjahr 2025 mit Antrag bis 31. Dezember 2024.",
+      "conditions": [{"expression": "farm.o6_4.measure_application_date <= '2024-12-31' && farm.o6_4.contract_start_year == 2025", "description": "Der Maßnahmenantrag wurde spätestens am 31. Dezember des Vorjahres abgegeben.", "input_paths": ["farm.o6_4.measure_application_date", "farm.o6_4.contract_start_year"]}],
+      "result": {"outcome": "valid_application", "description": "Ein fristgerechter Maßnahmenantrag begründet den Vertrag ab dem Folgejahr."},
+      "source_reference_ids": ["C-O64-APPLICATION", "C-GENERAL-APPLICATION"]
+    },
+    {
+      "id": "O64-CODE-001",
+      "rule_type": "application_code",
+      "statement": "Bergmähder sind mit Schlagnutzungsart Bergmähder zu beantragen; im Mahdjahr ist je nach Verfahren BM1, BM2 oder BM3, bei fehlender Mahd BM0 zu verwenden.",
+      "conditions": [{"expression": "parcel.land_use == 'Bergmähder' && farm.o6_4.code in ['BM0', 'BM1', 'BM2', 'BM3']", "description": "Schlagnutzungsart und Mähcode sind gültig.", "input_paths": ["land.parcels[].land_use", "farm.o6_4.code"]}],
+      "result": {"outcome": "valid_code", "description": "Die Feldstücksliste ist maßnahmenkonform codiert."},
+      "source_reference_ids": ["C-O64-CODES"]
+    },
+    {
+      "id": "O64-CODE-002",
+      "rule_type": "no_mowing_code",
+      "statement": "Bei fehlender Mahd wird BM0 codiert; alle nicht die Mahd betreffenden Auflagen bleiben auch im BM0-Jahr einzuhalten.",
+      "conditions": [{"expression": "annual_mowing_count == 0 && farm.o6_4.code == 'BM0'", "description": "Das Jahr ohne Mahd ist korrekt mit BM0 gekennzeichnet.", "input_paths": ["land.parcels[].operations.mowing_years", "farm.o6_4.code"]}],
+      "result": {"outcome": "no_o6_4_premium", "description": "Im BM0-Jahr wird keine o6_4-Prämie gewährt; übrige Auflagen gelten fort."},
+      "source_reference_ids": ["C-O64-BM0", "C-O64-NOPREMIUM"]
+    },
+    {
+      "id": "O64-PREMIUM-001",
+      "rule_type": "premium_amount",
+      "statement": "Die Prämie beträgt 2023: BM0 0, BM1 350, BM2 550, BM3 900 Euro/ha; ab 2024: BM0 0, BM1 378, BM2 594, BM3 972 Euro/ha.",
+      "conditions": [{"expression": "farm.o6_4.year in [2023, 2024, 2025, 2026, 2027, 2028] && farm.o6_4.code in ['BM0', 'BM1', 'BM2', 'BM3']", "description": "Förderjahr und gültiger Mähcode sind bekannt.", "input_paths": ["farm.o6_4.year", "farm.o6_4.code"]}],
+      "result": {"outcome": "premium_eur_per_ha", "description": "Der Betrag wird aus der vollständigen Verfahrens-/Jahrestabelle ermittelt.", "value": {"2023": {"BM0": 0, "BM1": 350, "BM2": 550, "BM3": 900}, "2024_onwards": {"BM0": 0, "BM1": 378, "BM2": 594, "BM3": 972}}},
+      "source_reference_ids": ["C-O64-PREMIUMS"]
+    },
+    {
+      "id": "O64-COMB-001",
+      "rule_type": "combination",
+      "statement": "o6_4 ist auf der Einzelfläche mit keiner anderen ÖPUL-Maßnahme kombinierbar, ausgenommen die Abgeltung punktförmiger bzw. sonstiger Landschaftselemente im Rahmen von UBB (1A) oder BIO (1B).",
+      "conditions": [{"expression": "other_measure.measure_code == null || other_measure.measure_code in ['o6_1a_landscape_element_compensation', 'o6_1b_landscape_element_compensation']", "description": "Nur die in der Kombinationstabelle mit Fußnote 1 gekennzeichnete Landschaftselement-Komponente ist ausgenommen.", "input_paths": ["land.parcels[].other_measures"]}],
+      "result": {"outcome": "combination_allowed_or_rejected", "description": "Unzulässige Einzelflächenkombinationen werden abgewiesen."},
+      "source_reference_ids": ["C-O64-SRL-COMBINATION", "C-ANNEX-COMBINATION", "C-ANNEX-FOOTNOTE-1"]
+    },
+    {
+      "id": "O64-CHANGE-001",
+      "rule_type": "measure_change",
+      "statement": "Bis spätestens 31. Dezember 2025 konnte mit einzelnen oder allen Flächen von o6_4 in Naturschutz oder Ergebnisorientierte Bewirtschaftung gewechselt werden.",
+      "conditions": [{"expression": "farm.o6_4.measure_change_date <= '2025-12-31' && farm.o6_4.target_measure in ['o6_18', 'o6_19']", "description": "Der Wechsel erfolgt innerhalb der befristeten Wechselmöglichkeit und zielt auf eine der beiden höherwertigen Maßnahmen.", "input_paths": ["farm.o6_4.measure_change_date", "farm.o6_4.target_measure"]}],
+      "result": {"outcome": "measure_change_allowed", "description": "Die restliche ursprüngliche Vertragslaufzeit ist mit der Zielmaßnahme einzuhalten."},
+      "source_reference_ids": ["C-O64-CHANGE"]
+    },
+    {
+      "id": "O64-ACCESS-001",
+      "rule_type": "area_access",
+      "statement": "Flächenzugänge sind 2024 und 2025 zur Gänze prämienfähig; ab Folgejahren ist die Ausweitung auf 50 Prozent der Basis 2025 begrenzt, wobei bis 5 ha jedenfalls zulässig sind.",
+      "conditions": [{"expression": "farm.o6_4.access_year in [2024, 2025] || (farm.o6_4.access_year >= 2026 && (farm.o6_4.added_area_ha <= farm.o6_4.base_2025_area_ha * 0.5 || farm.o6_4.added_area_ha <= 5))", "description": "Der Flächenzugang liegt innerhalb der jahresabhängigen Begrenzung.", "input_paths": ["farm.o6_4.access_year", "farm.o6_4.added_area_ha", "farm.o6_4.base_2025_area_ha"]}],
+      "result": {"outcome": "premium_eligibility_limited", "description": "Die Prämienfähigkeit des Zugangs wird nach Vertragsjahr begrenzt."},
+      "source_reference_ids": ["C-O64-AREA-ACCESS"]
+    },
+    {
+      "id": "O64-GENERAL-001",
+      "rule_type": "general_condition",
+      "statement": "Teilnehmende Betriebe müssen die Konditionalität einhalten, um die ÖPUL-Förderung in voller Höhe zu erhalten.",
+      "conditions": [{"expression": "farm.o6_4.compliance.conditionality_compliant == true", "description": "Die einschlägigen Konditionalitätsvorschriften werden eingehalten.", "input_paths": ["farm.o6_4.compliance.conditionality_compliant"]}],
+      "result": {"outcome": "full_payment_condition", "description": "Konditionalitätsverstöße können die Förderung mindern."},
+      "source_reference_ids": ["C-GENERAL-CONDITIONALITY"]
+    },
+    {
+      "id": "O64-GENERAL-002",
+      "rule_type": "farm_minimum_size",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr gilt grundsätzlich eine Mindestbetriebsgröße von 0,50 ha geschütztem Anbau oder 1,50 ha landwirtschaftlicher Fläche zuzüglich bestimmter Zusatzflächen; ab dem zweiten Teilnahmejahr entfällt sie grundsätzlich.",
+      "conditions": [{"expression": "farm.first_oepul_year == false || land.protected_area_ha >= 0.5 || land.eligible_agricultural_area_ha >= 1.5", "description": "Die Erstjahr-Mindestgröße ist erfüllt oder es handelt sich nicht um das erste Teilnahmejahr.", "input_paths": ["farm.first_oepul_year", "land.protected_area_ha", "land.eligible_agricultural_area_ha"]}],
+      "result": {"outcome": "access_condition", "description": "Die Mindestgröße wird nur im ersten ÖPUL-Teilnahmejahr geprüft."},
+      "source_reference_ids": ["C-GENERAL-MIN-SIZE"]
+    },
+    {
+      "id": "O64-GENERAL-003",
+      "rule_type": "area_eligibility",
+      "statement": "Beantragte Flächen müssen aktiv landwirtschaftlich bewirtschaftet und für die Maßnahme korrekt im Mehrfachantrag angegeben sein; ausgeschlossene Flächen sind nicht prämienfähig.",
+      "conditions": [{"expression": "parcel.active_agricultural_management == true && parcel.correctly_identified_for_measure == true && parcel.code != 'OP'", "description": "Aktive Bewirtschaftung, korrekte Identifikation und kein OP-Code liegen vor.", "input_paths": ["land.parcels[].active_agricultural_management", "land.parcels[].correctly_identified_for_measure", "land.parcels[].code"]}],
+      "result": {"outcome": "premium_eligible_area", "description": "Nicht förderfähige oder mit OP codierte Flächen erhalten keine Prämie."},
+      "source_reference_ids": ["C-GENERAL-NONELIGIBLE", "C-GENERAL-OP"]
+    },
+    {
+      "id": "O64-GENERAL-004",
+      "rule_type": "controls",
+      "statement": "Die Einhaltung der Bedingungen wird durch Verwaltungs-, Vor-Ort- und nachgängige Kontrollen überprüft.",
+      "conditions": [],
+      "result": {"outcome": "control_subject", "description": "Antragsangaben und vor Ort prüfbare Auflagen müssen nachweisbar sein."},
+      "source_reference_ids": ["C-GENERAL-CONTROLS"]
+    },
+    {
+      "id": "O64-GENERAL-005",
+      "rule_type": "sanction",
+      "statement": "Verstöße können abhängig von Schwere, Ausmaß, Dauer und Häufigkeit von Verwarnung bzw. 1 Prozent ab 2027 bis zu 100 Prozent Kürzung und bei zweimaliger 100-Prozent-Kürzung zum Ausschluss mit Rückforderung führen.",
+      "conditions": [{"expression": "count(farm.o6_4.compliance.violations) > 0", "description": "Ein inhaltlicher oder zugangsbezogener Verstoß wurde festgestellt.", "input_paths": ["farm.o6_4.compliance.violations"]}],
+      "result": {"outcome": "sanction_scale", "description": "Die maßnahmenbezogene Kürzungs- und Rückforderungslogik ist anzuwenden."},
+      "source_reference_ids": ["C-GENERAL-SANCTIONS"]
+    },
+    {
+      "id": "O64-GENERAL-006",
+      "rule_type": "area_reduction",
+      "statement": "Bei Flächenabgängen während der mehrjährigen Verpflichtung sind jährlich bis 5 Prozent, höchstens 5 ha und jedenfalls 0,50 ha zulässig; darüber besteht Rückzahlung für die gesamte Differenzfläche.",
+      "conditions": [{"expression": "farm.o6_4.reduction_ha <= min(farm.o6_4.previous_measure_area_ha * 0.05, 5) || farm.o6_4.reduction_ha <= 0.5", "description": "Der Flächenabgang liegt innerhalb einer der kumulativ genannten Toleranzen.", "input_paths": ["farm.o6_4.previous_measure_area_ha", "farm.o6_4.reduction_ha"]}],
+      "result": {"outcome": "area_reduction_allowed_or_repayable", "description": "Überschreitungen lösen Rückzahlung für die Differenzfläche aus."},
+      "source_reference_ids": ["C-GENERAL-DECREASE"]
+    },
+    {
+      "id": "O64-GENERAL-007",
+      "rule_type": "modulation",
+      "statement": "Die Betriebsgrößenmodulation zahlt bis 200 ha 100 Prozent, über 200 bis 300 ha 90 Prozent, über 300 bis 1.000 ha 85 Prozent und über 1.000 ha 75 Prozent der Prämie aus.",
+      "conditions": [{"expression": "land.total_area_ha >= 0", "description": "Die gesamte Betriebsfläche ist für die Staffelberechnung vorhanden.", "input_paths": ["land.total_area_ha"]}],
+      "result": {"outcome": "modulation_factor", "description": "Der flächenabhängige Auszahlungsfaktor ist auf die Maßnahme anzuwenden.", "value": {"up_to_200_ha": 1.0, "over_200_to_300_ha": 0.9, "over_300_to_1000_ha": 0.85, "over_1000_ha": 0.75}},
+      "source_reference_ids": ["C-GENERAL-MODULATION"]
+    }
+  ]
+}
