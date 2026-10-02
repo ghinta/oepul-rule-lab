@@ -1,78 +1,722 @@
-const REPOSITORY = "https://github.com/ghinta/oepul-rule-lab";
+"use strict";
 
-const MODEL_META = [
-  { id: "claude-opus-5-5", label: "Claude Opus 5.5", provider: "Claude", published: true },
-  { id: "gpt-5.6-terra", label: "GPT-5.6 Terra", provider: "Codex", published: true },
-  { id: "gpt-5.6-sol", label: "GPT-5.6 Sol", provider: "Codex", published: false, note: "Kein finalisiertes Run-Artefakt auf origin/main." },
-  { id: "gpt-6-astra", label: "GPT-6 Astra", provider: "Codex", published: false, note: "Kein finalisiertes Run-Artefakt auf origin/main." },
-  { id: "gpt-5.6-luna", label: "GPT-5.6 Luna", provider: "Codex", published: true },
-  { id: "gpt-5.5", label: "GPT-5.5", provider: "Codex", published: true },
-];
+const DATA = window.RULELAB_DATA;
+const REPOSITORY = DATA.repository;
+const OPUS = DATA.comparison.challenger;
+const TERRA = DATA.comparison.baseline;
+const SVG_NS = "http://www.w3.org/2000/svg";
 
-const RAW_RUNS = [["o6_1a","claude-opus-5-5","high","v2-o6_1a-opus-5.5-high-20260929","o6_1a_ubb_2026_04.pdf",166,418,141,143,67,190,true],["o6_1a","gpt-5.5","high","v2-o6_1a-gpt55-20260918","o6_1a_ubb_2026_04.pdf",41,54,40,7,34,53,true],["o6_1a","gpt-5.6-terra","high","v2-o6_1a-terra-20260920","o6_1a_ubb_2026_04.pdf",38,44,34,8,1,29,true],["o6_1b","claude-opus-5-5","high","v2-o6_1b-opus-5.5-high-20260925","o6_1b_biologische_wirtschaftsweise_2026_04.pdf",200,588,239,111,89,192,true],["o6_1b","gpt-5.6-terra","high","v2-o6_1b-terra-20260925","o6_1b_biologische_wirtschaftsweise_2026_04.pdf",36,40,38,4,11,30,true],["o6_1c","claude-opus-5-5","high","v2-o6_1c-opus-5.5-high-20260925","o6_1c_nichtproduktive_ackerflaechen_und_agroforststreifen_2025_10.pdf",97,258,179,74,11,88,true],["o6_1c","gpt-5.6-terra","high","v2-o6_1c-terra-20260926","o6_1c_nichtproduktive_ackerflaechen_und_agroforststreifen_2025_10.pdf",32,14,22,4,3,43,true],["o6_2","gpt-5.6-terra","high","v2-o6_2-terra-20260921","o6_2_einschraenkung_ertragssteig_betriebsmittel_2026_04.pdf",29,25,41,3,3,39,true],["o6_3","gpt-5.6-terra","high","v2-o6_3-terra-high-20260925","o6_3_heuwirtschaft_2025_10.pdf",31,41,46,5,6,28,true],["o6_4","claude-opus-5-5","high","v2-o6_4-opus-5.5-high-20260925","o6_4_bewirtschaftung_von_bergmaehdern_2025_10.pdf",74,162,134,57,21,46,true],["o6_4","gpt-5.6-terra","high","v2-o6_4-terra-high-20260925","o6_4_bewirtschaftung_von_bergmaehdern_2025_10.pdf",20,31,26,3,8,34,true],["o6_5","claude-opus-5-5","high","v2-o6_5-opus-5.5-high-20260925","o6_5_erhaltung_gefaehrdeter_nutztierrassen_2025_10.pdf",97,189,143,93,7,62,true],["o6_5","gpt-5.6-terra","high","v2-o6_5-terra-20260926","o6_5_erhaltung_gefaehrdeter_nutztierrassen_2025_10.pdf",26,17,30,3,5,32,true],["o6_6","claude-opus-5-5","high","v2-o6_6-opus-5.5-high-20260925","o6_6_begruenung_ackerflaechen_zwischenfruchtanbau_2025_10.pdf",111,290,154,101,47,72,true],["o6_6","gpt-5.6-terra","high","v2-o6_6-terra-20260926","o6_6_begruenung_ackerflaechen_zwischenfruchtanbau_2025_10.pdf",32,25,32,3,1,40,true],["o6_7","claude-opus-5-5","high","v2-o6_7-opus-5.5-high-20260925","o6_7_begruenung_ackerflaechen_system_immergruen_2025_10.pdf",107,265,161,106,25,88,true],["o6_7","gpt-5.6-terra","high","v2-o6_7-terra-20260926","o6_7_begruenung_ackerflaechen_system_immergruen_2025_10.pdf",34,20,31,4,10,50,true],["o6_8","gpt-5.6-terra","high","v2-o6_8-terra-high-retry-20260924","o6_8_erosionsschutz_acker_2026_04.pdf",26,24,32,6,2,35,true],["o6_9","claude-opus-5-5","high","v2-o6_9-opus-5.5-high-20260925","o6_9_ausbringung_fluessiger_wirtschaftsduenger_guelleseparation_2026_06.pdf",96,222,145,60,26,63,true],["o6_9","gpt-5.6-terra","high","v2-o6_9-terra-high-20260925","o6_9_ausbringung_fluessiger_wirtschaftsduenger_guelleseparation_2026_06.pdf",25,19,53,4,1,28,true],["o6_10","claude-opus-5-5","high","v2-o6_10-opus-5.5-high-20260925","o6_10_erosionsschutz_wein_obst_hopfen_2025_10.pdf",91,191,126,56,20,62,true],["o6_10","gpt-5.6-terra","high","v2-o6_10-terra-20260927","o6_10_erosionsschutz_wein_obst_hopfen_2025_10.pdf",31,27,38,5,2,40,true],["o6_11","gpt-5.6-luna","high","v2-o6_11-luna-20260920","o6_11_herbizidverzicht_wein_obst_hopfen_2026_04.pdf",26,36,38,7,9,32,true],["o6_11","gpt-5.6-terra","high","v2-o6_11-terra-20260927","o6_11_herbizidverzicht_wein_obst_hopfen_2026_04.pdf",23,19,39,2,5,36,true],["o6_12","claude-opus-5-5","high","v2-o6_12-opus-5.5-high-20260926","o6_12_insektizidverzicht_wein_obst_hopfen_2026_04.pdf",91,190,178,68,17,83,true],["o6_12","gpt-5.6-terra","high","v2-o6_12-terra-20260928","o6_12_insektizidverzicht_wein_obst_hopfen_2026_04.pdf",34,40,44,5,10,34,true],["o6_13","claude-opus-5-5","high","v2-o6_13-opus-5.5-high-20260926","o6_13_einsatz_von_nuetzlingen_im_geschuetzten_anbau_2025_10.pdf",80,169,137,77,23,76,true],["o6_13","gpt-5.6-terra","high","v2-o6_13-terra-20260928","o6_13_einsatz_von_nuetzlingen_im_geschuetzten_anbau_2025_10.pdf",26,26,39,4,7,38,true],["o6_14","claude-opus-5-5","high","v2-o6_14-opus-5.5-high-20260926","o6_14_almbewirtschaftung_2026_04.pdf",126,311,121,122,4,136,true],["o6_14","gpt-5.6-terra","high","v2-o6_14-terra-20260928","o6_14_almbewirtschaftung_2026_04.pdf",30,22,28,3,3,52,true],["o6_15","claude-opus-5-5","high","v2-o6_15-opus-5.5-high-20260926","o6_15_tierwohl-behirtung_2026_04.pdf",95,201,132,64,7,93,true],["o6_15","gpt-5.6-terra","high","v2-o6_15-terra-20260928","o6_15_tierwohl-behirtung_2026_04.pdf",25,24,23,5,2,50,true],["o6_16","gpt-5.6-terra","high","v2-o6_16-terra-20260919","o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf",34,30,40,9,1,94,true],["o6_17","gpt-5.6-terra","high","v2-o6_17-terra-high-20260925","o6_17_humuserhalt_und_bodenschutz_auf_umbruchsfaehigem-gruenland_2025_10.pdf",28,31,46,4,3,53,true],["o6_18","claude-opus-5-5","high","v2-o6_18-opus-5.5-high-20260927","o6_18_naturschutz_2025_10.pdf",125,321,115,96,30,112,true],["o6_18","gpt-5.6-terra","high","v2-o6_18-terra-retry-20260929","o6_18_naturschutz_2025_10.pdf",25,19,23,7,1,20,true],["o6_19","claude-opus-5-5","high","v2-o6_19-opus-5.5-high-20260927","o6_19_ergebnisorientierte_bewirtschaftung_2025_10.pdf",102,199,151,76,94,97,true],["o6_19","gpt-5.6-terra","high","v2-o6_19-terra-20260929","o6_19_ergebnisorientierte_bewirtschaftung_2025_10.pdf",30,31,52,5,4,43,true],["o6_20","claude-opus-5-5","high","v2-o6_20-opus-5.5-high-20260928","o6_20_tierwohl_weide_2025_10.pdf",97,196,216,61,6,92,true],["o6_20","gpt-5.6-terra","high","v2-o6_20-terra-20260929","o6_20_tierwohl_weide_2025_10.pdf",32,23,20,4,1,52,true],["o6_21","claude-opus-5-5","high","v2-o6_21-opus-5.5-high-20260928","o6_21_tierwohl-stallhaltung_rinder_2025_10.pdf",124,241,137,75,11,115,true],["o6_21","gpt-5.6-terra","high","v2-o6_21-terra-20260929","o6_21_tierwohl-stallhaltung_rinder_2025_10.pdf",17,18,24,4,3,33,true],["o6_22","claude-opus-5-5","high","v2-o6_22-opus-5.5-high-20260928","o6_22_tierwohl-schweinehaltung_2025_10.pdf",126,272,167,84,40,90,true],["o6_22","gpt-5.6-terra","high","v2-o6_22-terra-20260929","o6_22_tierwohl-schweinehaltung_2025_10.pdf",24,22,61,4,1,47,true],["o6_23","claude-opus-5-5","high","v2-o6_23-opus-5.5-high-20260928","o6_23_natura2000-landwirtschaft_2025_10.pdf",88,182,140,60,9,46,true],["o6_23","gpt-5.6-terra","high","20260930T002730Z__o6_23__gpt-5.6-terra","o6_23_natura2000-landwirtschaft_2025_10.pdf",22,25,27,7,7,20,true],["o6_24","claude-opus-5-5","high","v2-o6_24-opus-5.5-high-20260928","o6_24_wasserrahmenrichtlinie-landwirtschaft_2025_10.pdf",62,140,179,62,22,46,true],["o6_24","gpt-5.6-terra","high","20260930T004645Z__o6_24__gpt-5.6-terra","o6_24_wasserrahmenrichtlinie-landwirtschaft_2025_10.pdf",21,25,44,4,3,24,true]];
+const numberFormat = new Intl.NumberFormat("de-AT");
+const decimalFormat = new Intl.NumberFormat("de-AT", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const twoDecimals = new Intl.NumberFormat("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const dateFormat = new Intl.DateTimeFormat("de-AT", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/Vienna" });
 
-const [measure, model, effort, dir, sourceSheet, rules, references, coverage, tests, proposals, profilePathsAdded, valid] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-const labelFor = (id) => MODEL_META.find((item) => item.id === id)?.label ?? id;
-const sum = (items, index) => items.reduce((total, item) => total + item[index], 0);
-const formatter = new Intl.NumberFormat("de-AT");
-const html = (value) => String(value).replace(/[&<>'"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[character]));
+const fmt = (value) => (value == null ? "–" : numberFormat.format(value));
+const pct = (value) => (value == null || !Number.isFinite(value) ? "–" : `${numberFormat.format(Math.round(value * 100))} %`);
+const factor = (a, b) => (b ? `×${decimalFormat.format(a / b)}` : "–");
+const sum = (items, key) => items.reduce((total, item) => total + (item[key] || 0), 0);
 
-const kpis = document.querySelector("#kpis");
-const modelGrid = document.querySelector("#model-grid");
-const modelFilter = document.querySelector("#model-filter");
-const query = document.querySelector("#query");
-const table = document.querySelector("#run-table");
-const filterState = document.querySelector("#filter-state");
+const MODEL_PROVIDER = { "claude-cli": "Claude Code", "codex-cli": "Codex" };
+const SOURCE_LABELS = {
+  measure: "Informationsblatt der Maßnahme",
+  atb: "Allgemeine Teilnahmebedingungen",
+  srl: "Sonderrichtlinie ÖPUL 2023",
+  srl_annex: "SRL-Anhänge",
+  notice: "Bekanntmachungen 2026",
+  other: "Sonstige",
+};
+const AMA_LABELS = { ja: "ja", teilweise: "teilweise", nein: "nein" };
+const AMA_ICONS = { ja: "✓", teilweise: "◐", nein: "✕" };
+const CLASS_LABELS = { A: "Zugang und Empfehlung", B: "Bewirtschaftung", C: "Abwicklung" };
+const CLASS_SHORT = { A: "Zugang", B: "Bewirt\u00adschaftung", C: "Abwicklung" };
 
-function renderKpis(items) {
+const runs = DATA.runs;
+const measureTitle = Object.fromEntries(DATA.measures.map((m) => [m.id, m.title]));
+const modelLabel = Object.fromEntries(DATA.models.map((m) => [m.id, m.label]));
+const labelFor = (id) => modelLabel[id] || id;
+const runsOf = (model) => runs.filter((run) => run.model === model);
+const conceptById = Object.fromEntries(DATA.concepts.map((c) => [c.id, c]));
+
+function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  setAttributes(node, attrs);
+  appendChildren(node, children);
+  return node;
+}
+
+function svg(tag, attrs = {}, ...children) {
+  const node = document.createElementNS(SVG_NS, tag);
+  setAttributes(node, attrs);
+  appendChildren(node, children);
+  return node;
+}
+
+function setAttributes(node, attrs) {
+  for (const [key, value] of Object.entries(attrs)) {
+    if (value == null || value === false) continue;
+    if (key === "class") node.setAttribute("class", value);
+    else if (key === "text") node.textContent = value;
+    else if (key.startsWith("on") && typeof value === "function") node.addEventListener(key.slice(2), value);
+    else node.setAttribute(key, value === true ? "" : String(value));
+  }
+}
+
+function appendChildren(node, children) {
+  for (const child of children.flat()) {
+    if (child == null || child === false) continue;
+    node.append(child instanceof Node ? child : document.createTextNode(String(child)));
+  }
+}
+
+function modelTag(model) {
+  const swatchClass = model === OPUS ? "swatch opus" : model === TERRA ? "swatch terra" : null;
+  return el("span", { class: "model-tag" }, swatchClass ? el("span", { class: swatchClass, "aria-hidden": "true" }) : null, labelFor(model));
+}
+
+function amaBadge(status) {
+  return el("span", { class: `ama ${status}` }, el("span", { class: "ama-icon", "aria-hidden": "true" }, AMA_ICONS[status] || "?"), AMA_LABELS[status] || status);
+}
+
+function classTag(cls) {
+  return el("span", { class: "class-tag", title: CLASS_LABELS[cls] || "" }, cls);
+}
+
+function runLink(run, path = "") {
+  return `${REPOSITORY}/tree/main/runs/${encodeURIComponent(run.run_id)}${path}`;
+}
+
+function blobLink(run, path) {
+  return `${REPOSITORY}/blob/main/runs/${encodeURIComponent(run.run_id)}/${path}`;
+}
+
+function optionList(select, options, value = "all") {
+  select.replaceChildren(...options.map(([optionValue, label]) => el("option", { value: optionValue }, label)));
+  select.value = value;
+}
+
+function table(columns, rows, emptyText) {
+  const head = el("thead", {}, el("tr", {}, columns.map((c) => el("th", { class: c.num ? "num" : null, scope: "col" }, c.label))));
+  const body = el("tbody");
+  if (!rows.length) {
+    body.append(el("tr", {}, el("td", { class: "empty", colspan: columns.length }, emptyText)));
+  }
+  for (const row of rows) {
+    body.append(
+      el(
+        "tr",
+        {},
+        columns.map((c) => el("td", { class: [c.num ? "num" : null, c.wide ? "wide" : null, c.cellClass || null].filter(Boolean).join(" ") || null, "data-label": c.label }, c.render(row)))
+      )
+    );
+  }
+  return el("table", {}, head, body);
+}
+
+/* ---------- Comparison facts ---------- */
+
+const opusRuns = runsOf(OPUS);
+const terraRuns = runsOf(TERRA);
+
+function pairTotals() {
+  const totals = { terraPages: 0, opusPages: 0, terraPagesIn: 0, opusPagesIn: 0, terraQuotes: 0, opusQuotes: 0, terraQuotesIn: 0, opusQuotesIn: 0 };
+  for (const pair of DATA.pairs) {
+    const base = runs[pair.baseline];
+    const chal = runs[pair.challenger];
+    totals.terraPages += pair.baseline_pages;
+    totals.opusPages += pair.challenger_pages;
+    totals.terraPagesIn += Math.round((pair.baseline_pages_in_challenger || 0) * pair.baseline_pages);
+    totals.opusPagesIn += Math.round((pair.challenger_pages_in_baseline || 0) * pair.challenger_pages);
+    totals.terraQuotes += base.references;
+    totals.opusQuotes += chal.references;
+    totals.terraQuotesIn += Math.round((pair.baseline_in_challenger || 0) * base.references);
+    totals.opusQuotesIn += Math.round((pair.challenger_in_baseline || 0) * chal.references);
+  }
+  return totals;
+}
+
+const TOTALS = pairTotals();
+
+function share(items, key) {
+  const rules = sum(items, "rules");
+  return rules ? sum(items, key) / rules : null;
+}
+
+function fillFacts() {
+  const costs = opusRuns.map((run) => run.generation.cost_usd).filter((v) => v != null);
+  const minutes = opusRuns.map((run) => run.generation.api_minutes).filter((v) => v != null);
+  const facts = {
+    "pages-terra-in-opus": pct(TOTALS.terraPagesIn / TOTALS.terraPages),
+    "pages-opus-in-terra": pct(TOTALS.opusPagesIn / TOTALS.opusPages),
+    "quotes-terra-in-opus": pct(TOTALS.terraQuotesIn / TOTALS.terraQuotes),
+    "rules-factor": factor(sum(opusRuns, "rules"), sum(terraRuns, "rules")),
+    "tests-factor": factor(sum(opusRuns, "tests"), sum(terraRuns, "tests")),
+    "rego-factor": factor(sum(opusRuns, "rego_lines"), sum(terraRuns, "rego_lines")),
+    "exec-opus": pct(share(opusRuns, "rules_with_rego")),
+    "exec-terra": pct(share(terraRuns, "rules_with_rego")),
+    "english-terra": fmt(terraRuns.filter((run) => run.english_share > 0.5).length),
+    "cost-opus": costs.length ? `${fmt(Math.round(costs.reduce((a, b) => a + b, 0)))} USD` : "–",
+    "api-opus": minutes.length ? `${fmt(Math.round(minutes.reduce((a, b) => a + b, 0) / 60))} h` : "–",
+  };
+  for (const node of document.querySelectorAll("[data-fact]")) {
+    node.textContent = facts[node.dataset.fact] ?? "–";
+  }
+}
+
+/* ---------- Overview ---------- */
+
+function renderSnapshot() {
+  const measures = new Set(runs.map((run) => run.measure)).size;
+  const asOf = DATA.as_of ? dateFormat.format(new Date(DATA.as_of)) : "unbekannt";
+  document.querySelector("#snapshot").textContent = `Stand: ${asOf} · ${fmt(runs.length)} Runs · ${fmt(measures)} Maßnahmen`;
+  document.querySelector("#footer-state").textContent = `Letzter finalisierter Run: ${asOf}.`;
+}
+
+function renderKpis() {
   const values = [
-    [items.length, "finalisierte Runs"],
-    [new Set(items.map((item) => item[measure])).size, "abgedeckte Maßnahmen"],
-    [sum(items, rules), "strukturierte Regeln"],
-    [sum(items, references), "Quellenreferenzen"],
-    [sum(items, proposals), "Profilvorschläge"],
+    [runs.length, "finalisierte Runs"],
+    [new Set(runs.map((run) => run.measure)).size, "abgedeckte Maßnahmen"],
+    [sum(runs, "rules"), "strukturierte Regeln"],
+    [sum(runs, "references"), "Quellenreferenzen"],
+    [sum(runs, "proposals"), "Profilvorschläge"],
   ];
-  kpis.innerHTML = values.map(([value, label]) => `<article class="kpi"><strong>${formatter.format(value)}</strong><span>${label}</span></article>`).join("");
+  document.querySelector("#kpis").replaceChildren(...values.map(([value, label]) => el("article", { class: "kpi" }, el("strong", {}, fmt(value)), el("span", {}, label))));
 }
 
 function renderModelCards() {
-  modelGrid.innerHTML = MODEL_META.map((meta) => {
-    const items = RAW_RUNS.filter((item) => item[model] === meta.id);
-    const measures = new Set(items.map((item) => item[measure])).size;
-    if (!meta.published) {
-      return `<article class="model-card" data-published="false"><div><div class="model-name">${html(meta.label)}</div><div class="model-provider">${html(meta.provider)}</div></div><p class="model-note">${html(meta.note)}</p></article>`;
-    }
-    return `<article class="model-card" data-published="true"><div><div class="model-name">${html(meta.label)}</div><div class="model-provider">${html(meta.provider)} · high</div></div><div><div class="model-stat"><strong>${formatter.format(items.length)}</strong><span>finalisierte Runs</span></div><div class="model-row"><span>${formatter.format(measures)} Maßnahmen</span><span>${formatter.format(sum(items, rules))} Regeln</span><span>${formatter.format(sum(items, proposals))} Vorschläge</span></div></div></article>`;
-  }).join("");
+  const cards = DATA.models.map((model) => {
+    const items = runsOf(model.id);
+    const adapter = items[0]?.adapter;
+    const efforts = [...new Set(items.map((run) => run.effort))].join(", ");
+    return el(
+      "article",
+      { class: "model-card" },
+      el("div", {}, el("div", { class: "model-name" }, model.label), el("div", { class: "model-provider" }, `${MODEL_PROVIDER[adapter] || adapter} · ${efforts}`)),
+      el(
+        "div",
+        {},
+        el("div", { class: "model-stat" }, el("strong", {}, fmt(items.length)), el("span", {}, items.length === 1 ? "finalisierter Run" : "finalisierte Runs")),
+        el("div", { class: "model-row" }, el("span", {}, `${fmt(new Set(items.map((run) => run.measure)).size)} Maßnahmen`), el("span", {}, `${fmt(sum(items, "rules"))} Regeln`), el("span", {}, `${fmt(sum(items, "proposals"))} Vorschläge`))
+      )
+    );
+  });
+  document.querySelector("#model-grid").replaceChildren(...cards);
 }
 
-function artifactLinks(run) {
-  const root = `${REPOSITORY}/tree/main/runs/${encodeURIComponent(run[dir])}`;
-  const proposal = `${REPOSITORY}/blob/main/runs/${encodeURIComponent(run[dir])}/workspace/rules/profile_changes.json`;
-  return `<a class="artifact" href="${root}" target="_blank" rel="noreferrer">Run ↗</a><a class="sr-only" href="${proposal}" target="_blank" rel="noreferrer">Profilvorschläge für ${html(run[measure])}</a>`;
+/* ---------- Comparison: tiles and meters ---------- */
+
+const PAIR_METRICS = [
+  ["rules", "Strukturierte Regeln"],
+  ["references", "Quellenreferenzen"],
+  ["coverage", "Coverage-Einträge"],
+  ["tests", "Generierte Tests"],
+  ["rego_lines", "Rego-Zeilen"],
+  ["paths_added", "Vorgeschlagene Profilpfade"],
+];
+
+function renderPairTiles() {
+  const tiles = PAIR_METRICS.map(([key, label]) => {
+    const opus = sum(opusRuns, key);
+    const terra = sum(terraRuns, key);
+    return el(
+      "article",
+      { class: "pair-tile" },
+      el("div", { class: "tile-label" }, label),
+      el("div", { class: "tile-value" }, fmt(opus)),
+      el("div", { class: "tile-compare" }, `Opus · Terra: ${fmt(terra)}`),
+      el("span", { class: "tile-factor" }, factor(opus, terra))
+    );
+  });
+  document.querySelector("#pair-tiles").replaceChildren(...tiles);
 }
 
-function renderTable() {
-  const selected = modelFilter.value;
-  const text = query.value.trim().toLowerCase();
-  const items = RAW_RUNS.filter((item) => (selected === "all" || item[model] === selected) && `${item[measure]} ${item[sourceSheet]} ${labelFor(item[model])}`.toLowerCase().includes(text));
-  renderKpis(items);
-  filterState.textContent = `${formatter.format(items.length)} von ${formatter.format(RAW_RUNS.length)} Runs sichtbar`;
-  if (!items.length) {
-    table.innerHTML = '<tr><td class="empty" colspan="10">Keine finalisierten Runs für diesen Filter.</td></tr>';
-    return;
+function meter(title, rows) {
+  return el(
+    "div",
+    { class: "meter" },
+    el("div", { class: "meter-title" }, title),
+    rows.map(({ label, value, display, series }) =>
+      el(
+        "div",
+        { class: "meter-row" },
+        el("span", {}, label),
+        el("span", { class: "meter-track", role: "img", "aria-label": `${label}: ${display}` }, el("span", { class: `meter-fill ${series}`, style: `width:${Math.max(0, Math.min(1, value)) * 100}%` })),
+        el("span", { class: "meter-value" }, display)
+      )
+    )
+  );
+}
+
+function renderMeters() {
+  const testsPerRule = (items) => sum(items, "tests") / sum(items, "rules");
+  const german = (items) => 1 - items.reduce((t, run) => t + run.english_share * run.rules, 0) / sum(items, "rules");
+  const pairRows = (getter, formatter = pct) => [
+    { label: "Opus 5.5", value: getter(opusRuns), display: formatter(getter(opusRuns)), series: "opus" },
+    { label: "Terra", value: getter(terraRuns), display: formatter(getter(terraRuns)), series: "terra" },
+  ];
+  document.querySelector("#meters").replaceChildren(
+    meter("Regeln mit Rego-Symbol", pairRows((items) => share(items, "rules_with_rego"))),
+    meter("Regeln mit Eingabepfaden", pairRows((items) => share(items, "rules_with_inputs"))),
+    meter("Generierte Tests je Regel", pairRows(testsPerRule, (v) => twoDecimals.format(v))),
+    meter("Regeltexte auf Deutsch", pairRows(german))
+  );
+  document.querySelector("#overlap-meters").replaceChildren(
+    meter("Zitierte Quellseiten", [
+      { label: "Terra → Opus", value: TOTALS.terraPagesIn / TOTALS.terraPages, display: pct(TOTALS.terraPagesIn / TOTALS.terraPages), series: "opus" },
+      { label: "Opus → Terra", value: TOTALS.opusPagesIn / TOTALS.opusPages, display: pct(TOTALS.opusPagesIn / TOTALS.opusPages), series: "terra" },
+    ]),
+    meter("Wörtliche Belege", [
+      { label: "Terra → Opus", value: TOTALS.terraQuotesIn / TOTALS.terraQuotes, display: pct(TOTALS.terraQuotesIn / TOTALS.terraQuotes), series: "opus" },
+      { label: "Opus → Terra", value: TOTALS.opusQuotesIn / TOTALS.opusQuotes, display: pct(TOTALS.opusQuotesIn / TOTALS.opusQuotes), series: "terra" },
+    ])
+  );
+}
+
+/* ---------- Charts ---------- */
+
+function niceStep(max, targetTicks = 4) {
+  const raw = max / targetTicks;
+  const power = 10 ** Math.floor(Math.log10(raw || 1));
+  const candidates = [1, 2, 2.5, 5, 10].map((m) => m * power);
+  return candidates.find((step) => raw <= step) || candidates[candidates.length - 1];
+}
+
+function niceScale(max, targetTicks = 4) {
+  const step = niceStep(max, targetTicks);
+  const top = Math.max(step, Math.ceil(max / step) * step);
+  const ticks = [];
+  for (let value = 0; value <= top + step / 2; value += step) ticks.push(value);
+  return { top, ticks };
+}
+
+function roundedBar(x0, y, width, height, radius = 4) {
+  const w = Math.max(0, width);
+  const r = Math.min(radius, w, height / 2);
+  if (w <= 0) return "";
+  return `M${x0},${y}H${x0 + w - r}Q${x0 + w},${y} ${x0 + w},${y + r}V${y + height - r}Q${x0 + w},${y + height} ${x0 + w - r},${y + height}H${x0}Z`;
+}
+
+function attachTooltip(card, tooltip, target, build) {
+  const show = (clientX, clientY) => {
+    tooltip.replaceChildren(...build());
+    tooltip.hidden = false;
+    const box = card.getBoundingClientRect();
+    const tipWidth = tooltip.offsetWidth;
+    const tipHeight = tooltip.offsetHeight;
+    let left = clientX - box.left + 14;
+    let top = clientY - box.top + 14;
+    if (left + tipWidth > box.width - 8) left = clientX - box.left - tipWidth - 14;
+    if (left < 8) left = 8;
+    if (top + tipHeight > box.height - 8) top = clientY - box.top - tipHeight - 14;
+    tooltip.style.left = `${left}px`;
+    tooltip.style.top = `${Math.max(8, top)}px`;
+  };
+  const hide = () => {
+    tooltip.hidden = true;
+  };
+  target.addEventListener("pointermove", (event) => show(event.clientX, event.clientY));
+  target.addEventListener("pointerleave", hide);
+  target.addEventListener("focus", () => {
+    const rect = target.getBoundingClientRect();
+    show(rect.left + rect.width * 0.55, rect.top + rect.height);
+  });
+  target.addEventListener("blur", hide);
+}
+
+function tooltipRows(title, rows, note) {
+  return [
+    el("div", { class: "tt-title" }, title),
+    ...rows.map(([series, label, value]) => el("div", { class: "tt-row" }, el("span", { class: `tt-key ${series}` }), el("strong", {}, value), el("span", { class: "muted" }, label))),
+    note ? el("div", { class: "tt-note" }, note) : null,
+  ];
+}
+
+const MEASURE_METRICS = [
+  ["rules", "Regeln"],
+  ["references", "Quellenreferenzen"],
+  ["tests", "Tests"],
+  ["paths_added", "Profilpfade"],
+  ["rego_lines", "Rego-Zeilen"],
+  ["data_tables", "Datentabellen"],
+];
+let measureMetric = "rules";
+
+function renderMeasureMetricButtons() {
+  const group = document.querySelector("#measure-metric");
+  group.replaceChildren(
+    ...MEASURE_METRICS.map(([key, label]) =>
+      el(
+        "button",
+        {
+          type: "button",
+          "aria-pressed": key === measureMetric ? "true" : "false",
+          onclick: () => {
+            measureMetric = key;
+            renderMeasureMetricButtons();
+            renderMeasureChart();
+          },
+        },
+        label
+      )
+    )
+  );
+}
+
+function renderMeasureChart() {
+  const container = document.querySelector("#measure-chart");
+  const card = document.querySelector("#measure-chart-card");
+  const tooltip = document.querySelector("#measure-tooltip");
+  const metricLabel = MEASURE_METRICS.find(([key]) => key === measureMetric)[1];
+  const rows = DATA.pairs.map((pair) => ({
+    measure: pair.measure,
+    terra: runs[pair.baseline][measureMetric] || 0,
+    opus: runs[pair.challenger][measureMetric] || 0,
+  }));
+  const width = Math.max(300, Math.floor(container.clientWidth));
+  const narrow = width < 560;
+  const labelWidth = narrow ? 50 : 64;
+  const factorWidth = narrow ? 44 : 60;
+  const rowHeight = 26;
+  const top = 24;
+  const height = top + rows.length * rowHeight + 6;
+  const { top: max, ticks } = niceScale(Math.max(...rows.map((r) => Math.max(r.terra, r.opus))), narrow ? 3 : 5);
+  const plotWidth = width - labelWidth - factorWidth - 12;
+  const x = (value) => labelWidth + (value / max) * plotWidth;
+
+  const root = svg("svg", { class: "chart-svg", viewBox: `0 0 ${width} ${height}`, width, height, role: "group", "aria-label": `${metricLabel} je Maßnahme, Opus 5.5 und Terra` });
+  for (const tick of ticks) {
+    root.append(svg("line", { class: "gridline", x1: x(tick), x2: x(tick), y1: top - 6, y2: height - 4 }));
+    root.append(svg("text", { x: x(tick), y: top - 11, "text-anchor": "middle" }, fmt(tick)));
   }
-  table.innerHTML = items.map((item) => `<tr><td class="measure" data-label="Maßnahme">${html(item[measure])}</td><td data-label="Modell"><span class="model-tag">${html(labelFor(item[model]))}</span></td><td class="source-sheet" data-label="Maßnahmenblatt">${html(item[sourceSheet])}</td><td data-label="Regeln">${formatter.format(item[rules])}</td><td data-label="Referenzen">${formatter.format(item[references])}</td><td data-label="Coverage">${formatter.format(item[coverage])}</td><td data-label="Tests">${formatter.format(item[tests])}</td><td data-label="Profilvorschläge"><a href="${REPOSITORY}/blob/main/runs/${encodeURIComponent(item[dir])}/workspace/rules/profile_changes.json" target="_blank" rel="noreferrer">${formatter.format(item[proposals])}</a></td><td data-label="Gates">${item[valid] ? '<span class="gate">gültig</span>' : '<span class="gate">prüfen</span>'}</td><td data-label="Artefakt">${artifactLinks(item)}</td></tr>`).join("");
+  root.append(svg("text", { x: width, y: top - 11, "text-anchor": "end" }, "Faktor"));
+  rows.forEach((row, index) => {
+    const cy = top + index * rowHeight + rowHeight / 2;
+    const ratio = row.terra ? row.opus / row.terra : null;
+    const group = svg("g", { class: "row", tabindex: "0", role: "img", "aria-label": `${row.measure} ${measureTitle[row.measure] || ""}: Opus ${fmt(row.opus)}, Terra ${fmt(row.terra)}` });
+    group.append(
+      svg("rect", { class: "hit", x: 0, y: cy - rowHeight / 2 + 1, width, height: rowHeight - 2, rx: 6 }),
+      svg("text", { class: "row-label", x: 4, y: cy + 4 }, row.measure),
+      svg("line", { class: "track-line", x1: x(Math.min(row.terra, row.opus)), x2: x(Math.max(row.terra, row.opus)), y1: cy, y2: cy }),
+      svg("circle", { class: "dot terra", cx: x(row.terra), cy, r: 5 }),
+      svg("circle", { class: "dot opus", cx: x(row.opus), cy, r: 5 }),
+      svg("text", { class: "value-label", x: width - 2, y: cy + 4, "text-anchor": "end" }, ratio == null ? "–" : `×${decimalFormat.format(ratio)}`)
+    );
+    attachTooltip(card, tooltip, group, () =>
+      tooltipRows(`${row.measure} · ${measureTitle[row.measure] || ""}`, [["opus", "Opus 5.5", fmt(row.opus)], ["terra", "Terra", fmt(row.terra)]], ratio == null ? null : `${metricLabel}: Opus ${factor(row.opus, row.terra)}`)
+    );
+    root.append(group);
+  });
+  container.replaceChildren(root);
+  document.querySelector("#measure-chart-title").textContent = `${metricLabel} je Maßnahme`;
 }
 
-function initFilters() {
-  const available = MODEL_META.filter((meta) => RAW_RUNS.some((item) => item[model] === meta.id));
-  modelFilter.innerHTML = [`<option value="all">Alle Modelle</option>`, ...available.map((meta) => `<option value="${meta.id}">${html(meta.label)}</option>`)].join("");
-  modelFilter.value = "all";
-  modelFilter.addEventListener("change", renderTable);
-  query.addEventListener("input", renderTable);
+function renderMeasureTable() {
+  const rows = DATA.pairs.map((pair) => ({ pair, terra: runs[pair.baseline], opus: runs[pair.challenger] }));
+  const columns = [
+    { label: "Maßnahme", render: (r) => el("span", { class: "measure", title: measureTitle[r.pair.measure] }, r.pair.measure) },
+    { label: "Regeln Opus/Terra", num: true, render: (r) => `${fmt(r.opus.rules)} / ${fmt(r.terra.rules)}` },
+    { label: "Referenzen Opus/Terra", num: true, render: (r) => `${fmt(r.opus.references)} / ${fmt(r.terra.references)}` },
+    { label: "Tests Opus/Terra", num: true, render: (r) => `${fmt(r.opus.tests)} / ${fmt(r.terra.tests)}` },
+    { label: "Pfade Opus/Terra", num: true, render: (r) => `${fmt(r.opus.paths_added)} / ${fmt(r.terra.paths_added)}` },
+    { label: "Rego-Zeilen Opus/Terra", num: true, render: (r) => `${fmt(r.opus.rego_lines)} / ${fmt(r.terra.rego_lines)}` },
+    { label: "Terra-Seiten bei Opus", num: true, render: (r) => pct(r.pair.baseline_pages_in_challenger) },
+    { label: "Terra-Belege bei Opus", num: true, render: (r) => pct(r.pair.baseline_in_challenger) },
+  ];
+  document.querySelector("#measure-table").replaceChildren(table(columns, rows, "Keine Paare vorhanden."));
 }
 
+function renderCategoryChart() {
+  const container = document.querySelector("#category-chart");
+  const card = document.querySelector("#category-chart-card");
+  const tooltip = document.querySelector("#category-tooltip");
+  const opusTotal = sum(opusRuns, "rules");
+  const terraTotal = sum(terraRuns, "rules");
+  const rows = DATA.rule_categories.map((category) => ({
+    ...category,
+    opus: opusRuns.reduce((t, run) => t + (run.categories[category.id] || 0), 0),
+    terra: terraRuns.reduce((t, run) => t + (run.categories[category.id] || 0), 0),
+  }));
+  const width = Math.max(300, Math.floor(container.clientWidth));
+  const narrow = width < 560;
+  const valueRoom = 56;
+  const barHeight = 10;
+  const gap = 2;
+  const block = 18 + barHeight * 2 + gap + 14;
+  const height = rows.length * block;
+  const max = Math.max(...rows.map((r) => Math.max(r.opus, r.terra)));
+  const plotWidth = width - valueRoom;
+  const w = (value) => (value / max) * plotWidth;
+  const root = svg("svg", { class: "chart-svg", viewBox: `0 0 ${width} ${height}`, width, height, role: "group", "aria-label": "Regeln nach Kategorie, Opus 5.5 und Terra" });
+  rows.forEach((row, index) => {
+    const y0 = index * block;
+    const hasPhase = row.phase && row.phase !== "-";
+    const title = !hasPhase ? row.label : narrow ? `${row.phase} · ${row.label}` : `${row.label} · Phase ${row.phase}`;
+    const group = svg("g", { class: "row", tabindex: "0", role: "img", "aria-label": `${row.label}: Opus ${fmt(row.opus)}, Terra ${fmt(row.terra)}` });
+    const yOpus = y0 + 22;
+    const yTerra = yOpus + barHeight + gap;
+    group.append(
+      svg("rect", { class: "hit", x: 0, y: y0 + 2, width, height: block - 6, rx: 6 }),
+      svg("text", { class: "row-label", x: 0, y: y0 + 14 }, title),
+      svg("line", { class: "baseline", x1: 0.5, x2: 0.5, y1: yOpus - 2, y2: yTerra + barHeight + 2 }),
+      svg("path", { class: "bar opus", d: roundedBar(1, yOpus, w(row.opus), barHeight) }),
+      svg("path", { class: "bar terra", d: roundedBar(1, yTerra, w(row.terra), barHeight) }),
+      svg("text", { class: "value-label", x: w(row.opus) + 6, y: yOpus + barHeight - 1 }, fmt(row.opus)),
+      svg("text", { class: "value-label", x: w(row.terra) + 6, y: yTerra + barHeight - 1 }, fmt(row.terra))
+    );
+    attachTooltip(card, tooltip, group, () =>
+      tooltipRows(row.label, [["opus", `Opus 5.5 · ${pct(row.opus / opusTotal)} der Regeln`, fmt(row.opus)], ["terra", `Terra · ${pct(row.terra / terraTotal)} der Regeln`, fmt(row.terra)]], `Opus ${factor(row.opus, row.terra)}`)
+    );
+    root.append(group);
+  });
+  container.replaceChildren(root);
+}
+
+function renderSourceMix() {
+  const totals = (items) => {
+    const counts = {};
+    for (const run of items) for (const [kind, value] of Object.entries(run.citations_by_source)) counts[kind] = (counts[kind] || 0) + value;
+    return counts;
+  };
+  const opus = totals(opusRuns);
+  const terra = totals(terraRuns);
+  const opusSum = Object.values(opus).reduce((a, b) => a + b, 0) || 1;
+  const terraSum = Object.values(terra).reduce((a, b) => a + b, 0) || 1;
+  const kinds = DATA.source_kinds.filter((kind) => (opus[kind] || 0) + (terra[kind] || 0) > 0);
+  const columns = [
+    { label: "Quelle", render: (kind) => SOURCE_LABELS[kind] || kind, wide: true },
+    {
+      label: "Anteil Opus · Terra",
+      wide: true,
+      render: (kind) =>
+        el(
+          "div",
+          { class: "mini-bars" },
+          [
+            ["opus", (opus[kind] || 0) / opusSum, opus[kind] || 0],
+            ["terra", (terra[kind] || 0) / terraSum, terra[kind] || 0],
+          ].map(([series, value, count]) =>
+            el("div", { class: "mini-bar", title: `${series === "opus" ? "Opus" : "Terra"}: ${fmt(count)} Referenzen` }, el("span", { class: "mini-track" }, el("span", { class: `mini-fill ${series}`, style: `width:${value * 100}%` })), el("span", {}, pct(value)))
+          )
+        ),
+    },
+  ];
+  document.querySelector("#source-mix").replaceChildren(el("div", { class: "table-wrap stack-table source-mix-table" }, table(columns, kinds, "Keine Referenzen.")));
+}
+
+/* ---------- Variables ---------- */
+
+const conceptStats = (() => {
+  const stats = {};
+  for (const concept of [...DATA.concepts, { id: "other" }]) {
+    stats[concept.id] = { measures: {}, paths: {} };
+  }
+  for (const [runIndex, , , conceptId] of DATA.proposals) {
+    const run = runs[runIndex];
+    const entry = stats[conceptId] || (stats[conceptId] = { measures: {}, paths: {} });
+    (entry.measures[run.model] ||= new Set()).add(run.measure);
+    entry.paths[run.model] = (entry.paths[run.model] || 0) + 1;
+  }
+  return stats;
+})();
+
+const measureCount = (conceptId, model) => conceptStats[conceptId]?.measures[model]?.size || 0;
+const pathCount = (conceptId, model) => conceptStats[conceptId]?.paths[model] || 0;
+const totalMeasures = DATA.measures.length;
+
+function initConceptFilters() {
+  optionList(document.querySelector("#concept-class"), [["all", "Alle Klassen"], ...Object.entries(CLASS_LABELS).map(([k, v]) => [k, `${k} · ${v}`])]);
+  optionList(document.querySelector("#concept-ama"), [["all", "AMA: alle"], ["ja", "AMA: ja"], ["teilweise", "AMA: teilweise"], ["nein", "AMA: nein"]]);
+  const groups = [...new Set(DATA.concepts.map((c) => c.group))];
+  optionList(document.querySelector("#concept-group"), [["all", "Alle Gruppen"], ...groups.map((g) => [g, g])]);
+  for (const id of ["#concept-class", "#concept-ama", "#concept-group"]) document.querySelector(id).addEventListener("change", renderConceptTable);
+}
+
+function renderConceptTable() {
+  const cls = document.querySelector("#concept-class").value;
+  const ama = document.querySelector("#concept-ama").value;
+  const group = document.querySelector("#concept-group").value;
+  const rows = DATA.concepts
+    .filter((c) => (cls === "all" || c.class === cls) && (ama === "all" || c.ama.status === ama) && (group === "all" || c.group === group))
+    .sort((a, b) => measureCount(b.id, OPUS) + measureCount(b.id, TERRA) - (measureCount(a.id, OPUS) + measureCount(a.id, TERRA)));
+  const columns = [
+    { label: "Konzept", wide: true, render: (c) => el("div", {}, el("strong", {}, c.label), el("div", { class: "type" }, c.id)) },
+    { label: "Gruppe", render: (c) => c.group },
+    { label: "Klasse", render: (c) => classTag(c.class) },
+    {
+      label: "Maßnahmen mit Bedarf",
+      render: (c) =>
+        el(
+          "div",
+          { class: "mini-bars" },
+          [
+            ["opus", measureCount(c.id, OPUS)],
+            ["terra", measureCount(c.id, TERRA)],
+          ].map(([series, count]) => el("div", { class: "mini-bar", title: `${series === "opus" ? "Opus" : "Terra"}: ${count} von ${totalMeasures} Maßnahmen` }, el("span", { class: "mini-track" }, el("span", { class: `mini-fill ${series}`, style: `width:${(count / totalMeasures) * 100}%` })), el("span", {}, `${count}`)))
+        ),
+    },
+    { label: "Pfade Opus/Terra", num: true, render: (c) => `${fmt(pathCount(c.id, OPUS))} / ${fmt(pathCount(c.id, TERRA))}` },
+    { label: "AMA", wide: true, render: (c) => el("div", {}, amaBadge(c.ama.status), c.ama.source ? el("div", { class: "small muted ama-detail" }, c.ama.source) : null, c.ama.note ? el("div", { class: "small muted" }, c.ama.note) : null) },
+  ];
+  document.querySelector("#concept-table").replaceChildren(table(columns, rows, "Kein Konzept für diesen Filter."));
+}
+
+let pathPage = 0;
+const PATH_PAGE_SIZE = 50;
+
+function initPathFilters() {
+  optionList(document.querySelector("#path-model"), [["all", "Alle Modelle"], ...DATA.models.map((m) => [m.id, m.label])]);
+  optionList(document.querySelector("#path-measure"), [["all", "Alle Maßnahmen"], ...DATA.measures.map((m) => [m.id, `${m.id} · ${m.title}`])]);
+  optionList(document.querySelector("#path-concept"), [["all", "Alle Konzepte"], ...DATA.concepts.map((c) => [c.id, c.label]), ["other", "Nicht zugeordnet"]]);
+  for (const id of ["#path-model", "#path-measure", "#path-concept"]) {
+    document.querySelector(id).addEventListener("change", () => {
+      pathPage = 0;
+      renderPathTable();
+    });
+  }
+  document.querySelector("#path-query").addEventListener("input", () => {
+    pathPage = 0;
+    renderPathTable();
+  });
+}
+
+function renderPathTable() {
+  const model = document.querySelector("#path-model").value;
+  const measure = document.querySelector("#path-measure").value;
+  const concept = document.querySelector("#path-concept").value;
+  const query = document.querySelector("#path-query").value.trim().toLowerCase();
+  const rows = DATA.proposals.filter(([runIndex, path, , conceptId]) => {
+    const run = runs[runIndex];
+    return (model === "all" || run.model === model) && (measure === "all" || run.measure === measure) && (concept === "all" || conceptId === concept) && (!query || path.toLowerCase().includes(query));
+  });
+  const pages = Math.max(1, Math.ceil(rows.length / PATH_PAGE_SIZE));
+  pathPage = Math.min(pathPage, pages - 1);
+  const visible = rows.slice(pathPage * PATH_PAGE_SIZE, (pathPage + 1) * PATH_PAGE_SIZE);
+  const columns = [
+    { label: "Pfad", wide: true, cellClass: "path", render: ([, path, , , kind]) => (kind === "changed" ? `${path} (geändert)` : path) },
+    { label: "Typ", wide: true, cellClass: "type", render: ([, , type]) => type },
+    { label: "Konzept", render: ([, , , conceptId]) => conceptById[conceptId]?.label || "Nicht zugeordnet" },
+    { label: "Maßnahme", render: ([runIndex]) => el("span", { class: "measure" }, runs[runIndex].measure) },
+    { label: "Modell", render: ([runIndex]) => modelTag(runs[runIndex].model) },
+    { label: "AMA", render: ([, , , conceptId]) => (conceptById[conceptId] ? amaBadge(conceptById[conceptId].ama.status) : "–") },
+  ];
+  document.querySelector("#path-table").replaceChildren(table(columns, visible, "Keine Pfade für diesen Filter."));
+  document.querySelector("#path-state").textContent = `${fmt(rows.length)} von ${fmt(DATA.proposals.length)} Pfaden`;
+  const pager = document.querySelector("#path-pager");
+  pager.replaceChildren(
+    el("button", { type: "button", disabled: pathPage === 0, onclick: () => { pathPage -= 1; renderPathTable(); } }, "Zurück"),
+    el("span", {}, `Seite ${fmt(pathPage + 1)} von ${fmt(pages)}`),
+    el("button", { type: "button", disabled: pathPage >= pages - 1, onclick: () => { pathPage += 1; renderPathTable(); } }, "Weiter")
+  );
+}
+
+/* ---------- AMA matrix ---------- */
+
+function renderAmaMatrix() {
+  const statuses = ["ja", "teilweise", "nein"];
+  const classes = ["A", "B", "C"];
+  const head = el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "Klasse"), statuses.map((s) => el("th", { scope: "col" }, amaBadge(s)))));
+  const body = el(
+    "tbody",
+    {},
+    classes.map((cls) =>
+      el(
+        "tr",
+        {},
+        el("td", { class: "row-head", title: CLASS_LABELS[cls] }, el("strong", {}, cls), el("span", {}, CLASS_SHORT[cls])),
+        statuses.map((status) => {
+          const concepts = DATA.concepts.filter((c) => c.class === cls && c.ama.status === status);
+          const need = concepts.reduce((t, c) => t + measureCount(c.id, OPUS), 0);
+          return el("td", { title: concepts.map((c) => c.label).join("\n") }, el("strong", {}, fmt(concepts.length)), el("span", {}, `${fmt(need)} Bedarfe`));
+        })
+      )
+    )
+  );
+  document.querySelector("#ama-matrix").replaceChildren(el("div", { class: "matrix-wrap" }, el("table", { class: "matrix" }, head, body)));
+}
+
+/* ---------- Open items ---------- */
+
+function renderOpenItems() {
+  const items = DATA.unresolved.map(([runIndex, source, locator, reason]) => ({ run: runs[runIndex], source, locator, reason }));
+  const byModel = (model) => items.filter((item) => item.run.model === model).length;
+  document.querySelector("#open-caption").textContent = `${fmt(items.length)} als „unresolved“ markierte Coverage-Einträge (Opus ${fmt(byModel(OPUS))}, Terra ${fmt(byModel(TERRA))}).`;
+  document.querySelector("#open-list").replaceChildren(
+    ...items.map((item) =>
+      el(
+        "li",
+        {},
+        el("div", { class: "issue-head" }, el("span", { class: "measure" }, item.run.measure), modelTag(item.run.model), el("span", { class: "issue-source" }, `${item.source} · ${item.locator}`)),
+        el("p", {}, item.reason)
+      )
+    )
+  );
+}
+
+/* ---------- Catalog ---------- */
+
+function initCatalog() {
+  optionList(document.querySelector("#model-filter"), [["all", "Alle Modelle"], ...DATA.models.map((m) => [m.id, m.label])]);
+  document.querySelector("#model-filter").addEventListener("change", renderCatalog);
+  document.querySelector("#query").addEventListener("input", renderCatalog);
+}
+
+function renderCatalog() {
+  const selected = document.querySelector("#model-filter").value;
+  const text = document.querySelector("#query").value.trim().toLowerCase();
+  const items = runs.filter((run) => (selected === "all" || run.model === selected) && `${run.measure} ${measureTitle[run.measure] || ""} ${run.sheet || ""} ${labelFor(run.model)}`.toLowerCase().includes(text));
+  document.querySelector("#filter-state").textContent = `${fmt(items.length)} von ${fmt(runs.length)} Runs sichtbar`;
+  const columns = [
+    { label: "Maßnahme", render: (run) => el("div", {}, el("span", { class: "measure" }, run.measure), el("div", { class: "small muted" }, measureTitle[run.measure] || "")), wide: true },
+    { label: "Modell", render: (run) => modelTag(run.model) },
+    { label: "Blatt", render: (run) => el("span", { class: "source-sheet", title: run.sheet || "" }, run.sheet_version || "–") },
+    { label: "Regeln", num: true, render: (run) => fmt(run.rules) },
+    { label: "Referenzen", num: true, render: (run) => fmt(run.references) },
+    { label: "Coverage", num: true, render: (run) => fmt(run.coverage) },
+    { label: "Tests", num: true, render: (run) => fmt(run.tests) },
+    { label: "Vorschläge", num: true, render: (run) => el("a", { href: blobLink(run, "workspace/rules/profile_changes.json"), target: "_blank", rel: "noreferrer" }, fmt(run.proposals)) },
+    { label: "Versuche", num: true, render: (run) => fmt(run.generation.attempts) },
+    { label: "Kosten (USD)", num: true, render: (run) => (run.generation.cost_usd == null ? "–" : decimalFormat.format(run.generation.cost_usd)) },
+    { label: "Gates", render: (run) => el("span", { class: "gate" }, run.grounding_valid && run.validation_exit_code === 0 ? "gültig" : "prüfen") },
+    { label: "Artefakt", render: (run) => el("a", { class: "artifact", href: runLink(run), target: "_blank", rel: "noreferrer" }, "Run ↗") },
+  ];
+  document.querySelector("#run-table").replaceChildren(table(columns, items, "Keine finalisierten Runs für diesen Filter."));
+}
+
+/* ---------- Boot ---------- */
+
+function renderCharts() {
+  renderMeasureChart();
+  renderCategoryChart();
+}
+
+let lastWidth = 0;
+function onResize() {
+  const width = document.querySelector("#measure-chart").clientWidth;
+  if (Math.abs(width - lastWidth) < 8) return;
+  lastWidth = width;
+  renderCharts();
+}
+
+renderSnapshot();
+renderKpis();
 renderModelCards();
-initFilters();
-renderTable();
+fillFacts();
+renderPairTiles();
+renderMeters();
+renderMeasureMetricButtons();
+renderMeasureTable();
+renderSourceMix();
+initConceptFilters();
+renderConceptTable();
+initPathFilters();
+renderPathTable();
+renderAmaMatrix();
+renderOpenItems();
+initCatalog();
+renderCatalog();
+renderCharts();
+lastWidth = document.querySelector("#measure-chart").clientWidth;
+let resizeTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(onResize, 120);
+});
