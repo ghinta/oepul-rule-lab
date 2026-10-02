@@ -1,0 +1,1010 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_2",
+  "rules": [
+    {
+      "id": "O62-R01",
+      "rule_type": "eligibility",
+      "statement": "The measure may be paid for arable, grassland, wine, orchard and hop areas.",
+      "conditions": [
+        {
+          "expression": "parcel.land_use is arable or grassland, or parcel is a special crop of category orchard, vineyard or hop",
+          "description": "The parcel belongs to an eligible land-use class.",
+          "input_paths": [
+            "land.parcels[].land_use",
+            "land.parcels[].crop.crop_category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_surface",
+        "description": "The parcel is in scope for o6_2.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "O62-01",
+        "GEN-03"
+      ],
+      "rego_symbols": [
+        "eligible_surface"
+      ]
+    },
+    {
+      "id": "O62-R02",
+      "rule_type": "contract_duration",
+      "statement": "The o6_2 contract is multi-year and runs through 31 December 2028; starts in 2023, 2024 and 2025 run for six, five and four years respectively.",
+      "conditions": [
+        {
+          "expression": "contract_start_year in {2023, 2024, 2025}",
+          "description": "The measure was entered in an allowed entry year.",
+          "input_paths": [
+            "year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_valid",
+        "description": "The contractual end date is 2028-12-31.",
+        "value": "2028-12-31"
+      },
+      "source_reference_ids": [
+        "O62-02",
+        "SRL-01",
+        "GEN-06"
+      ]
+    },
+    {
+      "id": "O62-R03",
+      "rule_type": "combination",
+      "statement": "Participation in UBB (1A) is mandatory at the same time as o6_2.",
+      "conditions": [
+        {
+          "expression": "program.o6_1a.participates == true",
+          "description": "The mandatory UBB combination is active.",
+          "input_paths": [
+            "program.o6_1a.participates",
+            "program.o6_2.participates"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combination_allowed",
+        "description": "o6_2 has its required UBB combination.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "O62-03"
+      ],
+      "rego_symbols": [
+        "ubb_combination_ok"
+      ]
+    },
+    {
+      "id": "O62-R04",
+      "rule_type": "classification",
+      "statement": "A farm is animal-holding when at least 0.30 RGVE per hectare of all fodder area is held.",
+      "conditions": [
+        {
+          "expression": "total_rgve / (grassland_area_ha + arable_fodder_area_ha) >= 0.30",
+          "description": "RGVE is divided by the sum of grassland and arable fodder area.",
+          "input_paths": [
+            "livestock.species_groups[]",
+            "land.parcels[].area_ha",
+            "land.parcels[].crop.crop_name"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_holding",
+        "description": "The farm is classified as animal-holding for premium purposes.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "O62-04",
+        "O62-05",
+        "ANN-A-01",
+        "GEN-04"
+      ],
+      "rego_symbols": [
+        "animal_holding",
+        "rgve_per_forage_ha"
+      ]
+    },
+    {
+      "id": "O62-R05",
+      "rule_type": "input_classification",
+      "statement": "Arable fodder consists of Futtergräser, Wechselwiese, Kleegras, Klee, Luzerne, Ackerweide and sonstiges Feldfutter.",
+      "conditions": [
+        {
+          "expression": "parcel.crop.crop_name is in the closed arable-fodder list",
+          "description": "The crop name is one of the listed fodder uses.",
+          "input_paths": [
+            "land.parcels[].crop.crop_name"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "arable_fodder",
+        "description": "The parcel counts as arable fodder for animal-status and premium rules.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "O62-05"
+      ],
+      "rego_symbols": [
+        "is_ackerfutter"
+      ]
+    },
+    {
+      "id": "O62-R06",
+      "rule_type": "input_table",
+      "statement": "RGVE must be calculated using the complete Anhang A conversion table, including age and size classes.",
+      "conditions": [
+        {
+          "expression": "each animal category resolves to a data.rgve_key entry",
+          "description": "Every counted animal group has a table factor.",
+          "input_paths": [
+            "livestock.species_groups[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rgve_calculated",
+        "description": "Animal counts are multiplied by the applicable RGVE factors.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ANN-A-01",
+        "ANN-A-02"
+      ],
+      "rego_symbols": [
+        "animal_rgve",
+        "total_rgve"
+      ]
+    },
+    {
+      "id": "O62-R07",
+      "rule_type": "prohibition",
+      "statement": "No external nitrogen-containing fertilizer may be applied on any agricultural land of the farm.",
+      "conditions": [
+        {
+          "expression": "farm.compliance.external_n_fertilizer_kg == 0",
+          "description": "External nitrogen fertilizer use is zero across the farm.",
+          "input_paths": [
+            "farm.compliance.external_n_fertilizer_kg"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "compliant",
+        "description": "The external nitrogen-fertilizer ban is met.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "O62-06"
+      ],
+      "rego_symbols": [
+        "external_n_ok"
+      ]
+    },
+    {
+      "id": "O62-R08",
+      "rule_type": "exception",
+      "statement": "External manure and permitted EU 2018/848 compost may be applied; if slurry is sent to a biogas plant, corresponding biogas slurry may be taken back.",
+      "conditions": [
+        {
+          "expression": "input type is external manure or permitted compost, or documented biogas return after slurry delivery",
+          "description": "The input is one of the expressly permitted exceptions.",
+          "input_paths": [
+            "land.parcels[].operations.fertilizer",
+            "land.parcels[].operations.fertilizer.source"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "allowed_input",
+        "description": "The listed organic input exception applies.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "O62-07"
+      ],
+      "rego_symbols": [
+        "fertilizer_source_allowed"
+      ]
+    },
+    {
+      "id": "O62-R09",
+      "rule_type": "prohibition",
+      "statement": "Other organic residues such as potato waste water, maize steep water, Carbokalk, distillery residues and molasses are not permitted.",
+      "conditions": [
+        {
+          "expression": "organic_residue_type is not in the permitted manure/compost set",
+          "description": "The residue is outside the express exceptions.",
+          "input_paths": [
+            "land.parcels[].operations.fertilizer.source"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "prohibited",
+        "description": "The organic residue cannot be used under o6_2.",
+        "value": false
+      },
+      "source_reference_ids": [
+        "O62-08"
+      ],
+      "rego_symbols": [
+        "fertilizer_source_prohibited"
+      ]
+    },
+    {
+      "id": "O62-R10",
+      "rule_type": "exception",
+      "statement": "Non-nitrogen single and compound fertilizers may be used; domestic wastewater may be applied, but sewage sludge is prohibited.",
+      "conditions": [
+        {
+          "expression": "fertilizer is non-nitrogen or wastewater is own domestic wastewater",
+          "description": "The input falls under an expressly stated fertilizer exception.",
+          "input_paths": [
+            "land.parcels[].operations.fertilizer"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "conditional_allowed",
+        "description": "The input is allowed only under the stated type restriction.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "O62-09",
+        "O62-10"
+      ]
+    },
+    {
+      "id": "O62-R11",
+      "rule_type": "threshold",
+      "statement": "Annual livestock nitrogen production may not exceed 170 kg N per hectare of agricultural land after stable and storage losses; alpine/community-pasture nitrogen is apportioned out.",
+      "conditions": [
+        {
+          "expression": "farm.compliance.livestock_n_kg_per_ha <= 170",
+          "description": "The current-calendar-year livestock nitrogen production is at or below the threshold.",
+          "input_paths": [
+            "farm.compliance.livestock_n_kg_per_ha",
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "compliant",
+        "description": "The livestock nitrogen threshold is met.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "O62-11"
+      ],
+      "rego_symbols": [
+        "livestock_n_ok"
+      ]
+    },
+    {
+      "id": "O62-R12",
+      "rule_type": "prohibition",
+      "statement": "Broadly applied plant-protection products are prohibited on all grassland and arable-fodder areas, except products containing only substances permitted under EU 2018/848 and individual-plant treatment.",
+      "conditions": [
+        {
+          "expression": "restricted parcel has no prohibited broad application",
+          "description": "The parcel is grassland or arable fodder and each application is an allowed bio product or individual treatment.",
+          "input_paths": [
+            "land.parcels[].land_use",
+            "land.parcels[].crop.crop_name",
+            "land.parcels[].operations.psm_applications[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "compliant",
+        "description": "The parcel meets the pesticide restriction.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "O62-12"
+      ],
+      "rego_symbols": [
+        "parcel_psm_ok",
+        "all_psm_ok"
+      ]
+    },
+    {
+      "id": "O62-R13",
+      "rule_type": "prohibition",
+      "statement": "Seed dressing is treated as broad application and is not permitted on restricted grassland or arable-fodder areas.",
+      "conditions": [
+        {
+          "expression": "restricted parcel.operations.seed_treatment == false",
+          "description": "No seed treatment is used on a restricted parcel.",
+          "input_paths": [
+            "land.parcels[].operations.seed_treatment"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "compliant",
+        "description": "The seed-treatment restriction is met.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "O62-13"
+      ],
+      "rego_symbols": [
+        "parcel_psm_ok"
+      ]
+    },
+    {
+      "id": "O62-R14",
+      "rule_type": "permission",
+      "statement": "Broadly applied plant-protection products may be used on arable parcels planted with arable crops when permitted by the BAES/AGES register.",
+      "conditions": [
+        {
+          "expression": "parcel.land_use == arable and parcel is not arable fodder",
+          "description": "The parcel is an arable crop parcel outside the grassland/fodder restriction.",
+          "input_paths": [
+            "land.parcels[].land_use",
+            "land.parcels[].crop.crop_name"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "allowed",
+        "description": "The o6_2 broad-application ban does not apply to this arable crop parcel, subject to the register.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "O62-14"
+      ],
+      "rego_symbols": [
+        "parcel_psm_ok"
+      ]
+    },
+    {
+      "id": "O62-R15",
+      "rule_type": "reporting",
+      "statement": "From application year 2026, pesticide applications no longer need to be recorded with PSM codes in the multiple application.",
+      "conditions": [
+        {
+          "expression": "application_year >= 2026",
+          "description": "The application year is 2026 or later.",
+          "input_paths": [
+            "year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_psm_code_required",
+        "description": "The former PSM coding obligation is not required from 2026.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "O62-15"
+      ]
+    },
+    {
+      "id": "O62-R16",
+      "rule_type": "prohibition",
+      "statement": "Purchase and storage of inputs prohibited by o6_2 are also prohibited; permitted products used on other crops are exempt if quantities are plausible and documented.",
+      "conditions": [
+        {
+          "expression": "stored_or_purchased_input is permitted for the relevant crop or is absent",
+          "description": "The farm does not buy or store prohibited inputs without a documented other-crop use.",
+          "input_paths": [
+            "farm.input_inventory[]",
+            "land.parcels[].crop.crop_name",
+            "documentation.field_records_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "compliant",
+        "description": "The purchase and storage rule is met.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "O62-16"
+      ],
+      "rego_symbols": [
+        "purchase_storage_ok"
+      ]
+    },
+    {
+      "id": "O62-R17",
+      "rule_type": "training",
+      "statement": "At least three hours of specialist training on nitrogen fertilization or adapted grassland use frequency must be completed by 31 December 2025.",
+      "conditions": [
+        {
+          "expression": "training.hours >= 3 and training.completed_by <= 2025-12-31",
+          "description": "The course duration and deadline are met.",
+          "input_paths": [
+            "farm.training.hours",
+            "farm.training.completed_by"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "training_complete",
+        "description": "The o6_2 training requirement is fulfilled.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "O62-17"
+      ],
+      "rego_symbols": [
+        "course_ok"
+      ]
+    },
+    {
+      "id": "O62-R18",
+      "rule_type": "training",
+      "statement": "The course must come from an approved provider, may be taken by a materially involved farm person, is countable from 1 January 2022, and cannot be double-counted.",
+      "conditions": [
+        {
+          "expression": "provider_approved and course_date >= 2022-01-01 and double_counted == false",
+          "description": "Provider, date and no-double-counting conditions are met.",
+          "input_paths": [
+            "farm.training.provider_approved",
+            "farm.training.course_date",
+            "farm.training.double_counted"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "training_eligible",
+        "description": "The course can satisfy the measure obligation.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "O62-18-TXT",
+        "O62-19",
+        "O62-20"
+      ],
+      "rego_symbols": [
+        "course_ok"
+      ]
+    },
+    {
+      "id": "O62-R19",
+      "rule_type": "training",
+      "statement": "If the trained person leaves before 31 December 2025, the course must be replaced by that date; departure after that date requires no additional course.",
+      "conditions": [
+        {
+          "expression": "trained_person_departure_date < 2025-12-31",
+          "description": "The trained person's departure is tested against the course deadline.",
+          "input_paths": [
+            "farm.training.trained_person_departure_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "replacement_training_required_if_early_departure",
+        "description": "The training obligation follows the trained person until the deadline.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "O62-19"
+      ]
+    },
+    {
+      "id": "O62-R20",
+      "rule_type": "combination",
+      "statement": "The separate three-hour biodiversity training obligation under UBB also applies.",
+      "conditions": [
+        {
+          "expression": "program.o6_1a.participates == true",
+          "description": "The required UBB combination is active.",
+          "input_paths": [
+            "program.o6_1a.participates",
+            "farm.training.biodiversity_hours"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "additional_training_required",
+        "description": "Three hours of biodiversity-relevant training must also be met under UBB.",
+        "value": 3
+      },
+      "source_reference_ids": [
+        "O62-21"
+      ]
+    },
+    {
+      "id": "O62-R21",
+      "rule_type": "application_deadline",
+      "statement": "The measure must be applied for before the contract starts by 31 December; the last entry was funding year 2025, applied for by 31 December 2024.",
+      "conditions": [
+        {
+          "expression": "application_date <= 31 December of the year before application_year and application_year in {2023, 2024, 2025}",
+          "description": "The initial application deadline and final entry year are met.",
+          "input_paths": [
+            "program.o6_2.application_date",
+            "program.o6_2.application_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "application_valid",
+        "description": "The application establishes a valid o6_2 contract.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "O62-22",
+        "O62-23",
+        "GEN-07"
+      ],
+      "rego_symbols": [
+        "application_ok"
+      ]
+    },
+    {
+      "id": "O62-R22",
+      "rule_type": "combination",
+      "statement": "A farm-wide combination with organic farming is excluded; only the stated organic partial-farm combination for wine, orchard and hop areas is permitted.",
+      "conditions": [
+        {
+          "expression": "program.o6_1b is absent or is a permitted partial-farm wine/orchard/hop participation",
+          "description": "The organic-farming combination is checked at farm and crop-area level.",
+          "input_paths": [
+            "program.o6_1b.participates",
+            "program.o6_1b.partial_farm",
+            "land.parcels[].crop.crop_category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combination_condition",
+        "description": "o6_2 and BIO may coexist only in the specified exception.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "O62-24"
+      ],
+      "rego_symbols": [
+        "organic_combination_ok"
+      ]
+    },
+    {
+      "id": "O62-R23",
+      "rule_type": "measure_change",
+      "statement": "During the measure period, a switch to organic farming could be made by 31 December 2025 without the normal measure combination.",
+      "conditions": [
+        {
+          "expression": "switch_date <= 2025-12-31 and target_measure == o6_1b",
+          "description": "The conversion deadline and target measure are met.",
+          "input_paths": [
+            "program.change_date",
+            "program.target_measure"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "measure_switch_allowed",
+        "description": "The higher-value measure can replace o6_2 for the remaining contract period.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "O62-25",
+        "SRL-02"
+      ]
+    },
+    {
+      "id": "O62-R24",
+      "rule_type": "quality",
+      "statement": "Orchard premium is payable only for high-quality, generally grafted planting material; un-grafted trees must be coded OP and receive no ÖPUL premium.",
+      "conditions": [
+        {
+          "expression": "orchard planting material is grafted/high-quality",
+          "description": "The orchard installation satisfies the planting-material quality requirement.",
+          "input_paths": [
+            "land.parcels[].crop.crop_category",
+            "land.parcels[].crop.planting_material_quality"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "orchard_premium_eligible",
+        "description": "The orchard area may receive the measure premium.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "O62-26"
+      ],
+      "rego_symbols": [
+        "orchard_premium_eligible"
+      ]
+    },
+    {
+      "id": "O62-R25",
+      "rule_type": "premium",
+      "statement": "For application year 2026 and later through 2028, non-fodder arable and special-crop areas receive 64.8 euros per hectare.",
+      "conditions": [
+        {
+          "expression": "application_year in {2024, 2025, 2026, 2027, 2028} and parcel is non-fodder arable or eligible special crop",
+          "description": "The parcel is in the standard 2024-onward rate class.",
+          "input_paths": [
+            "year",
+            "land.parcels[].land_use",
+            "land.parcels[].crop.crop_name",
+            "land.parcels[].crop.crop_category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_rate",
+        "description": "The standard rate is 64.8 euros per hectare before modulation and caps.",
+        "value": 64.8
+      },
+      "source_reference_ids": [
+        "O62-27"
+      ],
+      "rego_symbols": [
+        "premium_rate"
+      ]
+    },
+    {
+      "id": "O62-R26",
+      "rule_type": "premium",
+      "statement": "For application year 2026 and later, animal-holding fodder/grassland below 1.40 RGVE per hectare receives 75.6 euros per hectare.",
+      "conditions": [
+        {
+          "expression": "animal_holding and rgve_per_forage_ha < 1.40 and application_year >= 2024",
+          "description": "The farm is animal-holding but below the 1.40 RGVE tier.",
+          "input_paths": [
+            "livestock.species_groups[]",
+            "land.parcels[].area_ha",
+            "year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_rate",
+        "description": "The lower animal-holding tier pays 75.6 euros per hectare before modulation and caps.",
+        "value": 75.6
+      },
+      "source_reference_ids": [
+        "O62-27",
+        "O62-28"
+      ],
+      "rego_symbols": [
+        "premium_rate"
+      ]
+    },
+    {
+      "id": "O62-R27",
+      "rule_type": "premium",
+      "statement": "Non-animal-holding fodder and grassland receive zero premium, while obligations continue to apply; animal status is used only for premium amount.",
+      "conditions": [
+        {
+          "expression": "rgve_per_forage_ha < 0.30 or animal status is lost in a later year",
+          "description": "The farm is not in the animal-holding class for the relevant year.",
+          "input_paths": [
+            "livestock.species_groups[]",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_rate",
+        "description": "The rate is zero for non-animal-holding fodder/grassland, but substantive obligations remain.",
+        "value": 0
+      },
+      "source_reference_ids": [
+        "O62-28"
+      ],
+      "rego_symbols": [
+        "premium_rate"
+      ]
+    },
+    {
+      "id": "O62-R28",
+      "rule_type": "premium",
+      "statement": "Animal-holding fodder/grassland at or above 1.40 RGVE per hectare receives 64.8 euros per hectare from 2024 onward; 2023 rate is 60 euros.",
+      "conditions": [
+        {
+          "expression": "animal_holding and rgve_per_forage_ha >= 1.40",
+          "description": "The farm reaches the upper animal-holding tier.",
+          "input_paths": [
+            "livestock.species_groups[]",
+            "land.parcels[].area_ha",
+            "year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_rate",
+        "description": "The upper tier rate is 64.8 euros per hectare from 2024 onward.",
+        "value": 64.8
+      },
+      "source_reference_ids": [
+        "O62-27"
+      ],
+      "rego_symbols": [
+        "premium_rate"
+      ]
+    },
+    {
+      "id": "O62-R29",
+      "rule_type": "classification",
+      "statement": "Arable fodder declared as a second crop is paid as arable land and is excluded from fodder-area animal-status calculation.",
+      "conditions": [
+        {
+          "expression": "parcel is declared as second crop",
+          "description": "The parcel has the second-crop declaration.",
+          "input_paths": [
+            "land.parcels[].crop.second_crop"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "arable_rate_and_exclusion",
+        "description": "The parcel uses the arable premium class and is excluded from fodder-area status calculation.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "O62-29"
+      ]
+    },
+    {
+      "id": "O62-R30",
+      "rule_type": "general_condition",
+      "statement": "Only Austrian land and Austrian-held animals count for funded area and animal-density calculations.",
+      "conditions": [
+        {
+          "expression": "parcel.region.country == AT and animal.holding_country == AT",
+          "description": "Funded land and counted animals are located in Austria.",
+          "input_paths": [
+            "region",
+            "livestock.species_groups[].holding_country"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "location_compliant",
+        "description": "The location requirement is met.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "GEN-03"
+      ]
+    },
+    {
+      "id": "O62-R31",
+      "rule_type": "general_condition",
+      "statement": "The o6_2 obligations must be fulfilled for the full calendar-year obligation period and for all funded units.",
+      "conditions": [
+        {
+          "expression": "all funded parcels comply from 1 January through 31 December",
+          "description": "The annual obligation period is fully covered.",
+          "input_paths": [
+            "land.parcels[]",
+            "year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "full_year_compliance",
+        "description": "Partial-year compliance is not sufficient unless a stated transfer/exception applies.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "GEN-02",
+        "GEN-05"
+      ]
+    },
+    {
+      "id": "O62-R32",
+      "rule_type": "area_access",
+      "statement": "For o6_2, 2024 and 2025 area additions are fully premium-eligible; later additions are limited to 50 percent of the 2025 basis, with up to 5 ha always allowed; land already under the same measure is not an addition.",
+      "conditions": [
+        {
+          "expression": "access_year in {2024, 2025} or later_access <= 50% of 2025 basis or later_access <= 5 ha or same_measure_before == true",
+          "description": "The restricted area-access rule is evaluated against the 2025 base.",
+          "input_paths": [
+            "year",
+            "land.total_area_ha",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_area_access",
+        "description": "The area addition is fully or partially premium-eligible according to the year and cap.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "GEN-06",
+        "GEN-07"
+      ]
+    },
+    {
+      "id": "O62-R33",
+      "rule_type": "area_reduction",
+      "statement": "During the multi-year period, area reduction is allowed annually up to 5 percent, at most 5 ha, and in any case 0.50 ha; exceeding the limits triggers repayment for the full difference area.",
+      "conditions": [
+        {
+          "expression": "reduction <= max(5% of prior_year_measure_area, 0.50 ha) and reduction <= 5 ha",
+          "description": "The reduction is within all applicable tolerances.",
+          "input_paths": [
+            "land.measure_area_previous_year",
+            "land.measure_area_current_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "area_reduction_allowed",
+        "description": "The reduction is within tolerance and avoids the specified difference-area repayment.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "GEN-09"
+      ]
+    },
+    {
+      "id": "O62-R34",
+      "rule_type": "sanction",
+      "statement": "Access-condition, area, substantive, conditionality or multi-year-period violations can cause premium cuts or repayment; the sanction scale ranges from warning/1 percent from 2027 through 100 percent and exclusion after two 100-percent cuts.",
+      "conditions": [
+        {
+          "expression": "a listed violation is established",
+          "description": "A control identifies a non-compliance event.",
+          "input_paths": [
+            "documentation",
+            "land.parcels[]",
+            "year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "sanction_or_repayment",
+        "description": "The measure-specific sanction assessment applies.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "GEN-10",
+        "GEN-11"
+      ]
+    },
+    {
+      "id": "O62-R35",
+      "rule_type": "premium_cap",
+      "statement": "From 2025, the general cap for the sum of area payments including allocated landscape-element payments is 1,300 euros per hectare.",
+      "conditions": [
+        {
+          "expression": "sum of relevant area payments per parcel <= 1300 EUR/ha",
+          "description": "The parcel's combined area-payment cap is respected.",
+          "input_paths": [
+            "land.parcels[].area_ha",
+            "farm.payment_components[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "within_premium_cap",
+        "description": "The area-payment cap is not exceeded.",
+        "value": 1300
+      },
+      "source_reference_ids": [
+        "GEN-12"
+      ],
+      "rego_symbols": [
+        "premium_cap_ok"
+      ]
+    },
+    {
+      "id": "O62-R36",
+      "rule_type": "modulation",
+      "statement": "The payment is modulated by total farm area: 100 percent through 200 ha, 90 percent over 200 through 300 ha, 85 percent over 300 through 1,000 ha, and 75 percent above 1,000 ha.",
+      "conditions": [
+        {
+          "expression": "farm.total_area_ha is assigned to the applicable area band",
+          "description": "The modulation factor is calculated on the total farm area, subject to the separate alm/behirtung rule.",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "modulated_premium",
+        "description": "The applicable band factor is applied to all measure premiums.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "GEN-13"
+      ],
+      "rego_symbols": [
+        "modulation_factor"
+      ]
+    },
+    {
+      "id": "O62-R37",
+      "rule_type": "drought_exception_2026",
+      "statement": "In 2026, on listed drought-district arable parcels with a late-summer/autumn crop and no harvestable stand due to drought, the 85-percent harvest and removal obligation need not be fulfilled and no individual force-majeure report is required; the ÖPUL premium remains payable.",
+      "conditions": [
+        {
+          "expression": "application_year == 2026 and region.federal_state/district is in data.drought_2026 and parcel is late-summer/autumn crop and no harvestable stand due to drought",
+          "description": "All conditions for the automatic 2026 drought exception are met.",
+          "input_paths": [
+            "year",
+            "region.federal_state",
+            "region.district",
+            "land.parcels[].land_use",
+            "land.parcels[].late_summer_or_autumn_harvest_crop",
+            "land.parcels[].no_harvestable_stand_due_to_drought"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "harvest_exception",
+        "description": "The harvest/removal obligation is waived for the affected parcel in 2026 without individual notification.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "GEN-01",
+        "NOTICE-0805-01",
+        "NOTICE-0805-02",
+        "NOTICE-0812-01"
+      ],
+      "rego_symbols": [
+        "eligible_for_drought_harvest_exception"
+      ]
+    },
+    {
+      "id": "O62-R38",
+      "rule_type": "cross_measure_exception_2026",
+      "statement": "In 2026, early use of UBB/BIO biodiversity areas is allowed only with OPUBB or OPBIO coding on the affected area; the affected area receives no UBB/BIO premium and the other maximum-use and remaining obligations remain.",
+      "conditions": [
+        {
+          "expression": "application_year == 2026 and affected biodiversity parcel is coded OPUBB or OPBIO",
+          "description": "The 2026 drought biodiversity exception is used with the required no-premium code.",
+          "input_paths": [
+            "year",
+            "land.parcels[].constraints.biodiversity_area",
+            "land.parcels[].code"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "early_biodiversity_use_without_premium",
+        "description": "The affected UBB/BIO area can be used early but is not paid.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "NOTICE-0522-01",
+        "NOTICE-0522-02",
+        "NOTICE-0812-02"
+      ]
+    },
+    {
+      "id": "O62-R39",
+      "rule_type": "cross_measure_exception_2026",
+      "statement": "In 2026, grassland biodiversity-area use may be brought forward by 14 days only where OPUBB or OPBIO is coded and no UBB/BIO premium is paid; DIVSZ additionally requires the comparable fields' second cut.",
+      "conditions": [
+        {
+          "expression": "application_year == 2026 and grassland biodiversity parcel is coded OPUBB or OPBIO and DIVSZ comparable second cut exists",
+          "description": "The specific grassland biodiversity exception conditions are met.",
+          "input_paths": [
+            "year",
+            "land.parcels[].constraints.biodiversity_area",
+            "land.parcels[].code",
+            "land.parcels[].operations.cutting_dates"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "early_grassland_biodiversity_use_without_premium",
+        "description": "The affected area can be used up to 14 days early without UBB/BIO payment.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "NOTICE-0522-02"
+      ]
+    }
+  ]
+}
