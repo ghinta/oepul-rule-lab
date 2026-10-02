@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 163,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1b-luna-high-20260930/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_1b.rego",
+    "tests/o6_1b_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1b-luna-high-20260930/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 21,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_1b.rego",
+        "tests/o6_1b_test.rego"
+      ],
+      "duration_ms": 30,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1b-luna-high-20260930/workspace/tools/opa",
+            "fmt",
+            "policy/o6_1b.rego"
+          ],
+          "duration_ms": 17,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package o6_1b\n\nimport rego.v1\n\ndefault eligible := false\n\ndefault bio_certification_valid := false\n\ndefault contract_duration_valid := false\n\ndefault farm_size_valid := false\n\ndefault animal_rules_valid := false\n\ndefault arable_diversification_valid := false\n\ndefault arable_biodiversity_minimum_valid := false\n\ndefault grassland_biodiversity_minimum_valid := false\n\ndefault arable_field_biodiversity_valid := true\n\ndefault grassland_field_biodiversity_valid := true\n\ndefault arable_biodiversity_management_valid := false\n\ndefault grassland_biodiversity_management_valid := false\n\ndefault regional_seed_valid := false\n\ndefault monitoring_valid := false\n\ndefault pheromone_valid := false\n\ndefault circular_arable_valid := false\n\ndefault circular_grassland_valid := false\n\narable_div_codes := data.o6_1b_eligible_lists.bio_div_codes\ngrassland_div_codes := data.o6_1b_eligible_lists.grassland_div_codes\n\nregional_arable_species := {item.name | item := data.o6_1b_autochthone_species.regional_arable[_]}\nregional_grassland_species := {item.name | item := data.o6_1b_autochthone_species.regional_grassland[_]}\n\nrare_crop_listed if {\n\tinput.crop.variety == data.o6_1b_rare_crop_varieties.varieties[_].variety\n}\n\nrgve_factor := factor if {\n\tfactor := data.o6_1b_rgve[input.livestock.category]\n}\n\narable_base_premium := data.o6_1b_premiums.years[sprintf(\"%v\", [year])].arable_base\ngrassland_non_livestock_premium := data.o6_1b_premiums.years[sprintf(\"%v\", [year])].grassland_base_non_livestock\ntransaction_cost_premium := data.o6_1b_premiums.years[sprintf(\"%v\", [year])].transaction_costs\n\nyear := object.get(input, \"year\", 2026)\n\nbio_certification_valid if {\n\tinput.certifications.organic.is_certified == true\n\tinput.certifications.organic.control_body != null\n}\n\ncontract_duration_valid if {\n\tinput.contract.start_year >= 2023\n\tinput.contract.start_year <= 2025\n\tinput.contract.end_date == \"2028-12-31\"\n}\n\nfarm_size_valid if {\n\tinput.first_participation_year != year\n}\n\nfarm_size_valid if {\n\tinput.first_participation_year == year\n\tinput.land.protected_cultivation_area_ha >= 0.5\n}\n\nfarm_size_valid if {\n\tinput.first_participation_year == year\n\tinput.land.total_area_ha >= 1.5\n}\n\nanimal_rules_valid if {\n\tinput.livestock.has_livestock == false\n}\n\nanimal_rules_valid if {\n\tinput.livestock.uncertified_fattening_pigs <= 2\n\tinput.livestock.uncertified_chickens <= 10\n\tinput.livestock.conventional_equines_only != true\n}\n\nanimal_rules_valid if {\n\tinput.livestock.conventional_equines_only == true\n\tinput.livestock.biological_equines == 0\n}\n\narable_diversification_valid if {\n\tinput.land.arable_area_ha <= 5\n}\n\narable_diversification_valid if {\n\tinput.land.arable_area_ha > 5\n\tinput.land.grain_and_maize_share <= 0.75\n\tinput.land.max_crop_share <= 0.55\n}\n\narable_biodiversity_minimum_valid if {\n\tinput.land.arable_area_ha <= 2\n}\n\narable_biodiversity_minimum_valid if {\n\tinput.land.arable_area_ha > 2\n\tinput.land.arable_biodiversity_area_ha >= input.land.arable_area_ha * 0.07\n}\n\narable_biodiversity_minimum_valid if {\n\tinput.land.arable_area_ha > 2\n\tinput.land.arable_area_ha < 10\n\tinput.land.arable_biodiversity_area_ha + input.land.grassland_biodiversity_area_for_arable_ha >= (input.land.arable_area_ha + input.land.mowed_grassland_area_ha) * 0.07\n}\n\ngrassland_biodiversity_minimum_valid if {\n\tinput.land.mowed_grassland_area_ha <= 2\n}\n\ngrassland_biodiversity_minimum_valid if {\n\tinput.land.mowed_grassland_area_ha > 2\n\tinput.land.grassland_biodiversity_area_ha >= input.land.mowed_grassland_area_ha * 0.07\n}\n\narable_field_biodiversity_valid if {\n\tinput.land.arable_area_ha < 10\n}\n\narable_field_biodiversity_valid if {\n\tinput.land.arable_area_ha >= 10\n\tinput.land.arable_fields_with_more_than_5ha_are_valid == true\n}\n\ngrassland_field_biodiversity_valid if {\n\tinput.land.mowed_grassland_area_ha < 10\n}\n\ngrassland_field_biodiversity_valid if {\n\tinput.land.mowed_grassland_area_ha >= 10\n\tinput.land.grassland_fields_with_more_than_5ha_are_valid == true\n}\n\narable_biodiversity_management_valid if {\n\tinput.biodiversity.arable.sown_date <= sprintf(\"%v-05-15\", [year])\n\tinput.biodiversity.arable.insect_pollinated_partners >= 7\n\tinput.biodiversity.arable.plant_families >= 3\n\tinput.biodiversity.arable.non_insect_pollinated_share <= 0.10\n\tinput.biodiversity.arable.minimum_duration_years >= 2\n\tinput.biodiversity.arable.fertilizer_used == false\n}\n\narable_biodiversity_management_valid if {\n\tinput.biodiversity.arable.exempt_from_new_sowing == true\n\tinput.biodiversity.arable.minimum_duration_years >= 2\n\tinput.biodiversity.arable.fertilizer_used == false\n}\n\ngrassland_biodiversity_management_valid if {\n\tinput.biodiversity.grassland.variant in data.o6_1b_eligible_lists.grassland_div_codes\n\tinput.biodiversity.grassland.annual_mowing_with_removal == true\n}\n\nregional_seed_valid if {\n\tinput.biodiversity.regional_seed.kind in {\"arable\", \"grassland\"}\n\tinput.biodiversity.regional_seed.species_count >= 30\n\tinput.biodiversity.regional_seed.family_count >= 7\n\tinput.biodiversity.regional_seed.seed_rate_kg_ha >= 20\n\tinput.biodiversity.regional_seed.max_single_species_share <= 0.05\n\tinput.biodiversity.regional_seed.regional_origin_documented == true\n\tinput.biodiversity.regional_seed.sown_date <= sprintf(\"%v-05-15\", [year])\n}\n\nregional_seed_valid if {\n\tinput.biodiversity.regional_seed.ecotype_seed == true\n\tinput.biodiversity.regional_seed.species_count >= 30\n\tinput.biodiversity.regional_seed.family_count >= 7\n\tinput.biodiversity.regional_seed.seed_rate_kg_ha >= 20\n\tinput.biodiversity.regional_seed.regional_origin_documented == true\n}\n\nmonitoring_valid if {\n\tinput.monitoring.participation_confirmation == true\n\tinput.monitoring.introductory_event_completed == true\n\tinput.monitoring.data_submitted_annually == true\n}\n\nmonitoring_valid if {\n\tinput.monitoring.program == \"biodiversity\"\n\tinput.monitoring.participation_confirmation == true\n\tinput.monitoring.data_submitted_annually == true\n}\n\nmonitoring_valid if {\n\tinput.monitoring.program == \"great_bustard\"\n\tinput.monitoring.participation_confirmation == true\n\tinput.monitoring.nature_measure == true\n\tinput.monitoring.ta01_on_at_least_one_parcel == true\n}\n\nmonitoring_valid if {\n\tinput.monitoring.program == \"phenology\"\n\tinput.monitoring.participation_confirmation == true\n\tinput.monitoring.nature_measure == true\n\tinput.monitoring.has_gl06_gl15_or_gl25 == true\n}\n\npheromone_valid if {\n\tyear >= 2025\n\tinput.pheromone_traps.is_sugar_beet_or_previous_sugar_beet_parcel == true\n\tinput.pheromone_traps.traps_per_ha >= 15\n\tinput.pheromone_traps.days_on_field >= 35\n\tinput.pheromone_traps.emptyings_during_minimum_period >= 2\n\tinput.pheromone_traps.records_complete == true\n}\n\ncircular_arable_valid if {\n\tyear >= 2025\n\tinput.land.circular_arable_share > 0.15\n\tinput.livestock.average_rgve_per_forage_ha < 1.4\n\tinput.land.circular_arable_crop_is_eligible == true\n}\n\ncircular_grassland_valid if {\n\tyear >= 2025\n\tinput.land.circular_grassland_share > 0.08\n\tinput.livestock.is_forage_eating_livestock_farm == true\n\tinput.livestock.average_rgve_per_forage_ha < 1.4\n}\n\neligible if {\n\tbio_certification_valid\n\tcontract_duration_valid\n\tfarm_size_valid\n\tanimal_rules_valid\n\tarable_diversification_valid\n\tarable_biodiversity_minimum_valid\n\tgrassland_biodiversity_minimum_valid\n\tarable_field_biodiversity_valid\n\tgrassland_field_biodiversity_valid\n}\n\narable_biodiversity_deadline_valid if {\n\tinput.biodiversity.arable.use_date >= sprintf(\"%v-08-01\", [year])\n}\n\narable_biodiversity_deadline_valid if {\n\tinput.biodiversity.arable.unrestricted_share <= 0.25\n}\n\narable_biodiversity_deadline_valid if {\n\tinput.biodiversity.arable.invasive_species_share > 0.25\n\tinput.biodiversity.arable.invasive_species_evidence == true\n}\n\ngrassland_variant_valid if {\n\tinput.biodiversity.grassland.variant == \"DIVSZ\"\n\tinput.biodiversity.grassland.first_use_date >= \"06-15\"\n\tinput.biodiversity.grassland.mowing_with_removal == true\n}\n\ngrassland_variant_valid if {\n\tinput.biodiversity.grassland.variant == \"DIVNFZ\"\n\tinput.biodiversity.grassland.dormant_days >= 63\n\tinput.biodiversity.grassland.second_use_in_year == true\n}\n\ngrassland_variant_valid if {\n\tinput.biodiversity.grassland.variant == \"DIVAGF\"\n\tinput.biodiversity.grassland.last_use_date <= \"08-15\"\n\tinput.biodiversity.grassland.mowing_with_removal == true\n}\n\ngrassland_variant_valid if {\n\tinput.biodiversity.grassland.variant == \"DIVRS\"\n\tinput.biodiversity.grassland.first_use_date >= \"07-15\"\n\tinput.biodiversity.grassland.max_uses_per_year <= 2\n\tinput.biodiversity.grassland.mowing_with_removal == true\n\tinput.biodiversity.grassland.fertilizer_only_manure_or_compost == true\n}\n\nmanagement_code_for_2026_exception := code if {\n\tinput.year == 2026\n\tinput.biodiversity.early_use_before_august == true\n\tcode := \"OPBIO\"\n}\n\nmanagement_code_for_2026_exception := code if {\n\tinput.year == 2026\n\tinput.biodiversity.third_arable_use == true\n\tcode := \"OPBIO\"\n}\n\nmanagement_code_for_2026_exception := code if {\n\tinput.year == 2026\n\tinput.biodiversity.early_use_before_august != true\n\tinput.biodiversity.third_arable_use != true\n\tcode := null\n}\n\npremium_cap_factor := factor if {\n\tinput.land.total_area_ha <= 200\n\tfactor := 1.0\n}\n\npremium_cap_factor := factor if {\n\tinput.land.total_area_ha > 200\n\tinput.land.total_area_ha <= 300\n\tfactor := (200 + ((input.land.total_area_ha - 200) * 0.9)) / input.land.total_area_ha\n}\n\npremium_cap_factor := factor if {\n\tinput.land.total_area_ha > 300\n\tinput.land.total_area_ha <= 1000\n\tfactor := ((200 + (100 * 0.9)) + ((input.land.total_area_ha - 300) * 0.85)) / input.land.total_area_ha\n}\n\npremium_cap_factor := factor if {\n\tinput.land.total_area_ha > 1000\n\tfactor := (((200 + (100 * 0.9)) + (700 * 0.85)) + ((input.land.total_area_ha - 1000) * 0.75)) / input.land.total_area_ha\n}\n\npremium_cap_factor := 1.0 if not input.land.total_area_ha\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1b-luna-high-20260930/workspace/tools/opa",
+            "fmt",
+            "tests/o6_1b_test.rego"
+          ],
+          "duration_ms": 13,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package o6_1b\n\nimport rego.v1\n\nvalid_base_input := {\n\t\"year\": 2026,\n\t\"first_participation_year\": 2025,\n\t\"contract\": {\"start_year\": 2025, \"end_date\": \"2028-12-31\"},\n\t\"certifications\": {\"organic\": {\"is_certified\": true, \"control_body\": \"control\"}},\n\t\"land\": {\n\t\t\"total_area_ha\": 100,\n\t\t\"protected_cultivation_area_ha\": 0,\n\t\t\"arable_area_ha\": 20,\n\t\t\"mowed_grassland_area_ha\": 20,\n\t\t\"arable_biodiversity_area_ha\": 1.4,\n\t\t\"grassland_biodiversity_area_ha\": 1.4,\n\t\t\"grain_and_maize_share\": 0.7,\n\t\t\"max_crop_share\": 0.5,\n\t\t\"arable_fields_with_more_than_5ha_are_valid\": true,\n\t\t\"grassland_fields_with_more_than_5ha_are_valid\": true,\n\t},\n\t\"livestock\": {\n\t\t\"has_livestock\": false,\n\t\t\"uncertified_fattening_pigs\": 0,\n\t\t\"uncertified_chickens\": 0,\n\t\t\"conventional_equines_only\": false,\n\t},\n}\n\ntest_base_participation_is_eligible if {\n\teligible with input as valid_base_input\n}\n\ntest_arable_diversification_rejects_excessive_grain if {\n\tnot arable_diversification_valid with input as object.union(valid_base_input, {\"land\": object.union(valid_base_input.land, {\"grain_and_maize_share\": 0.76})})\n}\n\ntest_arable_biodiversity_threshold if {\n\tarable_biodiversity_minimum_valid with input as valid_base_input\n}\n\ntest_arable_biodiversity_deadline_allows_unrestricted_quarter if {\n\tarable_biodiversity_deadline_valid with input as object.union(valid_base_input, {\"biodiversity\": {\"arable\": {\"unrestricted_share\": 0.25}}})\n}\n\ntest_grassland_divnfz_requires_63_days if {\n\tgrassland_variant_valid with input as object.union(valid_base_input, {\"biodiversity\": {\"grassland\": {\"variant\": \"DIVNFZ\", \"dormant_days\": 63, \"second_use_in_year\": true}}})\n}\n\ntest_regional_seed_requires_30_species_and_7_families if {\n\tregional_seed_valid with input as object.union(valid_base_input, {\"biodiversity\": {\"regional_seed\": {\"kind\": \"arable\", \"species_count\": 30, \"family_count\": 7, \"seed_rate_kg_ha\": 20, \"max_single_species_share\": 0.05, \"regional_origin_documented\": true, \"sown_date\": \"2026-05-15\"}}})\n}\n\ntest_pheromone_minimum if {\n\tpheromone_valid with input as object.union(valid_base_input, {\"pheromone_traps\": {\"is_sugar_beet_or_previous_sugar_beet_parcel\": true, \"traps_per_ha\": 15, \"days_on_field\": 35, \"emptyings_during_minimum_period\": 2, \"records_complete\": true}})\n}\n\ntest_2026_early_use_requires_opbio if {\n\tmanagement_code_for_2026_exception == \"OPBIO\" with input as object.union(valid_base_input, {\"biodiversity\": {\"early_use_before_august\": true}})\n}\n\ntest_modulation_factor_for_220_hectares if {\n\tpremium_cap_factor >= 0.9909\n\tpremium_cap_factor <= 0.9910\n\t\twith input as object.union(valid_base_input, {\"land\": object.union(valid_base_input.land, {\"total_area_ha\": 220})})\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1b-luna-high-20260930/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 21,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 9/9\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1b-luna-high-20260930/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 89,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1b-luna-high-20260930/workspace"
+}
