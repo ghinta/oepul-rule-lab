@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 172,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_4-luna-high-20261001/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_4.rego",
+    "tests/o6_4_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_4-luna-high-20261001/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 23,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_4.rego",
+        "tests/o6_4_test.rego"
+      ],
+      "duration_ms": 28,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_4-luna-high-20261001/workspace/tools/opa",
+            "fmt",
+            "policy/o6_4.rego"
+          ],
+          "duration_ms": 17,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package o6_4\n\nimport rego.v1\n\ndefault premium_amount := null\n\npremium_amount := data.o6_4.premiums_eur_per_ha[y][input.farm.o6_4.code] if {\n\tinput.farm.o6_4.year >= 2023\n\ty := sprintf(\"%v\", [input.farm.o6_4.year])\n\tdata.o6_4.premiums_eur_per_ha[y][input.farm.o6_4.code]\n}\n\nparticipates(parcel) if {\n\tsome participation in parcel.measure_participation\n\tparticipation.measure == \"o6_4\"\n\tparticipation.participating == true\n}\n\neligible_parcel_ids contains parcel.parcel_id if {\n\tsome parcel in input.land.parcels\n\tparticipates(parcel)\n\tparcel.land_use == data.o6_4.eligible_land_use\n\tparcel.above_local_settlement_boundary == true\n\tparcel.difficult_to_manage == true\n\tparcel.elevation_above_1200_area_ha > parcel.area_ha / 2\n\tparcel.elevation_above_1200_area_ha > 0\n\tparcel.elevation_m > input.land.home_farm_elevation_m\n\tparcel.is_alpine_farm_exception != true\n\tparcel.parcel_id != \"\"\n}\n\neligible_parcel_ids contains parcel.parcel_id if {\n\tsome parcel in input.land.parcels\n\tparticipates(parcel)\n\tparcel.land_use == data.o6_4.eligible_land_use\n\tparcel.above_local_settlement_boundary == true\n\tparcel.difficult_to_manage == true\n\tparcel.elevation_above_1200_area_ha > parcel.area_ha / 2\n\tparcel.elevation_above_1200_area_ha > 0\n\tparcel.is_alpine_farm_exception == true\n\tparcel.parcel_id != \"\"\n}\n\neligibility_findings contains {\"parcel_id\": parcel.parcel_id, \"reason\": \"Bergmähder_land_use_required\"} if {\n\tsome parcel in input.land.parcels\n\tparticipates(parcel)\n\tparcel.land_use != data.o6_4.eligible_land_use\n}\n\neligibility_findings contains {\"parcel_id\": parcel.parcel_id, \"reason\": \"above_local_settlement_boundary_required\"} if {\n\tsome parcel in input.land.parcels\n\tparticipates(parcel)\n\tparcel.above_local_settlement_boundary != true\n}\n\neligibility_findings contains {\"parcel_id\": parcel.parcel_id, \"reason\": \"difficult_to_manage_required\"} if {\n\tsome parcel in input.land.parcels\n\tparticipates(parcel)\n\tparcel.difficult_to_manage != true\n}\n\neligibility_findings contains {\"parcel_id\": parcel.parcel_id, \"reason\": \"more_than_half_above_1200m_required\"} if {\n\tsome parcel in input.land.parcels\n\tparticipates(parcel)\n\tparcel.elevation_above_1200_area_ha <= parcel.area_ha / 2\n}\n\neligibility_findings contains {\"parcel_id\": parcel.parcel_id, \"reason\": \"parcel_must_be_above_home_farm_elevation\"} if {\n\tsome parcel in input.land.parcels\n\tparticipates(parcel)\n\tparcel.elevation_m <= input.land.home_farm_elevation_m\n\tparcel.is_alpine_farm_exception != true\n}\n\nmissing_data contains \"land.parcels[].elevation_above_1200_area_ha\" if {\n\tsome parcel in input.land.parcels\n\tparticipates(parcel)\n\tnot parcel.elevation_above_1200_area_ha\n}\n\nmissing_data contains \"land.home_farm_elevation_m\" if {\n\tsome parcel in input.land.parcels\n\tparticipates(parcel)\n\tnot input.land.home_farm_elevation_m\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"reason\": \"mowing_not_full_area\"} if {\n\tsome parcel in input.land.parcels\n\tparticipates(parcel)\n\tsome mowing in parcel.operations.mowing_years\n\tmowing.full_area != true\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"reason\": \"mowing_material_not_removed\"} if {\n\tsome parcel in input.land.parcels\n\tparticipates(parcel)\n\tsome mowing in parcel.operations.mowing_years\n\tmowing.mowed_material_removed != true\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"reason\": \"more_than_one_mowing_per_year\"} if {\n\tsome parcel in input.land.parcels\n\tparticipates(parcel)\n\tcount([mowing | mowing := parcel.operations.mowing_years[_]; mowing.year == input.farm.o6_4.year]) > 1\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"reason\": \"mulching_not_allowed\"} if {\n\tsome parcel in input.land.parcels\n\tparticipates(parcel)\n\tparcel.operations.mulching == true\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"reason\": \"grazing_before_16_august\"} if {\n\tsome parcel in input.land.parcels\n\tparticipates(parcel)\n\tsome grazing in parcel.operations.grazing_periods\n\tgrazing.start_date < sprintf(\"%v-08-16\", [input.farm.o6_4.year])\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"reason\": \"grazing_not_aftermath\"} if {\n\tsome parcel in input.land.parcels\n\tparticipates(parcel)\n\tsome grazing in parcel.operations.grazing_periods\n\tgrazing.grazing_type != \"aftermath\"\n}\n\nallowed_fertilizer(application) if {\n\tapplication.material == \"household_wastewater\"\n}\n\nallowed_fertilizer(application) if {\n\tapplication.material == \"solid_manure\"\n\tapplication.original_form == true\n\tapplication.needs_based == true\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"reason\": \"prohibited_fertilizer_or_sludge\"} if {\n\tsome parcel in input.land.parcels\n\tparticipates(parcel)\n\tsome application in parcel.operations.fertilizer_applications\n\tnot allowed_fertilizer(application)\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"reason\": \"prohibited_plant_protection_product\"} if {\n\tsome parcel in input.land.parcels\n\tparticipates(parcel)\n\tsome application in parcel.operations.plant_protection_applications\n\tapplication.bio_regulation_2018_848_allowed != true\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"reason\": \"unpermitted_combination\"} if {\n\tsome parcel in input.land.parcels\n\tparticipates(parcel)\n\tsome measure in parcel.other_measures\n\tnot measure.measure_code in allowed_combination_measure\n}\n\nallowed_combination_measure contains \"o6_1a_landscape_element_compensation\" if {\n\tdata.o6_4.combination_table_o6_4[\"1A\"] == \"landscape_element_compensation_only\"\n}\n\nallowed_combination_measure contains \"o6_1b_landscape_element_compensation\" if {\n\tdata.o6_4.combination_table_o6_4[\"1B\"] == \"landscape_element_compensation_only\"\n}\n\ncode_valid if {\n\tinput.farm.o6_4.code in {\"BM0\", \"BM1\", \"BM2\", \"BM3\"}\n}\n\nviolations contains {\"reason\": \"invalid_mowing_code\"} if {\n\tnot code_valid\n}\n\nno_mowing_no_premium if {\n\tinput.farm.o6_4.code == \"BM0\"\n\tpremium_amount == 0\n}\n\ncontract_end_date := \"2028-12-31\" if {\n\tinput.farm.o6_4.contract_start_year in {2023, 2024, 2025}\n}\n\ncontract_duration_years := 6 if {\n\tinput.farm.o6_4.contract_start_year == 2023\n}\n\ncontract_duration_years := 5 if {\n\tinput.farm.o6_4.contract_start_year == 2024\n}\n\ncontract_duration_years := 4 if {\n\tinput.farm.o6_4.contract_start_year == 2025\n}\n\napplication_deadline_valid if {\n\tinput.farm.o6_4.measure_application_date <= sprintf(\"%v-12-31\", [input.farm.o6_4.contract_start_year - 1])\n}\n\narea_access_allowed if {\n\tinput.farm.o6_4.access_year in {2024, 2025}\n}\n\narea_access_allowed if {\n\tinput.farm.o6_4.access_year >= 2026\n\tinput.farm.o6_4.added_area_ha <= 5\n}\n\narea_access_allowed if {\n\tinput.farm.o6_4.access_year >= 2026\n\tinput.farm.o6_4.added_area_ha <= input.farm.o6_4.base_2025_area_ha * 0.5\n}\n\nmeasure_change_allowed if {\n\tinput.farm.o6_4.measure_change_date <= \"2025-12-31\"\n\tinput.farm.o6_4.target_measure in {\"o6_18\", \"o6_19\"}\n}\n\npremium_eligible_parcel_ids contains parcel.parcel_id if {\n\tsome parcel in input.land.parcels\n\tparcel.active_agricultural_management == true\n\tparcel.correctly_identified_for_measure == true\n\tparcel.code != \"OP\"\n\tparcel.parcel_id != \"\"\n}\n\nfirst_year_minimum_size_met if {\n\tinput.farm.first_oepul_year != true\n}\n\nfirst_year_minimum_size_met if {\n\tinput.farm.first_oepul_year == true\n\tinput.land.protected_area_ha >= 0.5\n}\n\nfirst_year_minimum_size_met if {\n\tinput.farm.first_oepul_year == true\n\tinput.land.eligible_agricultural_area_ha >= 1.5\n}\n\nconditionality_compliant if {\n\tinput.farm.o6_4.compliance.conditionality_compliant == true\n}\n\narea_reduction_allowed if {\n\tinput.farm.o6_4.reduction_ha <= 0.5\n}\n\narea_reduction_allowed if {\n\tinput.farm.o6_4.reduction_ha <= 5\n\tinput.farm.o6_4.reduction_ha <= input.farm.o6_4.previous_measure_area_ha * 0.05\n}\n\nmodulation_factor := 1.0 if {\n\tinput.land.total_area_ha <= 200\n}\n\nmodulation_factor := (200 + ((input.land.total_area_ha - 200) * 0.9)) / input.land.total_area_ha if {\n\tinput.land.total_area_ha > 200\n\tinput.land.total_area_ha <= 300\n}\n\nmodulation_factor := ((200 + (100 * 0.9)) + ((input.land.total_area_ha - 300) * 0.85)) / input.land.total_area_ha if {\n\tinput.land.total_area_ha > 300\n\tinput.land.total_area_ha <= 1000\n}\n\nmodulation_factor := (((200 + (100 * 0.9)) + (700 * 0.85)) + ((input.land.total_area_ha - 1000) * 0.75)) / input.land.total_area_ha if {\n\tinput.land.total_area_ha > 1000\n}\n\nop_code_no_premium if {\n\tsome parcel in input.land.parcels\n\tparcel.code == \"OP\"\n}\n\ndefault compliance := {\"status\": \"insufficient_data\", \"violations\": [], \"missing_data\": []}\n\ncompliance := {\"status\": \"non_compliant\", \"violations\": violations, \"missing_data\": [x | x := missing_data[_]]} if {\n\tcount(violations) > 0\n}\n\ncompliance := {\"status\": \"insufficient_data\", \"violations\": [], \"missing_data\": [x | x := missing_data[_]]} if {\n\tcount(violations) == 0\n\tcount(missing_data) > 0\n}\n\ncompliance := {\"status\": \"compliant\", \"violations\": [], \"missing_data\": []} if {\n\tcount(violations) == 0\n\tcount(missing_data) == 0\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_4-luna-high-20261001/workspace/tools/opa",
+            "fmt",
+            "tests/o6_4_test.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package o6_4\n\nimport rego.v1\n\ntest_premium_2026_by_mowing_code if {\n\tpremium_amount with input as {\"farm\": {\"o6_4\": {\"year\": 2026, \"code\": \"BM1\"}}} == 378\n\tpremium_amount with input as {\"farm\": {\"o6_4\": {\"year\": 2026, \"code\": \"BM2\"}}} == 594\n\tpremium_amount with input as {\"farm\": {\"o6_4\": {\"year\": 2026, \"code\": \"BM3\"}}} == 972\n\tpremium_amount with input as {\"farm\": {\"o6_4\": {\"year\": 2026, \"code\": \"BM0\"}}} == 0\n}\n\ntest_eligible_parcel_requires_majority_above_1200m if {\n\tids := eligible_parcel_ids with input as {\"land\": {\"home_farm_elevation_m\": 900, \"parcels\": [{\"parcel_id\": \"P1\", \"area_ha\": 2, \"land_use\": \"Bergmähder\", \"above_local_settlement_boundary\": true, \"difficult_to_manage\": true, \"elevation_m\": 1250, \"elevation_above_1200_area_ha\": 1.1, \"is_alpine_farm_exception\": false, \"measure_participation\": [{\"measure\": \"o6_4\", \"participating\": true}]}]}}\n\tids == {\"P1\"}\n}\n\ntest_ineligible_parcel_below_majority if {\n\tfindings := eligibility_findings with input as {\"land\": {\"home_farm_elevation_m\": 900, \"parcels\": [{\"parcel_id\": \"P1\", \"area_ha\": 2, \"land_use\": \"Bergmähder\", \"elevation_m\": 1000, \"elevation_above_1200_area_ha\": 1, \"measure_participation\": [{\"measure\": \"o6_4\", \"participating\": true}]}]}}\n\t{\"parcel_id\": \"P1\", \"reason\": \"more_than_half_above_1200m_required\"} in findings\n}\n\ntest_bm0_has_no_premium if {\n\tno_mowing_no_premium with input as {\"farm\": {\"o6_4\": {\"year\": 2026, \"code\": \"BM0\"}}}\n}\n\ntest_prohibited_fertilizer_is_violation if {\n\tfindings := violations with input as {\"farm\": {\"o6_4\": {\"year\": 2026, \"code\": \"BM1\"}}, \"land\": {\"parcels\": [{\"parcel_id\": \"P1\", \"measure_participation\": [{\"measure\": \"o6_4\", \"participating\": true}], \"operations\": {\"fertilizer_applications\": [{\"material\": \"mineral_fertilizer\"}]}}]}}\n\t{\"parcel_id\": \"P1\", \"reason\": \"prohibited_fertilizer_or_sludge\"} in findings\n}\n\ntest_landscape_element_exception_is_allowed if {\n\tfindings := violations with input as {\"farm\": {\"o6_4\": {\"year\": 2026, \"code\": \"BM1\"}}, \"land\": {\"parcels\": [{\"parcel_id\": \"P1\", \"measure_participation\": [{\"measure\": \"o6_4\", \"participating\": true}], \"other_measures\": [{\"measure_code\": \"o6_1a_landscape_element_compensation\"}]}]}}\n\tnot {\"parcel_id\": \"P1\", \"reason\": \"unpermitted_combination\"} in findings\n}\n\ntest_invalid_code_is_violation if {\n\tfindings := violations with input as {\"farm\": {\"o6_4\": {\"year\": 2026, \"code\": \"BM9\"}}}\n\t{\"reason\": \"invalid_mowing_code\"} in findings\n}\n\ntest_contract_and_modulation_rules if {\n\tend := contract_end_date with input as {\"farm\": {\"o6_4\": {\"contract_start_year\": 2025}}}\n\tduration := contract_duration_years with input as {\"farm\": {\"o6_4\": {\"contract_start_year\": 2025}}}\n\tfactor := modulation_factor with input as {\"land\": {\"total_area_ha\": 220}}\n\tend == \"2028-12-31\"\n\tduration == 4\n\tfactor == 0.9909090909090909091\n}\n\ntest_area_access_and_measure_change if {\n\tarea_access_allowed with input as {\"farm\": {\"o6_4\": {\"access_year\": 2026, \"added_area_ha\": 4, \"base_2025_area_ha\": 8}}}\n\tmeasure_change_allowed with input as {\"farm\": {\"o6_4\": {\"measure_change_date\": \"2025-12-31\", \"target_measure\": \"o6_18\"}}}\n\top_code_no_premium with input as {\"land\": {\"parcels\": [{\"code\": \"OP\"}]}}\n}\n\ntest_conditionality_uses_measure_profile_object if {\n\tconditionality_compliant with input as {\"farm\": {\"o6_4\": {\"compliance\": {\"conditionality_compliant\": true}}}}\n}\n\ntest_array_profile_fields_are_read_from_flat_parcel_leaves if {\n\tfindings := violations with input as {\"farm\": {\"o6_4\": {\"year\": 2026, \"code\": \"BM1\"}}, \"land\": {\"parcels\": [{\"parcel_id\": \"P1\", \"measure_participation\": [{\"measure\": \"o6_4\", \"participating\": true}], \"operations\": {\"mowing_years\": [{\"year\": 2026, \"full_area\": false}], \"grazing_periods\": [{\"start_date\": \"2026-08-15\", \"grazing_type\": \"aftermath\"}], \"plant_protection_applications\": [{\"bio_regulation_2018_848_allowed\": false}]}}]}}\n\t{\"parcel_id\": \"P1\", \"reason\": \"mowing_not_full_area\"} in findings\n\t{\"parcel_id\": \"P1\", \"reason\": \"grazing_before_16_august\"} in findings\n\t{\"parcel_id\": \"P1\", \"reason\": \"prohibited_plant_protection_product\"} in findings\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_4-luna-high-20261001/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 22,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 11/11\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_4-luna-high-20261001/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 97,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_4-luna-high-20261001/workspace"
+}
