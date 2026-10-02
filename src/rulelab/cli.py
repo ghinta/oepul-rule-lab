@@ -571,11 +571,15 @@ def source_files(source_root: Path, measure: str, all_sources: bool) -> list[Pat
         for record in records:
             if not isinstance(record, dict):
                 continue
+            scope = record.get("applies_to_measures")
             include = (
                 record.get("measure_id") == measure
                 or record.get("document_id") == "o6_general"
-                or record.get("source_type")
-                in {"legal_basis_pdf", "year_specific_notice_html"}
+                or (
+                    record.get("source_type")
+                    in {"legal_basis_pdf", "year_specific_notice_html"}
+                    and (not scope or measure in scope)
+                )
             )
             if not include:
                 continue
