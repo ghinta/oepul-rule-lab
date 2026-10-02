@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 173,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_6-luna-high-20261002/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_6.rego",
+    "tests/o6_6_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_6-luna-high-20261002/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 20,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_6.rego",
+        "tests/o6_6_test.rego"
+      ],
+      "duration_ms": 32,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_6-luna-high-20261002/workspace/tools/opa",
+            "fmt",
+            "policy/o6_6.rego"
+          ],
+          "duration_ms": 20,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_6\n\nimport rego.v1\n\nmeasure := object.get(input, \"o6_6\", {})\n\nvariant_record(v) := record if {\n\tsome record in data.variants\n\trecord.id == v\n\trecord.application_year_from <= measure.application_year\n\trecord.application_year_to == null\n}\n\nvariant_record(v) := record if {\n\tsome record in data.variants\n\trecord.id == v\n\trecord.application_year_from <= measure.application_year\n\trecord.application_year_to != null\n\tmeasure.application_year <= record.application_year_to\n}\n\nvariant_config := record if {\n\tmeasure.variant != null\n\trecord := variant_record(measure.variant)\n}\n\nprofile_fields := {\"application_year\", \"variant\", \"sow_date\", \"break_date\", \"mixing_partner_count\", \"plant_family_count\", \"full_coverage\", \"mineral_n_applied\", \"psm_applied\", \"mechanical_removal\", \"area_ha\", \"arable_area_ha\"}\n\nprofile_missing contains field if {\n\tfield := profile_fields[_]\n\tobject.get(measure, field, null) == null\n}\n\nvariant_6_crop_allowed(crop) if {\n\tcrop in data.variant_6_allowed_crops\n}\n\nvariant_1_date_valid if {\n\tmeasure.variant == 1\n\tmeasure.application_year <= 2024\n\tmeasure.sow_date <= sprintf(\"%d-07-31\", [measure.application_year])\n\tmeasure.break_date >= sprintf(\"%d-10-10\", [measure.application_year])\n}\n\nvariant_1_date_valid if {\n\tmeasure.variant == 1\n\tmeasure.application_year >= 2025\n\tmeasure.sow_date <= sprintf(\"%d-08-10\", [measure.application_year])\n\tmeasure.break_date >= sprintf(\"%d-09-15\", [measure.application_year])\n\tmeasure.days_between_sowing_and_break >= 70\n}\n\nvariant_date_valid if {\n\tmeasure.variant == 1\n\tvariant_1_date_valid\n}\n\nvariant_date_valid if {\n\tmeasure.variant != 1\n\tmeasure.variant == 2\n\tcfg := variant_record(measure.variant)\n\tmeasure.sow_date <= sprintf(\"%d-%s\", [measure.application_year, cfg.sow_by])\n\tmeasure.break_date >= sprintf(\"%d-%s\", [measure.application_year + 1, cfg.earliest_break])\n}\n\nvariant_date_valid if {\n\tmeasure.variant == 3\n\tcfg := variant_record(measure.variant)\n\tmeasure.sow_date <= sprintf(\"%d-%s\", [measure.application_year, cfg.sow_by])\n\tmeasure.break_date >= sprintf(\"%d-%s\", [measure.application_year, cfg.earliest_break])\n}\n\nvariant_date_valid if {\n\tmeasure.variant in {4, 5, 6}\n\tcfg := variant_record(measure.variant)\n\tmeasure.sow_date <= sprintf(\"%d-%s\", [measure.application_year, cfg.sow_by])\n\tmeasure.break_date >= sprintf(\"%d-%s\", [measure.application_year + 1, cfg.earliest_break])\n}\n\nvariant_date_valid if {\n\tmeasure.variant == 7\n\tmeasure.sow_date <= sprintf(\"%d-09-15\", [measure.application_year])\n\tmeasure.break_date >= sprintf(\"%d-01-31\", [measure.application_year + 1])\n}\n\npartner_count_valid if {\n\tmeasure.variant == 6\n\tcount(measure.mixture_crops) >= 1\n}\n\npartner_count_valid if {\n\tmeasure.variant != 6\n\tcfg := variant_record(measure.variant)\n\tmeasure.mixing_partner_count >= cfg.partners\n\tmeasure.plant_family_count >= cfg.families\n}\n\nvariant_6_crops_valid if {\n\tmeasure.variant == 6\n\tcount(measure.mixture_crops) > 0\n\tevery crop in measure.mixture_crops {\n\t\tvariant_6_crop_allowed(crop)\n\t}\n}\n\nvariant_1_composition_valid if {\n\tmeasure.variant == 1\n\tmeasure.insect_pollinated_partner_count >= 5\n\tmeasure.plant_family_count >= 2\n\tmeasure.non_insect_pollinated_share < 0.10\n}\n\nvariant_7_composition_valid if {\n\tmeasure.variant == 7\n\tmeasure.crop == \"winter_rape\"\n\tmeasure.mixing_partner_count >= 3\n\tmeasure.plant_family_count >= 2\n}\n\ntravel_ban_valid if {\n\tmeasure.variant != 1\n}\n\ntravel_ban_valid if {\n\tmeasure.variant == 1\n\tmeasure.application_year <= 2024\n\tmeasure.travel_date == null\n}\n\ntravel_ban_valid if {\n\tmeasure.variant == 1\n\tmeasure.application_year >= 2025\n\tmeasure.travel_date == null\n}\n\nmechanical_removal_valid if {\n\tmeasure.variant == 7\n}\n\nmechanical_removal_valid if {\n\tmeasure.variant <= 6\n\tmeasure.mechanical_removal == true\n}\n\ndrought_2026_cover_exemption if {\n\tmeasure.application_year == 2026\n\tmeasure.proper_installation == true\n\tmeasure.full_coverage == false\n}\n\ndrought_2026_cover_exemption if {\n\tmeasure.application_year == 2026\n\tmeasure.proper_installation == true\n\tmeasure.volunteer_grain_share > 0.50\n}\n\nharvest_85_exemption_districts := {\n\t\"Burgenland\": \"all\",\n\t\"Wien\": \"all\",\n\t\"Niederösterreich\": {\"Amstetten\", \"Baden\", \"Bruck an der Leitha\", \"Gänserndorf\", \"Gmünd\", \"Hollabrunn\", \"Horn\", \"Korneuburg\", \"Krems an der Donau Stadt\", \"Krems Land\", \"Melk\", \"Mistelbach\", \"Mödling\", \"Neunkirchen\", \"Sankt Pölten Land\", \"Sankt Pölten Stadt\", \"Scheibbs\", \"Tulln\", \"Waidhofen an der Thaya\", \"Wiener Neustadt Land\", \"Wiener Neustadt Stadt\", \"Zwettl\"},\n\t\"Oberösterreich\": {\"Eferding\", \"Grieskirchen\", \"Kirchdorf\", \"Linz\", \"Linz-Land\", \"Perg\", \"Steyr\", \"Steyr-Land\", \"Urfahr-Umgebung\", \"Wels\", \"Wels-Land\"},\n\t\"Steiermark\": {\"Graz\", \"Graz-Umgebung\", \"Hartberg-Fürstenfeld\", \"Leibnitz\", \"Südoststeiermark\", \"Weiz\"},\n}\n\ndrought_2026_harvest_exemption if {\n\tmeasure.application_year == 2026\n\tmeasure.drought_no_harvestable_stock == true\n\tmeasure.federal_state in harvest_85_exemption_districts\n\tdistricts := harvest_85_exemption_districts[measure.federal_state]\n\tdistricts == \"all\"\n\tmeasure.crop_harvest_period == \"late_summer_or_autumn\"\n}\n\ndrought_2026_harvest_exemption if {\n\tmeasure.application_year == 2026\n\tmeasure.drought_no_harvestable_stock == true\n\tmeasure.federal_state in harvest_85_exemption_districts\n\tdistricts := harvest_85_exemption_districts[measure.federal_state]\n\tdistricts != \"all\"\n\tmeasure.district in districts\n\tmeasure.crop_harvest_period == \"late_summer_or_autumn\"\n}\n\nviolations contains {\"code\": \"NO_MINIMUM_AREA\", \"message\": \"Mindestens 1,50 ha Ackerfläche müssen in jedem Teilnahmejahr bewirtschaftet werden.\"} if {\n\tmeasure.arable_area_ha < 1.50\n}\n\nviolations contains {\"code\": \"NO_GREENED_PARCEL\", \"message\": \"Wird kein begrünter Schlag beantragt, erlischt der Vertrag für die Maßnahme.\"} if {\n\tmeasure.has_greened_parcel == false\n}\n\nviolations contains {\"code\": \"NO_ARABLE_ELIGIBILITY\", \"message\": \"Die Maßnahme ist auf Ackerflächen mit aktiv angelegter Begrünung zwischen zwei Hauptfrüchten bzw. Begleitsaaten im Raps auszuführen.\"} if {\n\tmeasure.area_ha > 0\n\tmeasure.land_use != \"arable\"\n}\n\nviolations contains {\"code\": \"NOT_FULL_COVER\", \"message\": \"Eine flächendeckende Begrünung ist grundsätzlich erforderlich.\"} if {\n\tmeasure.full_coverage == false\n\tnot drought_2026_cover_exemption\n}\n\nviolations contains {\"code\": \"NOT_ACTIVE\", \"message\": \"Die Begrünung muss aktiv durch Ansaat oder Untersaat angelegt werden.\"} if {\n\tmeasure.active_sowing == false\n}\n\nviolations contains {\"code\": \"VOLUNTEER_OR_SELF_GREENING\", \"message\": \"Ausfall, Druschausfall und selbstbegrünende Flächen zählen nicht als Zwischenfrucht.\"} if {\n\tmeasure.volunteer_or_self_greening == true\n}\n\nviolations contains {\"code\": \"INVALID_CROP_MIX\", \"message\": \"Getreide/Mais bzw. Mischungen mit mehr als 50 % Getreide und/oder Mais sind nicht zulässig, außer zulässige Grünschnittroggensorten in Variante 6.\"} if {\n\tmeasure.grain_maize_share > 0.50\n\tmeasure.variant != 6\n}\n\nviolations contains {\"code\": \"INVALID_VARIANT_DATE\", \"message\": \"Anlage und frühester Umbruch entsprechen nicht der gewählten Begrünungsvariante.\"} if {\n\tmeasure.variant != null\n\tnot variant_date_valid\n}\n\nviolations contains {\"code\": \"INVALID_PARTNERS\", \"message\": \"Die erforderliche Zahl an Mischungspartnern und Pflanzenfamilien ist nicht erfüllt.\"} if {\n\tmeasure.variant != null\n\tnot partner_count_valid\n}\n\nviolations contains {\"code\": \"INVALID_VARIANT_1_COMPOSITION\", \"message\": \"Variante 1 erfordert mindestens fünf insektenblütige Partner aus mindestens zwei Pflanzenfamilien; nicht-insektenblütige Pflanzen sind nur unter 10 % zulässig.\"} if {\n\tmeasure.variant == 1\n\tnot variant_1_composition_valid\n}\n\nviolations contains {\"code\": \"INVALID_VARIANT_6_CROPS\", \"message\": \"Variante 6 erlaubt ausschließlich die in der Regel genannten winterharten Kulturen oder deren Mischungen.\"} if {\n\tmeasure.variant == 6\n\tnot variant_6_crops_valid\n}\n\nviolations contains {\"code\": \"INVALID_VARIANT_7\", \"message\": \"Variante 7 erfordert Winterraps und mindestens drei Mischungspartner aus mindestens zwei Pflanzenfamilien.\"} if {\n\tmeasure.variant == 7\n\tnot variant_7_composition_valid\n}\n\nviolations contains {\"code\": \"MINERAL_N\", \"message\": \"Mineralische Stickstoffdüngung ist vom Zeitpunkt der Anlage bis zum Ende des Begrünungszeitraums verboten; auch kombinierte Düngung bei der Ansaat ist unzulässig.\"} if {\n\tmeasure.mineral_n_applied == true\n}\n\nviolations contains {\"code\": \"PSM\", \"message\": \"Pflanzenschutzmittel dürfen grundsätzlich vom Zeitpunkt der Anlage bis zum Ende des Begrünungszeitraums nicht eingesetzt werden.\"} if {\n\tmeasure.psm_applied == true\n\tmeasure.variant != 7\n\tmeasure.psm_after_follow_crop_sowing != true\n}\n\nviolations contains {\"code\": \"VARIANT_7_HERBICIDE\", \"message\": \"Bei Variante 7 ist Herbizideinsatz nach dem Vierblattstadium des Rapses bis zum Ende des Begrünungszeitraums verboten.\"} if {\n\tmeasure.variant == 7\n\tmeasure.herbicide_after_four_leaf_stage == true\n}\n\nviolations contains {\"code\": \"SOIL_DISTURBANCE\", \"message\": \"Aktive Bodenbearbeitung, die die Begrünung absterben lässt oder den Zweck beeinträchtigt, ist während des Begrünungszeitraums nicht zulässig.\"} if {\n\tmeasure.harmful_soil_tillage == true\n}\n\nviolations contains {\"code\": \"KNIFE_ROLLER\", \"message\": \"Messerwalzen sind während des Begrünungszeitraums nicht zulässig.\"} if {\n\tmeasure.knife_roller_used == true\n\tmeasure.after_frost == false\n}\n\nviolations contains {\"code\": \"NO_REGROWTH\", \"message\": \"Häckseln/Pflegemahd während des Begrünungszeitraums ist nur zulässig, wenn Nachwachsen, Erosionsschutz, Nitratrückhalt und flächendeckende Begrünung gesichert sind.\"} if {\n\tmeasure.maintenance_action == \"chopping_or_mowing\"\n\tmeasure.regrowth_expected == false\n}\n\nviolations contains {\"code\": \"TRAVEL_BAN\", \"message\": \"Das Befahrungsverbot der Variante 1 bis zum maßgeblichen Stichtag ist einzuhalten; nur das Überqueren zur Bewirtschaftung von Nachbarflächen ist ausgenommen.\"} if {\n\tmeasure.variant == 1\n\tmeasure.travel_date != null\n\tmeasure.travel_is_neighbor_crossing != true\n\tmeasure.travel_date <= measure.travel_ban_until\n}\n\nviolations contains {\"code\": \"THRESHING\", \"message\": \"Zwischenfrüchte dürfen nicht gedroschen werden; bei Drusch ist die Kultur als Schlagnutzung zu beantragen.\"} if {\n\tmeasure.threshed == true\n}\n\nviolations contains {\"code\": \"NO_MECHANICAL_REMOVAL\", \"message\": \"Zwischenfruchtbegrünungen der Varianten 1 bis 6 müssen mechanisch beseitigt werden.\"} if {\n\tmeasure.variant <= 6\n\tmeasure.removal_done == true\n\tnot mechanical_removal_valid\n}\n\nviolations contains {\"code\": \"INVALID_AUTUMN_MAIN_CROP\", \"message\": \"Nach Variante 1 ist verpflichtend eine Hauptkultur im Herbst anzubauen und im folgenden Mehrfachantrag zu beantragen.\"} if {\n\tmeasure.variant == 1\n\tmeasure.autumn_main_crop_planted != true\n}\n\nviolations contains {\"code\": \"VARIANT_7_NO_N\", \"message\": \"Auch bei Variante 7 gilt das Mineralstickstoffverbot bis zum Ende des Begrünungszeitraums.\"} if {\n\tmeasure.variant == 7\n\tmeasure.mineral_n_applied == true\n}\n\nviolations contains {\"code\": \"APPLICATION_LATE\", \"message\": \"Die Maßnahme muss vor Vertragsbeginn bis spätestens 31. Dezember des Vorjahres im Maßnahmenantrag beantragt werden.\"} if {\n\tmeasure.application_year != null\n\tmeasure.measure_application_date > sprintf(\"%d-12-31\", [measure.application_year - 1])\n}\n\nviolations contains {\"code\": \"MFA_VARIANT_LATE\", \"message\": \"Die Begrünung ist im Mehrfachantrag fristgerecht zu beantragen: Varianten 1–3 bis 31. August, Varianten 4–7 bis 30. September.\"} if {\n\tmeasure.variant_application_date != null\n\tmeasure.variant <= 3\n\tmeasure.variant_application_date > sprintf(\"%d-08-31\", [measure.application_year])\n}\n\nviolations contains {\"code\": \"MFA_VARIANT_LATE\", \"message\": \"Die Begrünung ist im Mehrfachantrag fristgerecht zu beantragen: Varianten 1–3 bis 31. August, Varianten 4–7 bis 30. September.\"} if {\n\tmeasure.variant_application_date != null\n\tmeasure.variant >= 4\n\tmeasure.variant_application_date > sprintf(\"%d-09-30\", [measure.application_year])\n}\n\nviolations contains {\"code\": \"GLÖZ8_NPF_2024\", \"message\": \"Im Antragsjahr 2024 im Rahmen der Konditionalität beantragte Zwischenfrüchte Variante 1 NPF bis Variante 6 NPF sind nicht förderbar.\"} if {\n\tmeasure.application_year == 2024\n\tmeasure.gloez8_npf == true\n}\n\nviolations contains {\"code\": \"NO_CONCURRENT_IMMERGRUEN\", \"message\": \"Eine gleichzeitige Teilnahme an Zwischenfruchtanbau und System Immergrün ist nicht möglich.\"} if {\n\tmeasure.participates_immergruen == true\n}\n\nviolations contains {\"code\": \"HARVEST_85\", \"message\": \"Auf Ackerflächen ist grundsätzlich Ernte und Verbringen des Erntegutes auf mindestens 85 % des Schlages erforderlich.\"} if {\n\tmeasure.harvested_share < 0.85\n\tnot drought_2026_harvest_exemption\n}\n\nviolations contains {\"code\": \"APPLICATION_NOT_CORRECTED\", \"message\": \"Wenn die beantragte Begrünungsvariante nicht angelegt werden kann, ist sie umgehend zu streichen, zu reduzieren oder auf eine spätere Variante zu ändern.\"} if {\n\tmeasure.application_year == 2026\n\tmeasure.sowing_will_not_occur == true\n\tmeasure.application_corrected != true\n}\n\nviolations contains {\"code\": \"CONDITIONALITY\", \"message\": \"Die Konditionalitätsbestimmungen sind von allen ÖPUL-Teilnehmern einzuhalten.\"} if {\n\tmeasure.conditionality_compliant == false\n}\n\npremium_band := data.premium_bands_eur_per_ha[sprintf(\"%d\", [measure.variant])] if {\n\tmeasure.variant != null\n}\n\npremium_guaranteed_minimum := premium_band.min if {\n\tpremium_band != null\n}\n\neligible := count(violations) == 0\n\ndecision := {\n\t\"eligible\": eligible,\n\t\"measure\": \"o6_6\",\n\t\"variant\": object.get(measure, \"variant\", null),\n\t\"violations\": violations,\n\t\"profile_missing\": profile_missing,\n\t\"premium_band_eur_per_ha\": object.get(data.premium_bands_eur_per_ha, sprintf(\"%d\", [object.get(measure, \"variant\", 0)]), null),\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_6-luna-high-20261002/workspace/tools/opa",
+            "fmt",
+            "tests/o6_6_test.rego"
+          ],
+          "duration_ms": 12,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_6_test\n\nimport data.oepul.o6_6 as policy\nimport rego.v1\n\ntest_variant_2_valid if {\n\tdecision := policy.decision with input as {\n\t\t\"o6_6\": {\n\t\t\t\"application_year\": 2026,\n\t\t\t\"variant\": 2,\n\t\t\t\"sow_date\": \"2026-08-01\",\n\t\t\t\"break_date\": \"2027-02-15\",\n\t\t\t\"area_ha\": 2,\n\t\t\t\"arable_area_ha\": 2,\n\t\t\t\"land_use\": \"arable\",\n\t\t\t\"active_sowing\": true,\n\t\t\t\"full_coverage\": true,\n\t\t\t\"mixing_partner_count\": 7,\n\t\t\t\"plant_family_count\": 3,\n\t\t\t\"mineral_n_applied\": false,\n\t\t\t\"psm_applied\": false,\n\t\t\t\"mechanical_removal\": true,\n\t\t\t\"removal_done\": true,\n\t\t\t\"harvested_share\": 1,\n\t\t\t\"measure_application_date\": \"2025-12-31\",\n\t\t\t\"variant_application_date\": \"2026-08-31\",\n\t\t\t\"participates_immergruen\": false,\n\t\t},\n\t}\n\tdecision.eligible == true\n\tcount(decision.violations) == 0\n}\n\ntest_variant_1_2025_requires_seventy_days if {\n\tdecision := policy.decision with input as {\n\t\t\"o6_6\": {\n\t\t\t\"application_year\": 2025,\n\t\t\t\"variant\": 1,\n\t\t\t\"sow_date\": \"2025-08-10\",\n\t\t\t\"break_date\": \"2025-09-15\",\n\t\t\t\"days_between_sowing_and_break\": 36,\n\t\t\t\"area_ha\": 2,\n\t\t\t\"arable_area_ha\": 2,\n\t\t\t\"land_use\": \"arable\",\n\t\t\t\"full_coverage\": true,\n\t\t\t\"active_sowing\": true,\n\t\t\t\"mixing_partner_count\": 5,\n\t\t\t\"plant_family_count\": 2,\n\t\t\t\"insect_pollinated_partner_count\": 5,\n\t\t\t\"non_insect_pollinated_share\": 0,\n\t\t\t\"mineral_n_applied\": false,\n\t\t\t\"psm_applied\": false,\n\t\t\t\"mechanical_removal\": true,\n\t\t\t\"removal_done\": true,\n\t\t},\n\t}\n\tviolation_code(decision.violations, \"INVALID_VARIANT_DATE\")\n}\n\ntest_variant_6_closed_crop_list if {\n\tdecision := policy.decision with input as {\n\t\t\"o6_6\": {\n\t\t\t\"application_year\": 2026,\n\t\t\t\"variant\": 6,\n\t\t\t\"sow_date\": \"2026-10-15\",\n\t\t\t\"break_date\": \"2027-03-21\",\n\t\t\t\"area_ha\": 2,\n\t\t\t\"arable_area_ha\": 2,\n\t\t\t\"land_use\": \"arable\",\n\t\t\t\"full_coverage\": true,\n\t\t\t\"active_sowing\": true,\n\t\t\t\"mixture_crops\": [\"Senf\"],\n\t\t\t\"mineral_n_applied\": false,\n\t\t\t\"psm_applied\": false,\n\t\t\t\"mechanical_removal\": true,\n\t\t\t\"removal_done\": true,\n\t\t},\n\t}\n\tviolation_code(decision.violations, \"INVALID_VARIANT_6_CROPS\")\n}\n\ntest_variant_7_herbicide_restriction if {\n\tdecision := policy.decision with input as {\n\t\t\"o6_6\": {\n\t\t\t\"application_year\": 2026,\n\t\t\t\"variant\": 7,\n\t\t\t\"sow_date\": \"2026-09-15\",\n\t\t\t\"break_date\": \"2027-01-31\",\n\t\t\t\"area_ha\": 2,\n\t\t\t\"arable_area_ha\": 2,\n\t\t\t\"land_use\": \"arable\",\n\t\t\t\"crop\": \"winter_rape\",\n\t\t\t\"full_coverage\": true,\n\t\t\t\"active_sowing\": true,\n\t\t\t\"mixing_partner_count\": 3,\n\t\t\t\"plant_family_count\": 2,\n\t\t\t\"mineral_n_applied\": false,\n\t\t\t\"psm_applied\": false,\n\t\t\t\"herbicide_after_four_leaf_stage\": true,\n\t\t},\n\t}\n\tviolation_code(decision.violations, \"VARIANT_7_HERBICIDE\")\n}\n\ntest_drought_2026_full_coverage_exception if {\n\tdecision := policy.decision with input as {\n\t\t\"o6_6\": {\n\t\t\t\"application_year\": 2026,\n\t\t\t\"variant\": 3,\n\t\t\t\"sow_date\": \"2026-08-20\",\n\t\t\t\"break_date\": \"2026-11-15\",\n\t\t\t\"area_ha\": 2,\n\t\t\t\"arable_area_ha\": 2,\n\t\t\t\"land_use\": \"arable\",\n\t\t\t\"active_sowing\": true,\n\t\t\t\"proper_installation\": true,\n\t\t\t\"full_coverage\": false,\n\t\t\t\"mixing_partner_count\": 3,\n\t\t\t\"plant_family_count\": 2,\n\t\t\t\"mineral_n_applied\": false,\n\t\t\t\"psm_applied\": false,\n\t\t\t\"mechanical_removal\": true,\n\t\t\t\"removal_done\": true,\n\t\t},\n\t}\n\tnot violation_code(decision.violations, \"NOT_FULL_COVER\")\n}\n\nviolation_code(items, code) if {\n\titem := items[_]\n\titem.code == code\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_6-luna-high-20261002/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 25,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 5/5\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_6-luna-high-20261002/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 95,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_6-luna-high-20261002/workspace"
+}
