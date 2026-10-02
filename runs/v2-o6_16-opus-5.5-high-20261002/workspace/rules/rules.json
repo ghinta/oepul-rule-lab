@@ -1,0 +1,3727 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_16",
+  "rules": [
+    {
+      "id": "o6_16.scope.area_based_support",
+      "rule_type": "scope",
+      "statement": "Die Maßnahme fördert Ackerflächen in der Gebietskulisse gemäß Anhang G; der Zuschlag stark stickstoffreduzierte Fütterung wird ab 2025 auch für Ackerflächen außerhalb der Kulisse gewährt. Angeboten werden zusätzlich die Option AG sowie die Zuschläge Wien und (ab 2025) Cultan.",
+      "conditions": [
+        {
+          "expression": "parcel.land_use == 'arable' and in_area(parcel)",
+          "description": "Ackerfläche liegt in einer Katastralgemeinde gemäß Anhang G",
+          "input_paths": [
+            "land.parcels[].land_use",
+            "land.parcels[].cadastral_community_number"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "in_scope",
+        "description": "Schlag ist für Basisprämie und flächenbezogene Auflagen der Maßnahme relevant",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.overview",
+        "ref.mb.overview_pig",
+        "ref.mb.overview_options",
+        "ref.srl.16_support"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.arable_in_area",
+        "data.oepul.o6_16.arable_in_area_ha"
+      ]
+    },
+    {
+      "id": "o6_16.area.annex_g_kulisse",
+      "rule_type": "definition",
+      "statement": "Die Gebietskulisse „Vorbeugender Grundwasserschutz – Acker“ ist in Anhang G nach Katastralgemeinden (Bundesland, Gemeinde, KG, KG-Nr.) abgegrenzt; ein Schlag liegt in der Kulisse, wenn seine KG-Nr. in der Liste enthalten ist (1566 Tabellenzeilen, ab 2025 ausgedehnte Kulisse).",
+      "conditions": [
+        {
+          "expression": "parcel.cadastral_community_number in data.o6_16.gebietskulisse_anhang_g.rows[].kg_nr",
+          "description": "KG-Nr. des Schlages ist in Anhang G gelistet",
+          "input_paths": [
+            "land.parcels[].cadastral_community_number"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "in_area",
+        "description": "Schlag liegt in der Gebietskulisse; Bundesland ergibt sich aus der Anhang-G-Zeile",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.anh.g_list",
+        "ref.anh.g_first",
+        "ref.anh.g_title",
+        "ref.anh.g_map2025",
+        "ref.mb.min_area",
+        "ref.srl.marker_1b"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.kulisse_kg",
+        "data.oepul.o6_16.kg_in_area",
+        "data.oepul.o6_16.in_area",
+        "data.oepul.o6_16.area_state",
+        "data.o6_16.gebietskulisse_anhang_g.rows"
+      ]
+    },
+    {
+      "id": "o6_16.access.offered_states",
+      "rule_type": "eligibility",
+      "statement": "Die Maßnahme wird nur in Burgenland, Kärnten, Niederösterreich, Oberösterreich, Steiermark und Wien angeboten.",
+      "conditions": [
+        {
+          "expression": "state in params.federal_states_offered",
+          "description": "Bundesland der Kulissenfläche ist eines der sechs Angebotsländer",
+          "input_paths": [
+            "land.parcels[].cadastral_community_number"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "offered",
+        "description": "Teilnahme nur mit Flächen in diesen Bundesländern möglich",
+        "value": [
+          "burgenland",
+          "kaernten",
+          "niederoesterreich",
+          "oberoesterreich",
+          "steiermark",
+          "wien"
+        ]
+      },
+      "source_reference_ids": [
+        "ref.mb.states"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.state_offered",
+        "data.o6_16.o6_16_params.federal_states_offered"
+      ]
+    },
+    {
+      "id": "o6_16.contract.period",
+      "rule_type": "contract",
+      "statement": "Der Vertragszeitraum (inkl. Zuschlag Wien) beträgt mindestens 4 Jahre und läuft bis 31.12.2028: Beginn 2023 = 6 Jahre, 2024 = 5 Jahre, 2025 = 4 Jahre.",
+      "conditions": [
+        {
+          "expression": "contract_start_year in {2023,2024,2025}",
+          "description": "Vertragsbeginn 1.1. des Einstiegsjahres",
+          "input_paths": [
+            "farm.oepul.o6_16.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_years",
+        "description": "Vertragsdauer gemäß Tabelle, Ende 31.12.2028",
+        "value": {
+          "2023": 6,
+          "2024": 5,
+          "2025": 4
+        }
+      },
+      "source_reference_ids": [
+        "ref.mb.contract_end",
+        "ref.mb.contract_table",
+        "ref.at.multi_vgw",
+        "ref.srl.multi_year"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.contract_period_years",
+        "data.oepul.o6_16.contract_end_date",
+        "data.o6_16.o6_16_params.contract_period"
+      ]
+    },
+    {
+      "id": "o6_16.contract.one_year_components",
+      "rule_type": "contract",
+      "statement": "Option AG sowie die Zuschläge stark stickstoffreduzierte Fütterung und Cultan-Düngung haben einen Vertrags- und Verpflichtungszeitraum von einem Kalenderjahr (1.1.–31.12.).",
+      "conditions": [
+        {
+          "expression": "component in {leaching_risk_area, n_reduced_pig_feeding, cultan}",
+          "description": "einjährige Komponente der Maßnahme",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "one_calendar_year",
+        "description": "Verpflichtung gilt jeweils für ein Kalenderjahr",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.contract_one_year",
+        "ref.at.options_one_year"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.component_contract_is_one_year"
+      ]
+    },
+    {
+      "id": "o6_16.contract.pig_feeding_auto_renewal",
+      "rule_type": "contract",
+      "statement": "Der Zuschlag stark stickstoffreduzierte Fütterung verlängert sich automatisch um ein Förderjahr, wenn er nicht abgemeldet wird; werden die Mindestteilnahmebedingungen nicht eingehalten, erlischt der Vertrag.",
+      "conditions": [
+        {
+          "expression": "option_applied('n_reduced_pig_feeding') and not deregistered",
+          "description": "Zuschlag beantragt und nicht abgemeldet",
+          "input_paths": [
+            "farm.oepul.o6_16.n_reduced_pig_feeding.applied",
+            "farm.oepul.o6_16.n_reduced_pig_feeding.deregistered"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "auto_renewed",
+        "description": "Zuschlag gilt im Folgejahr weiter; bei Unterschreiten von 1,00 GVE/ha erlischt der Vertrag",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.contract_auto_renew",
+        "ref.at.renew",
+        "ref.srl.preapp"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.pig_feeding_auto_renewed"
+      ]
+    },
+    {
+      "id": "o6_16.access.combination_obligation",
+      "rule_type": "eligibility",
+      "statement": "Es muss zeitgleich an „Begrünung von Ackerflächen – Zwischenfruchtanbau“ (o6_6) oder „System Immergrün“ (o6_7) teilgenommen werden (Kombinationsverpflichtung).",
+      "conditions": [
+        {
+          "expression": "'o6_6' in participating_measures or 'o6_7' in participating_measures",
+          "description": "Teilnahme an o6_6 oder o6_7",
+          "input_paths": [
+            "farm.oepul.participating_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing",
+        "description": "Zugangsvoraussetzung nicht erfüllt: im 1. Jahr kein Vertrag, ab dem 2. Jahr keine Prämie",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.combination",
+        "ref.srl.16_combination",
+        "ref.at.sanction_access",
+        "ref.srl.access_fail"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.access.combination_obligation]",
+        "data.oepul.o6_16.combination_obligation_met",
+        "data.oepul.o6_16.access_conditions_met"
+      ]
+    },
+    {
+      "id": "o6_16.access.min_area_first_year",
+      "rule_type": "eligibility",
+      "statement": "Im ersten Teilnahmejahr müssen mindestens 2,00 ha Ackerfläche in der Gebietskulisse gemäß Anhang G bewirtschaftet werden; in den Folgejahren darf es weniger sein.",
+      "conditions": [
+        {
+          "expression": "farm.year == contract_start_year",
+          "description": "erstes Teilnahmejahr",
+          "input_paths": [
+            "farm.year",
+            "farm.oepul.o6_16.contract_start_year"
+          ]
+        },
+        {
+          "expression": "sum(area_ha of arable parcels in area) >= 2.0",
+          "description": "Ackerfläche in der Kulisse mindestens 2,00 ha",
+          "input_paths": [
+            "land.parcels[].area_ha",
+            "land.parcels[].land_use",
+            "land.parcels[].cadastral_community_number"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_below",
+        "description": "Kein gültiger Vertrag im ersten Jahr",
+        "value": 2.0
+      },
+      "source_reference_ids": [
+        "ref.mb.min_area",
+        "ref.mb.min_area_followup",
+        "ref.srl.access_fail"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.access.min_area_first_year]",
+        "data.oepul.o6_16.min_area_first_year_met",
+        "data.oepul.o6_16.first_participation_year"
+      ]
+    },
+    {
+      "id": "o6_16.access.pig_feeding_min_density",
+      "rule_type": "eligibility",
+      "statement": "Für den Zuschlag stark stickstoffreduzierte Fütterung sind im Teilnahmejahr mindestens 1,00 GVE Schweine im Jahresdurchschnitt je ha Ackerfläche (gesamte Ackerfläche ohne Abzüge, inkl. außerhalb der Kulisse) erforderlich; GVE gemäß Anhang A (Ferkel ab 8 kg 0,07; Jung-/Mastschweine ab 32 kg 0,3; Zucht-/Jungsauen ab 50 kg 0,5).",
+      "conditions": [
+        {
+          "expression": "option_applied('n_reduced_pig_feeding')",
+          "description": "Zuschlag beantragt",
+          "input_paths": [
+            "farm.oepul.o6_16.n_reduced_pig_feeding.applied"
+          ]
+        },
+        {
+          "expression": "sum(pig GVE) / land.arable_area_ha >= 1.0",
+          "description": "Schweine-GVE je ha Ackerfläche",
+          "input_paths": [
+            "livestock.species_groups[].species",
+            "livestock.species_groups[].category",
+            "livestock.species_groups[].animal_count",
+            "livestock.species_groups[].gve",
+            "land.arable_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_below",
+        "description": "Zuschlag nicht gewährt / Vertrag erlischt",
+        "value": 1.0
+      },
+      "source_reference_ids": [
+        "ref.mb.pig_min",
+        "ref.mb.pig_gve_key",
+        "ref.mb.pig",
+        "ref.mb.pig_area",
+        "ref.srl.16_pig",
+        "ref.anh.gve_pigs",
+        "ref.srl.gve"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.access.pig_feeding_min_density]",
+        "data.oepul.o6_16.pig_gve_total",
+        "data.oepul.o6_16.pig_gve_per_ha_arable",
+        "data.oepul.o6_16.pig_gve_factor",
+        "data.o6_16.gve_schluessel_anhang_a.rows"
+      ]
+    },
+    {
+      "id": "o6_16.access.option_min_one_parcel",
+      "rule_type": "eligibility",
+      "statement": "Für die Teilnahme an der Option AG und am Zuschlag Cultan muss jeweils zumindest ein Schlag beantragt werden.",
+      "conditions": [
+        {
+          "expression": "count(parcels with code AG|CUL) >= 1",
+          "description": "mindestens ein codierter Schlag",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_none",
+        "description": "Option ohne Schlag nicht wirksam",
+        "value": 1
+      },
+      "source_reference_ids": [
+        "ref.mb.options_one_parcel"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.access.option_min_one_parcel]"
+      ]
+    },
+    {
+      "id": "o6_16.application.measure_application_deadline",
+      "rule_type": "application",
+      "statement": "Die Maßnahme sowie die Zuschläge Wien und Schweinefütterung sind vor Vertragsbeginn im Maßnahmenantrag bis spätestens 31.12. zu beantragen, um einen Vertrag ab dem Folgejahr zu begründen.",
+      "conditions": [
+        {
+          "expression": "measure_application_date <= (contract_start_year-1)-12-31",
+          "description": "Antrag bis 31.12. des Vorjahres",
+          "input_paths": [
+            "farm.oepul.o6_16.measure_application_date",
+            "farm.oepul.o6_16.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_late",
+        "description": "Kein gültiger Vertrag für das Folgejahr",
+        "value": "12-31"
+      },
+      "source_reference_ids": [
+        "ref.mb.app_deadline",
+        "ref.at.application",
+        "ref.srl.app_required"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.application.measure_application_deadline]",
+        "data.oepul.o6_16.application_in_time"
+      ]
+    },
+    {
+      "id": "o6_16.application.last_entry_measure",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg in die Maßnahme (inkl. Zuschlag Wien) ist mit dem Förderjahr 2025 möglich (Beantragung bis 31.12.2024).",
+      "conditions": [
+        {
+          "expression": "contract_start_year <= 2025",
+          "description": "Einstiegsjahr spätestens 2025",
+          "input_paths": [
+            "farm.oepul.o6_16.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_later",
+        "description": "Kein Neueinstieg ab 2026",
+        "value": 2025
+      },
+      "source_reference_ids": [
+        "ref.mb.app_last",
+        "ref.mb.app_last_date",
+        "ref.at.last_multi"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.application.last_entry_measure]"
+      ]
+    },
+    {
+      "id": "o6_16.application.humus_vienna_application",
+      "rule_type": "deadline",
+      "statement": "Der Zuschlag Humusaufbau und Erosionsschutz in Wien erfordert einen Maßnahmenantrag bis 31.12. vor Vertragsbeginn; letzter Einstieg Förderjahr 2025.",
+      "conditions": [
+        {
+          "expression": "start_year <= 2025 and application_date <= (start_year-1)-12-31",
+          "description": "fristgerechter Antrag",
+          "input_paths": [
+            "farm.oepul.o6_16.humus_erosion_vienna.application_date",
+            "farm.oepul.o6_16.humus_erosion_vienna.start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_late",
+        "description": "Zuschlag nicht gültig",
+        "value": 2025
+      },
+      "source_reference_ids": [
+        "ref.mb.app_last",
+        "ref.srl.app_required"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.application.humus_vienna_application]"
+      ]
+    },
+    {
+      "id": "o6_16.application.pig_feeding_application",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg in den Zuschlag stark stickstoffreduzierte Fütterung ist mit dem Förderjahr 2028 möglich (Maßnahmenantrag bis 31.12.2027).",
+      "conditions": [
+        {
+          "expression": "start_year <= 2028 and application_date <= (start_year-1)-12-31",
+          "description": "fristgerechter Antrag",
+          "input_paths": [
+            "farm.oepul.o6_16.n_reduced_pig_feeding.application_date",
+            "farm.oepul.o6_16.n_reduced_pig_feeding.start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_late",
+        "description": "Zuschlag nicht gültig",
+        "value": 2028
+      },
+      "source_reference_ids": [
+        "ref.mb.app_pig_last",
+        "ref.at.options_2027",
+        "ref.srl.app_required"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.application.pig_feeding_application]"
+      ]
+    },
+    {
+      "id": "o6_16.application.pig_feeding_not_with_o6_9",
+      "rule_type": "combination",
+      "statement": "Eine gleichzeitige Teilnahme am Zuschlag stark stickstoffreduzierte Fütterung (o6_16) und an der gleichlautenden Kategorie der Maßnahme o6_9 ist nicht möglich.",
+      "conditions": [
+        {
+          "expression": "option_applied('n_reduced_pig_feeding') and 'o6_9_n_reduced_pig_feeding' in participating_measures",
+          "description": "Doppelteilnahme",
+          "input_paths": [
+            "farm.oepul.participating_measures",
+            "farm.oepul.o6_16.n_reduced_pig_feeding.applied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Kombination ausgeschlossen",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.app_pig_o6_9",
+        "ref.srl.pig_excl"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.application.pig_feeding_not_with_o6_9]",
+        "data.oepul.o6_16.pig_feeding_eligible"
+      ]
+    },
+    {
+      "id": "o6_16.application.no_measure_application_ag_cultan",
+      "rule_type": "application",
+      "statement": "Für die Option AG und den Zuschlag Cultan ist kein Maßnahmenantrag vor Vertragsbeginn erforderlich; die Schläge werden im Teilnahmejahr mit Code AG bzw. CUL gekennzeichnet.",
+      "conditions": [
+        {
+          "expression": "component in {leaching_risk_area, cultan}",
+          "description": "Komponente ohne Maßnahmenantrag",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "no_measure_application_required",
+        "description": "Teilnahme über die Codierung im Mehrfachantrag",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.app_ag_no_app",
+        "ref.mb.app_cul"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.requires_measure_application",
+        "data.oepul.o6_16.cul_parcels",
+        "data.oepul.o6_16.ag_parcels"
+      ]
+    },
+    {
+      "id": "o6_16.application.ag_usage_type",
+      "rule_type": "application",
+      "statement": "AG-Schläge sind je nach Bewirtschaftung mit der Schlagnutzungsart Grünbrache, Futtergräser, Sonstiges Feldfutter oder Wechselwiese zu beantragen und mit Code AG zu kennzeichnen.",
+      "conditions": [
+        {
+          "expression": "'AG' in parcel.oepul.codes => parcel.oepul.usage_type in allowed",
+          "description": "zulässige Schlagnutzungsart",
+          "input_paths": [
+            "land.parcels[].oepul.codes",
+            "land.parcels[].oepul.usage_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_other_usage",
+        "description": "Fehlerhafte Beantragung",
+        "value": [
+          "Grünbrache",
+          "Futtergräser",
+          "Sonstiges Feldfutter",
+          "Wechselwiese"
+        ]
+      },
+      "source_reference_ids": [
+        "ref.mb.app_ag_code"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.application.ag_usage_type]"
+      ]
+    },
+    {
+      "id": "o6_16.application.ag_div_double_coding",
+      "rule_type": "combination",
+      "statement": "Bei Teilnahme an UBB oder BIO können AG-Flächen auf die Biodiversitätsflächenvorgaben angerechnet werden; dann sind sie als Grünbrache oder Sonstiges Feldfutter mit den Codes AG und DIV zu beantragen (Pflegeauflagen der DIV-Flächen sind einzuhalten).",
+      "conditions": [
+        {
+          "expression": "'AG' in codes and 'DIV' in codes",
+          "description": "Doppelcodierung",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        },
+        {
+          "expression": "participates o6_1a or o6_1b; usage_type in {Grünbrache, Sonstiges Feldfutter}",
+          "description": "Voraussetzungen",
+          "input_paths": [
+            "farm.oepul.participating_measures",
+            "land.parcels[].oepul.usage_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_unmet",
+        "description": "Unzulässige Doppelcodierung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.app_ag_div",
+        "ref.mb.app_ag_div_usage",
+        "ref.srl.ubb_ag"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.application.ag_div_double_coding]",
+        "data.oepul.o6_16.ag_div_allowed"
+      ]
+    },
+    {
+      "id": "o6_16.application.ag_npf_until_2024",
+      "rule_type": "exception",
+      "statement": "Bis einschließlich 2024 konnten AG-Grünbrachen mit Code NPF auf den GLÖZ-8-Stilllegungsanteil angerechnet werden; dann erfolgt keine ÖPUL-Prämie.",
+      "conditions": [
+        {
+          "expression": "year <= 2024 and 'AG' in codes and 'NPF' in codes",
+          "description": "AG-Grünbrache mit NPF",
+          "input_paths": [
+            "farm.year",
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Keine AG-Prämie für den Schlag",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.app_ag_npf",
+        "ref.mb.app_ag_npf2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.ag_npf_no_premium"
+      ]
+    },
+    {
+      "id": "o6_16.application.ag_conversion",
+      "rule_type": "procedure",
+      "statement": "AG-Flächen konnten bis 31.12.2025 (Maßnahmenantrag) ohne Rückzahlung in die Maßnahmen Naturschutz oder Ergebnisorientierte Bewirtschaftung umgewandelt werden.",
+      "conditions": [
+        {
+          "expression": "application_date <= 2025-12-31 and target in {o6_18, o6_19}",
+          "description": "fristgerechte Umwandlung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "conversion_allowed",
+        "description": "Wechsel in höherwertige Maßnahme ohne Rückzahlung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.app_ag_convert",
+        "ref.at.switch",
+        "ref.at.switch_ag",
+        "ref.srl.conversion"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.ag_conversion_possible",
+        "data.oepul.o6_16.conversion_allowed",
+        "data.o6_16.oepul_general.measure_conversions"
+      ]
+    },
+    {
+      "id": "o6_16.records.napv_compliance",
+      "rule_type": "obligation",
+      "statement": "Auf allen bewirtschafteten Flächen des Betriebes sind die Düngevorgaben der Nitrat-Aktionsprogramm-Verordnung einzuhalten und betriebliche Aufzeichnungen gemäß § 8 Abs. 1 NAPV (Nährstoffbedarf inkl. Ertragsplausibilisierung, N-Anfall, N-Ausbringung inkl. Bewässerung, Vorfruchtwirkung, Überschuss aus Vorkultur) zu führen.",
+      "conditions": [
+        {
+          "expression": "farm_records.napv_compliant == true",
+          "description": "NAPV-konforme Düngung und Aufzeichnung",
+          "input_paths": [
+            "farm.oepul.o6_16.farm_records.napv_compliant",
+            "documentation.nutrient_balance_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_false",
+        "description": "inhaltlicher Verstoß",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.farm_records",
+        "ref.srl.16_records"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.records.napv_compliance]"
+      ]
+    },
+    {
+      "id": "o6_16.records.farm_plan_deadline",
+      "rule_type": "deadline",
+      "statement": "Die betrieblichen Aufzeichnungen sind bis 28.02. des laufenden Förderjahres als voraussichtliche Düngeplanung anzulegen.",
+      "conditions": [
+        {
+          "expression": "fertilization_plan_date <= year-02-28",
+          "description": "Düngeplanung fristgerecht",
+          "input_paths": [
+            "farm.oepul.o6_16.farm_records.fertilization_plan_date",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_late",
+        "description": "inhaltlicher Verstoß",
+        "value": "02-28"
+      },
+      "source_reference_ids": [
+        "ref.mb.farm_records_plan",
+        "ref.srl.16_records"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.records.farm_plan_deadline]"
+      ]
+    },
+    {
+      "id": "o6_16.records.farm_balance_deadline",
+      "rule_type": "deadline",
+      "statement": "Die betriebliche Düngebilanzierung ist bis spätestens 31.01. des Folgejahres abzuschließen.",
+      "conditions": [
+        {
+          "expression": "farm_balance_completed_date <= (year+1)-01-31",
+          "description": "Bilanz fristgerecht abgeschlossen",
+          "input_paths": [
+            "farm.oepul.o6_16.farm_records.farm_balance_completed_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_late",
+        "description": "inhaltlicher Verstoß",
+        "value": "01-31"
+      },
+      "source_reference_ids": [
+        "ref.mb.farm_records_balance"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.records.farm_balance_deadline]"
+      ]
+    },
+    {
+      "id": "o6_16.records.field_records_scope",
+      "rule_type": "obligation",
+      "statement": "Für Ackerflächen in der Kulisse sind schlagbezogene Aufzeichnungen über die N-Düngung gemäß § 9 Abs. 6 NAPV zu führen; vergleichbare Schläge dürfen zusammengefasst werden; Kulturen mit max. 0,30 ha je Kultur sind ausgenommen.",
+      "conditions": [
+        {
+          "expression": "sum(area_ha per crop in area) > 0.30",
+          "description": "Kultur über 0,30 ha in der Kulisse",
+          "input_paths": [
+            "land.parcels[].crop.crop_name",
+            "land.parcels[].area_ha",
+            "land.parcels[].cadastral_community_number"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "records_required",
+        "description": "Schlagbezogene Aufzeichnungspflicht",
+        "value": 0.3
+      },
+      "source_reference_ids": [
+        "ref.mb.field_records",
+        "ref.mb.field_records_small",
+        "ref.mb.field_records_combine",
+        "ref.srl.16_field"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.field_records_required",
+        "data.oepul.o6_16.crop_area_in_area"
+      ]
+    },
+    {
+      "id": "o6_16.records.field_records_electronic",
+      "rule_type": "obligation",
+      "statement": "Die schlagbezogenen Aufzeichnungen sind elektronisch zu führen.",
+      "conditions": [
+        {
+          "expression": "field_records_required and field_records.electronic == true",
+          "description": "elektronische Führung",
+          "input_paths": [
+            "farm.oepul.o6_16.field_records.electronic"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_false",
+        "description": "inhaltlicher Verstoß",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.field_records_14d",
+        "ref.srl.16_field"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.records.field_records_electronic]"
+      ]
+    },
+    {
+      "id": "o6_16.records.field_records_14_days",
+      "rule_type": "deadline",
+      "statement": "Die schlagbezogenen Aufzeichnungen sind zeitnah, spätestens 14 Tage nach Ausbringung, Anbau, Bewässerung oder Ernte fertigzustellen.",
+      "conditions": [
+        {
+          "expression": "field_records.max_completion_delay_days <= 14",
+          "description": "maximaler Verzug",
+          "input_paths": [
+            "farm.oepul.o6_16.field_records.max_completion_delay_days"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_late",
+        "description": "inhaltlicher Verstoß",
+        "value": 14
+      },
+      "source_reference_ids": [
+        "ref.mb.field_records_14d"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.records.field_records_14_days]"
+      ]
+    },
+    {
+      "id": "o6_16.records.field_records_content",
+      "rule_type": "obligation",
+      "statement": "Inhalt der schlagbezogenen Aufzeichnungen: Bezeichnung und Größe, Art und Menge der Düngemittel, Datum und Menge der Bewässerung, Anbau- und Erntedatum, Erntemenge samt Wiegebelegen, jährlicher Stickstoffsaldo.",
+      "conditions": [
+        {
+          "expression": "field_records.content_complete == true",
+          "description": "vollständige Inhalte",
+          "input_paths": [
+            "farm.oepul.o6_16.field_records.content_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_incomplete",
+        "description": "inhaltlicher Verstoß",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.field_records_content"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.records.field_records_content]",
+        "data.o6_16.o6_16_params.field_records.required_content"
+      ]
+    },
+    {
+      "id": "o6_16.records.provide_to_ministry",
+      "rule_type": "procedure",
+      "statement": "Die schlagbezogenen Aufzeichnungen sind dem BMLUK im Bedarfsfall zur Verfügung zu stellen.",
+      "conditions": [
+        {
+          "expression": "request_by_ministry",
+          "description": "Anforderung im Bedarfsfall",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "provide_records",
+        "description": "Herausgabe der Aufzeichnungen",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.field_records_bmluk",
+        "ref.srl.16_field"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.n.carryover_threshold",
+      "rule_type": "calculation",
+      "statement": "Der Stickstoffüberschuss (Saldo) der Vorkultur ist auf die Folgekultur anzurechnen, wenn er bis Antragsjahr 2024 mehr als 10 kg/ha bzw. für ab 2025 bestehende/angebaute Kulturen mehr als 20 kg/ha beträgt (jeweils vor Abzug des Reduktionsfaktors).",
+      "conditions": [
+        {
+          "expression": "saldo > threshold(year)",
+          "description": "Schwelle 10 kg/ha (≤2024) bzw. 20 kg/ha (≥2025), strikt größer",
+          "input_paths": [
+            "land.parcels[].previous_crop.n_saldo_kg_ha",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "carryover_required",
+        "description": "Überschuss ist anzurechnen",
+        "value": {
+          "2023-2024": 10,
+          "2025-2028": 20
+        }
+      },
+      "source_reference_ids": [
+        "ref.mb.n_carry",
+        "ref.mb.n_until2024",
+        "ref.mb.n_from2025",
+        "ref.mb.n_ex1"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.carryover_required",
+        "data.oepul.o6_16.carryover_row",
+        "data.o6_16.o6_16_params.n_carryover.threshold_rows"
+      ]
+    },
+    {
+      "id": "o6_16.n.carryover_cap",
+      "rule_type": "calculation",
+      "statement": "Für ab 2025 bestehende oder angebaute Kulturen ist der anzurechnende Überschuss mit 100 kg N/ha (vor Reduktionsfaktor) begrenzt, auch bei Schadereignissen wie Hagel oder Trockenheit.",
+      "conditions": [
+        {
+          "expression": "year >= 2025",
+          "description": "Kultur ab Antragsjahr 2025",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "capped",
+        "description": "anzurechnender Überschuss = min(Saldo, 100)",
+        "value": 100
+      },
+      "source_reference_ids": [
+        "ref.mb.n_from2025",
+        "ref.mb.n_damage",
+        "ref.mb.n_ex5b"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.capped_surplus"
+      ]
+    },
+    {
+      "id": "o6_16.n.reduction_factor_zones",
+      "rule_type": "calculation",
+      "statement": "Die Düngung der Folgekultur ist in nördlichem und mittlerem Burgenland, östlichem Niederösterreich inkl. Tullnerfeld und Wien um mindestens 80 %, in den übrigen Kulissengebieten um mindestens 60 % des anzurechnenden Überschusses zu reduzieren.",
+      "conditions": [
+        {
+          "expression": "zone(parcel) in 80%-Gebiete",
+          "description": "Reduktionszone des Schlages",
+          "input_paths": [
+            "land.parcels[].n_reduction_zone",
+            "land.parcels[].cadastral_community_number"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_factor",
+        "description": "0,8 bzw. 0,6",
+        "value": {
+          "noerdliches_mittleres_burgenland": 0.8,
+          "oestliches_niederoesterreich_inkl_tullnerfeld": 0.8,
+          "wien": 0.8,
+          "restliche_gebietskulisse": 0.6
+        }
+      },
+      "source_reference_ids": [
+        "ref.mb.n_zone80",
+        "ref.mb.n_zone_names",
+        "ref.mb.n_zone60",
+        "ref.srl.16_n_zone"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.reduction_factor",
+        "data.oepul.o6_16.parcel_zone",
+        "data.o6_16.o6_16_params.n_carryover.reduction_factor_zones"
+      ]
+    },
+    {
+      "id": "o6_16.n.carryover_reduction",
+      "rule_type": "obligation",
+      "statement": "Die Düngung der Folgekultur ist um den Übertrag (anzurechnender Überschuss × Reduktionsfaktor) einzuschränken (Beispiele: 20 kg/ha → 12 kg/ha bis 2024; 30 kg/ha Tullnerfeld → 24 kg/ha; 180 kg/ha Hagel → 108 kg/ha bis 2024 bzw. 60 kg/ha ab 2025).",
+      "conditions": [
+        {
+          "expression": "follow_crop_n_fertilization <= follow_crop_n_requirement - required_n_reduction(saldo, year, zone)",
+          "description": "Düngung der Folgekultur",
+          "input_paths": [
+            "land.parcels[].n_management.follow_crop_n_fertilization_kg_ha",
+            "land.parcels[].n_management.follow_crop_n_requirement_kg_ha",
+            "land.parcels[].previous_crop.n_saldo_kg_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_exceeded",
+        "description": "inhaltlicher Verstoß (Düngeverbot)",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.n_carry",
+        "ref.mb.n_ex1",
+        "ref.mb.n_ex2",
+        "ref.mb.n_ex4",
+        "ref.mb.n_ex5a",
+        "ref.mb.n_ex5b"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.required_n_reduction",
+        "data.oepul.o6_16.n_carryover",
+        "data.oepul.o6_16.violations[o6_16.n.carryover_reduction]"
+      ]
+    },
+    {
+      "id": "o6_16.n.non_n_consuming_follow_crop",
+      "rule_type": "exception",
+      "statement": "Nicht-stickstoffzehrende Folgekulturen (z. B. Grünbrache, Sojabohnen) sind zulässig; der Stickstoff ist dann wiederum auf die Nachfolgekultur zu übertragen.",
+      "conditions": [
+        {
+          "expression": "follow_crop is non-N-consuming",
+          "description": "nicht-stickstoffzehrende Folgekultur",
+          "input_paths": [
+            "land.parcels[].crop.crop_name"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "carry_forward",
+        "description": "Übertrag geht auf die nächste Kultur über",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.n_non_consuming",
+        "ref.mb.n_ex2"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.n.multiple_crops_saldo",
+      "rule_type": "calculation",
+      "statement": "Bei mehreren Kulturen im Jahr ist jeweils zu saldieren (Übertrag auf 60 % bzw. 80 % reduzierbar); nicht genutzte Kulturen sind bei Umbruch zu saldieren; bei mehrjährigen Kulturen ist jährlich ein Saldo zu bilden.",
+      "conditions": [
+        {
+          "expression": "crops_per_year > 1 or perennial or unused_crop_broken",
+          "description": "Saldierungsanlass",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "saldo_per_crop",
+        "description": "Saldo je Kultur bzw. jährlich",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.n_multi_crops",
+        "ref.mb.n_unused_breakup",
+        "ref.mb.n_perennial"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.n.legume_offtake_basis",
+      "rule_type": "calculation",
+      "statement": "Für Körnerleguminosen, Ackerbohne, Körnererbse, Futterleguminosen und weitere Ackerfutterkulturen ist im Saldo abweichend von der NAPV der Stickstoffbedarf (z. B. Soja 0 bzw. 50/60 kg N/ha) statt des ertragsabhängigen Entzugs anzusetzen.",
+      "conditions": [
+        {
+          "expression": "previous_crop is legume/forage and offtake_basis == 'yield_based'",
+          "description": "falsche Entzugsbasis",
+          "input_paths": [
+            "land.parcels[].previous_crop.crop_category",
+            "land.parcels[].n_management.offtake_basis"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Saldoberechnung unzulässig",
+        "value": "n_requirement"
+      },
+      "source_reference_ids": [
+        "ref.mb.n_legumes",
+        "ref.mb.n_legumes2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.n.legume_offtake_basis]",
+        "data.oepul.o6_16.legume_or_forage"
+      ]
+    },
+    {
+      "id": "o6_16.n.preceding_crop_effect",
+      "rule_type": "obligation",
+      "statement": "Vorfruchtwirkungen von Leguminosen, weiteren Ackerfutterkulturen und Brachebeständen sind bei den Folgekulturen zusätzlich zu berücksichtigen.",
+      "conditions": [
+        {
+          "expression": "previous_crop in legumes/forage/fallow",
+          "description": "Vorfrucht mit N-Nachlieferung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "consider_preceding_effect",
+        "description": "Vorfruchtwirkung in Düngeplanung berücksichtigen",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.n_preceding_effect",
+        "ref.mb.n_ex2"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.n.used_cover_crop_balance",
+      "rule_type": "calculation",
+      "statement": "Bei genutzten Zwischenfrüchten und Zweitfrüchten ist wie bei Hauptkulturen ein Saldo aus Düngung bzw. anzurechnenden Mengen und Entzug zu bilden; der Reduktionsfaktor ist je Kultur anwendbar (Beispiel Südburgenland: Saldo −8 kg/ha).",
+      "conditions": [
+        {
+          "expression": "cover_crop_used == true",
+          "description": "genutzte Zwischenfrucht",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "balance_like_main_crop",
+        "description": "eigener Saldo, Reduktionsfaktor je Kultur",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.n_used_cc",
+        "ref.mb.n_ex3",
+        "ref.srl.16_n_cc"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.n.unused_cover_crop_reduction",
+      "rule_type": "exception",
+      "statement": "Bei ungenutzten Zwischenfrüchten kann für den Saldo der Vorkultur ebenfalls der Reduktionsfaktor (60 %/80 %) angewendet werden, sofern die Anlage gemäß o6_6 oder o6_7 erfolgt.",
+      "conditions": [
+        {
+          "expression": "cover_crop unused and sown per o6_6/o6_7",
+          "description": "ungenutzte Zwischenfrucht nach Begrünungsvorgaben",
+          "input_paths": [
+            "land.parcels[].operations.cover_crop.is_used"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_factor_applicable",
+        "description": "Reduktionsfaktor anwendbar",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.n_unused_cc"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.n.reduction_factor_once",
+      "rule_type": "prohibition",
+      "statement": "Der Reduktionsfaktor darf zwischen zwei Hauptkulturen nur einmal angewendet werden (z. B. bei Erneuerung einer Zwischenfrucht).",
+      "conditions": [
+        {
+          "expression": "reduction_factor_applications <= 1",
+          "description": "Anzahl der Anwendungen",
+          "input_paths": [
+            "land.parcels[].n_management.reduction_factor_applications"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_more",
+        "description": "unzulässige Mehrfachreduktion",
+        "value": 1
+      },
+      "source_reference_ids": [
+        "ref.mb.n_once"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.n.reduction_factor_once]"
+      ]
+    },
+    {
+      "id": "o6_16.n.unused_cover_crop_n_full",
+      "rule_type": "calculation",
+      "statement": "Auf ungenutzte Zwischenfrüchte ausgebrachte Stickstoffmengen sind gemäß NAPV zur Gänze der Folgekultur anzurechnen (kein Reduktionsfaktor); ungenutzte Zwischenfrüchte reduzieren den anzurechnenden Überschuss nicht.",
+      "conditions": [
+        {
+          "expression": "cover_crop unused and fertilized",
+          "description": "Düngung ungenutzter Zwischenfrucht",
+          "input_paths": [
+            "land.parcels[].n_management.unused_cover_crop_n_kg_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "credit_in_full",
+        "description": "100 % Anrechnung auf Folgekultur",
+        "value": 1.0
+      },
+      "source_reference_ids": [
+        "ref.mb.n_unused_full",
+        "ref.srl.16_n_cc"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.n.unused_cover_crop_max",
+      "rule_type": "calculation",
+      "statement": "Die Düngung einer ungenutzten Zwischenfrucht darf höchstens die maximal mögliche Düngung der Folgekultur abzüglich des Übertrags aus der Vorkultur betragen (Beispiel: Übertrag 25 kg/ha, Soja 60 kg/ha → max. 35 kg/ha).",
+      "conditions": [
+        {
+          "expression": "unused_cover_crop_n <= follow_crop_n_requirement - transfer",
+          "description": "Höchstmenge",
+          "input_paths": [
+            "land.parcels[].n_management.unused_cover_crop_n_kg_ha",
+            "land.parcels[].n_management.follow_crop_n_requirement_kg_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_exceeded",
+        "description": "Düngeverbot überschritten",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.n_unused_max",
+        "ref.mb.n_unused_example"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.max_unused_cover_crop_n",
+        "data.oepul.o6_16.violations[o6_16.n.unused_cover_crop_max]"
+      ]
+    },
+    {
+      "id": "o6_16.n.vegetable_nmin",
+      "rule_type": "calculation",
+      "statement": "Bei Gemüse nach Gemüse mit Nmin-Analyse (Anlage 3 Abschnitt II NAPV) ist mindestens ein Abzug in Höhe des Stickstoffsaldos der Vorkultur vorzunehmen, auch wenn das Nmin-Ergebnis niedriger ist.",
+      "conditions": [
+        {
+          "expression": "crop and previous_crop are vegetables and nmin available",
+          "description": "Gemüsefolge mit Nmin",
+          "input_paths": [
+            "land.parcels[].n_management.nmin_kg_ha",
+            "land.parcels[].previous_crop.n_saldo_kg_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "deduction",
+        "description": "Abzug = max(Nmin, Saldo Vorkultur)",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.n_vegetable"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.vegetable_n_deduction"
+      ]
+    },
+    {
+      "id": "o6_16.n.autumn_sowing_obligation",
+      "rule_type": "obligation",
+      "statement": "Bei errechnetem Überschuss der Vorkultur > 30 kg/ha, bei Schlägen > 0,30 ha mit Feldgemüse oder Kürbis als Vorkultur oder bei Umbruch von Ackerfutter oder Ackerbrachen vor dem 15.11. ist bis 15.11. eine Folgekultur oder eine Zwischenfrucht gemäß o6_6/o6_7 anzulegen; ausgenommen Schläge mit Ernte nach dem 30.09. (nicht jedoch nach Umbruch von Ackerfutter).",
+      "conditions": [
+        {
+          "expression": "saldo > 30 or (vegetable_or_pumpkin and area_ha > 0.30) or forage_or_fallow_broken_before_15_11",
+          "description": "Auslöser",
+          "input_paths": [
+            "land.parcels[].previous_crop.n_saldo_kg_ha",
+            "land.parcels[].previous_crop.crop_category",
+            "land.parcels[].previous_crop.breakup_date",
+            "land.parcels[].area_ha"
+          ]
+        },
+        {
+          "expression": "not (harvest_date > 09-30 and not forage_breakup)",
+          "description": "Ausnahme späte Ernte",
+          "input_paths": [
+            "land.parcels[].previous_crop.harvest_date"
+          ]
+        },
+        {
+          "expression": "follow_crop_sowing_date <= 11-15 or cover_crop.is_used",
+          "description": "Erfüllung",
+          "input_paths": [
+            "land.parcels[].n_management.follow_crop_sowing_date",
+            "land.parcels[].operations.cover_crop.is_used"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_unfulfilled",
+        "description": "inhaltlicher Verstoß",
+        "value": "11-15"
+      },
+      "source_reference_ids": [
+        "ref.mb.autumn_trigger",
+        "ref.mb.autumn_veg",
+        "ref.mb.autumn_duty",
+        "ref.mb.autumn_exempt"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.autumn_obligation_applies",
+        "data.oepul.o6_16.autumn_obligation_fulfilled",
+        "data.oepul.o6_16.violations[o6_16.n.autumn_sowing_obligation]"
+      ]
+    },
+    {
+      "id": "o6_16.training.min_hours",
+      "rule_type": "obligation",
+      "statement": "Bis 31.12.2026 sind unabhängig von der Vorqualifikation fachspezifische Kurse oder Fachexkursionen (Grundwasserschutz, Humusaufbau, wassersparende Bewirtschaftung bzw. grundwasserschonende Bewässerung oder stickstoff-/emissionsreduzierte Schweinefütterung) im Ausmaß von mindestens 10 Stunden bei einem vom BMLUK anerkannten Bildungsanbieter zu absolvieren.",
+      "conditions": [
+        {
+          "expression": "sum(hours of creditable courses) >= 10",
+          "description": "anrechenbare Stunden",
+          "input_paths": [
+            "farm.oepul.o6_16.training_courses[].hours",
+            "farm.oepul.o6_16.training_courses[].topics",
+            "farm.oepul.o6_16.training_courses[].provider_recognized",
+            "farm.oepul.o6_16.training_courses[].date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing_after_deadline",
+        "description": "Verstoß gegen Weiterbildungsverpflichtung",
+        "value": 10
+      },
+      "source_reference_ids": [
+        "ref.mb.training",
+        "ref.mb.training_deadline",
+        "ref.mb.training_topics",
+        "ref.mb.training_provider",
+        "ref.srl.16_training"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.training_hours",
+        "data.oepul.o6_16.training_fulfilled",
+        "data.oepul.o6_16.obligations[o6_16.training.min_hours]",
+        "data.oepul.o6_16.violations[o6_16.training.min_hours]"
+      ]
+    },
+    {
+      "id": "o6_16.training.course_content",
+      "rule_type": "obligation",
+      "statement": "In der Bildungsveranstaltung sind Maßnahmen zur Reduktion von Nährstoffeinträgen in Gewässer und gegen Bodenerosion sowie die Nutzung von Messergebnissen zum Stickstoffvorrat (Bodenproben, Nitrat-Informationsdienste) für die Düngebemessung zu behandeln.",
+      "conditions": [
+        {
+          "expression": "course covers required content",
+          "description": "Kursinhalt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "content_required",
+        "description": "Kursinhalt als Anforderung an anrechenbare Kurse",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.training_content"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.training.water_protection_concept",
+      "rule_type": "obligation",
+      "statement": "Auf Basis der Weiterbildung ist einmalig bis 31.12.2026 ein betriebsbezogenes Gewässerschutzkonzept zu erstellen.",
+      "conditions": [
+        {
+          "expression": "water_protection_concept_date <= 2026-12-31",
+          "description": "Konzept erstellt",
+          "input_paths": [
+            "farm.oepul.o6_16.water_protection_concept_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing_after_deadline",
+        "description": "Verstoß",
+        "value": "2026-12-31"
+      },
+      "source_reference_ids": [
+        "ref.mb.concept"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.water_protection_concept_done",
+        "data.oepul.o6_16.obligations[o6_16.training.water_protection_concept]",
+        "data.oepul.o6_16.violations[o6_16.training.water_protection_concept]"
+      ]
+    },
+    {
+      "id": "o6_16.training.attendee",
+      "rule_type": "eligibility",
+      "statement": "Der Kurs kann aus betrieblichen Gründen auch von einer am Betrieb maßgeblich tätigen Person besucht werden; ein Kursbesuch ist nicht auf mehrere Betriebe anrechenbar und an die geschulte Person gebunden: verlässt sie den Betrieb vor dem 31.12.2026, ist der Kurs bis dahin nachzuholen, danach nicht.",
+      "conditions": [
+        {
+          "expression": "not credited_to_other_farm and not attendee_left_farm_date < 2026-12-31",
+          "description": "Anrechenbarkeit nach Person",
+          "input_paths": [
+            "farm.oepul.o6_16.training_courses[].credited_to_other_farm",
+            "farm.oepul.o6_16.training_courses[].attendee_left_farm_date",
+            "farm.oepul.o6_16.training_courses[].attendee_role"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "course_creditable",
+        "description": "Kurs wird angerechnet",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.training_person",
+        "ref.mb.training_one_farm",
+        "ref.mb.training_left",
+        "ref.mb.training_left_after"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.course_creditable",
+        "data.oepul.o6_16.attendee_left_before_deadline"
+      ]
+    },
+    {
+      "id": "o6_16.training.creditable_from_2022",
+      "rule_type": "eligibility",
+      "statement": "Anrechenbar sind Kursbesuche ab dem 01.01.2022.",
+      "conditions": [
+        {
+          "expression": "course.date >= 2022-01-01",
+          "description": "Kursdatum",
+          "input_paths": [
+            "farm.oepul.o6_16.training_courses[].date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "course_creditable",
+        "description": "Kurs zählt",
+        "value": "2022-01-01"
+      },
+      "source_reference_ids": [
+        "ref.mb.training_from2022"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.course_creditable"
+      ]
+    },
+    {
+      "id": "o6_16.training.no_double_crediting",
+      "rule_type": "prohibition",
+      "statement": "Doppelanrechnungen ein und derselben Bildungsveranstaltung auf mehrere Verpflichtungen sind nicht zulässig.",
+      "conditions": [
+        {
+          "expression": "course.credited_to_other_commitment == false",
+          "description": "keine Doppelanrechnung",
+          "input_paths": [
+            "farm.oepul.o6_16.training_courses[].credited_to_other_commitment"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_creditable_if_double",
+        "description": "Kurs zählt nicht",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.training_double"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.course_creditable"
+      ]
+    },
+    {
+      "id": "o6_16.training.confirmation",
+      "rule_type": "procedure",
+      "statement": "Eine schriftliche Kursbesuchsbestätigung ist nach Aufforderung an die AMA zu übermitteln, sofern dies nicht durch den Bildungsanbieter erfolgt.",
+      "conditions": [
+        {
+          "expression": "ama_request and not provider_reported",
+          "description": "Aufforderung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "submit_confirmation",
+        "description": "Bestätigung übermitteln",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.training_confirmation"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.soil.samples_per_5ha",
+      "rule_type": "obligation",
+      "statement": "Bis 31.12.2026 ist je angefangene 5 ha Ackerfläche in der Kulisse (Basis MFA 2026, unabhängig von Schlagnutzung, anderen Maßnahmen und Prämiengewährung) mindestens eine Bodenprobe zu ziehen und an ein akkreditiertes Labor zu übermitteln (Beispiel 5,03 ha → 2 Proben).",
+      "conditions": [
+        {
+          "expression": "count(creditable samples) >= ceil(arable_in_area_ha_mfa2026 / 5)",
+          "description": "Probenanzahl",
+          "input_paths": [
+            "farm.oepul.o6_16.soil_samples[]",
+            "farm.oepul.o6_16.soil_sample_base_area_ha",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing_after_deadline",
+        "description": "Verstoß",
+        "value": 5
+      },
+      "source_reference_ids": [
+        "ref.mb.soil_count",
+        "ref.mb.soil_lab",
+        "ref.mb.soil_base",
+        "ref.mb.soil_example",
+        "ref.srl.16_soil"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.soil_samples_required",
+        "data.oepul.o6_16.soil_samples_fulfilled",
+        "data.oepul.o6_16.obligations[o6_16.soil.samples_per_5ha]",
+        "data.oepul.o6_16.violations[o6_16.soil.samples_per_5ha]"
+      ]
+    },
+    {
+      "id": "o6_16.soil.parameters_methods",
+      "rule_type": "obligation",
+      "statement": "Bodenuntersuchungen nach den Richtlinien für die sachgerechte Düngung oder der EUF-Methode auf Stickstoff (nachlieferbar oder mineralisch), Phosphor, Kalium, pH-Wert und Humusgehalt.",
+      "conditions": [
+        {
+          "expression": "parameters ⊇ {N,P,K,pH,humus} and n_method in {...} and analysis_method in {...}",
+          "description": "Parameter und Methode",
+          "input_paths": [
+            "farm.oepul.o6_16.soil_samples[].parameters",
+            "farm.oepul.o6_16.soil_samples[].n_method",
+            "farm.oepul.o6_16.soil_samples[].analysis_method"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "sample_creditable",
+        "description": "Probe zählt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.soil_params",
+        "ref.mb.soil_n",
+        "ref.mb.soil_method"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.soil_sample_creditable",
+        "data.o6_16.o6_16_params.soil_samples"
+      ]
+    },
+    {
+      "id": "o6_16.soil.creditable_from_2022",
+      "rule_type": "eligibility",
+      "statement": "Anrechenbar sind Bodenproben, die ab 01.01.2022 gezogen und von einem akkreditierten Labor untersucht wurden.",
+      "conditions": [
+        {
+          "expression": "sampling_date >= 2022-01-01 and lab_accredited",
+          "description": "Probendatum und Labor",
+          "input_paths": [
+            "farm.oepul.o6_16.soil_samples[].sampling_date",
+            "farm.oepul.o6_16.soil_samples[].lab_accredited"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "sample_creditable",
+        "description": "Probe zählt",
+        "value": "2022-01-01"
+      },
+      "source_reference_ids": [
+        "ref.mb.soil_from2022"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.soil_sample_creditable"
+      ]
+    },
+    {
+      "id": "o6_16.soil.results_in_invekos_gis",
+      "rule_type": "procedure",
+      "statement": "Die Ergebnisse der Bodenproben sind im INVEKOS-GIS (AMA-Datenbank) in der vorgesehenen Erfassungsmaske einzutragen.",
+      "conditions": [
+        {
+          "expression": "sample.entered_in_invekos_gis == true",
+          "description": "Erfassung",
+          "input_paths": [
+            "farm.oepul.o6_16.soil_samples[].entered_in_invekos_gis"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing",
+        "description": "Verstoß",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.soil_gis",
+        "ref.srl.16_soil_db"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.soil.results_in_invekos_gis]"
+      ]
+    },
+    {
+      "id": "o6_16.soil.no_transfer",
+      "rule_type": "exception",
+      "statement": "Eine Bodenuntersuchung kann nicht mit der Fläche an einen anderen Betrieb weitergegeben werden; der abgebende Betrieb kann sie anrechnen, der übernehmende muss ggf. neu untersuchen; Flächenhinzunahmen nach dem MFA 2026 ändern die Verpflichtung nicht.",
+      "conditions": [
+        {
+          "expression": "sample.received_with_parcel_from_other_farm == false",
+          "description": "eigene Probe",
+          "input_paths": [
+            "farm.oepul.o6_16.soil_samples[].received_with_parcel_from_other_farm"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_creditable_if_received",
+        "description": "Probe zählt beim übernehmenden Betrieb nicht",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.soil_transfer",
+        "ref.mb.soil_transfer2",
+        "ref.mb.soil_additions"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.soil_sample_creditable"
+      ]
+    },
+    {
+      "id": "o6_16.soil.mfa_assignment",
+      "rule_type": "procedure",
+      "statement": "Eine Bodenprobe ist dem Mehrfachantrag des Ziehungsjahres zuzuordnen (Probe 17.11.2024 → MFA 2024); bei im Herbst neu hinzugekommenen Flächen ist eine Erfassung zum MFA des Folgejahres möglich.",
+      "conditions": [
+        {
+          "expression": "sampling_year, parcel_added_in_autumn",
+          "description": "Zuordnung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "mfa_year",
+        "description": "MFA-Jahr der Erfassung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.soil_example2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.soil_sample_mfa_year"
+      ]
+    },
+    {
+      "id": "o6_16.psm.banned_active_substances",
+      "rule_type": "prohibition",
+      "statement": "In der Gebietskulisse ist der Einsatz von Dimethachlor, Metazachlor, S-Metolachlor und Terbuthylazin sowie im Falle der Wiederzulassung Bentazon bei Sorghum, Sudangras, Mais (inkl. Zuckermais und Saatmaisvermehrung), Raps, Soja und Zuckerrübe nicht zulässig.",
+      "conditions": [
+        {
+          "expression": "in_area(parcel) and crop in restricted_crops and substance in banned",
+          "description": "Wirkstoffeinsatz",
+          "input_paths": [
+            "land.parcels[].operations.psm_applications[].active_substances",
+            "land.parcels[].crop.crop_name",
+            "land.parcels[].cadastral_community_number",
+            "farm.oepul.o6_16.bentazon_reauthorized"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "inhaltlicher Verstoß",
+        "value": [
+          "Dimethachlor",
+          "Metazachlor",
+          "S-Metolachlor",
+          "Terbuthylazin",
+          "Bentazon (bei Wiederzulassung)"
+        ]
+      },
+      "source_reference_ids": [
+        "ref.mb.psm_ban",
+        "ref.mb.psm_bentazon",
+        "ref.mb.psm_crops",
+        "ref.srl.16_psm"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.psm.banned_active_substances]",
+        "data.oepul.o6_16.banned_substances",
+        "data.oepul.o6_16.psm_restricted_crop",
+        "data.o6_16.o6_16_params.psm"
+      ]
+    },
+    {
+      "id": "o6_16.psm.coding_until_2025",
+      "rule_type": "obligation",
+      "statement": "Bis einschließlich Antragsjahr 2025 ist ein flächiger PSM-Einsatz (inkl. gebeiztem Saatgut) im Mehrfachantrag mit PSMBIO bzw. PSMCS zu codieren; bei gemischtem Einsatz genügt PSMCS.",
+      "conditions": [
+        {
+          "expression": "year <= 2025 and in_area and psm_applications not empty",
+          "description": "Codierpflicht",
+          "input_paths": [
+            "farm.year",
+            "land.parcels[].operations.psm_applications[].product_type",
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_uncoded",
+        "description": "inhaltliche Auflage (PSM-Angabe)",
+        "value": [
+          "PSMBIO",
+          "PSMCS"
+        ]
+      },
+      "source_reference_ids": [
+        "ref.mb.psm_coding",
+        "ref.mb.psm_seed",
+        "ref.mb.psm_code_bio",
+        "ref.mb.psm_code_cs",
+        "ref.mb.psm_code_mixed",
+        "ref.srl.psm_info"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.psm.coding_until_2025]",
+        "data.oepul.o6_16.required_psm_code",
+        "data.oepul.o6_16.psm_code_ok"
+      ]
+    },
+    {
+      "id": "o6_16.psm.coding_advance",
+      "rule_type": "procedure",
+      "statement": "Die PSM-Codes konnten auch im Vorhinein angegeben werden; bei absehbarem Nichteinsatz waren sie zu streichen, Änderungen umgehend vorzunehmen.",
+      "conditions": [
+        {
+          "expression": "year <= 2025",
+          "description": "Codierzeitraum",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "amend_codes",
+        "description": "Codes aktuell halten",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.psm_code_advance"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.psm.coding_dropped_2026",
+      "rule_type": "exception",
+      "statement": "Ab dem Antragsjahr 2026 entfallen die Regelungen zur PSM-Codierung; PSM-Einsätze müssen nicht mehr im Mehrfachantrag erfasst werden.",
+      "conditions": [
+        {
+          "expression": "year >= 2026",
+          "description": "Antragsjahr",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_coding_required",
+        "description": "keine Codierpflicht",
+        "value": 2026
+      },
+      "source_reference_ids": [
+        "ref.mb.psm_code_2026"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.psm_coding_required"
+      ]
+    },
+    {
+      "id": "o6_16.ooe.readily_soluble_n_ban",
+      "rule_type": "prohibition",
+      "statement": "In der Kulisse Oberösterreich ist die Ausbringung leichtlöslicher stickstoffhaltiger Dünger (NAPV-Definition) von 15.10. bis einschließlich 15.02. auf allen Ackerflächen außer Ackerfutter und von 15.10. bis einschließlich 21.03. bei Mais verboten.",
+      "conditions": [
+        {
+          "expression": "state == oberoesterreich and readily_soluble_n and date in window",
+          "description": "Sperrzeitraum",
+          "input_paths": [
+            "land.parcels[].operations.fertilizer_applications[].date",
+            "land.parcels[].operations.fertilizer_applications[].readily_soluble_n",
+            "land.parcels[].crop.crop_category",
+            "land.parcels[].cadastral_community_number"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "inhaltlicher Verstoß",
+        "value": {
+          "ackerflaechen_ausser_ackerfutter": "10-15..02-15",
+          "mais": "10-15..03-21"
+        }
+      },
+      "source_reference_ids": [
+        "ref.mb.ooe",
+        "ref.mb.ooe_ban1",
+        "ref.mb.ooe_ban2",
+        "ref.srl.16_ooe"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.ooe.readily_soluble_n_ban]",
+        "data.oepul.o6_16.ooe_ban_window",
+        "data.o6_16.o6_16_params.upper_austria"
+      ]
+    },
+    {
+      "id": "o6_16.ooe.split_n_applications",
+      "rule_type": "obligation",
+      "statement": "In der Kulisse Oberösterreich sind Stickstoffgaben mit mehr als 80 kg/ha Nitrat-, Ammonium- oder Carbamid-N (nach Stall- und Lagerverlusten; Ammonium-N aus Wirtschaftsdüngern gemäß Anlage 2 NAPV) zu teilen; ausgenommen Dünger mit verzögerter N-Freisetzung.",
+      "conditions": [
+        {
+          "expression": "n_available_kg_ha > 80 and not slow_release",
+          "description": "Einzelgabe",
+          "input_paths": [
+            "land.parcels[].operations.fertilizer_applications[].n_available_kg_ha",
+            "land.parcels[].operations.fertilizer_applications[].slow_release"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Gabenteilung erforderlich",
+        "value": 80
+      },
+      "source_reference_ids": [
+        "ref.mb.ooe_split",
+        "ref.mb.ooe_split_calc",
+        "ref.mb.ooe_split_exempt"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.ooe.split_n_applications]"
+      ]
+    },
+    {
+      "id": "o6_16.ooe.no_cover_crop_variant_3",
+      "rule_type": "prohibition",
+      "statement": "Die Anlage von Begrünungen der Variante 3 (o6_6) ist in der Kulisse Oberösterreich nicht zulässig.",
+      "conditions": [
+        {
+          "expression": "cover_crop.o6_6_variant == 3",
+          "description": "Variante",
+          "input_paths": [
+            "land.parcels[].operations.cover_crop.o6_6_variant"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "inhaltlicher Verstoß",
+        "value": 3
+      },
+      "source_reference_ids": [
+        "ref.mb.ooe_var3"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.ooe.no_cover_crop_variant_3]"
+      ]
+    },
+    {
+      "id": "o6_16.ooe.ipm_control_walk",
+      "rule_type": "obligation",
+      "statement": "In der Kulisse Oberösterreich ist vor jeder chemisch-synthetischen Pflanzenschutzmaßnahme ein Kontrollgang schlagbezogen zu dokumentieren oder sind Warndienstmeldungen zu dokumentieren und zu berücksichtigen.",
+      "conditions": [
+        {
+          "expression": "product_type == chemical_synthetic => inspection or warning service documented",
+          "description": "Dokumentation",
+          "input_paths": [
+            "land.parcels[].operations.psm_applications[].prior_field_inspection_documented",
+            "land.parcels[].operations.psm_applications[].warning_service_documented"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "inhaltlicher Verstoß",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.ooe_ipm"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.ooe.ipm_control_walk]"
+      ]
+    },
+    {
+      "id": "o6_16.ag.eligibility",
+      "rule_type": "eligibility",
+      "statement": "Die Option AG ist auf Ackerflächen in der Kulisse mit durchschnittlicher Ackerzahl ≤ 40 möglich; nicht förderfähig sind im MFA 2020 als Grünland beantragte Flächen sowie Flächenteile mit GLÖZ-4-Pufferstreifen bzw. (bis 2024) GLÖZ-8-Stilllegung.",
+      "conditions": [
+        {
+          "expression": "in_area and ackerzahl_avg <= 40 and not grassland_in_mfa_2020",
+          "description": "Eignung",
+          "input_paths": [
+            "land.parcels[].leaching_option.ackerzahl_avg",
+            "land.parcels[].leaching_option.grassland_in_mfa_2020",
+            "land.parcels[].cadastral_community_number"
+          ]
+        },
+        {
+          "expression": "eligible_area = area - gloez4_area - gloez8_area(≤2024)",
+          "description": "förderbarer Flächenteil",
+          "input_paths": [
+            "land.parcels[].leaching_option.gloez4_area_ha",
+            "land.parcels[].leaching_option.gloez8_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_ineligible",
+        "description": "keine AG-Prämie",
+        "value": 40
+      },
+      "source_reference_ids": [
+        "ref.mb.ag_eligible",
+        "ref.mb.prem_ag_2020",
+        "ref.mb.prem_ag_gloez"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.ag.eligibility]",
+        "data.oepul.o6_16.ag_parcel_eligible",
+        "data.oepul.o6_16.ag_eligible_area"
+      ]
+    },
+    {
+      "id": "o6_16.ag.establishment",
+      "rule_type": "obligation",
+      "statement": "Auf AG-Flächen ist bis 15.05. eine winterharte Begrünungsmischung ohne Leguminosen einzusäen; ein bestehender Grünbrache- oder Ackerfutterbestand kann ohne Neueinsaat belassen werden (dann Leguminosen im Bestand zulässig).",
+      "conditions": [
+        {
+          "expression": "existing_stand_retained or (sowing_date <= 05-15 and winter_hardy and not legumes)",
+          "description": "Begrünung",
+          "input_paths": [
+            "land.parcels[].leaching_option.sowing_date",
+            "land.parcels[].leaching_option.mix_winter_hardy",
+            "land.parcels[].leaching_option.mix_contains_legumes",
+            "land.parcels[].leaching_option.existing_stand_retained"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_unmet",
+        "description": "inhaltlicher Verstoß",
+        "value": "05-15"
+      },
+      "source_reference_ids": [
+        "ref.mb.ag_sow",
+        "ref.mb.ag_sow_date",
+        "ref.mb.ag_existing"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.ag.establishment]",
+        "data.oepul.o6_16.ag_establishment_ok"
+      ]
+    },
+    {
+      "id": "o6_16.ag.breakup_date",
+      "rule_type": "prohibition",
+      "statement": "Der Umbruch von AG-Flächen ist frühestens am 15.09. des 2. Jahres erlaubt; bei lagegenauer Übernahme durch einen Folgebetrieb zählt das Anlagejahr des Vorbetriebes.",
+      "conditions": [
+        {
+          "expression": "breakup_date >= (first_ag_year+1)-09-15",
+          "description": "Umbruchtermin",
+          "input_paths": [
+            "land.parcels[].leaching_option.breakup_date",
+            "land.parcels[].leaching_option.first_ag_year",
+            "land.parcels[].leaching_option.previous_farm_first_ag_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_earlier",
+        "description": "inhaltlicher Verstoß",
+        "value": "09-15"
+      },
+      "source_reference_ids": [
+        "ref.mb.ag_breakup",
+        "ref.mb.ag_takeover",
+        "ref.srl.16_ag"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.ag.breakup_date]",
+        "data.oepul.o6_16.ag_earliest_breakup",
+        "data.oepul.o6_16.ag_first_year"
+      ]
+    },
+    {
+      "id": "o6_16.ag.area_loss_no_repayment",
+      "rule_type": "exception",
+      "statement": "Für den vorbewirtschaftenden Betrieb gelten AG-Flächenabgänge grundsätzlich als Verlust der Verfügungsgewalt ohne Rückzahlungsverpflichtung.",
+      "conditions": [
+        {
+          "expression": "ag parcel transferred",
+          "description": "Flächenabgang",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "no_repayment",
+        "description": "keine Rückforderung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.ag_loss"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.ag.no_psm_no_fertilizer",
+      "rule_type": "prohibition",
+      "statement": "Auf AG-Flächen ist der Einsatz von Pflanzenschutz- und Düngemitteln ab 01.01. des Jahres der ersten Angabe als AG bis zum Umbruch oder zur anderweitigen Deklaration verboten.",
+      "conditions": [
+        {
+          "expression": "not psm_used and no fertilizer",
+          "description": "keine Betriebsmittel",
+          "input_paths": [
+            "land.parcels[].operations.psm_used",
+            "land.parcels[].operations.fertilizer.mineral_n_kg_per_ha",
+            "land.parcels[].operations.fertilizer.organic_n_kg_per_ha",
+            "land.parcels[].operations.fertilizer_applications[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "inhaltlicher Verstoß",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.ag_inputs",
+        "ref.srl.16_ag_inputs"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.ag.no_psm_no_fertilizer]",
+        "data.oepul.o6_16.ag_inputs_used"
+      ]
+    },
+    {
+      "id": "o6_16.ag.mowing_every_second_year",
+      "rule_type": "obligation",
+      "statement": "Auf AG-Flächen hat mindestens einmal jedes zweite Jahr eine Mahd oder ein Häckseln zu erfolgen; die Verbringung des Mähgutes ist erlaubt.",
+      "conditions": [
+        {
+          "expression": "mown in year or year-1",
+          "description": "Pflege",
+          "input_paths": [
+            "land.parcels[].leaching_option.mowing_or_mulching_years",
+            "land.parcels[].operations.cutting_dates"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing",
+        "description": "inhaltlicher Verstoß",
+        "value": 2
+      },
+      "source_reference_ids": [
+        "ref.mb.ag_mow",
+        "ref.srl.16_ag_mow"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.ag.mowing_every_second_year]",
+        "data.oepul.o6_16.ag_mown_in"
+      ]
+    },
+    {
+      "id": "o6_16.ag.no_grazing_no_threshing",
+      "rule_type": "prohibition",
+      "statement": "Auf AG-Flächen sind Beweidung und Drusch nicht erlaubt; das Befahren ist zulässig, die Begrünung muss erhalten bleiben.",
+      "conditions": [
+        {
+          "expression": "not grazed and not threshed",
+          "description": "Nutzungsverbot",
+          "input_paths": [
+            "land.parcels[].leaching_option.grazed",
+            "land.parcels[].leaching_option.threshed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "inhaltlicher Verstoß",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.ag_graze",
+        "ref.mb.ag_drive"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.ag.no_grazing_no_threshing]"
+      ]
+    },
+    {
+      "id": "o6_16.ag.minimum_management_exempt",
+      "rule_type": "exception",
+      "statement": "AG-Flächen sind von den allgemeinen Mindestbewirtschaftungskriterien ausgenommen und förderfähig; es gelten die Auflagen der Option.",
+      "conditions": [
+        {
+          "expression": "'AG' in codes",
+          "description": "AG-Schlag",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exempt",
+        "description": "keine Ernteverpflichtung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.exempt_ag",
+        "ref.srl.ag_exempt"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.basis_parcels",
+        "data.oepul.o6_16.violations[o6_16.general.minimum_management_harvest]"
+      ]
+    },
+    {
+      "id": "o6_16.vienna.area_required",
+      "rule_type": "eligibility",
+      "statement": "Der Zuschlag Humusaufbau und Erosionsschutz in Wien kann von Betrieben mit Ackerflächen in der Kulisse Wien beantragt werden.",
+      "conditions": [
+        {
+          "expression": "count(parcels in vienna area) > 0",
+          "description": "Wiener Kulissenflächen",
+          "input_paths": [
+            "land.parcels[].cadastral_community_number"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_none",
+        "description": "Zuschlag nicht möglich",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.vienna"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.vienna.area_required]",
+        "data.oepul.o6_16.vienna_arable"
+      ]
+    },
+    {
+      "id": "o6_16.vienna.no_inversion_tillage",
+      "rule_type": "prohibition",
+      "statement": "Wendende Bodenbearbeitung ist im gesamten Vertragszeitraum auf Ackerflächen der Kulisse Wien unzulässig (Haupt- und Zwischenfrüchte), ausgenommen Bodenbearbeitung nach Mais.",
+      "conditions": [
+        {
+          "expression": "tillage_type == 'plough' and previous_crop != maize",
+          "description": "wendende Bearbeitung",
+          "input_paths": [
+            "land.parcels[].operations.tillage_type",
+            "land.parcels[].previous_crop.crop_category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "inhaltlicher Verstoß",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.vienna_tillage",
+        "ref.mb.vienna_maize"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.vienna.no_inversion_tillage]",
+        "data.oepul.o6_16.previous_crop_maize"
+      ]
+    },
+    {
+      "id": "o6_16.vienna.scientific_project",
+      "rule_type": "obligation",
+      "statement": "Teilnahme an einem vom BMLUK anerkannten Projekt zur Untersuchung der Kohlenstoffspeicherung im Boden mit wissenschaftlicher Begleitung; Teilnahmebestätigung ist Voraussetzung; Bewirtschaftungsdaten und Bodenprobenergebnisse auf Aufforderung bereitstellen.",
+      "conditions": [
+        {
+          "expression": "project_confirmation and data_provided_on_request",
+          "description": "Projektteilnahme",
+          "input_paths": [
+            "farm.oepul.o6_16.humus_erosion_vienna.project_confirmation",
+            "farm.oepul.o6_16.humus_erosion_vienna.data_provided_on_request"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing",
+        "description": "Zuschlag nicht erfüllt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.vienna_project",
+        "ref.mb.vienna_confirmation",
+        "ref.srl.16_vienna_data"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.vienna.scientific_project]",
+        "data.oepul.o6_16.vienna_project_ok"
+      ]
+    },
+    {
+      "id": "o6_16.vienna.extra_training",
+      "rule_type": "obligation",
+      "statement": "Zusätzlich zu den 10 Stunden sind bis 31.12.2026 weitere 3 Stunden Bildung und Beratung zu Bodenproben, Humusaufbau oder pflugloser Bodenbearbeitung zu absolvieren.",
+      "conditions": [
+        {
+          "expression": "vienna_extra_training_hours >= 3",
+          "description": "Zusatzstunden",
+          "input_paths": [
+            "farm.oepul.o6_16.training_courses[].vienna_extra",
+            "farm.oepul.o6_16.training_courses[].hours"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing_after_deadline",
+        "description": "Verstoß",
+        "value": 3
+      },
+      "source_reference_ids": [
+        "ref.mb.vienna_training",
+        "ref.srl.16_vienna_training"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.vienna.extra_training]",
+        "data.oepul.o6_16.vienna_extra_training_hours"
+      ]
+    },
+    {
+      "id": "o6_16.vienna.double_soil_samples",
+      "rule_type": "obligation",
+      "statement": "Im Vertragszeitraum sind doppelt so viele Bodenproben zu ziehen: mindestens 2 je angefangene 5 ha Ackerfläche in der Kulisse Wien nach räumlichen und zeitlichen Projektvorgaben.",
+      "conditions": [
+        {
+          "expression": "count(vienna samples) >= 2 * ceil(vienna_arable_ha / 5)",
+          "description": "Probenanzahl Wien",
+          "input_paths": [
+            "farm.oepul.o6_16.soil_samples[].area"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing",
+        "description": "Verstoß",
+        "value": 2
+      },
+      "source_reference_ids": [
+        "ref.mb.vienna_soil",
+        "ref.mb.vienna_soil2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.vienna.double_soil_samples]",
+        "data.oepul.o6_16.vienna_soil_samples_required"
+      ]
+    },
+    {
+      "id": "o6_16.vienna.no_o6_8_mulch_premium",
+      "rule_type": "combination",
+      "statement": "Der Zuschlag Wien ist auf der Einzelfläche nicht mit „Erosionsschutz Acker“ (Mulchsaat, Direktsaat, Strip-Till) kombinierbar; auf den Wiener Teilnahmeflächen wird keine o6_8-Prämie dafür gewährt.",
+      "conditions": [
+        {
+          "expression": "humus_vienna and parcel in vienna area and o6_8 practice in {mulchsaat,direktsaat,strip_till}",
+          "description": "Kombination",
+          "input_paths": [
+            "land.parcels[].oepul.o6_8_practices"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_o6_8_premium",
+        "description": "o6_8-Prämie entfällt auf dem Schlag",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.prem_vienna_o6_8",
+        "ref.srl.16_vienna_o6_8",
+        "ref.srl.o6_8_vienna",
+        "ref.anh.l_footnote4"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.o6_8_premium_excluded"
+      ]
+    },
+    {
+      "id": "o6_16.pig_feeding.all_pigs",
+      "rule_type": "obligation",
+      "statement": "Wird der Zuschlag beantragt, ist bei allen am Betrieb gehaltenen Schweinen die stark stickstoffreduzierte Fütterung einzuhalten.",
+      "conditions": [
+        {
+          "expression": "for all pig groups: protein limits met",
+          "description": "alle Schweine",
+          "input_paths": [
+            "livestock.species_groups[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_any_group_fails",
+        "description": "Verstoß",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.pig_all"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.pig_feeding.crude_protein_limits]",
+        "data.oepul.o6_16.pig_groups"
+      ]
+    },
+    {
+      "id": "o6_16.pig_feeding.crude_protein_limits",
+      "rule_type": "obligation",
+      "statement": "Rohproteingrenzen je kg Ration (88 % TM): Ferkel 8–32 kg ≤ 166 g; Jung-/Mastschweine und ungedeckte Jungsauen ab 32 kg Durchschnitt ≤ 157 g bzw. Phasen 32–60 kg ≤ 170 g, 60–90 kg ≤ 155 g, ab 90 kg ≤ 150 g; tragende Zuchtsauen/gedeckte Jungsauen ab 50 kg ≤ 125 g; säugende Zuchtsauen ≤ 155 g; Eber ab 50 kg ≤ 170 g.",
+      "conditions": [
+        {
+          "expression": "crude_protein <= limit(feeding_category, basis)",
+          "description": "Rohproteingehalt",
+          "input_paths": [
+            "livestock.species_groups[].feeding.feeding_category",
+            "livestock.species_groups[].feeding.crude_protein_avg_g_per_kg",
+            "livestock.species_groups[].feeding.phases[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_exceeded",
+        "description": "Verstoß",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.pig_t_ferkel",
+        "ref.mb.pig_t_avg",
+        "ref.mb.pig_t_60_90",
+        "ref.mb.pig_t_90",
+        "ref.mb.pig_t_sow",
+        "ref.mb.pig_t_boar",
+        "ref.srl.16_pig_avg",
+        "ref.srl.16_pig_sow"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.pig_feeding.crude_protein_limits]",
+        "data.oepul.o6_16.pig_group_protein_ok",
+        "data.o6_16.o6_16_params.crude_protein_limits"
+      ]
+    },
+    {
+      "id": "o6_16.pig_feeding.average_or_phase",
+      "rule_type": "exception",
+      "statement": "Bei Jung- und Mastschweinen sowie ungedeckten Jungsauen genügt entweder der Durchschnittswert oder die Phasenfütterung je Gewichtsabschnitt.",
+      "conditions": [
+        {
+          "expression": "average_ok or phase_ok",
+          "description": "Alternative",
+          "input_paths": [
+            "livestock.species_groups[].feeding.phase_feeding"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "either_suffices",
+        "description": "eine Bedingung genügt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.pig_either"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.pig_group_average_ok",
+        "data.oepul.o6_16.pig_group_phase_ok"
+      ]
+    },
+    {
+      "id": "o6_16.pig_feeding.protein_calculation_basis",
+      "rule_type": "calculation",
+      "statement": "Für die Rohproteinberechnung sind Futtermitteluntersuchungen, für nicht untersuchte Futtermittel Standardwerte der Fachliteratur und bei Fertigfutter die Herstellerangaben heranzuziehen.",
+      "conditions": [
+        {
+          "expression": "protein_basis in {feed_analysis, literature_standard, manufacturer_declaration}",
+          "description": "Datengrundlage",
+          "input_paths": [
+            "livestock.species_groups[].feeding.protein_basis"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "calculation_basis",
+        "description": "zulässige Werte",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.pig_calc"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.pig_feeding.evidence",
+      "rule_type": "obligation",
+      "statement": "Ein Nachweis über Rezepturen mit ausgewiesenem Rohproteingehalt je kg (88 % TM) muss vorhanden sein; bei Phasenfütterung ist bei Kontrollen die technische Möglichkeit und tatsächliche Durchführung plausibel zu machen.",
+      "conditions": [
+        {
+          "expression": "recipe_evidence_available and (not phase_feeding or phase_feeding_plausible)",
+          "description": "Nachweis",
+          "input_paths": [
+            "livestock.species_groups[].feeding.recipe_evidence_available",
+            "livestock.species_groups[].feeding.phase_feeding_plausible"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_missing",
+        "description": "Verstoß",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.pig_evidence",
+        "ref.mb.pig_phase"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.pig_feeding.evidence]",
+        "data.oepul.o6_16.pig_feeding_evidence_ok"
+      ]
+    },
+    {
+      "id": "o6_16.cultan.requirements",
+      "rule_type": "obligation",
+      "statement": "Zuschlag Cultan (ab 2025, Kulisse): mindestens eine Düngergabe als Ammoniumdepot per Injektion im Cultan-Nagelradverfahren; schlagbezogene Aufzeichnung von Art, Menge und Zeitpunkt; bei betriebsfremden Geräten Nachweis über Rechnungen oder gleichwertige Unterlagen.",
+      "conditions": [
+        {
+          "expression": "year >= 2025 and in_area and count(cultan_injection) >= 1 and all recorded and (not external or invoice)",
+          "description": "Cultan-Auflagen",
+          "input_paths": [
+            "land.parcels[].operations.fertilizer_applications[].method",
+            "land.parcels[].operations.fertilizer_applications[].recorded",
+            "land.parcels[].operations.fertilizer_applications[].external_contractor",
+            "land.parcels[].operations.fertilizer_applications[].contractor_invoice_available"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_unmet",
+        "description": "kein Zuschlag/Verstoß",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.mb.cultan",
+        "ref.mb.cultan_inject",
+        "ref.mb.cultan_records",
+        "ref.mb.cultan_external",
+        "ref.srl.16_cultan"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.cultan.requirements]",
+        "data.oepul.o6_16.cultan_parcel_ok"
+      ]
+    },
+    {
+      "id": "o6_16.premium.basis",
+      "rule_type": "premium",
+      "statement": "Basisprämie je ha Ackerfläche in der Kulisse (ohne AG): 50,0 €/ha (2023) bzw. 54,0 €/ha (ab 2024); bei Teilnahme an Biologische Wirtschaftsweise oder EEB 25,0 bzw. 27,0 €/ha (50 %).",
+      "conditions": [
+        {
+          "expression": "participates o6_1b or o6_2 => basis_reduced",
+          "description": "Basiskomponente",
+          "input_paths": [
+            "farm.oepul.participating_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_eur_per_ha",
+        "description": "Basisprämie",
+        "value": {
+          "basis": {
+            "2023": 50.0,
+            "2024+": 54.0
+          },
+          "basis_reduced": {
+            "2023": 25.0,
+            "2024+": 27.0
+          }
+        }
+      },
+      "source_reference_ids": [
+        "ref.mb.prem_basis",
+        "ref.mb.prem_basis_red",
+        "ref.srl.16_basis50",
+        "ref.srl.16_rates",
+        "ref.anh.l_legend"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.premium_rate",
+        "data.oepul.o6_16.basis_component",
+        "data.oepul.o6_16.basis_premium_area",
+        "data.oepul.o6_16.premium_components",
+        "data.o6_16.o6_16_params.premium_rates"
+      ]
+    },
+    {
+      "id": "o6_16.premium.training_first_10ha",
+      "rule_type": "premium",
+      "statement": "Zuschlag für Bildungs- und Beratungsauflagen für die ersten 10 ha: 30,0 €/ha (2023) bzw. 60,0 €/ha (ab 2024).",
+      "conditions": [
+        {
+          "expression": "area = min(basis_area, 10)",
+          "description": "Fläche",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "premium_eur_per_ha",
+        "description": "Zuschlag",
+        "value": {
+          "2023": 30.0,
+          "2024+": 60.0
+        }
+      },
+      "source_reference_ids": [
+        "ref.mb.prem_training"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.premium_components",
+        "data.oepul.o6_16.premium_areas"
+      ]
+    },
+    {
+      "id": "o6_16.premium.psm_maize_sorghum",
+      "rule_type": "premium",
+      "statement": "Zuschlag PSM-Verzicht Mais (ohne Saatmaisvermehrung), Sorghum und Sudangras: 20,0 €/ha (2023) bzw. 21,6 €/ha; nicht kombinierbar mit Biologischer Wirtschaftsweise, nicht in Schutz- und Schongebieten.",
+      "conditions": [
+        {
+          "expression": "not participates o6_1b and not in_protection_zone and crop in maize/sorghum/sudangras",
+          "description": "Zuschlagsfläche",
+          "input_paths": [
+            "land.parcels[].crop.crop_name",
+            "land.parcels[].oepul.in_protection_or_conservation_zone",
+            "farm.oepul.participating_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_eur_per_ha",
+        "description": "Zuschlag",
+        "value": {
+          "2023": 20.0,
+          "2024+": 21.6
+        }
+      },
+      "source_reference_ids": [
+        "ref.mb.prem_psm_maize",
+        "ref.mb.prem_psm_bio",
+        "ref.anh.l_footnote4"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.psm_premium_area",
+        "data.oepul.o6_16.psm_premium_parcels",
+        "data.o6_16.o6_16_params.psm_premium_crops"
+      ]
+    },
+    {
+      "id": "o6_16.premium.psm_rape_seed_maize",
+      "rule_type": "premium",
+      "statement": "Zuschlag PSM-Verzicht Raps und Saatmaisvermehrung: 60,0 €/ha (2023) bzw. 64,8 €/ha; nicht mit BIO, nicht in Schutz- und Schongebieten.",
+      "conditions": [
+        {
+          "expression": "crop in rape/seed maize",
+          "description": "Zuschlagsfläche",
+          "input_paths": [
+            "land.parcels[].crop.crop_name"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_eur_per_ha",
+        "description": "Zuschlag",
+        "value": {
+          "2023": 60.0,
+          "2024+": 64.8
+        }
+      },
+      "source_reference_ids": [
+        "ref.mb.prem_psm_rape",
+        "ref.mb.prem_psm_bio"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.psm_premium_area",
+        "data.oepul.o6_16.premium_components"
+      ]
+    },
+    {
+      "id": "o6_16.premium.upper_austria_top_up",
+      "rule_type": "premium",
+      "statement": "Landes-Top-up für zusätzliche Förderverpflichtungen in Oberösterreich: 30,0 €/ha (2023) bzw. 32,4 €/ha; ausschließlich aus Landesmitteln und nur bei zeitgerechter Bereitstellung.",
+      "conditions": [
+        {
+          "expression": "in_upper_austria_area and funds_available != false",
+          "description": "Top-up-Fläche",
+          "input_paths": [
+            "farm.oepul.o6_16.upper_austria_top_up_funds_available",
+            "land.parcels[].cadastral_community_number"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_eur_per_ha",
+        "description": "Zuschlag",
+        "value": {
+          "2023": 30.0,
+          "2024+": 32.4
+        }
+      },
+      "source_reference_ids": [
+        "ref.mb.prem_ooe",
+        "ref.srl.ooe_topup"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.ooe_top_up_area",
+        "data.oepul.o6_16.premium_components"
+      ]
+    },
+    {
+      "id": "o6_16.premium.leaching_risk_area",
+      "rule_type": "premium",
+      "statement": "Option AG: 500,0 €/ha (2023) bzw. 540,0 €/ha (ab 2024), höchstens für 20 % der Ackerfläche des Betriebes; AG-Flächen erhalten keine Basisprämie und sind auf der Einzelfläche mit keiner anderen ÖPUL-Prämie kombinierbar (ausgenommen LSE-Abgeltung in UBB/BIO).",
+      "conditions": [
+        {
+          "expression": "ag_premium_area = min(sum(eligible AG area), 0.2 * farm_arable_ha)",
+          "description": "AG-Prämienfläche",
+          "input_paths": [
+            "land.parcels[].oepul.codes",
+            "land.arable_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_eur_per_ha",
+        "description": "AG-Prämie",
+        "value": {
+          "2023": 500.0,
+          "2024+": 540.0,
+          "max_share": 0.2
+        }
+      },
+      "source_reference_ids": [
+        "ref.mb.prem_ag",
+        "ref.mb.prem_ag_value",
+        "ref.mb.prem_ag_no_basis",
+        "ref.srl.16_ag_comb",
+        "ref.anh.l_footnote4",
+        "ref.anh.l_footnote1"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.ag_premium_area",
+        "data.oepul.o6_16.ag_premium_area_uncapped",
+        "data.oepul.o6_16.premium_components"
+      ]
+    },
+    {
+      "id": "o6_16.premium.humus_erosion_vienna",
+      "rule_type": "premium",
+      "statement": "Optionaler Zuschlag Humusaufbau und Erosionsschutz in Wien: 110,0 €/ha (2023) bzw. 118,8 €/ha auf Ackerflächen der Kulisse Wien.",
+      "conditions": [
+        {
+          "expression": "humus_vienna and parcel in vienna area",
+          "description": "Zuschlagsfläche",
+          "input_paths": [
+            "farm.oepul.o6_16.humus_erosion_vienna.applied"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_eur_per_ha",
+        "description": "Zuschlag",
+        "value": {
+          "2023": 110.0,
+          "2024+": 118.8
+        }
+      },
+      "source_reference_ids": [
+        "ref.mb.prem_vienna"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.vienna_premium_area",
+        "data.oepul.o6_16.premium_components"
+      ]
+    },
+    {
+      "id": "o6_16.premium.n_reduced_pig_feeding",
+      "rule_type": "premium",
+      "statement": "Optionaler Zuschlag stark stickstoffreduzierte Fütterung: 50,0 €/ha (2023), 54,0 €/ha (2024) auf Ackerflächen der Kulisse, ab 2025 54,0 €/ha auch auf Ackerflächen außerhalb der Kulisse (nur bei ≥ 1 GVE Schweine/ha).",
+      "conditions": [
+        {
+          "expression": "pig_feeding_eligible; area = arable in area (≤2024) or all arable (≥2025)",
+          "description": "Zuschlagsfläche",
+          "input_paths": [
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_eur_per_ha",
+        "description": "Zuschlag",
+        "value": {
+          "2023": 50.0,
+          "2024": 54.0,
+          "2025+": 54.0
+        }
+      },
+      "source_reference_ids": [
+        "ref.mb.prem_pig",
+        "ref.mb.prem_pig2025",
+        "ref.mb.prem_pig_area",
+        "ref.mb.overview_pig"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.pig_feeding_area",
+        "data.oepul.o6_16.premium_components"
+      ]
+    },
+    {
+      "id": "o6_16.premium.cultan",
+      "rule_type": "premium",
+      "statement": "Optionaler Zuschlag Cultan-Düngung ab 2025: 40,0 €/ha auf CUL-Schlägen in der Kulisse.",
+      "conditions": [
+        {
+          "expression": "cultan_parcel_ok(parcel)",
+          "description": "Zuschlagsfläche",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_eur_per_ha",
+        "description": "Zuschlag",
+        "value": 40.0
+      },
+      "source_reference_ids": [
+        "ref.mb.prem_cultan",
+        "ref.srl.16_cultan_rate"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.cultan_area",
+        "data.oepul.o6_16.premium_components"
+      ]
+    },
+    {
+      "id": "o6_16.premium.combination_annex_l",
+      "rule_type": "combination",
+      "statement": "Prämienmäßige Kombinierbarkeit auf der Einzelfläche gemäß Anhang L (Zeile 16): kombinierbar mit UBB, Heuwirtschaft, o6_6, o6_7, o6_8, o6_9, o6_24; mit Prämienabschlag mit BIO und EEB; nicht kombinierbar mit den übrigen Maßnahmen (Fußnote 4: Wien/o6_8, PSM-Zuschlag/1B, AG nur LSE).",
+      "conditions": [
+        {
+          "expression": "combination_cell(measure) in {x, a}",
+          "description": "Zelle Anhang L",
+          "input_paths": [
+            "farm.oepul.participating_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combinable",
+        "description": "x = kombinierbar, a = mit Abschlag",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.srl.annex_l",
+        "ref.anh.l_legend",
+        "ref.anh.l_footnote1",
+        "ref.anh.l_footnote4",
+        "ref.at.combination"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.combination_cell",
+        "data.oepul.o6_16.combinable_on_parcel",
+        "data.oepul.o6_16.combination_with_premium_deduction",
+        "data.o6_16.kombination_anhang_l.row_o6_16"
+      ]
+    },
+    {
+      "id": "o6_16.premium.no_premium_op",
+      "rule_type": "exception",
+      "statement": "Auf Flächen mit Code OP (bzw. maßnahmenbezogenem OP-Code wie OPGWA) wird im jeweiligen Jahr keine (bzw. keine maßnahmenbezogene) ÖPUL-Prämie gewährt, z. B. bei Nichterfüllung der Ernteverpflichtung.",
+      "conditions": [
+        {
+          "expression": "'OP' in codes or 'OPGWA' in codes",
+          "description": "OP-Codierung",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Schlag ohne Prämie",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.op",
+        "ref.at.op_codes",
+        "ref.at.op_harvest"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.is_op",
+        "data.oepul.o6_16.basis_parcels"
+      ]
+    },
+    {
+      "id": "o6_16.general.applicant_type",
+      "rule_type": "eligibility",
+      "statement": "Förderwerbend sind natürliche Personen, im Firmenbuch eingetragene Personengesellschaften sowie juristische Personen und Personenvereinigungen (Gebietskörperschaften-Beteiligung ≤ 25 %), die einen Betrieb im eigenen Namen und auf eigene Rechnung mit Verfügungsgewalt über die Flächen führen (aktiver Landwirt).",
+      "conditions": [
+        {
+          "expression": "legal_form in applicant_types",
+          "description": "Rechtsform",
+          "input_paths": [
+            "farm.applicant.legal_form"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_other",
+        "description": "nicht förderwerbend",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.applicants",
+        "ref.at.own_account"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.general.applicant_type]",
+        "data.o6_16.oepul_general.applicant_types"
+      ]
+    },
+    {
+      "id": "o6_16.general.applicant_public_body",
+      "rule_type": "eligibility",
+      "statement": "Gebietskörperschaften und Einrichtungen mit mehr als 25 % Beteiligung bzw. bestimmendem Einfluss von Gebietskörperschaften sind (außer bei o6_6, o6_7, o6_20, o6_10 bis 2024, o6_1c ab 2025) nicht förderwerbend – daher nicht für o6_16.",
+      "conditions": [
+        {
+          "expression": "public_body_share_percent > 25",
+          "description": "Beteiligung",
+          "input_paths": [
+            "farm.applicant.public_body_share_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "nicht förderwerbend",
+        "value": 25
+      },
+      "source_reference_ids": [
+        "ref.at.public_body",
+        "ref.srl.public_body"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.general.applicant_public_body]",
+        "data.oepul.o6_16.public_body_excluded_for",
+        "data.o6_16.oepul_general.public_body_exception_measures"
+      ]
+    },
+    {
+      "id": "o6_16.general.min_farm_size",
+      "rule_type": "eligibility",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr muss der Betrieb mindestens 1,50 ha landwirtschaftliche Fläche oder 0,50 ha geschützten Anbau bewirtschaften; ab dem zweiten Jahr nicht mehr erforderlich.",
+      "conditions": [
+        {
+          "expression": "first_oepul_participation_year == year => total_area_ha >= 1.5 or protected_cultivation_area_ha >= 0.5",
+          "description": "Betriebsgröße",
+          "input_paths": [
+            "farm.oepul.first_oepul_participation_year",
+            "land.total_area_ha",
+            "land.protected_cultivation_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_below",
+        "description": "kein Vertrag",
+        "value": {
+          "agricultural_area_ha": 1.5,
+          "protected_cultivation_ha": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "ref.at.minsize",
+        "ref.at.minsize_15",
+        "ref.at.minsize_05",
+        "ref.at.minsize_later"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.general.min_farm_size]",
+        "data.oepul.o6_16.min_farm_size_met"
+      ]
+    },
+    {
+      "id": "o6_16.general.minimum_management_harvest",
+      "rule_type": "obligation",
+      "statement": "Auf Ackerflächen (außer Ackerfutter) sind ordnungsgemäßer Anbau, jährliche Pflege sowie Ernte und Verbringung des Erntegutes auf mindestens 85 % des Schlages erforderlich; sonst ist Code OP zu vergeben.",
+      "conditions": [
+        {
+          "expression": "harvested_share >= 0.85 or drought_relief_applies",
+          "description": "Ernte",
+          "input_paths": [
+            "land.parcels[].harvest.harvested_share"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_below",
+        "description": "OP-Codierung / keine Prämie",
+        "value": 0.85
+      },
+      "source_reference_ids": [
+        "ref.at.mindest_arable",
+        "ref.at.mindest_85",
+        "ref.at.op_harvest",
+        "ref.n0805.harvest"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.general.minimum_management_harvest]"
+      ]
+    },
+    {
+      "id": "o6_16.general.minimum_management_other",
+      "rule_type": "obligation",
+      "statement": "Grünland- und Ackerfutterflächen: jährlich mindestens einmal vollflächige Mahd mit Verbringung oder Beweidung; aus der Produktion genommene Flächen: Gründecke und Häckseln/Pflegemahd mindestens jedes zweite Jahr.",
+      "conditions": [
+        {
+          "expression": "land_use in {grassland, arable forage, set-aside}",
+          "description": "Nutzungsbereich",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "management_required",
+        "description": "Mindestbewirtschaftung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.mindest_grass",
+        "ref.at.mindest_fallow"
+      ],
+      "rego_symbols": [
+        "data.o6_16.oepul_general.mindestbewirtschaftung"
+      ]
+    },
+    {
+      "id": "o6_16.general.definitions",
+      "rule_type": "definition",
+      "statement": "Begriffsbestimmungen: Getreide, Nicht-Getreide (u. a. Sorghum, Sudangras), Ackerfutter (Futtergräser, Wechselwiese, Kleegras, Klee, Luzerne, Ackerweide, Sonstiges Feldfutter), Feldgemüse und Obst (ab 2025 inkl. Felsenbirne, Maulbeere, Papau).",
+      "conditions": [
+        {
+          "expression": "crop_name in definitions[list]",
+          "description": "Kulturzuordnung",
+          "input_paths": [
+            "land.parcels[].crop.crop_name"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "classification",
+        "description": "Kulturgruppe",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.getreide",
+        "ref.at.nicht_getreide",
+        "ref.at.ackerfutter",
+        "ref.at.feldgemuese",
+        "ref.at.feldgemuese2",
+        "ref.at.obst",
+        "ref.at.obst2025",
+        "ref.srl.ackerfutter"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.is_arable_forage_name",
+        "data.oepul.o6_16.is_vegetable_or_pumpkin",
+        "data.o6_16.oepul_general.definitions"
+      ]
+    },
+    {
+      "id": "o6_16.general.non_eligible_areas",
+      "rule_type": "exception",
+      "statement": "Nicht förderfähig sind u. a. Energieholz/Kurzumtrieb, Reb- und Baumschulen, nicht aktiv bewirtschaftete Flächen, sonstige Flächen, nicht für die Maßnahme angegebene oder falsch identifizierte Flächen, Nationalparkflächen (Neusiedlersee/Donau-Auen generell), GLÖZ-Landschaftselemente und Versuchsflächen (Code VF).",
+      "conditions": [
+        {
+          "expression": "parcel category in not_eligible_areas",
+          "description": "Ausschlussgrund",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "keine Prämie",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.not_eligible",
+        "ref.at.national_park",
+        "ref.at.vf",
+        "ref.srl.not_listed",
+        "ref.srl.trials"
+      ],
+      "rego_symbols": [
+        "data.o6_16.oepul_general.not_eligible_areas"
+      ]
+    },
+    {
+      "id": "o6_16.general.location_austria",
+      "rule_type": "eligibility",
+      "statement": "Geförderte Flächen müssen in Österreich liegen und Tiere in Österreich gehalten werden; nur inländische Tiere zählen für den Viehbesatz.",
+      "conditions": [
+        {
+          "expression": "parcel/animals in Austria",
+          "description": "Lage",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "eligible_only_in_austria",
+        "description": "Auslandsflächen/-tiere unberücksichtigt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.austria_area",
+        "ref.at.austria_animals"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.general.livestock_farm",
+      "rule_type": "definition",
+      "statement": "Tierhaltender Betrieb: mindestens 0,30 RGVE je ha Futterfläche (Grünland + Ackerfutter) gemäß GVE-Schlüssel Anhang A; Durchschnittstierliste bei schwankenden Beständen.",
+      "conditions": [
+        {
+          "expression": "rgve / forage_ha >= 0.30",
+          "description": "Viehbesatz",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "livestock_farm",
+        "description": "tierhaltend",
+        "value": 0.3
+      },
+      "source_reference_ids": [
+        "ref.at.livestock",
+        "ref.at.avg_stock",
+        "ref.srl.gve_avg",
+        "ref.anh.gve_cattle"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.livestock_farm",
+        "data.o6_16.gve_schluessel_anhang_a.rows"
+      ]
+    },
+    {
+      "id": "o6_16.general.commitment_duration",
+      "rule_type": "obligation",
+      "statement": "Die Verpflichtungsdauer umfasst das Kalenderjahr; förderfähig sind nur Flächen, auf denen die Verpflichtungen das ganze Jahr erfüllt werden; unterjährige Weitergabe nur bei Fortführung durch den Übernehmer, sonst OP-Code.",
+      "conditions": [
+        {
+          "expression": "compliance throughout calendar year",
+          "description": "ganzjährige Erfüllung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "eligible_if_full_year",
+        "description": "sonst OP",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.duration",
+        "ref.at.duration_full",
+        "ref.at.op_year"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.general.multi_year_area_binding",
+      "rule_type": "obligation",
+      "statement": "Mit der Maßnahme belegte Flächen des ersten Vertragsjahres und alle Flächenzugänge sind bis Vertragsende gemäß Förderverpflichtungen zu bewirtschaften; bei Nichteinhaltung sind bereits gewährte Beträge zurückzuerstatten.",
+      "conditions": [
+        {
+          "expression": "exit_year <= 2028",
+          "description": "vorzeitiger Ausstieg",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "repayment",
+        "description": "Rückforderung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.multi_areas",
+        "ref.srl.repay",
+        "ref.at.repay"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.early_exit_repayment"
+      ]
+    },
+    {
+      "id": "o6_16.general.deregistration",
+      "rule_type": "procedure",
+      "statement": "Abmeldung im laufenden Jahr macht die Maßnahme im betroffenen Förderjahr ungültig; bis zum Ausstieg sind die Verpflichtungen einzuhalten; Ausstieg nur bis Ankündigung einer VOK bzw. Mitteilung einer Verwaltungskontrolle; Ausstieg aus mehrjährigen Maßnahmen führt zur Rückforderung; Wiedereinstieg nur mit neuem Maßnahmenantrag.",
+      "conditions": [
+        {
+          "expression": "deregistration_date in year",
+          "description": "Abmeldung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "measure_invalid_for_year",
+        "description": "Rückforderung bei mehrjährigen Komponenten",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.dereg",
+        "ref.at.until_exit",
+        "ref.at.exit_time",
+        "ref.at.exit_repay",
+        "ref.at.reentry"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.deregistration_effective_year",
+        "data.oepul.o6_16.early_exit_repayment"
+      ]
+    },
+    {
+      "id": "o6_16.general.combination_correction",
+      "rule_type": "procedure",
+      "statement": "Unmögliche Maßnahmenkombinationen können bis zum Erhalt der Auszahlungsmitteilung korrigiert werden, sofern keine Beanstandung bei einer Vor-Ort-Kontrolle vorliegt.",
+      "conditions": [
+        {
+          "expression": "impossible combination applied",
+          "description": "Korrekturfall",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "correction_allowed",
+        "description": "Korrektur zulässig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.combination_fix"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.general.takeover",
+      "rule_type": "procedure",
+      "statement": "Maßnahmenübernahme durch einen bisher nicht teilnehmenden Betrieb für die Restlaufzeit bis 15.04. (2023/2028: 17.04.), ohne Ausweitung um mehr als 50 %, online mit Genehmigung der AMA; der Zuschlag Schweinefütterung (o6_16) ist nur in Einzelfällen bei Betriebsauflösung, -teilung oder -zusammenlegung übernehmbar.",
+      "conditions": [
+        {
+          "expression": "takeover_date <= takeover_deadline(year) and extension_ha <= 0.5 * taken_over_ha",
+          "description": "Übernahmevoraussetzungen",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "takeover_possible",
+        "description": "Übernahme möglich",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.takeover",
+        "ref.at.takeover_50",
+        "ref.at.takeover_online",
+        "ref.at.takeover_pig",
+        "ref.srl.takeover"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.takeover_deadline",
+        "data.oepul.o6_16.takeover_extension_ok",
+        "data.oepul.o6_16.takeover_individual_cases_only"
+      ]
+    },
+    {
+      "id": "o6_16.general.area_reduction_tolerance",
+      "rule_type": "calculation",
+      "statement": "Flächenverringerungen sind jährlich bis 5 %, höchstens 5,00 ha, jedenfalls 0,50 ha (Bezugsbasis Vorjahresfläche) zulässig; bei Überschreitung besteht Rückzahlungspflicht für die gesamte Differenzfläche.",
+      "conditions": [
+        {
+          "expression": "prev_ha - current_ha > max(min(0.05*prev_ha, 5), 0.5)",
+          "description": "Toleranz",
+          "input_paths": [
+            "farm.oepul.o6_16.premium_area_previous_year_ha",
+            "farm.oepul.o6_16.area_reduction_due_to_loss_of_control"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_exceeded",
+        "description": "Rückzahlung Differenzfläche",
+        "value": {
+          "share": 0.05,
+          "max_ha": 5.0,
+          "min_ha": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "ref.at.tol_5",
+        "ref.at.tol_5ha",
+        "ref.at.tol_05",
+        "ref.at.tol_base",
+        "ref.srl.tol",
+        "ref.at.repay"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.allowed_area_reduction",
+        "data.oepul.o6_16.area_reduction_repayment_required",
+        "data.oepul.o6_16.violations[o6_16.general.area_reduction_tolerance]"
+      ]
+    },
+    {
+      "id": "o6_16.general.loss_of_control",
+      "rule_type": "exception",
+      "statement": "Verlust der Verfügungsgewalt (Übertragung an anderen Betrieb/Person, z. B. Pachtende, Verkauf) führt zu keiner Rückzahlung; beim Wechsel der bewirtschaftenden Person ist die Verpflichtung weiterzuführen.",
+      "conditions": [
+        {
+          "expression": "area_reduction_due_to_loss_of_control == true",
+          "description": "Verlust der Verfügungsgewalt",
+          "input_paths": [
+            "farm.oepul.o6_16.area_reduction_due_to_loss_of_control"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_repayment",
+        "description": "keine Rückforderung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.loss_control",
+        "ref.at.change_person",
+        "ref.srl.loss_control"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.general.area_reduction_tolerance]"
+      ]
+    },
+    {
+      "id": "o6_16.general.allowed_conversions",
+      "rule_type": "exception",
+      "statement": "Zulässig ohne Rückzahlung sind Umwandlungen von Acker/Dauerkultur/Wein in Grünland/Gemeinschaftsweide, von Grünland in Almweide sowie in LSE Mehrnutzenhecke bzw. Agroforststreifen.",
+      "conditions": [
+        {
+          "expression": "conversion in allowed_land_use_conversions",
+          "description": "Nutzungsänderung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "allowed",
+        "description": "keine Rückforderung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.conversions"
+      ],
+      "rego_symbols": [
+        "data.o6_16.oepul_general.allowed_land_use_conversions"
+      ]
+    },
+    {
+      "id": "o6_16.general.area_increase_limit",
+      "rule_type": "calculation",
+      "statement": "Flächenzugänge sind 2024 und 2025 zur Gänze prämienfähig; danach ist die Prämienfähigkeit auf +50 % gegenüber 2025 begrenzt, eine Vergrößerung um bis zu 5,00 ha ist jedenfalls zulässig; bereits mit der Maßnahme belegte Flächen gelten nicht als Zugang.",
+      "conditions": [
+        {
+          "expression": "eligible_area = min(current, base2025 + max(0.5*base2025, 5)) for year > 2025",
+          "description": "Zugangsbeschränkung",
+          "input_paths": [
+            "farm.oepul.o6_16.premium_area_2025_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_area_limited",
+        "description": "prämienfähige Fläche begrenzt",
+        "value": {
+          "max_share": 0.5,
+          "always_ha": 5.0
+        }
+      },
+      "source_reference_ids": [
+        "ref.at.increase",
+        "ref.at.increase_vgw",
+        "ref.at.increase_full",
+        "ref.at.increase_50",
+        "ref.at.increase_5ha",
+        "ref.at.increase_same",
+        "ref.srl.increase",
+        "ref.srl.increase_5"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.limited_increase_area",
+        "data.oepul.o6_16.basis_premium_area"
+      ]
+    },
+    {
+      "id": "o6_16.general.sanctions",
+      "rule_type": "sanction",
+      "statement": "Verstöße (Zugangsvoraussetzungen, Flächenabweichungen, inhaltliche Auflagen, Konditionalität, Vertragszeitraum) führen nach Schwere, Ausmaß, Dauer und Häufigkeit zu Verwarnung (ab 2027 Einbehalt 1 %), Kürzungen um 2/5/10/25/50/100 % bzw. Ausschluss bei zweimaliger 100-%-Kürzung; ab dem 2. Jahr bei Zugangsmängeln keine Prämie im betroffenen Jahr.",
+      "conditions": [
+        {
+          "expression": "sanction stage",
+          "description": "Stufe",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "reduction_percent",
+        "description": "Kürzung gemäß Stufe",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.controls",
+        "ref.at.sanction_access",
+        "ref.at.sanction_content",
+        "ref.at.sanction_eval",
+        "ref.at.sanction_excl",
+        "ref.at.sanction_2027",
+        "ref.srl.access_fail",
+        "ref.srl.order"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.sanction_reduction_percent",
+        "data.o6_16.oepul_general.sanction_stages"
+      ]
+    },
+    {
+      "id": "o6_16.general.payment",
+      "rule_type": "procedure",
+      "statement": "Auszahlung jährlich bis 30.06. des Folgejahres; Teilzahlung bis 75 % nach Verwaltungskontrolle; Förderung kann unterbleiben, wenn der Auszahlungsbetrag 50 Euro nicht übersteigt.",
+      "conditions": [
+        {
+          "expression": "amount_eur <= 50",
+          "description": "Kleinbetrag",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "payment_rules",
+        "description": "Auszahlungsmodalitäten",
+        "value": {
+          "deadline": "06-30",
+          "advance_share": 0.75,
+          "min_eur": 50
+        }
+      },
+      "source_reference_ids": [
+        "ref.at.payment",
+        "ref.at.advance",
+        "ref.srl.min_payout"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.payment_deadline",
+        "data.oepul.o6_16.max_advance_payment",
+        "data.oepul.o6_16.payout_may_be_withheld"
+      ]
+    },
+    {
+      "id": "o6_16.general.area_payment_caps",
+      "rule_type": "calculation",
+      "statement": "Prämienobergrenzen je ha Schlag (Summe flächenbezogener Zahlungen inkl. LSE): 1.200 €/ha (2023), 1.300 €/ha (ab 2024; ohne o6_6, o6_7 sowie o6_10 bzw. ab 2025 o6_1c), Naturschutz/EBW 1.300 bzw. 1.500 €/ha, Nützlinge 2.000 bzw. 2.160 €/ha.",
+      "conditions": [
+        {
+          "expression": "sum_eur_per_ha > cap(scope, year)",
+          "description": "Obergrenze",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "capped",
+        "description": "Kürzung auf Obergrenze",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.caps"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.area_payment_cap",
+        "data.oepul.o6_16.area_payment_cap_exceeded",
+        "data.o6_16.oepul_general.area_payment_caps"
+      ]
+    },
+    {
+      "id": "o6_16.general.modulation",
+      "rule_type": "calculation",
+      "statement": "Die Prämien aller Maßnahmen werden nach der Gesamtfläche des Betriebes moduliert: bis 200 ha 100 %, 200–300 ha 90 %, 300–1.000 ha 85 %, über 1.000 ha 75 % (Beispiel 220 ha → 99,09 %).",
+      "conditions": [
+        {
+          "expression": "factor = Σ(band_portion × share) / total_area_ha",
+          "description": "Modulationsfaktor",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "modulation_factor",
+        "description": "gewichteter Auszahlungsanteil",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.mod",
+        "ref.at.mod_200",
+        "ref.at.mod_300",
+        "ref.at.mod_1000",
+        "ref.at.mod_over",
+        "ref.at.mod_example",
+        "ref.srl.mod"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.modulation_factor",
+        "data.oepul.o6_16.premium_total",
+        "data.o6_16.oepul_general.modulation_bands"
+      ]
+    },
+    {
+      "id": "o6_16.general.konditionalitaet",
+      "rule_type": "obligation",
+      "statement": "Alle teilnehmenden Betriebe müssen die Konditionalität (Klima/Umwelt, Gesundheit, Pflanzengesundheit, Tierwohl) und soziale Konditionalität einhalten, um die Förderung in voller Höhe zu erhalten.",
+      "conditions": [
+        {
+          "expression": "conditionality compliant",
+          "description": "Konditionalität",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "full_premium_only_if_compliant",
+        "description": "sonst Kürzung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.konditionalitaet"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.general.self_report_op",
+      "rule_type": "procedure",
+      "statement": "Bei Leistungsüberschneidung, nicht ganzjähriger oder nicht über den Vertragszeitraum erfüllbarer Verpflichtung sowie reinem Fremdverschulden ist der (maßnahmenbezogene) OP-Code zu vergeben; ohne Fremdverschulden ist der Code zu löschen oder eine Selbstanzeige zu erstatten (geringere Sanktion).",
+      "conditions": [
+        {
+          "expression": "op case applies",
+          "description": "OP-Fall",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "op_code_required",
+        "description": "keine Prämie auf betroffener Fläche",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.op_third",
+        "ref.at.selfreport",
+        "ref.at.op_period",
+        "ref.at.op_overlap",
+        "ref.srl.overlap"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.is_op",
+        "data.o6_16.oepul_general.op_code_cases"
+      ]
+    },
+    {
+      "id": "o6_16.general.force_majeure_circumstances",
+      "rule_type": "exception",
+      "statement": "Für höhere Gewalt gelten § 6 GSP-AV; bei dauerhaften oder vorübergehenden flächen-/bewirtschaftungsverändernden Umständen kann die AMA bei Meldung von Rückforderungen absehen; das BML kann spezielle Festlegungen treffen; bei Nichtzustimmung zu Vertragsanpassungen (Revisionsklausel) endet der Vertrag ohne Rückforderung.",
+      "conditions": [
+        {
+          "expression": "reported circumstance",
+          "description": "Umstand gemeldet",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "no_repayment_possible",
+        "description": "Abstand von Rückforderung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.srl.force_majeure",
+        "ref.srl.permanent",
+        "ref.srl.temporary",
+        "ref.srl.bml",
+        "ref.srl.revision"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.general.no_payment_without_application",
+      "rule_type": "procedure",
+      "statement": "Wird bei mehrjährigen Maßnahmen ab dem 2. Jahr eine Fläche oder Angabe nicht beantragt, bleibt die Verpflichtung aufrecht, es erfolgt aber keine Zahlung für dieses Jahr.",
+      "conditions": [
+        {
+          "expression": "parcel not applied in year > 1",
+          "description": "fehlende Beantragung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "no_payment",
+        "description": "Verpflichtung bleibt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.srl.no_payment_year"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.general.legal_status",
+      "rule_type": "information",
+      "statement": "Die Informationsblätter sind rechtlich unverbindlich; maßgeblich sind Sonderrichtlinie ÖPUL 2023, MOG 2021 und GSP-AV.",
+      "conditions": [
+        {
+          "expression": "conflict between sheet and directive",
+          "description": "Auslegung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "directive_prevails",
+        "description": "Rechtsgrundlage maßgeblich",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.at.legal"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.general.amendment_applicability",
+      "rule_type": "contract",
+      "statement": "Mit 1a gekennzeichnete Änderungen der SRL (u. a. Prämiensätze +8 %) gelten ab 01.01.2024, mit 1b gekennzeichnete (u. a. erweiterte Kulisse, Cultan, Schweinefütterung außerhalb der Kulisse) ab 01.01.2025.",
+      "conditions": [
+        {
+          "expression": "year >= 2024 / 2025",
+          "description": "Antragsjahr",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "year_dependent_rules",
+        "description": "jahresabhängige Parameter",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.srl.in_force",
+        "ref.srl.marker_1b",
+        "ref.srl.16_rates"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.premium_rate",
+        "data.oepul.o6_16.carryover_row"
+      ]
+    },
+    {
+      "id": "o6_16.general.landscape_elements",
+      "rule_type": "definition",
+      "statement": "Förderfähige Flächen umfassen auch darauf befindliche oder bis 5 m angrenzende Landschaftselemente (§ 25 GSP-AV).",
+      "conditions": [
+        {
+          "expression": "distance_m <= 5",
+          "description": "LSE-Abstand",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "included",
+        "description": "LSE zählt zur Fläche",
+        "value": 5
+      },
+      "source_reference_ids": [
+        "ref.at.le_5m"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_16.notice2026.drought_harvest_relief",
+      "rule_type": "exception",
+      "statement": "Dürre 2026: In allen Bezirken von Burgenland und Wien, in gelisteten Bezirken Niederösterreichs und Oberösterreichs sowie (ab 12.08.2026) in Graz, Graz-Umgebung, Hartberg-Fürstenfeld, Leibnitz, Südoststeiermark und Weiz gilt die Witterung als höhere Gewalt; die Ernte auf 85 % muss bei spät geernteten Ackerkulturen ohne erntbaren Bestand nicht erfolgen, die Prämie wird dennoch gewährt, ohne Einzelmeldung.",
+      "conditions": [
+        {
+          "expression": "year == 2026 and district in relief list and no_harvestable_stand_due_to_drought",
+          "description": "Dürreausnahme",
+          "input_paths": [
+            "farm.region.district",
+            "land.parcels[].harvest.no_harvestable_stand_due_to_drought",
+            "land.parcels[].harvest.usually_harvested_late_summer_or_autumn"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "harvest_obligation_waived",
+        "description": "Prämie trotz fehlender Ernte",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.n0805.areas",
+        "ref.n0805.crops",
+        "ref.n0805.noe",
+        "ref.n0812.styria",
+        "ref.n0805.harvest"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.drought_harvest_relief_applies",
+        "data.oepul.o6_16.drought_relief_district",
+        "data.o6_16.notices_2026.drought_harvest_relief_2026"
+      ]
+    },
+    {
+      "id": "o6_16.notice2026.greening_coverage_relief",
+      "rule_type": "exception",
+      "statement": "2026 wird bei o6_6, o6_7 (Kombinationsverpflichtung) und o6_10 keine Beanstandung ausgesprochen, wenn die Begrünung ordnungsgemäß angelegt wurde, aber keine Flächendeckung erreicht oder Ausfallgetreide die 50-%-Grenze überschreitet.",
+      "conditions": [
+        {
+          "expression": "year == 2026 and properly_sown",
+          "description": "ordnungsgemäße Anlage",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "no_objection",
+        "description": "höhere Gewalt automatisch anerkannt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.n0805.greening"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.greening_coverage_relief"
+      ]
+    },
+    {
+      "id": "o6_16.notice2026.o6_6_variant_deadlines",
+      "rule_type": "deadline",
+      "statement": "Begrünungsvarianten 1 und 2 (o6_6) sind 2026 bis 5. bzw. 10. August anzulegen; nicht anlegbare Varianten sind umgehend zu korrigieren oder zu streichen.",
+      "conditions": [
+        {
+          "expression": "variant in {1,2}",
+          "description": "Variante",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "latest_sowing",
+        "description": "2026-08-05 / 2026-08-10",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.n0805.variants"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.o6_6_latest_sowing_2026"
+      ]
+    },
+    {
+      "id": "o6_16.notice2026.o6_7_deadline_relief",
+      "rule_type": "exception",
+      "statement": "2026 dürfen bei System Immergrün die Fristen von 30 bzw. 50 Tagen bei Glaubhaftmachung überschritten werden; Zwischenfrüchte sind dennoch bis 20.09. (abfrostend) bzw. 15.10. (winterhart) anzulegen, Mindestdauer 42 Tage.",
+      "conditions": [
+        {
+          "expression": "year == 2026",
+          "description": "Antragsjahr",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "deadline_relief",
+        "description": "Fristüberschreitung zulässig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.n0812.immergruen",
+        "ref.n0812.immergruen_latest"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.o6_7_latest_cover_crop_2026"
+      ]
+    },
+    {
+      "id": "o6_16.notice2026.div_early_use",
+      "rule_type": "exception",
+      "statement": "2026 dürfen Acker-Biodiversitätsflächen (auch AG-Flächen mit DIV) vor dem 1. August genutzt werden, wenn sie mit OPUBB/OPBIO codiert werden (keine UBB/BIO-Prämie); betrifft beim Mähen nur Flächen über den frei nutzbaren 25 %; nicht codierte vorzeitig genutzte Flächen werden beanstandet.",
+      "conditions": [
+        {
+          "expression": "early_used_uncoded_div_ha > 0.25 * arable_div_ha",
+          "description": "Codierpflicht",
+          "input_paths": [
+            "land.parcels[].operations.cutting_dates",
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_uncoded",
+        "description": "Beanstandung",
+        "value": 0.25
+      },
+      "source_reference_ids": [
+        "ref.n0522.div_early",
+        "ref.n0522.div_25",
+        "ref.n0522.div_regular",
+        "ref.n0522.other_rules"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.notice2026.div_early_use]"
+      ]
+    },
+    {
+      "id": "o6_16.notice2026.div_third_use",
+      "rule_type": "exception",
+      "statement": "2026 ist auf Acker-Biodiversitätsflächen eine dritte Nutzung zulässig, wenn die Flächen mit OPUBB/OPBIO codiert sind; für diese wird keine Prämie gewährt.",
+      "conditions": [
+        {
+          "expression": "uses_in_year > 2 => OPUBB or OPBIO",
+          "description": "Codierpflicht",
+          "input_paths": [
+            "land.parcels[].operations.cutting_dates",
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_uncoded",
+        "description": "Beanstandung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.n0812.div_third"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_16.violations[o6_16.notice2026.div_third_use]"
+      ]
+    },
+    {
+      "id": "o6_16.notice2026.force_majeure_application",
+      "rule_type": "procedure",
+      "statement": "Sind Förderverpflichtungen wegen Trockenheit nicht einhaltbar, kann ein Antrag auf höhere Gewalt über eAMA (Register Eingaben) gestellt werden.",
+      "conditions": [
+        {
+          "expression": "obligation not feasible due to drought",
+          "description": "höhere Gewalt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "application_possible",
+        "description": "Einzelbetriebliches Ansuchen",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ref.n0522.force_majeure"
+      ],
+      "rego_symbols": []
+    }
+  ]
+}
