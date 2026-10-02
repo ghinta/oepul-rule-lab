@@ -1,0 +1,9 @@
+# Fachliche Annahmen und offene Punkte
+
+- Die Maßnahmenblätter sind als ausführliche AMA-Aufbereitung gekennzeichnet; die rechtlich verbindliche Grundlage ist die Sonderrichtlinie. Widersprüche wurden zugunsten der Sonderrichtlinie beziehungsweise des ausdrücklich späteren 2026-Hinweises behandelt.
+- Die 2026-Ausnahme wird für `input.year == 2026` als Haltedatum 31.08. modelliert. Tierbewegungsmeldungen für Nicht-Rinder bleiben bis 31.12. relevant; eine Nachbesetzungsmeldung nach 31.08. wird nicht verlangt. Die genaue fachliche Abgrenzung, ob eine Nachbesetzung nach dem verkürzten Haltungszeitraum überhaupt noch verlangt wird, ist im Hinweis sprachlich nicht weiter ausdifferenziert und bleibt als offene Auslegungsfrage dokumentiert.
+- Datumsarithmetik wird in der Rego-Schnittstelle als bereits berechnetes Feld `days_until_replacement` beziehungsweise `reported_within_days` erwartet. Das vermeidet eine nicht durch die Quellen belegte Kalenderarithmetik im Regelwerk.
+- Der 2026-Hinweis spricht von Tierbewegungsmeldungen bis Jahresende, während das Maßnahmenblatt die 7-Tage-Abgangsmeldung an die vorgeschriebene Haltedauer knüpft. Die ausführbare Regel erhält deshalb für Nicht-Rinder eine Meldung bei dokumentiertem Abgang bis zum Jahresende und führt die 7-Tage-Frist als eigenes Prüffeld.
+- Die Prämienfunktion leitet Prämienstufe und GEP-Zuschlag aus der Rassenliste ab. Für Rinder wird der Zuschlag Milchleistungskontrolle nur bei `milk_control == true` addiert; die Datentabelle enthält wegen der Jahrgangsstaffelung die veröffentlichten 2023- und ab-2024-Sätze.
+- `data/o6_5_tables.json` ist als flache JSON-Datei unter `data/` geladen; daher referenziert Rego `data.breeds` und `data.premiums_eur_per_animal`, nicht einen zusätzlichen Dateinamen-Namespace.
+- Das Canonical Farm Profile enthält keine Einzeltiere. Die vier Änderungen in `rules/profile_changes.json` sind deshalb Discover-Vorschläge und keine behaupteten Bestandswerte.
