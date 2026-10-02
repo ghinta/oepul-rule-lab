@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 147,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_5-luna-high-20261002/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_5.rego",
+    "tests/o6_5_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_5-luna-high-20261002/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 17,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_5.rego",
+        "tests/o6_5_test.rego"
+      ],
+      "duration_ms": 29,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_5-luna-high-20261002/workspace/tools/opa",
+            "fmt",
+            "policy/o6_5.rego"
+          ],
+          "duration_ms": 17,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package policy.o6_5\n\nimport rego.v1\n\ndefault eligible := false\n\neligible if count(eligible_animals) >= 1\n\neligible_animals contains animal if {\n\tsome animal in input.livestock.animals\n\tanimal_eligible(animal)\n\tholding_valid(animal)\n}\n\nanimal_eligible(animal) if {\n\tanimal.purebred == true\n\tanimal.approved_breeding_program == true\n\tanimal.regular_breeding_use == true\n\tbreed_record(animal)\n\tcategory_requirements_satisfied(animal)\n}\n\nbreed_record(animal) := record if {\n\tsome i\n\trecord := data.breeds[i]\n\trecord.species == animal.species\n\trecord.breed == animal.breed\n}\n\nbreed_has_gep(animal) if {\n\trecord := breed_record(animal)\n\trecord.special_gep == true\n}\n\ncategory_requirements_satisfied(animal) if {\n\tanimal.animal_type == \"cow\"\n\tanimal.breeding_facts.calved_by_stichtag == true\n\tanimal.purebred_mating == true\n}\n\ncategory_requirements_satisfied(animal) if {\n\tanimal.animal_type == \"mare\"\n\tanimal.breeding_facts.foaled_by_may31 == true\n\tanimal.breeding_facts.next_foaling_within_3_5_years == true\n\tanimal.purebred_mating == true\n}\n\ncategory_requirements_satisfied(animal) if {\n\tanimal.animal_type == \"ewe\"\n\tanimal.breeding_facts.lambed_by_stichtag == true\n\tanimal.purebred_mating == true\n}\n\ncategory_requirements_satisfied(animal) if {\n\tanimal.animal_type == \"doe\"\n\tanimal.breeding_facts.kidded_by_stichtag == true\n\tanimal.purebred_mating == true\n}\n\ncategory_requirements_satisfied(animal) if {\n\tanimal.animal_type == \"sow\"\n\tanimal.breeding_facts.purebred_farroted_by_stichtag == true\n\tanimal.breeding_facts.every_second_litter_purebred == true\n\tanimal.purebred_mating == true\n}\n\ncategory_requirements_satisfied(animal) if {\n\tanimal.animal_type == \"bull\"\n\tanimal.breeding_facts.age_months_at_stichtag >= 10\n\tannual_breeding_requirement_satisfied(animal)\n}\n\ncategory_requirements_satisfied(animal) if {\n\tanimal.animal_type == \"ram\"\n\tanimal.breeding_facts.age_months_at_stichtag >= 6\n\tannual_breeding_requirement_satisfied(animal)\n}\n\ncategory_requirements_satisfied(animal) if {\n\tanimal.animal_type == \"buck\"\n\tanimal.breeding_facts.age_months_at_stichtag >= 5\n\tannual_breeding_requirement_satisfied(animal)\n}\n\ncategory_requirements_satisfied(animal) if {\n\tanimal.animal_type == \"boar\"\n\tanimal.breeding_facts.age_months_at_stichtag >= 6\n\tannual_breeding_requirement_satisfied(animal)\n}\n\nannual_breeding_requirement_satisfied(animal) if animal.breeding_facts.breeding_year == input.farm.year\nannual_breeding_requirement_satisfied(animal) if animal.breeding_facts.admitted_to_breeding_year == input.farm.year\n\ncategory_requirements_satisfied(animal) if {\n\tanimal.animal_type == \"stallion\"\n\tanimal.breeding_facts.age_years_at_may31 >= 2\n\tanimal.purebred_mating == true\n\tstallion_old_animal_requirement_satisfied(animal)\n}\n\nstallion_old_animal_requirement_satisfied(animal) if animal.breeding_facts.age_years_at_may31 <= 5\n\nstallion_old_animal_requirement_satisfied(animal) if {\n\tanimal.breeding_facts.age_years_at_may31 > 5\n\tcount(animal.breeding_facts.live_born_offspring_last_two_years) >= 1\n}\n\nholding_deadline := \"2026-08-31\" if input.farm.year == 2026\nholding_deadline := sprintf(\"%d-12-31\", [input.farm.year]) if input.farm.year != 2026\n\nholding_valid(animal) if {\n\tanimal.held_from <= sprintf(\"%d-04-01\", [input.farm.year])\n\tanimal.held_to >= holding_deadline\n}\n\nmovement_report_required(animal, event) if {\n\tanimal.species != \"cattle\"\n\tevent.event_type == \"departure\"\n\tevent.event_date <= sprintf(\"%d-12-31\", [input.farm.year])\n}\n\nmovement_report_timely(animal, event) if {\n\tmovement_report_required(animal, event)\n\tevent.reported_within_days <= 7\n}\n\ntemporary_stay_is_not_departure(_, event) if {\n\tevent.event_type == \"temporary_transfer\"\n\tevent.temporary_stay == true\n\tevent.control_remains_with_applicant == true\n}\n\nreplacement_required(animal, event) if {\n\tanimal.species != \"cattle\"\n\tevent.event_type == \"replacement\"\n\tevent.event_date <= holding_deadline\n\tevent.days_until_replacement <= 35\n}\n\nreplacement_report_required(animal, event) if {\n\tanimal.species != \"cattle\"\n\tevent.event_type == \"replacement\"\n\tevent.event_date <= holding_deadline\n}\n\nreplacement_report_timely(animal, event) if {\n\treplacement_report_required(animal, event)\n\tevent.reported_within_days <= 7\n}\n\nreplacement_same_breed(event) if event.original_breed == event.replacement_breed\n\nreplacement_lower_premium_applies(event) if {\n\tevent.original_sex == \"female\"\n\tevent.replacement_sex == \"male\"\n}\n\nreplacement_lower_premium_applies(event) if {\n\tevent.original_milk_control == true\n\tevent.replacement_milk_control == false\n}\n\nbreeding_station_transfer_allowed(event) if {\n\tevent.purpose == \"breeding_station\"\n\tevent.duration_months <= 6\n}\n\nmale_breeding_transfer_allowed(event) if {\n\tevent.purpose == \"temporary_breeding_use\"\n\tevent.animal_sex == \"male\"\n\tevent.duration_months <= 3\n}\n\ntransfer_notice_required(animal, event) if {\n\tanimal.species != \"cattle\"\n\tevent.event_type == \"temporary_transfer\"\n\tevent.duration_days > 10\n}\n\ntransfer_notice_not_required(_, event) if {\n\tevent.event_type == \"temporary_transfer\"\n\tevent.duration_days <= 10\n\tevent.documented == true\n}\n\ncattle_database_replaces_reports(animal) if animal.species == \"cattle\"\n\npremium(animal) := amount if {\n\tbreed := breed_record(animal)\n\tpt := breed.premium_tier\n\tkind := premium_animal_type(animal.animal_type)\n\trecord := latest_premium_record(kind, pt)\n\tgep := gep_amount(record, breed)\n\tmilk := milk_amount(record, animal)\n\tamount := (record.base + gep) + milk\n}\n\ngep_amount(record, breed) := record.gep if breed.special_gep == true\ngep_amount(_, breed) := 0 if not breed.special_gep == true\nmilk_amount(record, animal) := record.milk_control if animal.breeding_facts.milk_control == true\nmilk_amount(_, animal) := 0 if not animal.breeding_facts.milk_control == true\n\npremium_animal_type(type) := \"ewe_or_doe\" if type in {\"ewe\", \"doe\"}\npremium_animal_type(type) := \"ram_or_buck\" if type in {\"ram\", \"buck\"}\npremium_animal_type(type) := type if not type in {\"ewe\", \"doe\", \"ram\", \"buck\"}\n\nlatest_premium_record(kind, tier) := record if {\n\trecords := [r | some r in data.premiums_eur_per_animal; r.animal_type == kind; r.premium_tier == tier; r.year_from <= input.farm.year]\n\tlatest_year := max({r.year_from | r := records[_]})\n\trecord := records[_]\n\trecord.year_from == latest_year\n}\n\npremium_rows := data.premiums_eur_per_animal\n\ncontract_year_valid if {\n\tinput.farm.year >= 2023\n\tinput.farm.year <= 2028\n}\n\napplication_on_time if {\n\tinput.farm.application_date <= sprintf(\"%d-12-31\", [input.farm.year - 1])\n}\n\nlatest_entry_allowed if input.farm.year <= 2027\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_5-luna-high-20261002/workspace/tools/opa",
+            "fmt",
+            "tests/o6_5_test.rego"
+          ],
+          "duration_ms": 12,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package policy.o6_5_test\n\nimport data.policy.o6_5 as policy\nimport rego.v1\n\ntest_eligible_with_one_valid_cow if {\n\tpolicy.eligible with input as {\n\t\t\"farm\": {\"year\": 2025},\n\t\t\"livestock\": {\"animals\": [{\n\t\t\t\"species\": \"cattle\",\n\t\t\t\"breed\": \"Murbodner\",\n\t\t\t\"animal_type\": \"cow\",\n\t\t\t\"purebred\": true,\n\t\t\t\"approved_breeding_program\": true,\n\t\t\t\"regular_breeding_use\": true,\n\t\t\t\"purebred_mating\": true,\n\t\t\t\"breeding_facts\": {\"calved_by_stichtag\": true},\n\t\t\t\"held_from\": \"2025-04-01\",\n\t\t\t\"held_to\": \"2025-12-31\",\n\t\t}]},\n\t}\n}\n\ntest_male_age_and_admission_requirement if {\n\tpolicy.category_requirements_satisfied({\n\t\t\"animal_type\": \"bull\",\n\t\t\"breeding_facts\": {\"age_months_at_stichtag\": 10, \"admitted_to_breeding_year\": 2025},\n\t}) with input as {\"farm\": {\"year\": 2025}}\n}\n\ntest_stallion_over_five_needs_recent_offspring if {\n\tpolicy.category_requirements_satisfied({\n\t\t\"animal_type\": \"stallion\",\n\t\t\"breeding_facts\": {\"age_years_at_may31\": 6, \"live_born_offspring_last_two_years\": [{\"year\": 2025}]},\n\t\t\"purebred_mating\": true,\n\t}) with input as {\"farm\": {\"year\": 2025}}\n}\n\ntest_2026_holding_deadline_is_august if {\n\tpolicy.holding_valid({\"held_from\": \"2026-04-01\", \"held_to\": \"2026-08-31\"}) with input as {\"farm\": {\"year\": 2026}}\n}\n\ntest_2026_replacement_report_after_august_not_required if {\n\tnot policy.replacement_report_required({\"species\": \"pig\"}, {\"event_type\": \"replacement\", \"event_date\": \"2026-09-01\"}) with input as {\"farm\": {\"year\": 2026}}\n}\n\ntest_non_cattle_movement_report_within_seven_days if {\n\tpolicy.movement_report_timely({\"species\": \"sheep\"}, {\"event_type\": \"departure\", \"event_date\": \"2025-06-01\", \"reported_within_days\": 7}) with input as {\"farm\": {\"year\": 2025}}\n}\n\ntest_premium_uses_breed_tier_gep_and_milk_control if {\n\tamount := policy.premium({\n\t\t\"species\": \"cattle\",\n\t\t\"breed\": \"Murbodner\",\n\t\t\"animal_type\": \"cow\",\n\t\t\"breeding_facts\": {\"milk_control\": true},\n\t}) with input as {\"farm\": {\"year\": 2024}}\n\tamount > 334.799\n\tamount < 334.801\n}\n\ntest_premium_uses_latest_rate_year if {\n\tamount := policy.premium({\n\t\t\"species\": \"cattle\",\n\t\t\"breed\": \"Murbodner\",\n\t\t\"animal_type\": \"cow\",\n\t\t\"breeding_facts\": {\"milk_control\": false},\n\t}) with input as {\"farm\": {\"year\": 2025}}\n\tamount > 248.399\n\tamount < 248.401\n}\n\ntest_short_documented_stay_needs_no_transfer_notice if {\n\tpolicy.transfer_notice_not_required({\"species\": \"sheep\"}, {\"event_type\": \"temporary_transfer\", \"duration_days\": 10, \"documented\": true})\n}\n\ntest_application_deadline_and_latest_entry if {\n\tpolicy.application_on_time with input as {\"farm\": {\"year\": 2026, \"application_date\": \"2025-12-31\"}}\n\tpolicy.latest_entry_allowed with input as {\"farm\": {\"year\": 2027}}\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_5-luna-high-20261002/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 20,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 10/10\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_5-luna-high-20261002/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 80,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_5-luna-high-20261002/workspace"
+}
