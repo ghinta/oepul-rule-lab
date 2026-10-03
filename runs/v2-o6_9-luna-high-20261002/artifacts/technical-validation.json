@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 187,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_9-luna-high-20261002/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_9.rego",
+    "tests/o6_9_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_9-luna-high-20261002/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 15,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_9.rego",
+        "tests/o6_9_test.rego"
+      ],
+      "duration_ms": 59,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_9-luna-high-20261002/workspace/tools/opa",
+            "fmt",
+            "policy/o6_9.rego"
+          ],
+          "duration_ms": 21,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_9\n\nimport rego.v1\n\ndefault result := {\n\t\"eligible\": false,\n\t\"violations\": [],\n\t\"warnings\": [],\n\t\"premium\": 0,\n}\n\nmeasure_active if {\n\tinput.measure == \"o6_9\"\n}\n\nparticipating_category(category) if {\n\tinput.participation.categories[_] == category\n}\n\nhas_minimum_participation if {\n\tinput.participation.application_m3 > 0\n}\n\nhas_minimum_participation if {\n\tinput.participation.separated_m3 > 0\n}\n\nhas_minimum_participation if {\n\tparticipating_category(\"pig_feeding\")\n}\n\napplication_method_allowed if {\n\tinput.application.method in {\"trailing_hose\", \"trailing_shoe\", \"injection\"}\n}\n\napplication_land_allowed if {\n\tinput.application.land_use in {\"arable\", \"grassland\"}\n}\n\neligible_manure if {\n\tinput.application.manure_type in {\"slurry\", \"urine\"}\n\tnot input.application.injected_rainwater\n\tnot input.application.is_water_mixed_solid_manure\n}\n\neligible_manure if {\n\tinput.application.manure_type == \"biogas_slurry\"\n\tnot input.application.biogas_has_excluded_input\n}\n\napplication_compliant if {\n\tapplication_method_allowed\n\tapplication_land_allowed\n\teligible_manure\n}\n\nseparation_compliant if {\n\tinput.separation.origin == \"own_cattle\"\n\tinput.separation.mechanical_phase_separation\n\tinput.separation.separated_m3 > 0\n}\n\npig_threshold_compliant if {\n\tinput.pig_feeding.gve_pigs_annual_average / input.farm.arable_area_ha >= 1\n}\n\npig_feed_compliant if {\n\tparticipating_category(\"pig_feeding\")\n\tpig_threshold_compliant\n\tinput.pig_feeding.all_pigs_compliant\n\tinput.pig_feeding.proof_available\n}\n\npig_feed_compliant if {\n\tnot participating_category(\"pig_feeding\")\n}\n\napplication_records_compliant if {\n\tinput.application.records_complete\n\t\"amount_m3\" in input.application.records_include\n\t\"manure_type\" in input.application.records_include\n\t\"date\" in input.application.records_include\n\t\"method\" in input.application.records_include\n\t\"parcel\" in input.application.records_include\n}\n\nseparation_records_compliant if {\n\tinput.separation.records_complete\n\t\"date\" in input.separation.records_include\n\t\"separated_liquid_m3\" in input.separation.records_include\n}\n\napplication_deadline_compliant if {\n\tinput.application.requested_by_december_31\n}\n\npig_entry_allowed if {\n\tnot participating_category(\"pig_feeding\")\n}\n\npig_entry_allowed if {\n\tparticipating_category(\"pig_feeding\")\n\tinput.farm.year >= 2025\n\tinput.farm.year <= 2028\n\tinput.participation.base_measure_valid\n}\n\nmeasure_entry_allowed if {\n\tinput.farm.year >= 2023\n\tinput.farm.year <= 2027\n\tinput.participation.measure_requested_by_december_31\n}\n\ncombination_allowed if {\n\tnot participating_category(\"pig_feeding\")\n}\n\ncombination_allowed if {\n\tparticipating_category(\"pig_feeding\")\n\tnot input.participation.groundwater_protection_pig_bonus\n}\n\ndefault application_premium := 0\n\napplication_premium := amount * rate if {\n\tamount := min([input.application.requested_m3, 50 * input.calculation.eligible_fertilizable_area_ha])\n\trate := max([r.rate_eur_per_m3 | r := data.premium_rates[_]; r.category == \"application\"; r.method == input.application.method; r.from_year <= input.farm.year])\n}\n\ndefault separation_premium := 0\n\nseparation_premium := amount * rate if {\n\tamount := min([input.separation.requested_m3, 20 * input.calculation.cattle_gve])\n\trate := max([r.rate_eur_per_m3 | r := data.premium_rates[_]; r.category == \"separation\"; r.from_year <= input.farm.year])\n}\n\ndefault pig_premium := 0\n\npig_premium := 54 * input.calculation.arable_area_ha if {\n\tparticipating_category(\"pig_feeding\")\n\tpig_feed_compliant\n\tinput.farm.year >= 2025\n}\n\nviolation contains \"measure_not_active\" if {\n\tnot measure_active\n}\n\nviolation contains \"minimum_participation_missing\" if {\n\tmeasure_active\n\tnot has_minimum_participation\n}\n\nviolation contains \"application_requirements_not_met\" if {\n\tinput.participation.application_m3 > 0\n\tnot application_compliant\n}\n\nviolation contains \"application_records_missing\" if {\n\tinput.participation.application_m3 > 0\n\tnot application_records_compliant\n}\n\nviolation contains \"separation_requirements_not_met\" if {\n\tinput.participation.separated_m3 > 0\n\tnot separation_compliant\n}\n\nviolation contains \"separation_records_missing\" if {\n\tinput.participation.separated_m3 > 0\n\tnot separation_records_compliant\n}\n\nviolation contains \"pig_threshold_or_proof_not_met\" if {\n\tparticipating_category(\"pig_feeding\")\n\tnot pig_feed_compliant\n}\n\nviolation contains \"application_deadline_not_met\" if {\n\tinput.participation.application_m3 > 0\n\tnot application_deadline_compliant\n}\n\nviolation contains \"pig_entry_not_allowed\" if {\n\tnot pig_entry_allowed\n}\n\nviolation contains \"measure_entry_not_allowed\" if {\n\tnot measure_entry_allowed\n}\n\nviolation contains \"incompatible_pig_bonus\" if {\n\tnot combination_allowed\n}\n\napplication_requirements_ok if {\n\tinput.participation.application_m3 == 0\n}\n\napplication_requirements_ok if {\n\tinput.participation.application_m3 > 0\n\tapplication_compliant\n}\n\nseparation_requirements_ok if {\n\tinput.participation.separated_m3 == 0\n}\n\nseparation_requirements_ok if {\n\tinput.participation.separated_m3 > 0\n\tseparation_compliant\n}\n\ndefault eligible := false\n\neligible if {\n\tmeasure_active\n\thas_minimum_participation\n\tapplication_requirements_ok\n\tseparation_requirements_ok\n\tpig_feed_compliant\n\tpig_entry_allowed\n\tmeasure_entry_allowed\n\tcombination_allowed\n}\n\nresult := {\n\t\"eligible\": eligible,\n\t\"violations\": sort([v | violation[v]]),\n\t\"warnings\": [\n\t\t\"The application premium is capped at 50 m3 per eligible fertilizable hectare.\",\n\t\t\"The separation premium is capped at 20 m3 per cattle GVE and year.\",\n\t],\n\t\"premium\": (application_premium + separation_premium) + pig_premium,\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_9-luna-high-20261002/workspace/tools/opa",
+            "fmt",
+            "tests/o6_9_test.rego"
+          ],
+          "duration_ms": 38,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_9_test\n\nimport rego.v1\n\ntest_valid_application_and_separation if {\n\tresult := data.oepul.o6_9.result with input as {\n\t\t\"measure\": \"o6_9\",\n\t\t\"farm\": {\"year\": 2026, \"arable_area_ha\": 20},\n\t\t\"participation\": {\n\t\t\t\"categories\": [\"application\", \"separation\"],\n\t\t\t\"application_m3\": 100,\n\t\t\t\"separated_m3\": 40,\n\t\t\t\"base_measure_valid\": true,\n\t\t\t\"measure_requested_by_december_31\": true,\n\t\t\t\"groundwater_protection_pig_bonus\": false,\n\t\t},\n\t\t\"application\": {\n\t\t\t\"method\": \"trailing_shoe\",\n\t\t\t\"land_use\": \"arable\",\n\t\t\t\"manure_type\": \"slurry\",\n\t\t\t\"injected_rainwater\": false,\n\t\t\t\"is_water_mixed_solid_manure\": false,\n\t\t\t\"records_complete\": true,\n\t\t\t\"records_include\": {\"amount_m3\", \"manure_type\", \"date\", \"method\", \"parcel\"},\n\t\t\t\"requested_by_december_31\": true,\n\t\t\t\"requested_m3\": 100,\n\t\t},\n\t\t\"separation\": {\n\t\t\t\"origin\": \"own_cattle\",\n\t\t\t\"mechanical_phase_separation\": true,\n\t\t\t\"separated_m3\": 40,\n\t\t\t\"records_complete\": true,\n\t\t\t\"records_include\": {\"date\", \"separated_liquid_m3\"},\n\t\t\t\"requested_m3\": 40,\n\t\t},\n\t\t\"pig_feeding\": {\"gve_pigs_annual_average\": 0, \"all_pigs_compliant\": true, \"proof_available\": true},\n\t\t\"calculation\": {\"eligible_fertilizable_area_ha\": 2, \"cattle_gve\": 3, \"arable_area_ha\": 20},\n\t}\n\tresult.eligible\n\tresult.violations == []\n\tresult.premium == 210\n}\n\ntest_application_cap_and_disallowed_device if {\n\tresult := data.oepul.o6_9.result with input as {\n\t\t\"measure\": \"o6_9\",\n\t\t\"farm\": {\"year\": 2026, \"arable_area_ha\": 10},\n\t\t\"participation\": {\"categories\": [\"application\"], \"application_m3\": 100, \"separated_m3\": 0, \"base_measure_valid\": true, \"measure_requested_by_december_31\": true, \"groundwater_protection_pig_bonus\": false},\n\t\t\"application\": {\"method\": \"broadcast\", \"land_use\": \"arable\", \"manure_type\": \"slurry\", \"injected_rainwater\": false, \"is_water_mixed_solid_manure\": false, \"records_complete\": true, \"records_include\": {\"amount_m3\", \"manure_type\", \"date\", \"method\", \"parcel\"}, \"requested_by_december_31\": true, \"requested_m3\": 100},\n\t\t\"separation\": {\"requested_m3\": 0, \"separated_m3\": 0},\n\t\t\"pig_feeding\": {\"gve_pigs_annual_average\": 0, \"all_pigs_compliant\": true, \"proof_available\": true},\n\t\t\"calculation\": {\"eligible_fertilizable_area_ha\": 1, \"cattle_gve\": 0, \"arable_area_ha\": 10},\n\t}\n\tnot result.eligible\n\t\"application_requirements_not_met\" in result.violations\n\tresult.premium == 0\n}\n\ntest_pig_threshold_and_incompatibility if {\n\tresult := data.oepul.o6_9.result with input as {\n\t\t\"measure\": \"o6_9\",\n\t\t\"farm\": {\"year\": 2025, \"arable_area_ha\": 10},\n\t\t\"participation\": {\"categories\": [\"pig_feeding\"], \"application_m3\": 0, \"separated_m3\": 0, \"base_measure_valid\": true, \"measure_requested_by_december_31\": true, \"groundwater_protection_pig_bonus\": true},\n\t\t\"application\": {\"requested_m3\": 0},\n\t\t\"separation\": {\"requested_m3\": 0, \"separated_m3\": 0},\n\t\t\"pig_feeding\": {\"gve_pigs_annual_average\": 10, \"all_pigs_compliant\": true, \"proof_available\": true},\n\t\t\"calculation\": {\"eligible_fertilizable_area_ha\": 0, \"cattle_gve\": 0, \"arable_area_ha\": 10},\n\t}\n\tnot result.eligible\n\t\"incompatible_pig_bonus\" in result.violations\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_9-luna-high-20261002/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 19,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 3/3\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_9-luna-high-20261002/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 93,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_9-luna-high-20261002/workspace"
+}
