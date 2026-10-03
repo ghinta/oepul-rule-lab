@@ -12,6 +12,13 @@ sicheren, fortsetzbaren Zustand zu bringen; ein harter Limitfehler darf nicht
 als normaler Abschluss behandelt werden. Ein unterbrochener Run wird später
 fortgesetzt oder mit dem vorhandenen Stand finalisiert.
 
+## Branch-Governance
+
+`main` ist geschützt. Niemals direkt auf `main` committen oder pushen. Jede
+Änderung erfolgt auf einem beschreibenden Feature-Branch (normalerweise
+`codex/<topic>`) auf Basis von aktuellem `main` und wird ausschließlich über
+einen reviewten Pull Request integriert.
+
 ## Prioritäten
 
 1. Lies die bereitgestellten Quelldokumente vollständig, einschließlich

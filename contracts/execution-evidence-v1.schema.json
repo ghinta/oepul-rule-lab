@@ -1,0 +1,52 @@
+{
+  "$defs": {
+    "ArtifactUse": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_path": {"maxLength": 2000, "minLength": 1, "title": "Artifact Path", "type": "string"},
+        "symbol": {"maxLength": 2000, "minLength": 1, "title": "Symbol", "type": "string"},
+        "line_start": {"anyOf": [{"minimum": 1, "type": "integer"}, {"type": "null"}], "title": "Line Start"},
+        "line_end": {"anyOf": [{"minimum": 1, "type": "integer"}, {"type": "null"}], "title": "Line End"}
+      },
+      "required": ["artifact_path", "symbol", "line_start", "line_end"],
+      "title": "ArtifactUse",
+      "type": "object"
+    },
+    "RuleExecutionEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "rule_id": {"maxLength": 160, "minLength": 3, "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]+$", "title": "Rule Id", "type": "string"},
+        "status": {"enum": ["executable", "documented_only", "unresolved"], "title": "Status", "type": "string"},
+        "rationale": {"anyOf": [{"maxLength": 2000, "minLength": 1, "type": "string"}, {"type": "null"}], "default": null, "title": "Rationale"},
+        "source_reference_ids": {"items": {"maxLength": 160, "minLength": 3, "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]+$", "type": "string"}, "title": "Source Reference Ids", "type": "array"},
+        "rego_uses": {"items": {"$ref": "#/$defs/ArtifactUse"}, "title": "Rego Uses", "type": "array"},
+        "tests": {"items": {"$ref": "#/$defs/RuleTestEvidence"}, "title": "Tests", "type": "array"}
+      },
+      "required": ["rule_id", "status"],
+      "title": "RuleExecutionEvidence",
+      "type": "object"
+    },
+    "RuleTestEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_path": {"maxLength": 2000, "minLength": 1, "title": "Artifact Path", "type": "string"},
+        "symbol": {"maxLength": 2000, "minLength": 1, "title": "Symbol", "type": "string"},
+        "line_start": {"minimum": 1, "title": "Line Start", "type": "integer"},
+        "line_end": {"minimum": 1, "title": "Line End", "type": "integer"},
+        "polarity": {"enum": ["positive", "negative", "boundary"], "title": "Polarity", "type": "string"}
+      },
+      "required": ["artifact_path", "symbol", "line_start", "line_end", "polarity"],
+      "title": "RuleTestEvidence",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "contract_version": {"const": "execution-evidence-v1.0.0", "title": "Contract Version", "type": "string"},
+    "run_id": {"maxLength": 160, "minLength": 3, "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]+$", "title": "Run Id", "type": "string"},
+    "rules": {"items": {"$ref": "#/$defs/RuleExecutionEvidence"}, "minItems": 1, "title": "Rules", "type": "array"}
+  },
+  "required": ["contract_version", "run_id", "rules"],
+  "title": "ExecutionEvidenceV1",
+  "type": "object"
+}

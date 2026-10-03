@@ -19,6 +19,7 @@ gates.
 | `profile-changes-v1.schema.json` | Source- and rule-linked profile change proposals |
 | `coverage-ledger-v1.schema.json` | Section, paragraph, table, footnote, and notice review ledger |
 | `data-inventory-v1.schema.json` | Hashes and row counts for generated executable tables |
+| `execution-evidence-v1.schema.json` | Per-rule executable/documented/unresolved status, source-to-Rego links, and test evidence for Quality Gate v2 |
 | `run-comparison-v1.schema.json` | Vergleichbare Kennzahlen mehrerer Modellläufe |
 | `raw-log-event-v1.schema.json` | Minimal JSON-object constraint for each provider-native JSONL event |
 
@@ -27,7 +28,7 @@ semantics, not research protocol versions.
 
 The v1 rule-catalog, source-reference, and inventory schemas remain only for
 reading archived pilots. New runs require the versions listed above. Regenerate
-the five model-authored schemas from their authoritative Pydantic models with
+the six model-authored schemas from their authoritative Pydantic models with
 `python3 -m rulelab export-schemas`.
 
 ## Model switching
@@ -91,6 +92,7 @@ runs/<run_id>/
     rules/profile_changes.json
     rules/coverage.json
     rules/data_inventory.json
+    rules/execution_evidence.json
     notes/assumptions.md
     tools/opa_validate.py
     tools/opa-version.txt
@@ -134,15 +136,18 @@ ambiguous:
 - `workspace/rules/coverage.json`: disposition of reviewed source locations;
 - `workspace/rules/data_inventory.json`: every generated data artifact, hash,
   JSON pointer, row count, and source-reference links;
+- `workspace/rules/execution_evidence.json`: Quality Gate v2 classification of
+  every rule, with direct Rego/source/test evidence for executable rules;
 - Rego-v1 modules below `workspace/policy/`;
 - meaningful generated tests below `workspace/tests/`;
 - `workspace/notes/assumptions.md`: ambiguity and unresolved questions.
 
-`prepare` copies all five Pydantic-generated schemas into the isolated
+`prepare` copies all six Pydantic-generated schemas into the isolated
 workspace. `finalize` applies strict Pydantic validation (`extra=forbid`), then
 checks cross-references, exact evidence presence on the cited page, source and
 data hashes, artifact line bounds, profile proposal preconditions, source
-coverage, and table row counts before it writes an inventory.
+coverage, table row counts, and Quality Gate v2 execution evidence before it
+writes an inventory.
 
 Generated tests are extraction aids, not independent proof that a rule is
 semantically correct.

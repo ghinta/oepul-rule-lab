@@ -58,7 +58,7 @@ Fußnoten und Querverweisen vollständig:
    JSON-Pointer, Zeilenzahl und Quellenbeleg-IDs. Gibt es keine Datendateien,
    bleibt `artifacts` leer.
 9. Validiere vor Abschluss alle fünf JSON-Ausgaben nochmals Feld für Feld gegen
-   die mitgelieferten Schemas; ähnliche oder ältere Formate gelten als Fehler.
+   die mitgelieferten Schemas; ähnliche oder ältere Formate gelten als Fehler.{{QUALITY_GATE_V2_STEP}}
 
 Lasse Regeln nicht allein wegen eines unvollständigen Ausgangsprofils weg. Ziel
 ist zunächst maximale, quellengebundene und technisch lauffähige Extraktion;

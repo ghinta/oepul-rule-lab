@@ -19,7 +19,12 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from .contracts import GENERATOR_CONTRACT_MODELS, export_generator_schemas
+from .contracts import (
+    GENERATOR_CONTRACT_MODELS,
+    RunArtifactV1,
+    export_generator_schemas,
+    validate_model_config,
+)
 from .grounding import known_profile_paths, validate_grounded_outputs
 
 
@@ -307,6 +312,16 @@ def write_json(path: Path, value: Any) -> None:
     with path.open("w", encoding="utf-8") as handle:
         json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
         handle.write("\n")
+
+
+def write_run_metadata(path: Path, value: dict[str, Any]) -> None:
+    """Reject malformed lifecycle metadata before it becomes run evidence."""
+    # Pre-v2 historical fixtures/runs without the lifecycle contract remain
+    # readable; every run prepared by the current CLI carries the contract and
+    # is validated at each persisted transition.
+    if "contract_version" in value:
+        RunArtifactV1.model_validate(value)
+    write_json(path, value)
 
 
 def sha256(path: Path) -> str:
@@ -601,6 +616,19 @@ def source_files(source_root: Path, measure: str, all_sources: bool) -> list[Pat
     return selected
 
 
+# Quality Gate v2 is opt-in (`prepare --quality-gate v2`): v1 runs keep the
+# prompt they were compared on, without this step.
+QUALITY_GATE_V2_PROMPT_STEP = """
+10. Lies `contracts/execution-evidence-v1.schema.json` und schreibe
+    `rules/execution_evidence.json`. Erfasse jede Katalogregel genau einmal:
+    `executable` benötigt direkte Rego-Stellen, dieselben Quellenbeleg-IDs wie
+    die Regel sowie mindestens einen positiven und einen negativen oder
+    Grenzfall-Test mit Symbol und Zeilenbereich. Regeln, die noch nicht
+    ausführbar sind, müssen stattdessen als `documented_only` oder `unresolved`
+    mit einer konkreten Begründung ausgewiesen werden. Behaupte keine
+    Ausführbarkeit, wenn kein direkter Quellen--Code--Test-Nachweis möglich ist."""
+
+
 def render_prompt(template: str, values: dict[str, str]) -> str:
     for key, value in values.items():
         template = template.replace("{{" + key + "}}", value)
@@ -609,7 +637,9 @@ def render_prompt(template: str, values: dict[str, str]) -> str:
 
 def prepare(args: argparse.Namespace) -> int:
     model_path = Path(args.model).resolve()
-    model_config = read_json(model_path)
+    model_config = validate_model_config(read_json(model_path)).model_dump(
+        mode="json"
+    )
     model_name = str(model_config.get("model", "unknown-model"))
     run_id = args.run_id or default_run_id(args.measure, model_name)
     run_dir = (REPO_ROOT / "runs" / run_id).resolve()
@@ -682,6 +712,7 @@ def prepare(args: argparse.Namespace) -> int:
     prompt_template = (REPO_ROOT / "prompts" / "generate_measure.md").read_text(
         encoding="utf-8"
     )
+    quality_gate = getattr(args, "quality_gate", "v1")
     prompt = render_prompt(
         prompt_template,
         {
@@ -689,6 +720,9 @@ def prepare(args: argparse.Namespace) -> int:
             "MODE": args.mode,
             "RUN_ID": run_id,
             "SOURCE_LIST": "\n".join(prompt_source_lines),
+            "QUALITY_GATE_V2_STEP": (
+                QUALITY_GATE_V2_PROMPT_STEP if quality_gate == "v2" else ""
+            ),
         },
     )
     (run_dir / "prompt.md").write_text(prompt, encoding="utf-8")
@@ -699,6 +733,7 @@ def prepare(args: argparse.Namespace) -> int:
         "created_at": utc_now(),
         "status": "prepared",
         "mode": args.mode,
+        "quality_gate_version": quality_gate,
         "measure": args.measure,
         "model": model_config,
         "profile": {
@@ -707,7 +742,7 @@ def prepare(args: argparse.Namespace) -> int:
         },
         "sources": source_records,
     }
-    write_json(run_dir / "run.json", metadata)
+    write_run_metadata(run_dir / "run.json", metadata)
     print(run_dir)
     return 0
 
@@ -884,7 +919,11 @@ def prepare_raw_attempt(raw_dir: Path) -> int:
 def run_agent(args: argparse.Namespace) -> int:
     run_dir = Path(args.run_dir).resolve()
     metadata = read_json(run_dir / "run.json")
-    config = read_json(run_dir / "model.json")
+    if "contract_version" in metadata:
+        RunArtifactV1.model_validate(metadata)
+    config = validate_model_config(read_json(run_dir / "model.json")).model_dump(
+        mode="json"
+    )
     adapter = config.get("adapter", "codex-cli")
     workspace = run_dir / "workspace"
     resume = bool(getattr(args, "resume", False))
@@ -945,7 +984,7 @@ def run_agent(args: argparse.Namespace) -> int:
             metadata["status"] = "not_started_usage_guard"
             usage_guard["status"] = "unavailable"
             usage_guard["reason"] = str(exc)
-            write_json(run_dir / "run.json", metadata)
+            write_run_metadata(run_dir / "run.json", metadata)
             print(f"Rule Lab usage guard: {exc}", file=sys.stderr)
             return USAGE_GUARD_EXIT_CODE
         usage_guard["start_remaining_percent"] = start_remaining
@@ -957,7 +996,7 @@ def run_agent(args: argparse.Namespace) -> int:
                 f"remaining quota {start_remaining:.1f}% is below the required "
                 f"{MIN_START_REMAINING_PERCENT:.0f}%"
             )
-            write_json(run_dir / "run.json", metadata)
+            write_run_metadata(run_dir / "run.json", metadata)
             print(f"Rule Lab usage guard: {usage_guard['reason']}", file=sys.stderr)
             return USAGE_GUARD_EXIT_CODE
     else:
@@ -992,7 +1031,7 @@ def run_agent(args: argparse.Namespace) -> int:
             *metadata.get("resumed_attempts", []),
             generation_attempt,
         ]
-    write_json(run_dir / "run.json", metadata)
+    write_run_metadata(run_dir / "run.json", metadata)
 
     timeout = int(config.get("timeout_seconds", 3600))
     usage_aborted = False
@@ -1085,7 +1124,7 @@ def run_agent(args: argparse.Namespace) -> int:
     )
     metadata["finished_at"] = utc_now()
     metadata["generator_exit_code"] = completed_returncode
-    write_json(run_dir / "run.json", metadata)
+    write_run_metadata(run_dir / "run.json", metadata)
     return USAGE_GUARD_EXIT_CODE if usage_aborted else completed_returncode
 
 
@@ -1286,6 +1325,8 @@ def finalize(args: argparse.Namespace) -> int:
     run_dir = Path(args.run_dir).resolve()
     workspace = run_dir / "workspace"
     metadata = read_json(run_dir / "run.json")
+    if "contract_version" in metadata:
+        RunArtifactV1.model_validate(metadata)
     baseline = read_json(run_dir / "baseline_profile.json")
     working = read_json(workspace / "canonical_farm_profile.json")
     direct_profile_diff = profile_diff(baseline, working)
@@ -1385,6 +1426,10 @@ def finalize(args: argparse.Namespace) -> int:
         "assumptions": workspace / "notes" / "assumptions.md",
         "raw_log": run_dir / "raw" / "events.jsonl",
     }
+    if metadata.get("quality_gate_version") == "v2":
+        required_files["execution_evidence"] = (
+            workspace / "rules" / "execution_evidence.json"
+        )
     missing_outputs = [
         name for name, path in required_files.items() if not path.is_file()
     ]
@@ -1412,6 +1457,22 @@ def finalize(args: argparse.Namespace) -> int:
         if grounded.data_inventory
         else None
     )
+    execution_evidence = grounded.execution_evidence
+    executable_rule_count = (
+        sum(item.status == "executable" for item in execution_evidence.rules)
+        if execution_evidence
+        else None
+    )
+    documented_rule_count = (
+        sum(item.status == "documented_only" for item in execution_evidence.rules)
+        if execution_evidence
+        else None
+    )
+    unresolved_rule_count = (
+        sum(item.status == "unresolved" for item in execution_evidence.rules)
+        if execution_evidence
+        else None
+    )
     if structured_rule_count == 0:
         missing_outputs.append("structured_rules_empty")
     if source_reference_count == 0:
@@ -1430,6 +1491,10 @@ def finalize(args: argparse.Namespace) -> int:
     metrics["profile_change_proposal_count"] = profile_change_count
     metrics["coverage_item_count"] = coverage_item_count
     metrics["data_table_count"] = data_table_count
+    metrics["quality_gate_version"] = metadata.get("quality_gate_version", "v1")
+    metrics["executable_rule_count"] = executable_rule_count
+    metrics["documented_rule_count"] = documented_rule_count
+    metrics["unresolved_rule_count"] = unresolved_rule_count
     metrics["grounding_valid"] = grounded.valid
     metrics["contract_errors"] = grounded.errors
     metrics["generated_test_count"] = generated_test_count
@@ -1496,7 +1561,7 @@ def finalize(args: argparse.Namespace) -> int:
     metadata["status"] = "failed" if finalization_failed else "finalized"
     metadata["finalized_at"] = utc_now()
     metadata["metrics"] = metrics
-    write_json(run_dir / "run.json", metadata)
+    write_run_metadata(run_dir / "run.json", metadata)
     print(json.dumps(metrics, ensure_ascii=False, indent=2))
     return 1 if finalization_failed else 0
 
@@ -1600,6 +1665,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--mode", choices=("discover", "conform"), default="discover"
     )
     prepare_parser.add_argument("--run-id")
+    prepare_parser.add_argument(
+        "--quality-gate",
+        choices=("v1", "v2"),
+        default="v1",
+        help="v2 additionally requires rules/execution_evidence.json",
+    )
     prepare_parser.add_argument("--profile", default=str(DEFAULT_PROFILE))
     prepare_parser.add_argument("--sources", default=str(DEFAULT_SOURCES))
     prepare_parser.add_argument("--all-sources", action="store_true")
