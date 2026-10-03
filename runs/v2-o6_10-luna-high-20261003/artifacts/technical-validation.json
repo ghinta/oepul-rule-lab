@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 488,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_10-luna-high-20261003/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_10.rego",
+    "tests/o6_10_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_10-luna-high-20261003/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 66,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_10.rego",
+        "tests/o6_10_test.rego"
+      ],
+      "duration_ms": 114,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_10-luna-high-20261003/workspace/tools/opa",
+            "fmt",
+            "policy/o6_10.rego"
+          ],
+          "duration_ms": 61,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_10\n\nimport rego.v1\n\ndefault eligible := false\n\ndefault all_requirements_met := false\n\ndefault premium_eur_per_ha := 0\n\ndefault surcharge_eur_per_ha := 0\n\ndefault total_premium_eur := 0\n\nparticipation := object.get(input, \"o6_10\", {})\nfarm := object.get(input, \"farm\", {})\nland := object.get(input, \"land\", {})\nparcels := object.get(land, \"parcels\", [])\nyear := object.get(farm, \"year\", 0)\n\nrequested if object.get(participation, \"requested\", false)\n\neligible_parcel(p) if {\n\tcategory := object.get(object.get(p, \"crop\", {}), \"crop_category\", \"\")\n\tcategory in data.eligible_crop_categories\n}\n\nmeasure_data(p) := object.get(p, \"o6_10\", {})\n\nterrace(p) if object.get(measure_data(p), \"is_terrace\", false)\n\narea_ha(p) := object.get(p, \"area_ha\", 0)\n\neligible_area_ha := sum([area_ha(p) | some p in parcels])\n\nviolations contains \"minimum_participation_area\" if {\n\trequested\n\teligible_area_ha < data.annual_rules.minimum_area_ha\n}\n\nviolations contains \"ineligible_crop_or_land_use\" if {\n\trequested\n\tsome p in parcels\n\tcategory := object.get(object.get(p, \"crop\", {}), \"crop_category\", \"\")\n\tcategory != \"\"\n\tnot category in data.eligible_crop_categories\n}\n\nviolations contains \"terrace_slope\" if {\n\trequested\n\tsome p in parcels\n\tterrace(p)\n\tslope := object.get(p, \"slope_percent\", null)\n\tslope == null\n}\n\nviolations contains \"terrace_slope\" if {\n\trequested\n\tsome p in parcels\n\tterrace(p)\n\tslope := object.get(p, \"slope_percent\", 0)\n\tslope < 25\n}\n\ndrought_2026_exception if {\n\tyear == 2026\n\tobject.get(participation, \"drought_2026\", false)\n\tobject.get(participation, \"proper_cover_establishment\", false)\n}\n\nviolations contains \"full_year_and_all_alleys_cover\" if {\n\trequested\n\tsome p in parcels\n\tnot terrace(p)\n\tnot object.get(measure_data(p), \"full_year_and_all_alleys_cover\", false)\n\tnot drought_2026_exception\n}\n\nviolations contains \"minimum_hardy_mixture_partners\" if {\n\trequested\n\tp := parcels[_]\n\tnot terrace(p)\n\tobject.get(measure_data(p), \"preexisting_cover\", false) == false\n\tpartners := object.get(measure_data(p), \"hardy_mixture_partners\", 0)\n\tpartners < data.annual_rules.minimum_hardy_mixture_partners\n}\n\nviolations contains \"insufficient_alternative_planting_cover\" if {\n\trequested\n\tp := parcels[_]\n\tnot terrace(p)\n\tobject.get(measure_data(p), \"alternative_planting_system\", false)\n\tcover := object.get(measure_data(p), \"covered_area_percent\", 0)\n\tcover < data.annual_rules.alternative_planting_minimum_cover_percent\n}\n\nviolations contains \"open_stem_area_exceeded\" if {\n\trequested\n\tp := parcels[_]\n\tnot terrace(p)\n\twidth := object.get(measure_data(p), \"open_stem_width_cm\", 0)\n\tcategory := object.get(object.get(p, \"crop\", {}), \"crop_category\", \"\")\n\tcategory == \"vineyard\"\n\twidth > data.annual_rules.wine_open_stem_area_cm\n}\n\nviolations contains \"open_stem_area_exceeded\" if {\n\trequested\n\tp := parcels[_]\n\tnot terrace(p)\n\twidth := object.get(measure_data(p), \"open_stem_width_cm\", 0)\n\tcategory := object.get(object.get(p, \"crop\", {}), \"crop_category\", \"\")\n\tcategory in [\"orchard\", \"hop\"]\n\twidth > data.annual_rules.orchard_hop_open_stem_area_cm\n}\n\nviolations contains \"invalid_cover_culture\" if {\n\trequested\n\tp := parcels[_]\n\tcover_type := object.get(measure_data(p), \"cover_type\", \"\")\n\tcover_type in data.invalid_cover_types\n}\n\nviolations contains \"prohibited_grain_or_maize\" if {\n\trequested\n\tp := parcels[_]\n\tcover := measure_data(p)\n\tshare := object.get(cover, \"grain_or_maize_share_percent\", 0)\n\tshare > data.annual_rules.maximum_grain_or_maize_share_percent\n\tobject.get(cover, \"oats_or_spring_barley_cover_crop\", false) == false\n}\n\nviolations contains \"prohibited_grain_or_maize\" if {\n\trequested\n\tp := parcels[_]\n\tcover := measure_data(p)\n\tobject.get(cover, \"pure_grain_or_maize\", false)\n\tobject.get(cover, \"green_cut_rye_under_seed_law\", false) == false\n\tobject.get(cover, \"oats_or_spring_barley_cover_crop\", false) == false\n}\n\nviolations contains \"tillage_destroys_cover\" if {\n\trequested\n\tp := parcels[_]\n\tevent := object.get(measure_data(p), \"tillage\", {})\n\tobject.get(event, \"destroys_cover\", false)\n\tobject.get(event, \"followed_by_reseeding\", false) == false\n}\n\nviolations contains \"reseeding_deadline\" if {\n\trequested\n\tp := parcels[_]\n\tevent := object.get(measure_data(p), \"reseeding\", {})\n\tobject.get(event, \"required\", false)\n\tobject.get(event, \"within_8_weeks\", false) == false\n}\n\nviolations contains \"reseeding_deadline\" if {\n\trequested\n\tp := parcels[_]\n\tevent := object.get(measure_data(p), \"reseeding\", {})\n\tobject.get(event, \"required\", false)\n\tobject.get(event, \"after_october_1\", false)\n}\n\nviolations contains \"late_renewal_until_may_15\" if {\n\trequested\n\tp := parcels[_]\n\tevent := object.get(measure_data(p), \"reseeding\", {})\n\tobject.get(event, \"cleared_after_september_15\", false)\n\tobject.get(event, \"uncovered_until_may_15\", false) == false\n}\n\nviolations contains \"pesticide_on_aisle_cover\" if {\n\trequested\n\tp := parcels[_]\n\tobject.get(measure_data(p), \"pesticide_on_aisle_cover\", false)\n}\n\nviolations contains \"non_mechanical_cover_removal\" if {\n\trequested\n\tp := parcels[_]\n\tobject.get(measure_data(p), \"cover_removal_method\", \"\") != \"\"\n\tobject.get(measure_data(p), \"cover_removal_method\", \"\") != \"mechanical\"\n}\n\nviolations contains \"cover_used_or_removed\" if {\n\trequested\n\tp := parcels[_]\n\tmd := measure_data(p)\n\tobject.get(md, \"cover_used_for_production\", false)\n\tobject.get(md, \"extensive_sheep_grazing\", false) == false\n\tobject.get(md, \"temporary_poultry_grazing\", false) == false\n}\n\nviolations contains \"operation_program_double_funding\" if {\n\trequested\n\tobject.get(participation, \"operation_program_organisms_or_pheromones\", false)\n\tobject.get(participation, \"organism_or_pheromone_surcharge_requested\", false)\n}\n\nviolations contains \"organism_or_pheromone_application\" if {\n\trequested\n\tobject.get(participation, \"organism_or_pheromone_surcharge_requested\", false)\n\tobject.get(participation, \"surcharge_applied_on_at_least_one_plot\", false) == false\n}\n\nviolations contains \"organism_or_pheromone_application\" if {\n\trequested\n\tobject.get(participation, \"organism_or_pheromone_surcharge_requested\", false)\n\tobject.get(participation, \"application_replaces_pesticide\", false) == false\n}\n\nviolations contains \"records_incomplete\" if {\n\trequested\n\tobject.get(participation, \"records\", {}) != {}\n\trecords := object.get(participation, \"records\", {})\n\tnot object.get(records, \"farm\", false)\n}\n\nall_requirements_met if {\n\trequested\n\tcount(violations) == 0\n}\n\neligible if all_requirements_met\n\nwine_rate(p) := rate if {\n\tslope := object.get(p, \"slope_percent\", 0)\n\trow := data.premium_eur_per_ha_from_2025.wine[_]\n\tslope >= row.min_slope_inclusive\n\trow.max_slope_exclusive == null\n\trate := row.rate\n}\n\nwine_rate(p) := rate if {\n\tslope := object.get(p, \"slope_percent\", 0)\n\trow := data.premium_eur_per_ha_from_2025.wine[_]\n\tslope >= row.min_slope_inclusive\n\trow.max_slope_exclusive != null\n\tslope < row.max_slope_exclusive\n\trate := row.rate\n}\n\norchard_rate(p) := rate if {\n\tslope := object.get(p, \"slope_percent\", 0)\n\trow := data.premium_eur_per_ha_from_2025.orchard[_]\n\tslope >= row.min_slope_inclusive\n\trow.max_slope_exclusive == null\n\trate := row.rate\n}\n\norchard_rate(p) := rate if {\n\tslope := object.get(p, \"slope_percent\", 0)\n\trow := data.premium_eur_per_ha_from_2025.orchard[_]\n\tslope >= row.min_slope_inclusive\n\trow.max_slope_exclusive != null\n\tslope < row.max_slope_exclusive\n\trate := row.rate\n}\n\nparcel_base_rate(p) := rate if {\n\tcategory := object.get(object.get(p, \"crop\", {}), \"crop_category\", \"\")\n\tcategory == \"vineyard\"\n\trate := wine_rate(p)\n}\n\nparcel_base_rate(p) := rate if {\n\tcategory := object.get(object.get(p, \"crop\", {}), \"crop_category\", \"\")\n\tcategory == \"orchard\"\n\trate := orchard_rate(p)\n}\n\nparcel_base_rate(p) := data.premium_eur_per_ha_from_2025.hop if {\n\tcategory := object.get(object.get(p, \"crop\", {}), \"crop_category\", \"\")\n\tcategory == \"hop\"\n}\n\nbase_total_eur := sum([(area_ha(p) * parcel_base_rate(p)) | some p in parcels])\n\nsurcharge_eur_per_ha := data.premium_eur_per_ha_from_2025.organism_or_pheromone_surcharge if {\n\tobject.get(participation, \"organism_or_pheromone_surcharge_requested\", false)\n\tobject.get(participation, \"insecticide_avoidance\", false) == false\n\tobject.get(participation, \"organic_farming\", false) == false\n}\n\nreduced_surcharge_applies if object.get(participation, \"insecticide_avoidance\", false)\n\nreduced_surcharge_applies if object.get(participation, \"organic_farming\", false)\n\nsurcharge_eur_per_ha := data.premium_eur_per_ha_from_2025.organism_or_pheromone_surcharge_reduced if {\n\tobject.get(participation, \"organism_or_pheromone_surcharge_requested\", false)\n\treduced_surcharge_applies\n}\n\npremium_eur_per_ha := base_total_eur / eligible_area_ha if {\n\teligible\n\teligible_area_ha > 0\n}\n\ntotal_premium_eur := base_total_eur + surcharge_total_eur if eligible\n\nsurcharge_total_eur := sum([(area_ha(p) * surcharge_eur_per_ha) | some p in parcels])\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_10-luna-high-20261003/workspace/tools/opa",
+            "fmt",
+            "tests/o6_10_test.rego"
+          ],
+          "duration_ms": 52,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_10_test\n\nimport data.oepul.o6_10\nimport rego.v1\n\nsample := {\n\t\"farm\": {\"year\": 2025},\n\t\"land\": {\"parcels\": [{\n\t\t\"area_ha\": 1,\n\t\t\"land_use\": \"special_crop\",\n\t\t\"slope_percent\": 30,\n\t\t\"crop\": {\"crop_category\": \"vineyard\"},\n\t\t\"o6_10\": {\n\t\t\t\"full_year_and_all_alleys_cover\": true,\n\t\t\t\"hardy_mixture_partners\": 3,\n\t\t\t\"open_stem_width_cm\": 80,\n\t\t\t\"cover_type\": \"sown_mixture\",\n\t\t\t\"cover_removal_method\": \"mechanical\",\n\t\t\t\"surcharge_applied\": true,\n\t\t},\n\t}]},\n\t\"o6_10\": {\n\t\t\"requested\": true,\n\t\t\"records\": {},\n\t\t\"organism_or_pheromone_surcharge_requested\": false,\n\t},\n}\n\ntest_valid_vineyard if {\n\to6_10.eligible with input as sample\n\to6_10.premium_eur_per_ha == 324 with input as sample\n}\n\ntest_minimum_area_violation if {\n\tnot o6_10.eligible with input as object.union(sample, {\"land\": {\"parcels\": []}})\n\t\"minimum_participation_area\" in o6_10.violations with input as object.union(sample, {\"land\": {\"parcels\": []}})\n}\n\ntest_invalid_cover_violation if {\n\tbad := object.union(sample, {\"land\": {\"parcels\": [{\n\t\t\"area_ha\": 1,\n\t\t\"slope_percent\": 10,\n\t\t\"crop\": {\"crop_category\": \"orchard\"},\n\t\t\"o6_10\": {\"full_year_and_all_alleys_cover\": true, \"hardy_mixture_partners\": 3, \"cover_type\": \"self_seeding\"},\n\t}]}})\n\tnot o6_10.eligible with input as bad\n\t\"invalid_cover_culture\" in o6_10.violations with input as bad\n}\n\ntest_reduced_surcharge if {\n\twith_surcharge := object.union(sample, {\"o6_10\": {\n\t\t\"requested\": true,\n\t\t\"records\": {},\n\t\t\"organism_or_pheromone_surcharge_requested\": true,\n\t\t\"surcharge_applied_on_at_least_one_plot\": true,\n\t\t\"application_replaces_pesticide\": true,\n\t\t\"insecticide_avoidance\": true,\n\t}})\n\to6_10.surcharge_eur_per_ha == 81 with input as with_surcharge\n}\n\ntest_drought_exception if {\n\tdry := object.union(sample, {\"farm\": {\"year\": 2026}, \"o6_10\": {\n\t\t\"requested\": true,\n\t\t\"drought_2026\": true,\n\t\t\"proper_cover_establishment\": true,\n\t\t\"records\": {},\n\t}})\n\to6_10.eligible with input as dry\n}\n\ntest_farm_records_required if {\n\tincomplete := object.union(sample, {\"o6_10\": {\"requested\": true, \"records\": {\"farm\": false}}})\n\tnot o6_10.eligible with input as incomplete\n\t\"records_incomplete\" in o6_10.violations with input as incomplete\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_10-luna-high-20261003/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 101,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 6/6\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_10-luna-high-20261003/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 204,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_10-luna-high-20261003/workspace"
+}
