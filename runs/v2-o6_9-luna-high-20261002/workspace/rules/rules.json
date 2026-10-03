@@ -1,0 +1,1058 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_9",
+  "rules": [
+    {
+      "id": "o6_9.scope.eligible_categories",
+      "rule_type": "scope",
+      "statement": "Die Maßnahme fördert bodennahe Ausbringung flüssiger Wirtschaftsdünger und Biogasgülle auf Acker- und Grünlandflächen, Gülleseparierung von Rindergülle und ab dem Antragsjahr 2025 stark stickstoffreduzierte Schweinefütterung.",
+      "conditions": [],
+      "result": {
+        "outcome": "eligible_categories",
+        "description": "Diese drei Kategorien gehören zum fachlichen Anwendungsbereich von o6_9.",
+        "value": [
+          "application",
+          "separation",
+          "pig_feeding"
+        ]
+      },
+      "source_reference_ids": [
+        "measure_p1_scope",
+        "srl_p61_scope"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.result"
+      ]
+    },
+    {
+      "id": "o6_9.contract.calendar_year",
+      "rule_type": "contract_period",
+      "statement": "Der Verpflichtungs- und Vertragszeitraum beträgt grundsätzlich ein Kalenderjahr vom 1. Jänner bis 31. Dezember.",
+      "conditions": [],
+      "result": {
+        "outcome": "one_year_contract",
+        "description": "Die jährliche Verpflichtung gilt für das Kalenderjahr.",
+        "value": {
+          "start": "01-01",
+          "end": "12-31"
+        }
+      },
+      "source_reference_ids": [
+        "measure_p1_contract",
+        "general_p12_one_year"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.result"
+      ]
+    },
+    {
+      "id": "o6_9.minimum.any_category",
+      "rule_type": "minimum_participation",
+      "statement": "In jedem Teilnahmejahr muss entweder flüssiger Wirtschaftsdünger bodennah ausgebracht, Rindergülle separiert oder an der Kategorie stark stickstoffreduzierte Fütterung von Schweinen teilgenommen werden.",
+      "conditions": [
+        {
+          "expression": "application_m3 > 0 OR separated_m3 > 0 OR pig_feeding_participated",
+          "description": "Mindestens eine der drei Maßnahmenkategorien muss im Teilnahmejahr erfüllt werden.",
+          "input_paths": [
+            "participation.application_m3",
+            "participation.separated_m3",
+            "participation.categories"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "minimum_participation_met",
+        "description": "Ohne eine Kategorie fehlt die Mindestteilnahme.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "measure_p2_minimum"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.has_minimum_participation"
+      ]
+    },
+    {
+      "id": "o6_9.minimum.pig_gve_per_arable_ha",
+      "rule_type": "access_condition",
+      "statement": "Für die Schweinefütterung müssen im jeweiligen Teilnahmejahr mindestens 1,00 GVE Schweine im Jahresdurchschnitt je ha gesamter Ackerfläche gehalten werden.",
+      "conditions": [
+        {
+          "expression": "pig_gve_annual_average / total_arable_area_ha >= 1",
+          "description": "Die Schwelle wird auf die gesamte Ackerfläche ohne Abzüge bezogen.",
+          "input_paths": [
+            "pig_feeding.gve_pigs_annual_average",
+            "farm.arable_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "pig_threshold_met",
+        "description": "Die Kategorie ist bei mindestens 1 GVE/ha Ackerfläche zugänglich.",
+        "value": 1
+      },
+      "source_reference_ids": [
+        "measure_p2_pig_threshold",
+        "srl_p61_pig_threshold"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.pig_threshold_compliant"
+      ]
+    },
+    {
+      "id": "o6_9.manure.eligible_types",
+      "rule_type": "definition",
+      "statement": "Förderbarer Wirtschaftsdünger ist Gülle, Jauche oder Biogasgülle; zusätzlicher zulässiger Wasseranteil macht ihn nicht generell unförderbar.",
+      "conditions": [],
+      "result": {
+        "outcome": "eligible_manure_types",
+        "description": "Die Maßnahme verwendet die drei definierten flüssigen Wirtschaftsdüngerarten.",
+        "value": [
+          "slurry",
+          "urine",
+          "biogas_slurry"
+        ]
+      },
+      "source_reference_ids": [
+        "measure_p2_definitions",
+        "srl_p61_definitions"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.eligible_manure"
+      ]
+    },
+    {
+      "id": "o6_9.manure.exclusions",
+      "rule_type": "eligibility_exclusion",
+      "statement": "In die Güllegrube eingeleitetes Regenwasser und mit Wasser versetzter und aufgemischter Festmist sind nicht förderbar.",
+      "conditions": [
+        {
+          "expression": "injected_rainwater OR water_mixed_solid_manure",
+          "description": "Einer dieser Ausschlusstatbestände schließt die betroffene Flüssigkeit aus.",
+          "input_paths": [
+            "application.injected_rainwater",
+            "application.is_water_mixed_solid_manure"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Die betroffene Menge ist nicht prämienfähig.",
+        "value": false
+      },
+      "source_reference_ids": [
+        "measure_p2_definitions",
+        "measure_p3_solid_manure_exclusion"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.eligible_manure"
+      ]
+    },
+    {
+      "id": "o6_9.biogas.excluded_input",
+      "rule_type": "eligibility_exclusion",
+      "statement": "Sobald Biogasgülle einen nicht definitionsgemäßen Bestandteil enthält, scheidet die gesamte Biogasgülle von der Förderfähigkeit aus.",
+      "conditions": [
+        {
+          "expression": "biogas_has_excluded_input",
+          "description": "Beispielhaft sind Speiseölreste ein ausgeschlossener Bestandteil.",
+          "input_paths": [
+            "application.biogas_has_excluded_input"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Die gesamte betroffene Biogasgülle ist ausgeschlossen.",
+        "value": false
+      },
+      "source_reference_ids": [
+        "measure_p3_biogas_exclusion"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.eligible_manure"
+      ]
+    },
+    {
+      "id": "o6_9.categories.combinable",
+      "rule_type": "combination",
+      "statement": "Bodennahes Ausbringen, Gülleseparation und Schweinefütterung können am selben Betrieb auch gemeinsam angewendet und gefördert werden.",
+      "conditions": [],
+      "result": {
+        "outcome": "combination_allowed",
+        "description": "Mehrere o6_9-Kategorien dürfen nebeneinander bestehen.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "measure_p3_categories",
+        "srl_p61_categories"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.has_minimum_participation"
+      ]
+    },
+    {
+      "id": "o6_9.application.land_and_device",
+      "rule_type": "eligibility_condition",
+      "statement": "Flüssige Wirtschaftsdünger einschließlich Biogasgülle müssen auf betriebseigenen Acker- oder Grünlandflächen mit Geräten unmittelbar auf oder in den Boden abgelegt werden.",
+      "conditions": [
+        {
+          "expression": "land_use IN {arable, grassland} AND device_places_on_or_in_soil",
+          "description": "Fläche und Ablageweise müssen gemeinsam die Förderbedingung erfüllen.",
+          "input_paths": [
+            "application.land_use",
+            "application.method"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "application_eligible",
+        "description": "Nur diese Flächen- und Geräteverwendung ist anerkennungsfähig.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "measure_p3_application_area"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.application_compliant"
+      ]
+    },
+    {
+      "id": "o6_9.application.methods",
+      "rule_type": "closed_list",
+      "statement": "Förderbare Ausbringungstechniken sind Schleppschlauch, Schleppschuh und Injektion.",
+      "conditions": [],
+      "result": {
+        "outcome": "allowed_methods",
+        "description": "Die geschlossene Methodenliste wird aus der Datendatei ausgewertet.",
+        "value": [
+          "trailing_hose",
+          "trailing_shoe",
+          "injection"
+        ]
+      },
+      "source_reference_ids": [
+        "measure_p3_methods",
+        "srl_p61_methods"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.application_method_allowed"
+      ]
+    },
+    {
+      "id": "o6_9.application.disallowed_devices",
+      "rule_type": "eligibility_exclusion",
+      "statement": "Schwenkverteiler und Prallteller auf einem Düsenbalken sind in der Maßnahme nicht zulässig.",
+      "conditions": [
+        {
+          "expression": "device IN {swivel_distributor, splash_plate}",
+          "description": "Diese Geräte erfüllen die bodennahe Ablage nicht.",
+          "input_paths": [
+            "application.method"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Die damit ausgebrachte Menge kann nicht anerkannt werden.",
+        "value": false
+      },
+      "source_reference_ids": [
+        "measure_p3_disallowed_devices"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.application_method_allowed"
+      ]
+    },
+    {
+      "id": "o6_9.application.records",
+      "rule_type": "recordkeeping",
+      "statement": "Für bodennahe Ausbringung sind chronologische, schlagbezogene Aufzeichnungen über Menge, Art, Zeitpunkt und Verfahren zu führen.",
+      "conditions": [
+        {
+          "expression": "records_include amount_m3, manure_type, date, method and parcel",
+          "description": "Alle fünf Angaben müssen aus den Aufzeichnungen nachvollziehbar sein.",
+          "input_paths": [
+            "application.records_complete",
+            "application.records_include"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "records_required",
+        "description": "Unvollständige Ausbringungsaufzeichnungen erfüllen die Dokumentationspflicht nicht.",
+        "value": [
+          "amount_m3",
+          "manure_type",
+          "date",
+          "method",
+          "parcel"
+        ]
+      },
+      "source_reference_ids": [
+        "measure_p3_records",
+        "srl_p61_records"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.application_records_compliant"
+      ]
+    },
+    {
+      "id": "o6_9.application.record_aggregation",
+      "rule_type": "recordkeeping_option",
+      "statement": "Mehrere Schläge dürfen bei gleicher Kultur, Menge, Ausbringdatum und Ausbringungsart zusammengefasst werden; die Schlaggrößen sind dann zu addieren.",
+      "conditions": [
+        {
+          "expression": "same_crop AND same_amount AND same_date AND same_method",
+          "description": "Nur bei vollständiger Gleichheit der vier Merkmale ist eine Zusammenfassung zulässig.",
+          "input_paths": [
+            "application.records_include"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "aggregation_allowed",
+        "description": "Die aggregierte Aufzeichnung muss die addierte Schlaggröße enthalten.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "measure_p3_record_aggregation"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.application.external_equipment_proof",
+      "rule_type": "evidence",
+      "statement": "Bei Ausbringung durch betriebsfremde Geräte ist die Dienstleistung durch Rechnung oder gleichwertige geeignete Unterlagen nachzuweisen.",
+      "conditions": [
+        {
+          "expression": "external_equipment",
+          "description": "Der Nachweis ist nur bei betriebsfremdem Gerät erforderlich.",
+          "input_paths": [
+            "application.external_equipment",
+            "documentation.application_logs_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "proof_required",
+        "description": "Ohne geeigneten Nachweis ist die externe Ausbringung nicht ausreichend belegt.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "measure_p4_external_application_proof",
+        "srl_p62_external_application_proof"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.application.biogas_origin_proof",
+      "rule_type": "evidence",
+      "statement": "Bei Ausbringung von Biogasgülle sind geeignete Nachweise über die Ausgangsprodukte vorzulegen.",
+      "conditions": [
+        {
+          "expression": "manure_type == biogas_slurry",
+          "description": "Die Nachweispflicht gilt zusätzlich zur Definition der Biogasgülle.",
+          "input_paths": [
+            "application.manure_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "proof_required",
+        "description": "Beispielsweise sind Untersuchungszertifikate geeignet.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "measure_p4_biogas_proof",
+        "srl_p62_biogas_proof"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.separation.own_cattle",
+      "rule_type": "eligibility_condition",
+      "statement": "Bei der Gülleseparierung muss am Betrieb durch Rinderhaltung angefallener flüssiger Wirtschaftsdünger in feste und flüssige Phase getrennt werden.",
+      "conditions": [
+        {
+          "expression": "origin == own_cattle AND mechanical_phase_separation",
+          "description": "Die Trennung erfolgt durch entsprechende mechanische Einrichtungen.",
+          "input_paths": [
+            "separation.origin",
+            "separation.mechanical_phase_separation"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "separation_eligible",
+        "description": "Betriebsfremde Rindergülle ist nicht förderbar.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "measure_p4_separation_definition",
+        "srl_p62_separation_definition"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.separation_compliant"
+      ]
+    },
+    {
+      "id": "o6_9.separation.actual_quantity",
+      "rule_type": "calculation_basis",
+      "statement": "Es müssen nicht alle am Betrieb anfallenden Rindergüllemengen separiert werden; förderbar sind nur die tatsächlich separierten Mengen.",
+      "conditions": [
+        {
+          "expression": "separated_m3 > 0",
+          "description": "Die Prämienmenge folgt der tatsächlich separierten Menge.",
+          "input_paths": [
+            "separation.separated_m3"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "actual_quantity_only",
+        "description": "Nicht separierte Mengen werden nicht in die Prämienmenge einbezogen.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "measure_p4_actual_separation"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.separation_premium"
+      ]
+    },
+    {
+      "id": "o6_9.separation.independent_application",
+      "rule_type": "independence",
+      "statement": "Gülleseparation ist nicht mit bodennaher Ausbringung verknüpft; die separierte Gülle darf auch mit herkömmlicher Technik ausgebracht werden.",
+      "conditions": [],
+      "result": {
+        "outcome": "independent_categories",
+        "description": "Separation und bodennahe Ausbringung sind getrennt zu beurteilen.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "measure_p4_separation_independence"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.separation.records",
+      "rule_type": "recordkeeping",
+      "statement": "Für die Gülleseparierung sind Datum und Menge des separierten flüssigen Wirtschaftsdüngers aufzuzeichnen.",
+      "conditions": [
+        {
+          "expression": "records_include date and separated_liquid_m3",
+          "description": "Diese beiden Angaben bilden den Mindestinhalt der Separationsaufzeichnung.",
+          "input_paths": [
+            "separation.records_complete",
+            "separation.records_include"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "records_required",
+        "description": "Andere Aufzeichnungen sind zulässig, wenn sie diese Angaben enthalten.",
+        "value": [
+          "date",
+          "separated_liquid_m3"
+        ]
+      },
+      "source_reference_ids": [
+        "measure_p4_separation_records"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.separation_records_compliant"
+      ]
+    },
+    {
+      "id": "o6_9.pig.feeding_from_2025",
+      "rule_type": "effective_date",
+      "statement": "Die Kategorie stark stickstoffreduzierte Fütterung von Schweinen ist ab dem Antragsjahr 2025 wählbar.",
+      "conditions": [
+        {
+          "expression": "year >= 2025",
+          "description": "Vor 2025 ist diese Kategorie nicht verfügbar.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "category_available",
+        "description": "Die Fütterungskategorie ist ab 2025 zulässig.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "measure_p5_feed_effective",
+        "srl_p62_feed_effective"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.pig_entry_allowed"
+      ]
+    },
+    {
+      "id": "o6_9.pig.all_animals_and_limits",
+      "rule_type": "feeding_requirement",
+      "statement": "Bei Teilnahme müssen alle am Betrieb gehaltenen Schweine die je Tierkategorie vorgegebenen Rohproteingrenzen je kg Ration in der Trockenmasse bei 88 % TM einhalten.",
+      "conditions": [
+        {
+          "expression": "all_pigs_compliant",
+          "description": "Die geschlossene Grenzwerttabelle wird aus data/o6_9_tables.json ausgewertet.",
+          "input_paths": [
+            "pig_feeding.all_pigs_compliant"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "feed_limits_met",
+        "description": "Die Grenzwerte gelten tierkategoriebezogen für alle Schweine des Betriebs.",
+        "value": "see data/o6_9_tables.json#/raw_protein_limits_g_per_kg_dm_88_percent"
+      },
+      "source_reference_ids": [
+        "measure_p5_feed_limits",
+        "srl_p62_feed_limits"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.pig_feed_compliant"
+      ]
+    },
+    {
+      "id": "o6_9.pig.average_or_phase",
+      "rule_type": "feeding_option",
+      "statement": "Bei Jung- und Mastschweinen sowie ungedeckten Jungsauen ist entweder der Durchschnittswert oder die Phasenfütterung für die Gewichtseinheit einzuhalten; beide Bedingungen müssen nicht gemeinsam erfüllt werden.",
+      "conditions": [
+        {
+          "expression": "average_limit_met OR phase_limit_met",
+          "description": "Die beiden Nachweiswege sind alternativ.",
+          "input_paths": [
+            "pig_feeding.average_limit_met",
+            "pig_feeding.phase_limit_met"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "alternative_feed_compliance",
+        "description": "Ein erfüllter Weg genügt.",
+        "value": "OR"
+      },
+      "source_reference_ids": [
+        "measure_p5_average_or_phase"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.pig.feed_analysis_and_proof",
+      "rule_type": "evidence",
+      "statement": "Rohproteingehalte sind anhand von Futtermitteluntersuchungen, Literaturstandardwerten für nicht untersuchte Futtermittel oder Herstellerangaben bei Fertigfuttermitteln zu berechnen und durch Rezepturen mit ausgewiesenem Rohproteingehalt nachzuweisen.",
+      "conditions": [
+        {
+          "expression": "proof_available",
+          "description": "Bei Phasenfütterung muss zusätzlich die technische Möglichkeit und tatsächliche Durchführung plausibel sein.",
+          "input_paths": [
+            "pig_feeding.proof_available",
+            "pig_feeding.phase_feeding_technically_plausible"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "feeding_proof_required",
+        "description": "Geeignet sind etwa Fütterungscomputer-Ausdruck, Futtermittelfirmenberechnung oder Offizialberatung.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "measure_p5_feed_proof",
+        "srl_p62_feed_proof"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.pig_feed_compliant"
+      ]
+    },
+    {
+      "id": "o6_9.application.application_deadline",
+      "rule_type": "deadline",
+      "statement": "Maßnahme und Schweinefütterungskategorie müssen vor Vertragsbeginn bis spätestens 31. Dezember im Maßnahmenantrag beantragt werden, damit ein Vertrag ab dem Folgejahr entsteht.",
+      "conditions": [
+        {
+          "expression": "measure_requested_by_december_31",
+          "description": "Die Frist bezieht sich auf den Maßnahmenantrag des Mehrfachantrags.",
+          "input_paths": [
+            "participation.measure_requested_by_december_31"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_can_start_next_year",
+        "description": "Eine verspätete Vorbeantragung begründet den Folgejahresvertrag nicht fristgerecht.",
+        "value": "31.12."
+      },
+      "source_reference_ids": [
+        "measure_p6_application_deadline",
+        "srl_p21_measure_application"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.measure_entry_allowed"
+      ]
+    },
+    {
+      "id": "o6_9.application.last_entry",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg in o6_9 ist mit Förderjahr 2027 möglich; der letzte Einstieg in die Schweinefütterungskategorie ist mit Förderjahr 2028 möglich, sofern die Grundmaßnahme gültig teilnimmt.",
+      "conditions": [
+        {
+          "expression": "base_year <= 2027 AND pig_category_year <= 2028 AND pig_category_requires_valid_base",
+          "description": "Die jeweilige Beantragung muss bis 31. Dezember des Vorjahres erfolgen.",
+          "input_paths": [
+            "farm.year",
+            "participation.base_measure_valid"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "entry_window",
+        "description": "Nach den letzten Einstiegsjahren ist kein Neueinstieg vorgesehen.",
+        "value": {
+          "measure_last_year": 2027,
+          "pig_category_last_year": 2028
+        }
+      },
+      "source_reference_ids": [
+        "measure_p6_entry_dates",
+        "general_p12_entry_dates"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.measure_entry_allowed",
+        "oepul.o6_9.pig_entry_allowed"
+      ]
+    },
+    {
+      "id": "o6_9.pig.incompatible_groundwater_bonus",
+      "rule_type": "combination_exclusion",
+      "statement": "Die Schweinefütterungskategorie in o6_9 darf nicht gleichzeitig mit dem gleichlautenden optionalen Zuschlag in Vorbeugender Grundwasserschutz – Acker beantragt werden.",
+      "conditions": [
+        {
+          "expression": "NOT groundwater_protection_pig_bonus",
+          "description": "Die Sperre betrifft nur den gleichlautenden Grundwasserschutz-Zuschlag.",
+          "input_paths": [
+            "participation.groundwater_protection_pig_bonus"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combination_allowed",
+        "description": "Bei gleichzeitigem Zuschlag ist die Kombination unzulässig.",
+        "value": false
+      },
+      "source_reference_ids": [
+        "measure_p6_incompatible_bonus",
+        "srl_p18_incompatible_bonus",
+        "annex_p103_measure_9_combination"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.combination_allowed"
+      ]
+    },
+    {
+      "id": "o6_9.application.requested_quantities",
+      "rule_type": "application_data",
+      "statement": "Die im Kalenderjahr bodennah ausgebrachten Mengen sind je Ausbringungsverfahren in m³ in der Beilage MFA-Angaben zu beantragen; die separierte Güllemenge ist ebenfalls in m³ zu beantragen.",
+      "conditions": [],
+      "result": {
+        "outcome": "quantities_requested_in_m3",
+        "description": "Mengen werden verfahrensbezogen bzw. als Separationsmenge beantragt.",
+        "value": "m3"
+      },
+      "source_reference_ids": [
+        "measure_p6_mfa_application_amounts",
+        "measure_p6_mfa_separation_amounts"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.application.november_correction",
+      "rule_type": "deadline",
+      "statement": "Prämienfähige bodennah ausgebrachte und separierte Mengen sind bis spätestens 30. November des jeweiligen Förderjahres zu beantragen; sie können bis dahin nachbeantragt werden.",
+      "conditions": [
+        {
+          "expression": "quantity_requested_by_november_30",
+          "description": "Dies gilt trotz der früheren MFA-Abgabefrist.",
+          "input_paths": [
+            "participation.quantity_requested_by_november_30"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "quantity_claim_deadline",
+        "description": "Die Mengenbeantragung bleibt bis 30. November prämienfähig.",
+        "value": "30.11."
+      },
+      "source_reference_ids": [
+        "measure_p6_november_deadline"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.contract.no_quantity_termination",
+      "rule_type": "contract_consequence",
+      "statement": "Wird in einem Förderjahr keine Ausbringungs- oder Separationsmenge beantragt und nicht an der Schweinefütterungskategorie teilgenommen, erlischt der Vertrag; für eine spätere Teilnahme ist ein neuer fristgerechter Maßnahmenantrag erforderlich.",
+      "conditions": [
+        {
+          "expression": "application_m3 == 0 AND separation_m3 == 0 AND NOT pig_feeding_participated",
+          "description": "Der Tatbestand wird je Förderjahr beurteilt.",
+          "input_paths": [
+            "participation.application_m3",
+            "participation.separated_m3",
+            "participation.categories"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_ends",
+        "description": "Eine Wiederaufnahme erfordert eine neue fristgerechte Beantragung.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "measure_p6_contract_termination",
+        "measure_p7_example"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.has_minimum_participation"
+      ]
+    },
+    {
+      "id": "o6_9.exit.after_contract_year",
+      "rule_type": "exit",
+      "statement": "Nach Erfüllung des einjährigen Vertragszeitraums ist der Ausstieg nach einem oder mehreren Teilnahmejahren möglich und online im aktuellen Mehrfachantrag bekannt zu geben.",
+      "conditions": [
+        {
+          "expression": "contract_year_completed",
+          "description": "Die Ausstiegsmeldung erfolgt für das laufende Förderjahr online.",
+          "input_paths": [
+            "participation.contract_year_completed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exit_allowed",
+        "description": "Der Ausstieg beendet die Folgejahresfortführung.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "measure_p7_exit",
+        "general_p13_exit"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.exit.same_year_effect",
+      "rule_type": "exit_consequence",
+      "statement": "Eine Abmeldung zwischen 1. Jänner und 31. Dezember macht die Maßnahme im betroffenen Förderjahr ungültig; bei Erfüllung bis 31. Dezember darf erst ab 1. Jänner des Folgejahres abgemeldet werden.",
+      "conditions": [
+        {
+          "expression": "withdrawal_date BETWEEN 01-01 AND 12-31",
+          "description": "Die Jahreswirkung betrifft das laufende Förderjahr.",
+          "input_paths": [
+            "participation.withdrawal_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "current_year_invalid",
+        "description": "Die laufenden Auflagen sind bis Jahresende einzuhalten.",
+        "value": false
+      },
+      "source_reference_ids": [
+        "measure_p7_same_year_exit",
+        "general_p13_same_year_exit"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.premium.application_rates",
+      "rule_type": "premium_rate",
+      "statement": "Die Ausbringungsprämien betragen ab 2024 1,1 €/m³ für Schleppschlauch, 1,5 €/m³ für Schleppschuh und 1,7 €/m³ für Injektion; 2023 gelten 1,0, 1,4 und 1,6 €/m³.",
+      "conditions": [
+        {
+          "expression": "allowed_method AND year >= 2023",
+          "description": "Die Rate wird nach Methode und Förderjahr aus der Tabelle bestimmt.",
+          "input_paths": [
+            "application.method",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "application_rate",
+        "description": "Die vollständigen Jahresraten stehen in der Datendatei.",
+        "value": "see data/o6_9_tables.json#/premium_rates"
+      },
+      "source_reference_ids": [
+        "measure_p8_rates",
+        "srl_p63_rates"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.application_premium"
+      ]
+    },
+    {
+      "id": "o6_9.premium.separation_rate",
+      "rule_type": "premium_rate",
+      "statement": "Die Prämie für Gülleseparierung beträgt 1,4 €/m³ im Jahr 2023 und 1,5 €/m³ ab 2024.",
+      "conditions": [
+        {
+          "expression": "separation_eligible",
+          "description": "Die Rate gilt für tatsächlich separierte Flüssigmenge.",
+          "input_paths": [
+            "separation.requested_m3",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "separation_rate",
+        "description": "Die Jahresrate wird aus der Datentabelle bestimmt.",
+        "value": "see data/o6_9_tables.json#/premium_rates"
+      },
+      "source_reference_ids": [
+        "measure_p8_rates",
+        "srl_p63_rates"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.separation_premium"
+      ]
+    },
+    {
+      "id": "o6_9.premium.pig_rate",
+      "rule_type": "premium_rate",
+      "statement": "Die Prämie für stark stickstoffreduzierte Schweinefütterung beträgt ab 2025 54,0 €/ha Ackerfläche.",
+      "conditions": [
+        {
+          "expression": "pig_feed_compliant AND year >= 2025",
+          "description": "Die Kategorie muss zugänglich und erfüllt sein.",
+          "input_paths": [
+            "pig_feeding.all_pigs_compliant",
+            "farm.year",
+            "farm.arable_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "pig_feeding_rate",
+        "description": "Die Prämie wird je ha Ackerfläche berechnet.",
+        "value": 54
+      },
+      "source_reference_ids": [
+        "measure_p8_pig_rate",
+        "srl_p63_pig_rate"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.pig_premium"
+      ]
+    },
+    {
+      "id": "o6_9.premium.application_cap",
+      "rule_type": "premium_cap",
+      "statement": "Bodennahes Ausbringen ist bis maximal 50 m³ flüssiger Wirtschaftsdünger und Biogasgülle je ha düngungswürdiger Acker- und Grünlandfläche prämienfähig.",
+      "conditions": [
+        {
+          "expression": "claimed_m3 <= 50 * eligible_fertilizable_area_ha",
+          "description": "Die Begrenzung bezieht sich auf die düngungswürdige und nicht auf die tatsächlich gedüngte Fläche.",
+          "input_paths": [
+            "application.requested_m3",
+            "calculation.eligible_fertilizable_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "capped_quantity",
+        "description": "Die abrechenbare Ausbringungsmenge wird bei der Obergrenze gekappt.",
+        "value": "50 m3/ha"
+      },
+      "source_reference_ids": [
+        "measure_p8_application_cap",
+        "srl_p63_application_cap"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.application_premium"
+      ]
+    },
+    {
+      "id": "o6_9.premium.separation_cap",
+      "rule_type": "premium_cap",
+      "statement": "Gülleseparierung ist bis maximal 20 m³ je Rinder-GVE und Jahr prämienfähig.",
+      "conditions": [
+        {
+          "expression": "claimed_separated_m3 <= 20 * cattle_gve",
+          "description": "Die Rinder-GVE werden aus der Rinderdatenbank und unabhängig vom Aufstallungssystem ermittelt.",
+          "input_paths": [
+            "separation.requested_m3",
+            "calculation.cattle_gve"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "capped_quantity",
+        "description": "Die abrechenbare Separationsmenge wird bei der Obergrenze gekappt.",
+        "value": "20 m3/GVE/year"
+      },
+      "source_reference_ids": [
+        "measure_p8_separation_cap"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.separation_premium"
+      ]
+    },
+    {
+      "id": "o6_9.premium.fertilizable_area",
+      "rule_type": "area_definition",
+      "statement": "Die düngungswürdige Fläche ist die Summe von Acker- und Grünlandflächen mit Stickstoffdüngebedarf nach Nitrat-Aktionsprogramm-Verordnung; Leguminosenreinbestände und Flächen mit gänzlichem Düngeverbot zählen nicht dazu.",
+      "conditions": [
+        {
+          "expression": "arable_or_grassland AND nitrogen_need AND NOT pure_legume AND NOT total_fertilizer_ban",
+          "description": "Nur diese Fläche bildet die 50-m³-Prämienbegrenzungsbasis.",
+          "input_paths": [
+            "land.parcels[].land_use",
+            "land.parcels[].crop.crop_category",
+            "land.parcels[].constraints"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "fertilizable_area_basis",
+        "description": "Die Fläche wird unabhängig von der tatsächlich gedüngten Fläche berechnet.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "measure_p8_fertilizable_area",
+        "srl_p63_fertilizable_area"
+      ],
+      "rego_symbols": [
+        "oepul.o6_9.application_premium"
+      ]
+    },
+    {
+      "id": "o6_9.gve.pig_conversion",
+      "rule_type": "conversion_factor",
+      "statement": "Für Schweine gelten die GVE-Faktoren 0,07 je Ferkel ab 8 kg, 0,3 je Jung-/Mastschwein ab 32 kg und 0,5 je Zucht-/Jungsau ab 50 kg.",
+      "conditions": [],
+      "result": {
+        "outcome": "pig_gve_calculation",
+        "description": "Die vollständige einschlägige Tabelle ist unter Anhang A abgelegt.",
+        "value": "see data/o6_9_tables.json#/pig_gve_factors"
+      },
+      "source_reference_ids": [
+        "annex_p3_pig_gve"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.general.austria_and_full_year",
+      "rule_type": "general_condition",
+      "statement": "Geförderte Flächen müssen in Österreich liegen und Einheiten sind nur förderfähig, wenn die Förderverpflichtungen während der gesamten Verpflichtungsdauer erfüllt werden.",
+      "conditions": [
+        {
+          "expression": "parcel_country == Austria AND obligations_fulfilled_full_duration",
+          "description": "Die allgemeinen Teilnahmebedingungen gelten auch für o6_9.",
+          "input_paths": [
+            "farm.region",
+            "land.parcels[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "general_eligibility",
+        "description": "Ausländische Flächen bzw. unterjährig nicht erfüllte Verpflichtungen sind nicht prämienfähig.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "general_p9_austria",
+        "general_p10_full_year"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.general.takeover_restriction",
+      "rule_type": "transfer",
+      "statement": "Eine Maßnahmenübernahme für o6_9 einschließlich Schweinefütterungszuschlag ist nur in Einzelfällen bei Betriebsauflösung, -teilung oder -zusammenlegung möglich.",
+      "conditions": [
+        {
+          "expression": "transfer_case IN {closure, division, merger}",
+          "description": "Die allgemeine Übernahmebestimmung führt o6_9 ausdrücklich als Ausnahme an.",
+          "input_paths": [
+            "participation.transfer_case"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "takeover_restricted",
+        "description": "Eine gewöhnliche Flächenübernahme reicht für diese Maßnahme nicht aus.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "general_p15_takeover"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.general.control_consequence",
+      "rule_type": "sanction",
+      "statement": "Verstöße gegen Zugangsvoraussetzungen, Mengenangaben, Förderverpflichtungen oder den Vertragszeitraum können zu Kürzung, Einbehalt, Ausschluss und Rückforderung führen; ab 2027 ersetzt ein 1-%-Einbehalt die Verwarnung.",
+      "conditions": [
+        {
+          "expression": "breach_detected",
+          "description": "Schwere, Ausmaß, Dauer und Häufigkeit werden maßnahmenbezogen berücksichtigt.",
+          "input_paths": [
+            "documentation",
+            "participation"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "sanction_possible",
+        "description": "Die konkrete Stufe wird nach den allgemeinen Kontroll- und Kürzungsregeln bestimmt.",
+        "value": [
+          "warning",
+          2,
+          5,
+          10,
+          25,
+          50,
+          100
+        ]
+      },
+      "source_reference_ids": [
+        "general_p17_breach_types",
+        "general_p18_sanctions"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_9.general.modulation",
+      "rule_type": "premium_modulation",
+      "statement": "Das Prämienausmaß aller Maßnahmen wird nach der gesamten Betriebsfläche moduliert: bis 200 ha 100 %, über 200 bis 300 ha 90 %, über 300 bis 1.000 ha 85 %, über 1.000 ha 75 %.",
+      "conditions": [
+        {
+          "expression": "farm_total_area_ha > 200",
+          "description": "Der Modulationsfaktor wird auf alle o6_9-Prämien angewendet.",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "modulated_premium",
+        "description": "Die berechnete o6_9-Bruttoprämie ist mit dem zutreffenden Faktor zu multiplizieren.",
+        "value": {
+          "up_to_200": 1,
+          "over_200_to_300": 0.9,
+          "over_300_to_1000": 0.85,
+          "over_1000": 0.75
+        }
+      },
+      "source_reference_ids": [
+        "general_p19_modulation"
+      ],
+      "rego_symbols": []
+    }
+  ]
+}

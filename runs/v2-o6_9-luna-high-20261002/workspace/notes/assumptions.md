@@ -1,0 +1,9 @@
+# Annahmen und offene fachliche Punkte
+
+- Der Run arbeitet im Modus `discover`. Fehlende Eingaben für Ereignisse, Fütterung, düngungswürdige Fläche, Antrag und Ausstieg werden ausschließlich in `rules/profile_changes.json` vorgeschlagen; das Canonical Farm Profile bleibt unverändert.
+- Die Rego-Policy verwendet eine explizite Entscheidungs-Eingabe unter `input` (Teilnahme, Ausbringung, Separation, Schweinefütterung und Berechnungsbasen). Die vorhandenen Profilfelder allein enthalten diese Ereignisse und Nachweise nicht.
+- Die Informationsblätter sind laut Impressum rechtlich unverbindlich; die Sonderrichtlinie und ihre Anhänge sind deshalb zusätzlich als Quellenbelege erfasst. Die aktuelle Juni-2026-Fassung des Maßnahmenblatts wird für die ausführbare Auswertung verwendet.
+- Die Futtertabelle enthält für gedeckte Jungsauen ab 50 kg im Maßnahmenblatt keine eigene Rohproteingrenze in der sichtbaren Tabellenzeile; sie ist im Katalog als offene fachliche Abgrenzung erhalten und nicht durch einen erfundenen Grenzwert ergänzt.
+- Die Rego-Berechnung liefert die o6_9-Bruttoprämie vor allgemeiner Betriebsgrößenmodulation. Die Modulation ist als eigener Katalogsatz dokumentiert, weil dafür die Gesamtbetriebsfläche und ggf. weitere Abwicklungsdaten benötigt werden.
+- Die 2026-Dürre- und Rebzikaden-Hinweise wurden vollständig gelesen. Ihre Ausnahmen betreffen andere Maßnahmen (Biodiversität, Begrünung, Ernteverpflichtung, Insektizidverzicht, Naturschutz bzw. Nutztierrassen) und werden daher in `rules/coverage.json` als `not_rule` geführt.
+- Die Kombinationstabelle in Anhang L bestätigt die allgemeine Kombinierbarkeit von Maßnahme 9 mit mehreren Maßnahmen, enthält aber die gesonderte Unvereinbarkeit des gleichlautenden Schweinefütterungszuschlags aus Maßnahme 16 nicht als maschinenlesbare Detailbeschreibung; die präzise Sperre wird aus dem SRL-Haupttext und dem Maßnahmenblatt übernommen.
