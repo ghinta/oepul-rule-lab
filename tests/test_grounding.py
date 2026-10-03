@@ -8,9 +8,11 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from rulelab.contracts import (
+    ExecutionEvidenceV1,
     GENERATOR_CONTRACT_MODELS,
     ProfileChange,
     RulesCatalogV2,
+    validate_model_config,
 )
 from rulelab.grounding import (
     apply_profile_changes,
@@ -78,6 +80,43 @@ class StrictContractTests(unittest.TestCase):
                     "rules": [rule, rule],
                 }
             )
+
+    def test_executable_rule_requires_positive_and_negative_or_boundary_test(self) -> None:
+        payload = {
+            "contract_version": "execution-evidence-v1.0.0",
+            "run_id": "test-run",
+            "rules": [
+                {
+                    "rule_id": "r01",
+                    "status": "executable",
+                    "source_reference_ids": ["c01"],
+                    "rego_uses": [
+                        {
+                            "artifact_path": "workspace/policy/policy.rego",
+                            "symbol": "allow",
+                            "line_start": 2,
+                            "line_end": 2,
+                        }
+                    ],
+                    "tests": [
+                        {
+                            "artifact_path": "workspace/tests/policy_test.rego",
+                            "symbol": "test_allow",
+                            "line_start": 2,
+                            "line_end": 2,
+                            "polarity": "positive",
+                        }
+                    ],
+                }
+            ],
+        }
+
+        with self.assertRaises(ValidationError):
+            ExecutionEvidenceV1.model_validate(payload)
+
+    def test_model_config_rejects_incomplete_adapter_configuration(self) -> None:
+        with self.assertRaises(ValidationError):
+            validate_model_config({"adapter": "codex-cli", "model": "test"})
 
 
 class EvidenceTests(unittest.TestCase):

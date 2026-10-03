@@ -55,6 +55,98 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
 
+class CodexCliModelConfig(StrictModel):
+    """Validated configuration for the built-in Codex CLI adapter."""
+
+    contract_version: Literal["model-config-v1.0.0"]
+    provider: Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9_-]{1,39}$")]
+    api_style: Literal["codex_cli"]
+    adapter: Literal["codex-cli"]
+    model: Annotated[str, StringConstraints(min_length=1, max_length=160)]
+    executable: NonEmptyStr
+    timeout_seconds: Annotated[int, Field(ge=1, le=7200)]
+    reasoning_effort: Literal[
+        "none", "minimal", "low", "medium", "high", "xhigh", "max", "ultra"
+    ]
+    args: list[str]
+
+
+class ExternalCommandModelConfig(StrictModel):
+    """Validated configuration for a provider-neutral command adapter."""
+
+    contract_version: Literal["model-config-v1.0.0"]
+    provider: Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9_-]{1,39}$")]
+    api_style: Literal["external_command"]
+    adapter: Literal["external-command"]
+    model: Annotated[str, StringConstraints(min_length=1, max_length=160)]
+    timeout_seconds: Annotated[int, Field(ge=1, le=7200)]
+    reasoning_effort: str | None = None
+    command: list[NonEmptyStr] = Field(min_length=1)
+
+
+ModelConfig = CodexCliModelConfig | ExternalCommandModelConfig
+
+
+def validate_model_config(value: Any) -> ModelConfig:
+    """Validate a model adapter before it is persisted or invoked."""
+    if not isinstance(value, dict):
+        raise ValueError("model configuration must be a JSON object")
+    adapter = value.get("adapter")
+    if adapter == "codex-cli":
+        return CodexCliModelConfig.model_validate(value)
+    if adapter == "external-command":
+        return ExternalCommandModelConfig.model_validate(value)
+    raise ValueError(f"Unsupported model adapter: {adapter!r}")
+
+
+class RunProfile(StrictModel):
+    path: NonEmptyStr
+    sha256: Sha256
+
+
+class RunSource(StrictModel):
+    name: NonEmptyStr
+    source_path: RelativePath
+    sha256: Sha256
+    bytes: Annotated[int, Field(ge=1)]
+
+
+class RunArtifactV1(StrictModel):
+    """Lifecycle metadata. Metrics stay open-ended so gates can evolve safely."""
+
+    contract_version: Literal["1.0"]
+    run_id: Annotated[
+        str,
+        StringConstraints(
+            min_length=6,
+            max_length=160,
+            pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]+$",
+        ),
+    ]
+    created_at: NonEmptyStr
+    status: Literal["prepared", "running", "generated", "failed", "finalized"]
+    mode: Literal["discover", "conform"]
+    measure: Annotated[str, StringConstraints(pattern=r"^o6_[0-9]+[a-z]?$")]
+    model: dict[str, Any]
+    profile: RunProfile
+    sources: list[RunSource] = Field(min_length=1)
+    quality_gate_version: Literal["v1", "v2"] = "v1"
+    started_at: NonEmptyStr | None = None
+    finished_at: NonEmptyStr | None = None
+    generator_exit_code: int | None = None
+    generation_attempt: Annotated[int, Field(ge=1)] | None = None
+    invocation: list[str] | None = None
+    opa_runtime: dict[str, Any] | None = None
+    generator_environment: dict[str, Any] | None = None
+    finalized_at: NonEmptyStr | None = None
+    metrics: dict[str, Any] | None = None
+
+    @model_validator(mode="after")
+    def model_configuration_is_valid(self) -> "RunArtifactV1":
+        validate_model_config(self.model)
+        return self
+
+
 class RuleCondition(StrictModel):
     expression: NonEmptyStr
     description: NonEmptyStr
@@ -308,12 +400,84 @@ class DataInventoryV1(StrictModel):
         return value
 
 
+class RuleTestEvidence(StrictModel):
+    artifact_path: RelativePath
+    symbol: NonEmptyStr
+    line_start: Annotated[int, Field(ge=1)]
+    line_end: Annotated[int, Field(ge=1)]
+    polarity: Literal["positive", "negative", "boundary"]
+
+    @model_validator(mode="after")
+    def ordered_lines(self) -> "RuleTestEvidence":
+        if self.line_end < self.line_start:
+            raise ValueError("line_end must be greater than or equal to line_start")
+        return self
+
+
+class RuleExecutionEvidence(StrictModel):
+    rule_id: Identifier
+    status: Literal["executable", "documented_only", "unresolved"]
+    rationale: NonEmptyStr | None = None
+    source_reference_ids: list[Identifier] = Field(default_factory=list)
+    rego_uses: list[ArtifactUse] = Field(default_factory=list)
+    tests: list[RuleTestEvidence] = Field(default_factory=list)
+
+    @field_validator("source_reference_ids")
+    @classmethod
+    def unique_source_references(cls, value: list[str]) -> list[str]:
+        if len(value) != len(set(value)):
+            raise ValueError("source_reference_ids must be unique")
+        return value
+
+    @model_validator(mode="after")
+    def execution_status_has_required_evidence(self) -> "RuleExecutionEvidence":
+        if self.status == "executable":
+            if self.rationale is not None:
+                raise ValueError("executable rules must not carry a non-executable rationale")
+            if not self.source_reference_ids:
+                raise ValueError("executable rules require source_reference_ids")
+            if not self.rego_uses:
+                raise ValueError("executable rules require at least one rego use")
+            if len(self.tests) < 2:
+                raise ValueError("executable rules require at least two test cases")
+            polarities = {test.polarity for test in self.tests}
+            if "positive" not in polarities or not ({"negative", "boundary"} & polarities):
+                raise ValueError(
+                    "executable rules require a positive and a negative or boundary test"
+                )
+        elif (
+            self.rationale is None
+            or self.source_reference_ids
+            or self.rego_uses
+            or self.tests
+        ):
+            raise ValueError(
+                "documented_only and unresolved rules require only a rationale"
+            )
+        return self
+
+
+class ExecutionEvidenceV1(StrictModel):
+    contract_version: Literal["execution-evidence-v1.0.0"]
+    run_id: Identifier
+    rules: list[RuleExecutionEvidence] = Field(min_length=1)
+
+    @field_validator("rules")
+    @classmethod
+    def unique_rule_ids(cls, value: list[RuleExecutionEvidence]) -> list[RuleExecutionEvidence]:
+        rule_ids = [rule.rule_id for rule in value]
+        if len(rule_ids) != len(set(rule_ids)):
+            raise ValueError("execution evidence rule IDs must be unique")
+        return value
+
+
 GENERATOR_CONTRACT_MODELS: dict[str, type[BaseModel]] = {
     "rules-catalog-v2.schema.json": RulesCatalogV2,
     "source-references-v2.schema.json": SourceReferencesV2,
     "profile-changes-v1.schema.json": ProfileChangeSetV1,
     "coverage-ledger-v1.schema.json": CoverageLedgerV1,
     "data-inventory-v1.schema.json": DataInventoryV1,
+    "execution-evidence-v1.schema.json": ExecutionEvidenceV1,
 }
 
 

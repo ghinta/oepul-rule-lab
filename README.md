@@ -12,6 +12,34 @@ Tests iterativ reparieren. Das Arbeitsprofil selbst bleibt unverändert:
 Vorschläge werden erst nach Pydantic-, Quellen- und Cross-Link-Prüfung auf eine
 separate Profilkopie angewendet. `conform`-Läufe erlauben keine Vorschläge.
 
+## Repository-Landschaft und Übergabe
+
+Dieses Projekt ist eines von drei unabhängigen Repositories. Sie sind nicht als
+Git-Submodule gekoppelt und brauchen keine synchronisierten Commits.
+
+| Repository | Kanonische Verantwortung | Übergabe |
+|---|---|---|
+| [`ghinta/oepul-rule-lab`](https://github.com/ghinta/oepul-rule-lab) | Quellengebundene Erzeugung und technische Validierung von Rego-Kandidaten | Dieses Repository erzeugt nachvollziehbare Kandidaten, aber keine aktive Runtime-Policy. |
+| [`ghinta/oepul-recommender`](https://github.com/ghinta/oepul-recommender) | Anwendungscode, normative OPA/Rego-Runtime, Integrationstests und technische Acceptance-Evidence | Ein Kandidat wird nur nach fachlicher und technischer Review in einem dedizierten Feature-Branch in die Runtime übernommen. |
+| [`ghinta/oepul-recommender-thesis`](https://github.com/ghinta/oepul-recommender-thesis) | Thesis-Text, Forschungsprotokoll, Provenienz und Ergebnisinterpretation | Berichtete Experimente referenzieren den exakten Rule-Lab-Commit samt Run-ID/Inventar und den akzeptierten Recommender-Commit. |
+
+Die Übergabe ist explizit: Einen Run mit `finalize` abschließen, dessen
+Inventar, Quellenbelege, Annahmen und Profilvorschläge unverändert erhalten,
+den Kandidaten im Recommender separat reviewen und integrieren und erst danach
+die beiden unveränderlichen Baselines in der Thesis-Provenienz festhalten. Ein
+technisch erfolgreicher Run oder selbst erzeugte Tests sind keine fachliche
+Freigabe. Dieses Lab darf aktuellere amtliche Quellen enthalten als ein
+eingefrorener Recommender- oder Experiment-Baseline; der Versionsunterschied
+ist bei jeder Übergabe sichtbar zu dokumentieren.
+
+## Branch-Governance
+
+`main` ist geschützt. Niemals direkt auf `main` committen oder pushen. Jede
+Änderung startet von aktuellem `main` auf einem beschreibenden Feature-Branch
+(normalerweise `codex/<topic>`), wird geprüft und ausschließlich über einen
+reviewten Pull Request gemergt. Das gilt auch für Quellen, Verträge,
+Validierungslogik und Dokumentation.
+
 ## Schnellstart
 
 ```bash
@@ -47,16 +75,18 @@ Manifest sichtbar und werden niemals nur zur Vereinheitlichung umbenannt.
 
 `prepare` legt einen isolierten Arbeitsbereich an und erzeugt für jedes PDF eine
 seitenmarkierte Textfassung, damit der Agent systematisch suchen und trotzdem
-auf PDF-Seiten zitieren kann. Fünf aus Pydantic-Modellen erzeugte Schemas für
+auf PDF-Seiten zitieren kann. Sechs aus Pydantic-Modellen erzeugte Schemas für
 Regeln, Quellenbelege, Profilvorschläge, Quellenabdeckung und Datentabellen
-werden in jeden Workspace kopiert und im Prompt ausdrücklich als verbindlich
-benannt. `run` startet den in der
+plus Ausführungs-/Testnachweise werden in jeden Workspace kopiert und im Prompt
+ausdrücklich als verbindlich benannt. `run` startet den in der
 Modellkonfiguration gewählten Adapter. `finalize` schreibt Profil-Diff,
 verwendete `input`-Pfade und technische Kennzahlen nach `artifacts/`. Es prüft
 außerdem strikt verbotene Zusatzfelder, Cross-Links, Quellen- und Datenhashes,
 wörtliche Belege auf der zitierten Seite, Abdeckung, Tabellenzeilenzahlen,
 Profiländerungsvoraussetzungen, die Existenz aller Regel- und Rego-Eingabepfade
 im vorgeschlagenen Profil sowie OPA-Formatierung, Strict-Compile und Tests.
+Quality Gate v2 verlangt zusätzlich eine explizite Klassifikation jeder Regel
+und für ausführbare Regeln einen direkten Quellen--Rego--Test-Nachweis.
 Erfundene oder nur ähnlich strukturierte Angaben lassen den Lauf sichtbar
 fehlschlagen.
 

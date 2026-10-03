@@ -59,6 +59,14 @@ Fußnoten und Querverweisen vollständig:
    bleibt `artifacts` leer.
 9. Validiere vor Abschluss alle fünf JSON-Ausgaben nochmals Feld für Feld gegen
    die mitgelieferten Schemas; ähnliche oder ältere Formate gelten als Fehler.
+10. Lies `contracts/execution-evidence-v1.schema.json` und schreibe
+    `rules/execution_evidence.json`. Erfasse jede Katalogregel genau einmal:
+    `executable` benötigt direkte Rego-Stellen, dieselben Quellenbeleg-IDs wie
+    die Regel sowie mindestens einen positiven und einen negativen oder
+    Grenzfall-Test mit Symbol und Zeilenbereich. Regeln, die noch nicht
+    ausführbar sind, müssen stattdessen als `documented_only` oder `unresolved`
+    mit einer konkreten Begründung ausgewiesen werden. Behaupte keine
+    Ausführbarkeit, wenn kein direkter Quellen--Code--Test-Nachweis möglich ist.
 
 Lasse Regeln nicht allein wegen eines unvollständigen Ausgangsprofils weg. Ziel
 ist zunächst maximale, quellengebundene und technisch lauffähige Extraktion;

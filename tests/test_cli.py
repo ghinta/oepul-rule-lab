@@ -196,7 +196,19 @@ class PrepareTests(unittest.TestCase):
             source.write_bytes(b"%PDF-test")
             model = root / "config" / "model.json"
             model.write_text(
-                json.dumps({"adapter": "codex-cli", "model": "test-model"}),
+                json.dumps(
+                    {
+                        "contract_version": "model-config-v1.0.0",
+                        "provider": "openai",
+                        "api_style": "codex_cli",
+                        "adapter": "codex-cli",
+                        "model": "test-model",
+                        "executable": "codex",
+                        "timeout_seconds": 60,
+                        "reasoning_effort": "low",
+                        "args": [],
+                    }
+                ),
                 encoding="utf-8",
             )
             args = argparse.Namespace(
@@ -251,7 +263,8 @@ class FinalizeTests(unittest.TestCase):
                 encoding="utf-8",
             )
             (workspace / "tests" / "policy_test.rego").write_text(
-                "package generated\ntest_placeholder if true\n", encoding="utf-8"
+                "package generated\ntest_allow_positive if true\ntest_allow_negative if true\n",
+                encoding="utf-8",
             )
             (workspace / "rules" / "rules.json").write_text(
                 json.dumps(
@@ -374,6 +387,46 @@ class FinalizeTests(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
+            (workspace / "rules" / "execution_evidence.json").write_text(
+                json.dumps(
+                    {
+                        "contract_version": "execution-evidence-v1.0.0",
+                        "run_id": "test-run",
+                        "rules": [
+                            {
+                                "rule_id": "r01",
+                                "status": "executable",
+                                "source_reference_ids": ["c01"],
+                                "rego_uses": [
+                                    {
+                                        "artifact_path": "workspace/policy/policy.rego",
+                                        "symbol": "allow",
+                                        "line_start": 2,
+                                        "line_end": 2,
+                                    }
+                                ],
+                                "tests": [
+                                    {
+                                        "artifact_path": "workspace/tests/policy_test.rego",
+                                        "symbol": "test_allow_positive",
+                                        "line_start": 2,
+                                        "line_end": 2,
+                                        "polarity": "positive",
+                                    },
+                                    {
+                                        "artifact_path": "workspace/tests/policy_test.rego",
+                                        "symbol": "test_allow_negative",
+                                        "line_start": 3,
+                                        "line_end": 3,
+                                        "polarity": "negative",
+                                    },
+                                ],
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
             (workspace / "notes" / "assumptions.md").write_text(
                 "No assumptions.\n", encoding="utf-8"
             )
@@ -383,6 +436,7 @@ class FinalizeTests(unittest.TestCase):
                     {
                         "run_id": "test-run",
                         "mode": "discover",
+                        "quality_gate_version": "v2",
                         "measure": "o6_1a",
                         "sources": [
                             {

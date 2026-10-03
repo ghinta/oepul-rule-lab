@@ -14,6 +14,7 @@ from typing import Any
 from .contracts import (
     CoverageLedgerV1,
     DataInventoryV1,
+    ExecutionEvidenceV1,
     ProfileChange,
     ProfileChangeSetV1,
     RulesCatalogV2,
@@ -29,6 +30,7 @@ class GroundingResult:
     profile_changes: ProfileChangeSetV1 | None
     coverage: CoverageLedgerV1 | None
     data_inventory: DataInventoryV1 | None
+    execution_evidence: ExecutionEvidenceV1 | None
     proposed_profile: dict[str, Any]
     errors: dict[str, list[str]]
 
@@ -227,6 +229,23 @@ def _line_count(path: Path) -> int:
     return len(path.read_text(encoding="utf-8", errors="replace").splitlines())
 
 
+def _line_range_contains_symbol(
+    path: Path, symbol: str, line_start: int, line_end: int
+) -> bool:
+    """Check a declared Rego/test symbol at its claimed source location.
+
+    This deliberately verifies a stable textual anchor, rather than trying to
+    fully parse Rego a second time. OPA remains authoritative for compilation.
+    """
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    if line_start < 1 or line_end > len(lines):
+        return False
+    pattern = re.compile(
+        rf"(?m)^\s*{re.escape(symbol)}(?:\s+contains)?\s*(?:\(|:=|=|if|\{{)"
+    )
+    return bool(pattern.search("\n".join(lines[line_start - 1 : line_end])))
+
+
 def table_row_count(value: Any) -> int:
     """Count rows in arrays or scalar lookup entries in nested objects."""
     if isinstance(value, list):
@@ -263,6 +282,12 @@ def validate_grounded_outputs(
             DataInventoryV1,
         ),
     }
+    quality_gate_v2 = metadata.get("quality_gate_version") == "v2"
+    if quality_gate_v2:
+        contract_paths["execution_evidence"] = (
+            workspace / "rules" / "execution_evidence.json",
+            ExecutionEvidenceV1,
+        )
     loaded: dict[str, Any] = {}
     errors: dict[str, list[str]] = {key: [] for key in contract_paths}
     errors["cross_references"] = []
@@ -280,6 +305,7 @@ def validate_grounded_outputs(
     profile_changes: ProfileChangeSetV1 | None = loaded["profile_changes"]
     coverage: CoverageLedgerV1 | None = loaded["coverage"]
     data_inventory: DataInventoryV1 | None = loaded["data_inventory"]
+    execution_evidence: ExecutionEvidenceV1 | None = loaded.get("execution_evidence")
     run_id = str(metadata.get("run_id", ""))
     measure = str(metadata.get("measure", ""))
 
@@ -295,6 +321,8 @@ def validate_grounded_outputs(
             errors["cross_references"].append(f"{name} run_id differs from run")
     if profile_changes is not None and profile_changes.measure != measure:
         errors["cross_references"].append("profile changes measure differs from run")
+    if execution_evidence is not None and execution_evidence.run_id != run_id:
+        errors["cross_references"].append("execution evidence run_id differs from run")
 
     rule_ids = {rule.id for rule in rules.rules} if rules else set()
     reference_ids = (
@@ -368,6 +396,87 @@ def validate_grounded_outputs(
                 if use.line_end is not None and use.line_end > artifact_lines:
                     errors["cross_references"].append(
                         f"{prefix}: line_end exceeds artifact: {use.artifact_path}"
+                    )
+
+    if quality_gate_v2 and execution_evidence is not None:
+        rule_by_id = {rule.id: rule for rule in rules.rules} if rules else {}
+        execution_by_rule = {
+            evidence.rule_id: evidence for evidence in execution_evidence.rules
+        }
+        missing_execution = set(rule_by_id) - set(execution_by_rule)
+        extra_execution = set(execution_by_rule) - set(rule_by_id)
+        if missing_execution:
+            errors["cross_references"].append(
+                f"rules missing execution evidence: {sorted(missing_execution)}"
+            )
+        if extra_execution:
+            errors["cross_references"].append(
+                f"execution evidence has unknown rules: {sorted(extra_execution)}"
+            )
+        references_by_id = (
+            {reference.reference_id: reference for reference in references.references}
+            if references
+            else {}
+        )
+        for rule_id, evidence in execution_by_rule.items():
+            rule = rule_by_id.get(rule_id)
+            if rule is None or evidence.status != "executable":
+                continue
+            if set(evidence.source_reference_ids) != set(rule.source_reference_ids):
+                errors["cross_references"].append(
+                    f"executable rule {rule_id} must evidence exactly its catalog source references"
+                )
+            declared_symbols = set(rule.rego_symbols)
+            for use in evidence.rego_uses:
+                artifact = run_dir / use.artifact_path
+                if artifact.suffix != ".rego" or not artifact.is_file():
+                    errors["cross_references"].append(
+                        f"executable rule {rule_id} has missing Rego artifact: {use.artifact_path}"
+                    )
+                    continue
+                if use.line_start is None or use.line_end is None:
+                    errors["cross_references"].append(
+                        f"executable rule {rule_id} requires bounded Rego source lines"
+                    )
+                    continue
+                if use.symbol not in declared_symbols:
+                    errors["cross_references"].append(
+                        f"executable rule {rule_id} maps undeclared Rego symbol: {use.symbol}"
+                    )
+                if not _line_range_contains_symbol(
+                    artifact, use.symbol, use.line_start, use.line_end
+                ):
+                    errors["cross_references"].append(
+                        f"executable rule {rule_id} cannot find Rego symbol {use.symbol} at declared lines"
+                    )
+            for test in evidence.tests:
+                artifact = run_dir / test.artifact_path
+                if artifact.suffix != ".rego" or not artifact.is_file():
+                    errors["cross_references"].append(
+                        f"executable rule {rule_id} has missing test artifact: {test.artifact_path}"
+                    )
+                    continue
+                if not _line_range_contains_symbol(
+                    artifact, test.symbol, test.line_start, test.line_end
+                ):
+                    errors["cross_references"].append(
+                        f"executable rule {rule_id} cannot find test {test.symbol} at declared lines"
+                    )
+            for reference_id in evidence.source_reference_ids:
+                reference = references_by_id.get(reference_id)
+                if reference is None:
+                    continue
+                direct_code_link = any(
+                    use.artifact_path == rego_use.artifact_path
+                    and use.symbol == rego_use.symbol
+                    and use.line_start is not None
+                    and use.line_end is not None
+                    for rego_use in evidence.rego_uses
+                    for use in reference.used_by
+                )
+                if not direct_code_link:
+                    errors["cross_references"].append(
+                        f"executable rule {rule_id} lacks a direct source-to-Rego link for {reference_id}"
                     )
 
     proposed_profile = copy.deepcopy(baseline_profile)
@@ -555,6 +664,7 @@ def validate_grounded_outputs(
         profile_changes=profile_changes,
         coverage=coverage,
         data_inventory=data_inventory,
+        execution_evidence=execution_evidence,
         proposed_profile=proposed_profile,
         errors=errors,
     )
