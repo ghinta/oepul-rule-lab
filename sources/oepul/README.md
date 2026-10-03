@@ -56,7 +56,11 @@ Das Update:
 6. erzeugt einen unveränderlichen Provenance-Lauf,
 7. aktualisiert das Root-Manifest.
 
-Vorhandene Originale werden nie mit abweichenden Bytes überschrieben. Eine
+Vorhandene Originale werden nie mit abweichenden Bytes überschrieben. Bei den
+2026-Meldungen wird vor dem Vergleich nur die Seitenleiste „Aktuelle News“
+(`c-news-page__quicklink-more`) ausgeblendet, weil AMA dort laufend neuere
+Meldungen verlinkt. Ist der übrige Inhalt gleich, bleibt die archivierte Datei
+samt Hash unverändert; jede andere Abweichung bricht weiterhin ab. Eine
 solche Kollision bricht das Update ab und muss als neue Quellenedition geklärt
 werden. Nicht mehr aktuelle Originale bleiben erhalten.
 

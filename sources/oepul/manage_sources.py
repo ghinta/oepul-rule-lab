@@ -350,6 +350,42 @@ def preserve(path: Path, body: bytes) -> None:
         atomic_write(path, body)
 
 
+NOTICE_SIDEBAR_START = '<div class="c-news-page__quicklink-more">'
+DIV_TAG_RE = re.compile(rb"<div\b|</div\s*>", re.IGNORECASE)
+
+
+def notice_content(body: bytes) -> bytes:
+    """Notice page without the "Aktuelle News" sidebar.
+
+    The sidebar links the newest AMA news and changes whenever AMA publishes
+    something else; the notice itself is everything outside it.
+    """
+    start = body.find(NOTICE_SIDEBAR_START.encode())
+    if start < 0:
+        return body
+    depth = 0
+    for match in DIV_TAG_RE.finditer(body, start):
+        depth += -1 if match.group().startswith(b"</") else 1
+        if depth == 0:
+            return body[:start] + body[match.end():]
+    raise SourceError("unbalanced notice sidebar markup")
+
+
+def preserve_notice(path: Path, body: bytes) -> bytes:
+    """Keep an archived notice whose content is unchanged; return stored bytes.
+
+    Only the sidebar may differ. Any other change still aborts, exactly like
+    `preserve()` for PDFs.
+    """
+    if not path.exists():
+        atomic_write(path, body)
+        return body
+    stored = path.read_bytes()
+    if stored != body and notice_content(stored) != notice_content(body):
+        raise SourceError(f"refusing to overwrite changed notice content: {path}")
+    return stored
+
+
 def json_bytes(value: Any) -> bytes:
     return (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode()
 
@@ -407,10 +443,10 @@ def build_notice(source_id: str, response: ResponseData, at: str) -> dict[str, A
     spec = NOTICE_SOURCES[source_id]
     filename = f"{spec['published_on']}__{spec['slug']}.html"
     target = NOTICES_DIR / filename
-    preserve(target, response.body)
-    if b"<html" not in response.body[:10000].lower():
+    body = preserve_notice(target, response.body)
+    if b"<html" not in body[:10000].lower():
         raise SourceError(f"notice is not recognizable HTML: {source_id}")
-    printed_date = notice_publication_date(response.body)
+    printed_date = notice_publication_date(body)
     if printed_date != spec["published_on"]:
         raise SourceError(
             f"notice publication-date mismatch for {source_id}: "
@@ -421,7 +457,7 @@ def build_notice(source_id: str, response: ResponseData, at: str) -> dict[str, A
         "published_on": spec["published_on"], "title": spec["title"], "topic_tags": spec["topic_tags"],
         **scope_fields(spec),
         "official_url": notice_url(spec), "source_filename": filename, "local_path": relative_path(target), "retrieved_at": at,
-        "sha256": sha256_bytes(response.body), "file_size_bytes": len(response.body), "http_provenance": http_record(response),
+        "sha256": sha256_bytes(body), "file_size_bytes": len(body), "http_provenance": http_record(response),
     }
 
 
