@@ -1,0 +1,1048 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_15",
+  "rules": [
+    {
+      "id": "O615-001",
+      "rule_type": "support_scope",
+      "statement": "Die Maßnahme fördert die Behirtung von Raufutterverzehrern auf Almweideflächen; die Prämie wird vom Almbetrieb beantragt und an diesen gewährt.",
+      "conditions": [],
+      "result": {
+        "outcome": "eligible_scope",
+        "description": "Fördergegenstand und begünstigte Person sind Almweideflächen und der Almbetrieb.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-O615-P1-SCOPE"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O615-002",
+      "rule_type": "contract_period",
+      "statement": "Der Vertrags- und Verpflichtungszeitraum beträgt ein Kalenderjahr vom 1. Jänner bis 31. Dezember und verlängert sich automatisch um ein Förderjahr, wenn keine Abmeldung erfolgt.",
+      "conditions": [
+        {
+          "expression": "contract_year is a calendar year",
+          "description": "Das Förderjahr ist ein Kalenderjahr.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "annual_contract",
+        "description": "Der Vertrag läuft jährlich und wird ohne Abmeldung fortgeführt.",
+        "value": {
+          "start": "01-01",
+          "end": "12-31"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-O615-P1-CONTRACT",
+        "CIT-GEN-P12-ANNUAL"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.annual_contract_valid"
+      ]
+    },
+    {
+      "id": "O615-003",
+      "rule_type": "combination_requirement",
+      "statement": "Eine gleichzeitige Teilnahme an der Maßnahme Almbewirtschaftung ist Zugangsvoraussetzung.",
+      "conditions": [
+        {
+          "expression": "participates_almbewirtschaftung == true",
+          "description": "Der Betrieb nimmt gleichzeitig an Almbewirtschaftung teil.",
+          "input_paths": [
+            "farm.participates_almbewirtschaftung"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_required",
+        "description": "Ohne Almbewirtschaftung besteht kein gültiger o6_15-Zugang.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-O615-P1-COMBINATION",
+        "CIT-SRL-P72-ACCESS"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.participation_valid"
+      ]
+    },
+    {
+      "id": "O615-004",
+      "rule_type": "minimum_participation",
+      "statement": "Im jeweiligen Förderjahr müssen mindestens 3,00 raufutterverzehrende Großvieheinheiten behirtet werden.",
+      "conditions": [
+        {
+          "expression": "behirtete_rgve >= 3",
+          "description": "Die behirteten RGVE erreichen die Mindestteilnahme.",
+          "input_paths": [
+            "livestock.species_groups[].gve"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "minimum_met",
+        "description": "Ab 3,00 behirteten RGVE ist die Mindestteilnahme erfüllt.",
+        "value": 3
+      },
+      "source_reference_ids": [
+        "CIT-O615-P2-MINIMUM",
+        "CIT-SRL-P72-MINIMUM"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.participation_valid"
+      ]
+    },
+    {
+      "id": "O615-005",
+      "rule_type": "eligible_animals",
+      "statement": "Teilnahmefähig sind Rinder, Schafe, Ziegen, Equiden sowie Neuweltkamele nach dem RGVE-Schlüssel.",
+      "conditions": [
+        {
+          "expression": "animal.species is one of cattle, sheep, goat, equine, camelid",
+          "description": "Jedes beantragte Tier gehört zu einer zulässigen Raufutterverzehrergruppe.",
+          "input_paths": [
+            "livestock.species_groups[].species"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_species",
+        "description": "Nur die genannten Tiergruppen können als RGVE teilnehmen.",
+        "value": [
+          "cattle",
+          "sheep",
+          "goat",
+          "equine",
+          "camelid"
+        ]
+      },
+      "source_reference_ids": [
+        "CIT-O615-P2-ANIMALS",
+        "CIT-ANNEXA-P3-TABLE"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.all_animals_are_eligible"
+      ]
+    },
+    {
+      "id": "O615-006",
+      "rule_type": "category_completeness",
+      "statement": "Die Behirtung muss nicht alle Almtiere umfassen, aber alle Tiere jeder beantragten Kategorie.",
+      "conditions": [
+        {
+          "expression": "all animals in each requested category are shepherded",
+          "description": "Eine beantragte Tierkategorie wird vollständig behirtet.",
+          "input_paths": [
+            "livestock.species_groups[].herded_category_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "category_complete",
+        "description": "Teilnahme ist tierkategoriebezogen vollständig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-O615-P2-CATEGORIES"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O615-007",
+      "rule_type": "alm_definition",
+      "statement": "Eine Alm ist eine Bewirtschaftungseinheit aus Almweideflächen mit Futterpflanzen und krautiger Vegetation; sie liegt im Almkataster oder Almgebiet, wird nicht vom Heimgut bewirtschaftet und weist einen sichtbaren Bewirtschaftungsunterschied oder eine deutliche Grenze auf.",
+      "conditions": [
+        {
+          "expression": "alm meets all definition elements",
+          "description": "Almstatus und Almweideflächen sind nach der Definition nachgewiesen.",
+          "input_paths": [
+            "land.parcels[].is_alm"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "alm_defined",
+        "description": "Die Fläche ist als Alm/Almweidefläche einordenbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-O615-P2-ALM",
+        "CIT-SRL-P72-ALM"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O615-008",
+      "rule_type": "milk_category",
+      "statement": "Milchvieh sind Milchkühe, Milchschafe und Milchziegen, die mindestens 45 Kalendertage auf einer oder mehreren Almen gemolken werden.",
+      "conditions": [
+        {
+          "expression": "milked_days_on_alms >= 45",
+          "description": "Das Tier wurde mindestens 45 Tage auf Alm(en) gemolken.",
+          "input_paths": [
+            "livestock.species_groups[].milked_days_on_alms"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "milk_category",
+        "description": "Nur bei erfüllter 45-Tage-Bedingung darf das Tier als Milchvieh beantragt werden.",
+        "value": 45
+      },
+      "source_reference_ids": [
+        "CIT-O615-P2-MILK",
+        "CIT-SRL-P72-MILK"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.milk_cow_category_valid",
+        "opul.o6_15.milk_sheep_or_goat_category_valid"
+      ]
+    },
+    {
+      "id": "O615-009",
+      "rule_type": "milk_cow_age",
+      "statement": "Milchkühe müssen am 1. Juli mindestens zwei Jahre alt sein und mindestens einmal abgekalbt haben.",
+      "conditions": [
+        {
+          "expression": "age_years >= 2 and calvings >= 1",
+          "description": "Alters- und Abkalbungsbedingungen am Tierstichtag sind erfüllt.",
+          "input_paths": [
+            "livestock.species_groups[].age_years",
+            "livestock.species_groups[].calvings"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "milk_cow_eligible",
+        "description": "Das Rind darf als Milchkuh geführt werden.",
+        "value": {
+          "age_years": 2,
+          "calvings": 1
+        }
+      },
+      "source_reference_ids": [
+        "CIT-O615-P2-MILK-AGE"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.milk_cow_category_valid"
+      ]
+    },
+    {
+      "id": "O615-010",
+      "rule_type": "milk_small_ruminant_age",
+      "statement": "Gemolkene Schafe und Ziegen müssen am 1. Juli mindestens ein Jahr alt sein.",
+      "conditions": [
+        {
+          "expression": "age_years >= 1",
+          "description": "Das gemolkene Schaf oder die gemolkene Ziege ist am 1. Juli mindestens ein Jahr alt.",
+          "input_paths": [
+            "livestock.species_groups[].age_years"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "milk_small_ruminant_eligible",
+        "description": "Das Tier erfüllt die Altersvoraussetzung für Milchschaf/Milchziege.",
+        "value": 1
+      },
+      "source_reference_ids": [
+        "CIT-O615-P3-MILK-AGE"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.milk_sheep_or_goat_category_valid"
+      ]
+    },
+    {
+      "id": "O615-011",
+      "rule_type": "duration",
+      "statement": "Je Tier und je Alm müssen mindestens 60 Tage Behirtungs- bzw. Bestoßungsdauer erreicht werden.",
+      "conditions": [
+        {
+          "expression": "minimum_herding_days_per_animal >= 60 and minimum_stocking_days_per_alm >= 60",
+          "description": "Beide Mindestdauern werden erreicht.",
+          "input_paths": [
+            "land.parcels[].stocking_days",
+            "livestock.species_groups[].herding_days"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "duration_met",
+        "description": "Die Mindestdauer pro Tier und Alm ist erfüllt.",
+        "value": 60
+      },
+      "source_reference_ids": [
+        "CIT-O615-P3-DURATION",
+        "CIT-SRL-P72-DURATION"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.sixty_day_requirement_valid"
+      ]
+    },
+    {
+      "id": "O615-012",
+      "rule_type": "day_counting",
+      "statement": "Der Auftriebstag zählt, der Abtriebstag nicht; Unterbrechungen zählen nicht. Auf mehrere behirtete Almen weitergetriebene Rinder, Schafe und Ziegen werden je Alm zeitanteilig angerechnet, müssen insgesamt aber 60 Behirtungstage erreichen.",
+      "conditions": [
+        {
+          "expression": "counting follows arrival-inclusive and departure-exclusive rule",
+          "description": "Tage und Unterbrechungen werden nach den Vorgaben berechnet.",
+          "input_paths": [
+        "land.parcels[].pasture_segments[].start_date",
+        "land.parcels[].pasture_segments[].end_date",
+        "land.parcels[].pasture_segments[].interruption_days",
+        "land.parcels[].pasture_segments[].pro_rata_factor"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "pro_rata_days",
+        "description": "Die Alpungsdauer wird nach der maßnahmenbezogenen Tages- und Zeitanteilslogik ermittelt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-O615-P3-DURATION-COUNT"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O615-013",
+      "rule_type": "animal_care",
+      "statement": "Die Behirtung erfordert tägliche ordnungsgemäße Versorgung, erforderlichenfalls auch nachts, während zumindest eines wesentlichen Teils des Tages; eine reine Nachschau genügt nicht.",
+      "conditions": [
+        {
+          "expression": "daily_care and care_essential_part_of_day",
+          "description": "Die Betreuung erfolgt täglich und über einen wesentlichen Teil des Tages.",
+          "input_paths": [
+        "land.parcels[].care.daily_care",
+        "land.parcels[].care.care_essential_part_of_day"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "care_required",
+        "description": "Die tägliche Betreuung ist Förderverpflichtung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-O615-P3-CARE",
+        "CIT-SRL-P72-CARE"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.care_requirement_valid"
+      ]
+    },
+    {
+      "id": "O615-014",
+      "rule_type": "care_components",
+      "statement": "Die Versorgung umfasst ausreichend Wasser, Tierpflege, ordnungsgemäße Behandlung von Krankheiten und Verletzungen sowie Sicherungsmaßnahmen auf der Alm.",
+      "conditions": [
+        {
+          "expression": "water_available and animal_care and disease_and_injury_treatment and security_measures",
+          "description": "Alle ausdrücklich genannten Versorgungselemente sind vorhanden.",
+          "input_paths": [
+        "land.parcels[].care.water_available",
+        "land.parcels[].care.animal_care",
+        "land.parcels[].care.disease_and_injury_treatment",
+        "land.parcels[].care.security_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "care_components_met",
+        "description": "Die Versorgungselemente sind vollständig erfüllt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-O615-P3-CARE"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.care_requirement_valid"
+      ]
+    },
+    {
+      "id": "O615-015",
+      "rule_type": "grazing_management",
+      "statement": "Die Teilflächen sind standortangepasst mittels Umtrieb zur gleichmäßigen und vollständigen Beweidung und Futterversorgung sowie durch Zäunung zu beweiden.",
+      "conditions": [
+        {
+          "expression": "site_adapted_grazing and subarea_rotation_or_fencing",
+          "description": "Standortangepasste Teilflächenbewirtschaftung ist dokumentiert.",
+          "input_paths": [
+        "land.parcels[].grazing_management.site_adapted_grazing",
+        "land.parcels[].grazing_management.subarea_rotation_or_fencing"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "grazing_management_required",
+        "description": "Standortangepasste Weidemaßnahmen sind einzuhalten.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-O615-P3-GRAZING",
+        "CIT-SRL-P72-CARE"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.grazing_management_valid"
+      ]
+    },
+    {
+      "id": "O615-016",
+      "rule_type": "accommodation",
+      "statement": "Für die betreuende Person muss eine geeignete Unterkunfts- und Übernachtungsmöglichkeit auf der Alm vorhanden sein; eine tatsächliche Nächtigung ist nicht zwingend, wenn die täglichen Verpflichtungen erfüllt werden.",
+      "conditions": [
+        {
+          "expression": "accommodation_available == true",
+          "description": "Eine geeignete Unterkunftsmöglichkeit steht zur Verfügung.",
+          "input_paths": [
+            "land.parcels[].accommodation_available"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "accommodation_required",
+        "description": "Vorhandene Unterkunft genügt; tägliche Nächtigung ist nicht erforderlich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-O615-P3-ACCOMMODATION"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.accommodation_valid"
+      ]
+    },
+    {
+      "id": "O615-017",
+      "rule_type": "herd_protection_dog_duration",
+      "statement": "Ein beantragter Herdenschutzhund muss während der gesamten Alpungsdauer der behirteten Tiere, jedoch mindestens 60 Tage, auf einer Alm eingesetzt werden; die 60 Tage müssen auf einer Alm erreicht werden.",
+      "conditions": [
+        {
+          "expression": "days_on_single_alm >= 60 and days_on_single_alm >= herded_animals_total_days",
+          "description": "Der Hund erfüllt Mindest- und Gesamtdauer auf derselben Alm.",
+          "input_paths": [
+            "livestock.herd_protection_dog.days_on_single_alm"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "dog_duration_met",
+        "description": "Der Hundezuschlag ist zeitlich möglich.",
+        "value": 60
+      },
+      "source_reference_ids": [
+        "CIT-O615-P4-DOG-DURATION",
+        "CIT-SRL-P72-DOG"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.herd_protection_dog_valid"
+      ]
+    },
+    {
+      "id": "O615-018",
+      "rule_type": "herd_protection_dog_definition",
+      "statement": "Ein Herdenschutzhund ist speziell ausgebildet, dauerhaft Mitglied der Herde, verbringt Tag und Nacht bei ihr und arbeitet eigenständig ohne direkte Kommandos.",
+      "conditions": [
+        {
+          "expression": "permanent_herd_member and day_and_night_with_herd and works_without_direct_commands",
+          "description": "Die Definitionsmerkmale des Herdenschutzhundes sind erfüllt.",
+          "input_paths": [
+            "livestock.herd_protection_dog.permanent_herd_member"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "dog_defined",
+        "description": "Der Hund erfüllt die fachliche Definition.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-O615-P4-DOG-DEFINITION"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.herd_protection_dog_valid"
+      ]
+    },
+    {
+      "id": "O615-019",
+      "rule_type": "herd_protection_dog_documentation",
+      "statement": "Für jeden beantragten Herdenschutzhund muss ein vom Österreichzentrum Bär, Wolf, Luchs anerkanntes Eignungszertifikat am Betrieb aufliegen; Schäden müssen haftpflichtversichert sein.",
+      "conditions": [
+        {
+          "expression": "certificate_recognized and liability_insurance",
+          "description": "Zertifikat und Haftpflichtdeckung sind nachgewiesen.",
+          "input_paths": [
+            "livestock.herd_protection_dog.certificate_recognized"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "dog_documentation_required",
+        "description": "Ohne Zertifikat oder Haftpflichtdeckung ist der Zuschlag nicht erfüllt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-O615-P4-DOG-DOCUMENTS"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.herd_protection_dog_valid"
+      ]
+    },
+    {
+      "id": "O615-020",
+      "rule_type": "application_deadline",
+      "statement": "Die Maßnahme ist vor Vertragsbeginn im Maßnahmenantrag bis spätestens 31. Dezember des Vorjahres zu beantragen.",
+      "conditions": [
+        {
+          "expression": "measure_application_date <= 31 December before contract year",
+          "description": "Der Maßnahmenantrag wurde fristgerecht eingereicht.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "application_timely",
+        "description": "Ein gültiger Vertrag ab dem Folgejahr kann begründet werden.",
+        "value": "12-31"
+      },
+      "source_reference_ids": [
+        "CIT-O615-P4-APPLICATION",
+        "CIT-SRL-P21-APPLICATION"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.annual_contract_valid"
+      ]
+    },
+    {
+      "id": "O615-021",
+      "rule_type": "last_entry",
+      "statement": "Der letzte Einstieg in die Maßnahme ist im Förderjahr 2027 möglich; der letzte Einstieg in den Herdenschutzhund-Zuschlag im Förderjahr 2028.",
+      "conditions": [
+        {
+          "expression": "measure_year <= 2027; dog_option_year <= 2028",
+          "description": "Die jeweiligen letzten Einstiegjahre werden eingehalten.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "entry_window",
+        "description": "Nach den genannten Jahren ist kein Neueinstieg mehr vorgesehen.",
+        "value": {
+          "measure": 2027,
+          "dog_option": 2028
+        }
+      },
+      "source_reference_ids": [
+        "CIT-O615-P4-LAST-ENTRY",
+        "CIT-GEN-P12-LAST-ENTRY"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O615-022",
+      "rule_type": "annual_application",
+      "statement": "Die Behirtung wird jährlich je Tierkategorie mit der Zahl der Hirtinnen und Hirten beantragt; dieselbe Person darf nicht mehrere Almen behirten und die Prämie nur einmal beantragen.",
+      "conditions": [
+        {
+          "expression": "one herder is assigned to at most one alm",
+          "description": "Die Hirtinnen-/Hirtenzuordnung ist almbezogen eindeutig.",
+          "input_paths": [
+        "land.parcels[].herder_assignment.herder_id",
+        "land.parcels[].herder_assignment.rgve",
+        "land.parcels[].herder_assignment.only_one_alm"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "annual_category_application",
+        "description": "Jährliche Kategorien- und Hirtenangaben sind erforderlich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-O615-P4-ANNUAL-APPLICATION"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O615-023",
+      "rule_type": "payment_application",
+      "statement": "Die Alm/Gemeinschaftsweide-Auftriebsliste gilt als Zahlungsantrag und ist bis 15. Juli, in den Jahren 2023 und 2028 bis 17. Juli, einzureichen.",
+      "conditions": [
+        {
+          "expression": "payment_application_date <= applicable July deadline",
+          "description": "Zahlungsantrag und ergänzende Angaben gehen fristgerecht ein.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "payment_application_timely",
+        "description": "Die Auftriebsliste begründet den Zahlungsantrag.",
+        "value": {
+          "regular": "07-15",
+          "special_years": [
+            2023,
+            2028
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "CIT-O615-P4-PAYMENT",
+        "CIT-SRL-P22-PAYMENT"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.reporting_valid"
+      ]
+    },
+    {
+      "id": "O615-024",
+      "rule_type": "reporting_deadline_cattle",
+      "statement": "Rinder sind über die Alm-/Weidemeldung Rinder zu beantragen; Auftrieb und Abtrieb sind binnen 14 Tagen zu melden, verspätet gemeldete Tiere gelten höchstens 14 Tage rückwirkend als gealpt.",
+      "conditions": [
+        {
+          "expression": "days_after_event <= 14",
+          "description": "Die Rindermeldung erfolgt innerhalb der 14-Tage-Frist.",
+          "input_paths": [
+        "livestock.species_groups[].report.event",
+        "livestock.species_groups[].report.days_after_event",
+        "livestock.species_groups[].report.deadline_days"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "cattle_report_timely",
+        "description": "Die Alm-/Weidemeldung ist fristgerecht.",
+        "value": 14
+      },
+      "source_reference_ids": [
+        "CIT-O615-P5-CATTLE-REPORT"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.reporting_valid"
+      ]
+    },
+    {
+      "id": "O615-025",
+      "rule_type": "reporting_deadline_small_ruminants",
+      "statement": "Schafe und Ziegen sind einzeltierbezogen mit Ohrmarke zu beantragen; Auftrieb und Abtrieb sind binnen 7 Tagen zu melden, mit höchstens 7 Tagen Rückwirkung.",
+      "conditions": [
+        {
+          "expression": "days_after_event <= 7 and ear_tag_present",
+          "description": "Einzeltiermeldung und Sieben-Tage-Frist sind erfüllt.",
+          "input_paths": [
+        "livestock.species_groups[].report.event",
+        "livestock.species_groups[].report.days_after_event",
+        "livestock.species_groups[].report.deadline_days",
+        "livestock.species_groups[].report.ear_tag_present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "small_ruminant_report_timely",
+        "description": "Die Einzelmeldung ist fristgerecht und identifizierbar.",
+        "value": 7
+      },
+      "source_reference_ids": [
+        "CIT-O615-P5-SHEEP-GOAT-REPORT"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.reporting_valid"
+      ]
+    },
+    {
+      "id": "O615-026",
+      "rule_type": "reporting_deadline_equine_camelid",
+      "statement": "Equiden und Neuweltkamele werden in Stück beantragt; Auftrieb ist binnen 7 Tagen zu melden und Abtriebsabweichungen sind binnen 7 Tagen zu korrigieren.",
+      "conditions": [
+        {
+          "expression": "days_after_event <= 7",
+          "description": "Die Meldung beziehungsweise Korrektur erfolgt binnen sieben Tagen.",
+          "input_paths": [
+        "livestock.species_groups[].report.event",
+        "livestock.species_groups[].report.days_after_event",
+        "livestock.species_groups[].report.deadline_days"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "equine_camelid_report_timely",
+        "description": "Die Stückmeldung ist fristgerecht.",
+        "value": 7
+      },
+      "source_reference_ids": [
+        "CIT-O615-P5-EQUID-REPORT"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.reporting_valid"
+      ]
+    },
+    {
+      "id": "O615-027",
+      "rule_type": "milk_flag_correction",
+      "statement": "Das vergessene gemolken-Kennzeichen kann bei Kühen binnen 14 Tagen und bei Schafen/Ziegen binnen 7 Tagen nach Almauftrieb nachgereicht werden, danach nicht mehr.",
+      "conditions": [
+        {
+          "expression": "correction_days <= category_deadline",
+          "description": "Die Kennzeichenkorrektur liegt innerhalb der jeweiligen Nachreichfrist.",
+          "input_paths": [
+            "livestock.species_groups[].report.correction_days"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "milk_flag_correctable",
+        "description": "Die Nachreichung ist nur innerhalb der Tiergruppenfrist zulässig.",
+        "value": {
+          "cattle": 14,
+          "sheep_goat": 7
+        }
+      },
+      "source_reference_ids": [
+        "CIT-O615-P5-MILK-FLAG"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O615-028",
+      "rule_type": "dog_application_limit",
+      "statement": "Für den Herdenschutzhund-Zuschlag ist die Anzahl zertifizierter Hunde in der Auftriebsliste anzugeben; ein konkreter Hund darf nur auf einer Alm beantragt werden, höchstens fünf Hunde je Alm.",
+      "conditions": [
+        {
+          "expression": "dogs_on_alm <= 5 and dog_requested_on_one_alm_only",
+          "description": "Hundezahl und eindeutige Almzuordnung sind eingehalten.",
+          "input_paths": [
+            "livestock.herd_protection_dog.dogs_on_alm"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "dog_application_limited",
+        "description": "Der Zuschlag ist je Hund und Alm begrenzt.",
+        "value": {
+          "max_dogs_per_alm": 5
+        }
+      },
+      "source_reference_ids": [
+        "CIT-O615-P5-DOG-APPLICATION",
+        "CIT-SRL-P73-PREMIUM"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.herd_protection_dog_valid"
+      ]
+    },
+    {
+      "id": "O615-029",
+      "rule_type": "contract_consequence",
+      "statement": "Wird die Mindestteilnahme von 3,00 behirteten RGVE in einem Förderjahr nicht eingehalten, erlischt der Vertrag; für eine Folgejahrteilnahme ist ein neuer fristgerechter Maßnahmenantrag erforderlich.",
+      "conditions": [
+        {
+          "expression": "behirtete_rgve < 3",
+          "description": "Die Mindestteilnahme wurde unterschritten.",
+          "input_paths": [
+            "livestock.species_groups[].gve"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_ends",
+        "description": "Der Vertrag endet und ein Wiedereinstieg benötigt einen neuen Antrag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-O615-P5-MINIMUM-CONSEQUENCE",
+        "CIT-GEN-P22-REENTRY"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O615-030",
+      "rule_type": "exit",
+      "statement": "Nach dem einjährigen Vertragszeitraum ist ein Gesamtausstieg oder Ausstieg aus einzelnen Tierkategorien bzw. dem Hundezuschlag möglich; eine Abmeldung vom 1. Jänner bis 31. Dezember macht die Maßnahme im betroffenen Förderjahr ungültig.",
+      "conditions": [
+        {
+          "expression": "exit_effective_date >= 1 January of following year",
+          "description": "Der Ausstieg wird erst nach Erfüllung des laufenden Jahres wirksam.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exit_allowed_after_year",
+        "description": "Der Ausstieg ist nach Jahreserfüllung für das Folgejahr möglich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-O615-P6-EXIT",
+        "CIT-GEN-P13-EXIT"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.exit_valid"
+      ]
+    },
+    {
+      "id": "O615-031",
+      "rule_type": "premium_rate",
+      "statement": "Die Prämiensätze betragen 2023 für die ersten 20 RGVE 75 Euro und ab der 21. RGVE 25 Euro, ab 2024 81 bzw. 27 Euro; der Milchviehzuschlag beträgt 2023 140 bzw. 100 Euro und ab 2024 151,20 bzw. 108 Euro je RGVE.",
+      "conditions": [
+        {
+          "expression": "eligible_behirtete_rgve > 0",
+          "description": "Behirtete RGVE sind nach RGVE-Schlüssel förderfähig.",
+          "input_paths": [
+            "livestock.species_groups[].gve"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_calculated",
+        "description": "Die gestaffelten Sätze und der Milchviehzuschlag werden verwendet.",
+        "value": {
+          "2023": {"first20": 75, "from21": 25, "milk_first20": 140, "milk_from21": 100},
+          "2024_plus": {"first20": 81, "from21": 27, "milk_first20": 151.2, "milk_from21": 108}
+        }
+      },
+      "source_reference_ids": [
+        "CIT-O615-P7-PREMIUM",
+        "CIT-O615-P7-RATE-TABLE",
+        "CIT-SRL-P73-PREMIUM"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.base_premium",
+        "opul.o6_15.milk_premium",
+        "opul.o6_15.premium_eur"
+      ]
+    },
+    {
+      "id": "O615-032",
+      "rule_type": "herder_cap",
+      "statement": "Pro Hirtin oder Hirte wird die Prämie für höchstens 50 RGVE gewährt; die erhöhte Prämie für die ersten 20 RGVE wird pro 50 RGVE und Hirtin/Hirte ausbezahlt.",
+      "conditions": [
+        {
+          "expression": "herder_rgve <= 50 per herder allocation",
+          "description": "Die Zuordnung je Hirtin/Hirte wird auf 50 RGVE begrenzt.",
+          "input_paths": [
+            "land.parcels[].herder_assignment.rgve"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "herder_cap_applied",
+        "description": "Die Prämienberechnung ist je Hirtin/Hirte gedeckelt.",
+        "value": 50
+      },
+      "source_reference_ids": [
+        "CIT-O615-P7-HERDER-CAP",
+        "CIT-SRL-P73-PREMIUM"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.first_twenty_rgve",
+        "opul.o6_15.after_twenty_rgve"
+      ]
+    },
+    {
+      "id": "O615-033",
+      "rule_type": "dog_premium",
+      "statement": "Der optionale Herdenschutzhund-Zuschlag beträgt ab 2025 1.200 Euro je Hund und ist auf fünf Hunde je Alm begrenzt.",
+      "conditions": [
+        {
+          "expression": "valid_dog_count <= 5",
+          "description": "Nur gültige Hunde bis zur Almobergrenze werden bewertet.",
+          "input_paths": [
+            "livestock.herd_protection_dog.dogs_on_alm"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "dog_premium_calculated",
+        "description": "Je gültigem Hund wird der Satz von 1.200 Euro angesetzt.",
+        "value": {
+          "from_2025": 1200,
+          "max_per_alm": 5
+        }
+      },
+      "source_reference_ids": [
+        "CIT-O615-P7-DOG-PREMIUM"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.dog_premium"
+      ]
+    },
+    {
+      "id": "O615-034",
+      "rule_type": "rgve_calculation",
+      "statement": "Die förderfähigen RGVE werden nach dem RGVE-Schlüssel berechnet; der Altersstichtag für alle Tierkategorien ist der 1. Juli des Antragsjahres.",
+      "conditions": [
+        {
+          "expression": "rgve = animal_count multiplied by applicable key factor",
+          "description": "Der Anhang-A-Faktor der Alters-/Tierkategorie wird angewendet.",
+          "input_paths": [
+            "livestock.species_groups[].animal_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rgve_converted",
+        "description": "Die Tierzahl wird in RGVE umgerechnet.",
+        "value": {
+          "age_reference": "07-01"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-O615-P8-RGVE",
+        "CIT-ANNEXA-P3-TABLE"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.rgve_lookup",
+        "opul.o6_15.rgve_key_complete"
+      ]
+    },
+    {
+      "id": "O615-035",
+      "rule_type": "geographic_eligibility",
+      "statement": "Geförderte Flächen und für die Förderung maßgebliche Tiere müssen in Österreich liegen bzw. gehalten werden.",
+      "conditions": [
+        {
+          "expression": "alm.in_austria and animal.held_in_austria",
+          "description": "Alm und Tiere liegen im Inland beziehungsweise werden im Inland gehalten.",
+          "input_paths": [
+            "land.parcels[].in_austria",
+            "livestock.species_groups[].held_in_austria"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "domestic_only",
+        "description": "Ausländische Flächen und Tiere sind nicht prämienrelevant.",
+        "value": true
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P9-LOCATION",
+        "CIT-GEN-P9-LOCATION"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O615-036",
+      "rule_type": "modulation",
+      "statement": "Almbewirtschaftung und Tierwohl-Behirtung werden getrennt von der Heimfläche moduliert: bis 200 ha 100 %, über 200 bis 300 ha 90 %, über 300 bis 1.000 ha 85 %, darüber 75 %.",
+      "conditions": [
+        {
+          "expression": "modulation_base is the relevant alm RGVE/area base",
+          "description": "Die getrennte Alm-Berechnungsbasis wird verwendet.",
+          "input_paths": [
+            "land.alpine_pasture_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "modulated_premium",
+        "description": "Der passende Betriebsgrößenfaktor wird auf die Prämie angewendet.",
+        "value": {
+          "up_to_200": 1,
+          "over_200_to_300": 0.9,
+          "over_300_to_1000": 0.85,
+          "over_1000": 0.75
+        }
+      },
+      "source_reference_ids": [
+        "CIT-GEN-P19-MODULATION",
+        "CIT-SRL-P17-MODULATION"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O615-038",
+      "rule_type": "conditionality",
+      "statement": "Alle an ÖPUL 2023 teilnehmenden Betriebe müssen die Konditionalitätsvorschriften einhalten, um die Förderung in voller Höhe zu erhalten.",
+      "conditions": [{"expression":"documentation.conditionality_compliant == true","description":"Die Konditionalität ist erfüllt.","input_paths":["documentation.conditionality_compliant"]}],
+      "result": {"outcome":"conditionality_required","description":"Bei erfüllter Konditionalität bleibt die volle Förderung grundsätzlich möglich.","value":true},
+      "source_reference_ids": ["CIT-GEN-P4-CONDITIONALITY"]
+    },
+    {
+      "id": "O615-039",
+      "rule_type": "applicant_eligibility",
+      "statement": "Die förderwerbende Person muss einen landwirtschaftlichen Betrieb im eigenen Namen und auf eigene Rechnung bewirtschaften, Verfügungsgewalt über die beantragten Flächen haben sowie aktiver Landwirt und landwirtschaftlich tätig sein.",
+      "conditions": [{"expression":"farm.active_farmer and farm.agricultural_activity and farm.controls_land","description":"Die allgemeine Antragsteller- und Verfügungsgewaltvoraussetzung ist erfüllt.","input_paths":["farm.active_farmer","farm.agricultural_activity","farm.controls_land"]}],
+      "result": {"outcome":"applicant_eligible","description":"Der Betrieb ist als förderwerbende Person grundsätzlich zugelassen.","value":true},
+      "source_reference_ids": ["CIT-GEN-P4-APPLICANT"]
+    },
+    {
+      "id": "O615-040",
+      "rule_type": "farm_minimum_size",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr sind grundsätzlich entweder mindestens 0,50 ha geschützter Anbau oder mindestens 1,50 ha landwirtschaftliche Fläche einschließlich der genannten Zusatzflächen erforderlich; ab dem zweiten Teilnahmejahr entfällt die allgemeine Betriebsmindestgröße.",
+      "conditions": [{"expression":"farm.first_oepul_participation == false or protected_cultivation_area_ha >= 0.50 or agricultural_area_with_additions_ha >= 1.50","description":"Die allgemeine Mindestgröße wird nur im ersten Teilnahmejahr geprüft.","input_paths":["farm.first_oepul_participation","land.protected_cultivation_area_ha","land.agricultural_area_with_additions_ha"]}],
+      "result": {"outcome":"farm_size_requirement","description":"Die Betriebsmindestgröße ist im ersten Teilnahmejahr erfüllt oder nicht mehr anwendbar.","value":{"protected_cultivation_ha":0.5,"agricultural_area_ha":1.5}},
+      "source_reference_ids": ["CIT-GEN-P5-MINIMUM-SIZE"]
+    },
+    {
+      "id": "O615-041",
+      "rule_type": "active_area_management",
+      "statement": "Beantragte Flächen müssen aktiv für die landwirtschaftliche Produktion bewirtschaftet werden; maßnahmenbezogene Ausnahmen richten sich nach den jeweiligen Förderbedingungen.",
+      "conditions": [{"expression":"every parcel used for o6_15 is actively managed and declared","description":"Die Alm-/Maßnahmenflächen sind aktiv bewirtschaftet und für die Maßnahme angegeben.","input_paths":["land.parcels[].actively_managed","land.parcels[].measure_declared"]}],
+      "result": {"outcome":"area_eligible","description":"Aktiv bewirtschaftete und korrekt angegebene Flächen können prämienrelevant sein.","value":true},
+      "source_reference_ids": ["CIT-GEN-P6-ACTIVE-AREA"]
+    },
+    {
+      "id": "O615-042",
+      "rule_type": "op_code_effect",
+      "statement": "Für Flächen mit dem Code OP wird im jeweiligen Förderjahr keine ÖPUL-Prämie gewährt.",
+      "conditions": [{"expression":"parcel.op_code != OP","description":"Die Alm-/Maßnahmenfläche ist nicht mit OP gekennzeichnet.","input_paths":["land.parcels[].op_code"]}],
+      "result": {"outcome":"premium_not_excluded_by_op","description":"Der OP-Code schließt die ÖPUL-Prämie auf der Fläche nicht aus.","value":true},
+      "source_reference_ids": ["CIT-GEN-P7-OP-CODE"]
+    },
+    {
+      "id": "O615-043",
+      "rule_type": "full_year_obligation",
+      "statement": "Die Verpflichtungsdauer erstreckt sich grundsätzlich vom 1. Jänner bis 31. Dezember; förderfähig sind nur Tiere, Flächen oder andere Einheiten, für die die Verpflichtungen während der gesamten Dauer erfüllt werden.",
+      "conditions": [{"expression":"documentation.full_year_obligation_met == true","description":"Die o6_15-Verpflichtungen sind während des gesamten Kalenderjahres eingehalten.","input_paths":["documentation.full_year_obligation_met"]}],
+      "result": {"outcome":"full_year_compliance","description":"Die Einheit bleibt für das Verpflichtungsjahr förderfähig.","value":true},
+      "source_reference_ids": ["CIT-GEN-P10-DURATION"]
+    },
+    {
+      "id": "O615-044",
+      "rule_type": "sanction_consequence",
+      "statement": "Verstöße gegen Förderverpflichtungen werden nach Schwere, Ausmaß, Dauer und Häufigkeit beurteilt und können bis zur Kürzung um 100 Prozent oder zum Ausschluss mit Rückforderung führen.",
+      "conditions": [{"expression":"documentation.sanction_finding is evaluated according to the applicable scale","description":"Ein festgestellter Verstoß wird nach dem allgemeinen Kürzungsschema bewertet.","input_paths":["documentation.sanction_finding"]}],
+      "result": {"outcome":"sanction_scale_applies","description":"Die konkrete Kürzung ist vom festgestellten Verstoß und der Kontrollbewertung abhängig.","value":null},
+      "source_reference_ids": ["CIT-GEN-P18-SANCTIONS"]
+    },
+    {
+      "id": "O615-037",
+      "rule_type": "higher_force_2026",
+      "statement": "Wenn Trockenheit die Förderverpflichtungen unhaltbar macht, etwa wegen fehlender Wasserversorgung auf Almen, kann ein einzelbetrieblicher Antrag auf höhere Gewalt über eAMA/Eingaben gestellt werden.",
+      "conditions": [
+        {
+          "expression": "contract_year == 2026 and drought_prevented_obligation and higher_force_application_submitted",
+          "description": "Die Trockenheit verhindert die Verpflichtung und ein Antrag wird eingebracht.",
+          "input_paths": [
+            "farm.year",
+        "land.parcels[].care.water_available",
+        "farm.o6_15_drought.drought_prevented_obligation",
+        "farm.o6_15_drought.higher_force_application_submitted"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "higher_force_possible",
+        "description": "Die Anerkennung höherer Gewalt ist als Einzelfallweg möglich; sie ist keine automatische o6_15-Befreiung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-HTML-2026-05-22-HIGHER-FORCE"
+      ],
+      "rego_symbols": [
+        "opul.o6_15.drought_higher_force_possible"
+      ]
+    }
+  ]
+}
