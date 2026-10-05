@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 163,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_19-luna-high-20261005/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/ebw.rego",
+    "tests/ebw_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_19-luna-high-20261005/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 15,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/ebw.rego",
+        "tests/ebw_test.rego"
+      ],
+      "duration_ms": 27,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_19-luna-high-20261005/workspace/tools/opa",
+            "fmt",
+            "policy/ebw.rego"
+          ],
+          "duration_ms": 15,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_19\n\nimport rego.v1\n\ndefault eligible := false\n\neligible if {\n\tinput.measure.id == \"o6_19\"\n\tinput.measure.requested == true\n\tinput.measure.project_confirmation.present == true\n\tinput.measure.project_confirmation.reference_area_present == true\n\tinput.measure.contract_end_year == 2028\n\tinput.measure.commitment_years == required_commitment_years\n\tinput.measure.commitment_end_date == \"2028-12-31\"\n\tfirst_year_area_ok\n\tall_project_indicators_met\n\tinput.measure.project_confirmation.indicator_observation_database_current == true\n\tinput.measure.project_confirmation.regular_care_every_second_year == true\n\ttraining_ok\n}\n\nfirst_year_area_ok if {\n\tinput.measure.first_commitment_year == false\n}\n\nfirst_year_area_ok if {\n\tinput.measure.first_commitment_year == true\n\tinput.measure.eligible_area_ha >= 1\n}\n\nall_project_indicators_met if {\n\tcount(input.measure.project_confirmation.parcels) == 0\n}\n\nall_project_indicators_met if {\n\tcount(input.measure.project_confirmation.parcels) > 0\n\tnot some_project_indicator_failed\n}\n\nsome_project_indicator_failed if {\n\tsome parcel in input.measure.project_confirmation.parcels\n\tparcel.mandatory_indicators_met == false\n}\n\ntraining_ok if {\n\tinput.measure.application_year > 2026\n}\n\ntraining_ok if {\n\tinput.measure.application_year <= 2026\n\tinput.measure.training.regional_network_meeting_by_2026_12_31 == true\n\tinput.measure.training.participant_is_farm_person == true\n\tinput.measure.training.not_double_counted == true\n}\n\ncontract_years := {2023: 6, 2024: 5, 2025: 4}\n\nrequired_commitment_years := contract_years[input.measure.start_year]\n\nregional_plan_surcharge_eur := 250 if {\n\tinput.measure.application_year == 2023\n\tinput.measure.regional_nature_conservation_plan.requested == true\n\tinput.measure.regional_nature_conservation_plan.annual_confirmation_present == true\n}\n\nregional_plan_surcharge_eur := 270 if {\n\tinput.measure.application_year >= 2024\n\tinput.measure.regional_nature_conservation_plan.requested == true\n\tinput.measure.regional_nature_conservation_plan.annual_confirmation_present == true\n}\n\nregional_plan_surcharge_eur := 0 if {\n\tinput.measure.regional_nature_conservation_plan.requested != true\n}\n\nregional_plan_surcharge_eur := 0 if {\n\tinput.measure.regional_nature_conservation_plan.requested == true\n\tinput.measure.regional_nature_conservation_plan.annual_confirmation_present != true\n}\n\nregional_plan_once_per_farm if {\n\tinput.measure.regional_nature_conservation_plan.requested == true\n\tinput.measure.regional_nature_conservation_plan.also_naturschutz == true\n\tinput.measure.regional_nature_conservation_plan.awards_this_year == 1\n}\n\nfallow_area_max_ha := max([input.measure.arable_area_ha * 0.25, 2]) if {\n\tinput.measure.arable_area_ha >= 0\n}\n\npremium_rate_eur_per_ha := data.premium_rates_eur_per_ha[input.measure.premium.land_use][input.measure.premium.habitat][input.measure.premium.conservation_status][input.measure.premium.difficulty_index] if {\n\tinput.measure.premium.land_use == \"wiesen\"\n\tinput.measure.premium.conservation_status in {\"A\", \"B\", \"C\"}\n\tinput.measure.premium.difficulty_index in {0, 1, 2}\n}\n\npremium_rate_eur_per_ha := data.premium_rates_eur_per_ha[input.measure.premium.land_use][input.measure.premium.habitat][input.measure.premium.conservation_status] if {\n\tinput.measure.premium.land_use == \"weiden\"\n\tinput.measure.premium.conservation_status in {\"A\", \"B\", \"C\"}\n}\n\npremium_rate_eur_per_ha := data.premium_rates_eur_per_ha[input.measure.premium.land_use][input.measure.premium.habitat][input.measure.premium.conservation_status] if {\n\tinput.measure.premium.land_use == \"acker\"\n\tinput.measure.premium.conservation_status in {\"A\", \"B\", \"C\"}\n}\n\nebba01_allowed if {\n\tinput.measure.surcharges.ebba01.requested == true\n\tinput.measure.surcharges.ebba01.reason_documented == true\n\tinput.measure.surcharges.ebba01.reason_qualifies == true\n\tinput.measure.surcharges.ebba01.awards_on_area == 0\n}\n\nebba02_allowed if {\n\tinput.measure.application_year >= 2025\n\tinput.measure.surcharges.ebba02.requested == true\n\tinput.measure.surcharges.ebba02.very_good_conservation_status == true\n\tinput.measure.surcharges.ebba02.reason_documented == true\n}\n\nebhg_allowed if {\n\tinput.measure.surcharges.ebhg.requested == true\n\tinput.measure.surcharges.ebhg.protection_layer_share >= 0.5\n}\n\nfield_combination_allowed if {\n\tinput.measure.other_measure in {\"natura_2000\", \"ubb_landscape_element\", \"bio_landscape_element\"}\n}\n\nfield_combination_allowed if {\n\tinput.measure.other_measure == \"none\"\n}\n\nfield_combination_allowed if {\n\tinput.measure.other_measure == \"naturschutz\"\n\tinput.measure.combination_scope == \"farm\"\n}\n\naccession_premium_share := 1 if {\n\tinput.measure.application_year in {2024, 2025}\n}\n\naccession_premium_share := 0.5 if {\n\tinput.measure.application_year > 2025\n}\n\naccession_premium_allowed_area_ha := max([input.measure.area_2025_ha * accession_premium_share, 5]) if {\n\tinput.measure.application_year > 2025\n}\n\naccession_premium_allowed_area_ha := input.measure.accession_area_ha if {\n\tinput.measure.application_year in {2024, 2025}\n}\n\nmodulation_factor := 1 if {\n\tinput.measure.total_farm_area_ha <= 200\n}\n\nmodulation_factor := (200 + (0.9 * (input.measure.total_farm_area_ha - 200))) / input.measure.total_farm_area_ha if {\n\tinput.measure.total_farm_area_ha > 200\n\tinput.measure.total_farm_area_ha <= 300\n}\n\nmodulation_factor := ((200 + 90) + (0.85 * (input.measure.total_farm_area_ha - 300))) / input.measure.total_farm_area_ha if {\n\tinput.measure.total_farm_area_ha > 300\n\tinput.measure.total_farm_area_ha <= 1000\n}\n\nmodulation_factor := (((200 + 90) + 595) + (0.75 * (input.measure.total_farm_area_ha - 1000))) / input.measure.total_farm_area_ha if {\n\tinput.measure.total_farm_area_ha > 1000\n}\n\ndrought_2026_project_confirmation_overrides if {\n\tinput.measure.application_year == 2026\n\tinput.measure.drought_2026.affected_biodiversity_area_in_ebw == true\n}\n\ndrought_2026_project_confirmation_overrides := false if {\n\tinput.measure.application_year != 2026\n}\n\ndrought_2026_ebw_use_allowed if {\n\tinput.measure.application_year == 2026\n\tinput.measure.drought_2026.affected_biodiversity_area_in_ebw == true\n\tinput.measure.drought_2026.proposed_use_follows_project_confirmation == true\n}\n\nviolation[msg] if {\n\tinput.measure.project_confirmation.present != true\n\tmsg := \"missing_project_confirmation\"\n}\n\nviolation[msg] if {\n\tinput.measure.first_commitment_year == true\n\tinput.measure.eligible_area_ha < 1\n\tmsg := \"first_year_area_below_1_ha\"\n}\n\nviolation[msg] if {\n\tinput.measure.project_confirmation.indicator_observation_database_current != true\n\tmsg := \"indicator_observation_database_missing_or_stale\"\n}\n\nviolation[msg] if {\n\tinput.measure.project_confirmation.regular_care_every_second_year != true\n\tmsg := \"regular_care_every_second_year_not_demonstrated\"\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_19-luna-high-20261005/workspace/tools/opa",
+            "fmt",
+            "tests/ebw_test.rego"
+          ],
+          "duration_ms": 12,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_19_test\n\nimport data.oepul.o6_19\nimport rego.v1\n\nbase_measure := {\n\t\"id\": \"o6_19\",\n\t\"requested\": true,\n\t\"application_year\": 2025,\n\t\"start_year\": 2025,\n\t\"commitment_years\": 4,\n\t\"commitment_end_date\": \"2028-12-31\",\n\t\"contract_end_year\": 2028,\n\t\"first_commitment_year\": true,\n\t\"eligible_area_ha\": 1.2,\n\t\"arable_area_ha\": 10,\n\t\"area_2025_ha\": 10,\n\t\"accession_area_ha\": 3,\n\t\"total_farm_area_ha\": 220,\n\t\"project_confirmation\": {\n\t\t\"present\": true,\n\t\t\"reference_area_present\": true,\n\t\t\"regular_care_every_second_year\": true,\n\t\t\"indicator_observation_database_current\": true,\n\t\t\"parcels\": [{\"mandatory_indicators_met\": true}],\n\t},\n\t\"training\": {\n\t\t\"regional_network_meeting_by_2026_12_31\": true,\n\t\t\"participant_is_farm_person\": true,\n\t\t\"not_double_counted\": true,\n\t},\n\t\"regional_nature_conservation_plan\": {\n\t\t\"requested\": true,\n\t\t\"annual_confirmation_present\": true,\n\t\t\"also_naturschutz\": true,\n\t\t\"awards_this_year\": 1,\n\t},\n\t\"premium\": {\n\t\t\"land_use\": \"wiesen\",\n\t\t\"habitat\": \"Feuchte bis nasse Fettwiese\",\n\t\t\"conservation_status\": \"A\",\n\t\t\"difficulty_index\": 1,\n\t},\n\t\"surcharges\": {\n\t\t\"ebba01\": {\"requested\": true, \"reason_documented\": true, \"reason_qualifies\": true, \"awards_on_area\": 0},\n\t\t\"ebba02\": {\"requested\": true, \"very_good_conservation_status\": true, \"reason_documented\": true},\n\t\t\"ebhg\": {\"requested\": true, \"protection_layer_share\": 0.5},\n\t},\n\t\"other_measure\": \"none\",\n\t\"combination_scope\": \"field\",\n}\n\ntest_eligibility_and_contract if {\n\to6_19.eligible with input as {\"measure\": base_measure}\n}\n\ntest_first_year_minimum_fails if {\n\tnot o6_19.eligible with input as {\"measure\": object.union(base_measure, {\"eligible_area_ha\": 0.99})}\n\to6_19.violation.first_year_area_below_1_ha with input as {\"measure\": object.union(base_measure, {\"eligible_area_ha\": 0.99})}\n}\n\ntest_indicator_catalog_and_premium_table_are_data_backed if {\n\tcount(data.indicator_catalog) >= 80\n\tdata.indicator_catalog[_].code == \"EBGT18\"\n\to6_19.premium_rate_eur_per_ha == 896.4 with input as {\"measure\": base_measure}\n}\n\ntest_regional_plan_once_and_rate if {\n\to6_19.regional_plan_surcharge_eur == 270 with input as {\"measure\": base_measure}\n\to6_19.regional_plan_once_per_farm with input as {\"measure\": base_measure}\n}\n\ntest_fallow_cap_is_at_least_two_hectares if {\n\to6_19.fallow_area_max_ha == 2.5 with input as {\"measure\": base_measure}\n}\n\ntest_accession_and_modulation if {\n\to6_19.accession_premium_allowed_area_ha == 3 with input as {\"measure\": base_measure}\n\to6_19.modulation_factor with input as {\"measure\": base_measure}\n}\n\ntest_allowed_combinations if {\n\to6_19.field_combination_allowed with input as {\"measure\": object.union(base_measure, {\"other_measure\": \"natura_2000\"})}\n\tnot o6_19.field_combination_allowed with input as {\"measure\": object.union(base_measure, {\"other_measure\": \"ubb\"})}\n}\n\ntest_drought_does_not_override_project_confirmation if {\n\to6_19.drought_2026_project_confirmation_overrides with input as {\"measure\": object.union(base_measure, {\"application_year\": 2026, \"drought_2026\": {\"affected_biodiversity_area_in_ebw\": true}})}\n\to6_19.drought_2026_ebw_use_allowed with input as {\"measure\": object.union(base_measure, {\"application_year\": 2026, \"drought_2026\": {\"affected_biodiversity_area_in_ebw\": true, \"proposed_use_follows_project_confirmation\": true}})}\n}\n\ntest_ebba_and_ebhg_constraints if {\n\to6_19.ebba01_allowed with input as {\"measure\": base_measure}\n\to6_19.ebba02_allowed with input as {\"measure\": base_measure}\n\to6_19.ebhg_allowed with input as {\"measure\": base_measure}\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_19-luna-high-20261005/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 22,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 9/9\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_19-luna-high-20261005/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 97,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_19-luna-high-20261005/workspace"
+}
