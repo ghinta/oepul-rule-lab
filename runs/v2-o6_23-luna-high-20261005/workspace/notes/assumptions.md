@@ -1,0 +1,10 @@
+# Fachliche Annahmen und offene Punkte
+
+- Das Maßnahmenblatt trägt den Stand Oktober 2025; die vier offiziellen 2026-Hinweise werden als zeitbezogene Ergänzungen behandelt. Die 2026-Schnittzeit-Ausnahme gilt nur, wenn die zugrunde liegende Landesverordnung tatsächlich angepasst wurde.
+- Die Anhang-J-Matrix wird vollständig als Daten modelliert. Eine konkrete Projektbestätigung kann zusätzliche nicht prämienrelevante Auflagen enthalten; diese sind ohne flächenbezogene Projektbestätigung nicht automatisch ableitbar.
+- `project_confirmation_cut_date` ist ein optionaler Profilvorschlag. Die abstrakte Verzögerung von 21/28/42/56/70/84 Tagen wird nicht in ein fixes Kalenderdatum umgerechnet, weil das Ausgangsdatum aus der jeweiligen Landesregelung bzw. Projektbestätigung stammt.
+- `o6_1b_teilbetrieb` ist eine normalisierte Datenkennung für die im Maßnahmenblatt ausdrücklich genannte Kombination „Biologische Wirtschaftsweise – Teilbetrieb“. Die amtliche technische Codierung ist im bereitgestellten o6_23-Material nicht näher spezifiziert.
+- Die DIVSZ-2026-Ausnahme wird nur für eine tatsächlich als Grünland-Biodiversitätsfläche geführte und zusätzlich in o6_23 relevante Fläche modelliert. Die 2026-OP-Codierung nimmt die UBB-/BIO-Prämie weg; die o6_23-Projektbestätigung bleibt davon unberührt.
+- Die allgemeine Betriebsgrößen-Mindestanforderung, Konditionalität, Prämienobergrenze und Modulation sind allgemeine ÖPUL-Bedingungen. Ihre Eingaben fehlen im Canonical Farm Profile und werden daher im Discover-Modus vorgeschlagen; der o6_23-Rego-Status verwendet die measure-spezifischen Kernbedingungen.
+- Für eine GL-Auflage ohne hinterlegten Projektbestätigungstermin wird keine kalendergenaue Schnittprüfung erzwungen. Für einen vorhandenen Termin prüft Rego das erste erfasste Schnittdatum; die 2026-Ausnahme kann diese Prüfung überlagern.
+- Die Kapitel-/Code-Liste `project_confirmation_obligations` ist im Discover-Profil optional ergänzt. Sind für einen Schlag keine Auflagenkapitel erfasst, wird keine zusätzliche Anhang-J-Paarprüfung ausgelöst; sobald Kapitel vorliegen, wird jede Paarung gegen die vollständige 8x8-Matrix geprüft.
