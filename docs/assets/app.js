@@ -31,6 +31,7 @@ RAW_RUNS.push(["o6_16", "gpt-5.6-luna", "high", "v2-o6_16-luna-high-20261005", "
 RAW_RUNS.push(["o6_17", "gpt-5.6-luna", "high", "v2-o6_17-luna-high-20261005", "o6_17_humuserhalt_und_bodenschutz_auf_umbruchsfaehigem-gruenland_2025_10.pdf", 48, 52, 42, 4, 50, 54, true]);
 RAW_RUNS.push(["o6_18", "gpt-5.6-luna", "high", "v2-o6_18-luna-high-20261005", "o6_18_naturschutz_2025_10.pdf", 39, 55, 29, 8, 55, 55, true]);
 RAW_RUNS.push(["o6_19", "gpt-5.6-luna", "high", "v2-o6_19-luna-high-20261005", "o6_19_ergebnisorientierte_bewirtschaftung_2025_10.pdf", 32, 66, 36, 9, 58, 59, true]);
+RAW_RUNS.push(["o6_20", "gpt-5.6-luna", "high", "v2-o6_20-luna-high-20261005", "o6_20_tierwohl_weide_2025_10.pdf", 41, 45, 61, 5, 3, 41, true]);
 
 const [measure, model, effort, dir, sourceSheet, rules, references, coverage, tests, proposals, profilePathsAdded, valid] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 const labelFor = (id) => MODEL_META.find((item) => item.id === id)?.label ?? id;
