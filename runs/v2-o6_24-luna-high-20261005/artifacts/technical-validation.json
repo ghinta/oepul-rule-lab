@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 152,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_24-luna-high-20261005/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_24.rego",
+    "tests/o6_24_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_24-luna-high-20261005/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 14,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_24.rego",
+        "tests/o6_24_test.rego"
+      ],
+      "duration_ms": 26,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_24-luna-high-20261005/workspace/tools/opa",
+            "fmt",
+            "policy/o6_24.rego"
+          ],
+          "duration_ms": 15,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_24\n\nimport rego.v1\n\neligible_parcel(p) if {\n\tp.land_use == \"arable\"\n\tp.constraints.is_wrrl_area == true\n\tp.constraints.wrrl_higher_n_authorization != true\n}\n\neligible_area_ha := total if {\n\tareas := [p.area_ha | some p in input.land.parcels; eligible_parcel(p)]\n\ttotal := sum(areas)\n}\n\ndefault eligible_area_ha := 0\n\ndefault minimum_participation_met := false\n\nminimum_participation_met if {\n\teligible_area_ha >= 2\n}\n\ndefault fertilizer_limits_met := false\n\nfertilizer_limits_met if {\n\tviolations := [p | some p in input.land.parcels; eligible_parcel(p); p.operations.fertilizer.annual_effective_n_kg_per_ha > p.operations.fertilizer.wrrl_annual_limit_kg_per_ha]\n\tcount(violations) == 0\n}\n\ndefault application_periods_met := false\n\napplication_periods_met if {\n\tviolations := [p | some p in input.land.parcels; eligible_parcel(p); p.operations.fertilizer.application_period_compliant != true]\n\tcount(violations) == 0\n}\n\ndefault farm_book_complete := false\n\nfarm_book_complete if {\n\tinput.documentation.wrrl_farm_book_complete == true\n}\n\ndefault all_measure_conditions_met := false\n\nall_measure_conditions_met if {\n\tminimum_participation_met\n\tfertilizer_limits_met\n\tapplication_periods_met\n\tfarm_book_complete\n}\n\npremium_eur_per_ha := 50 if {\n\tinput.farm.year == 2023\n}\n\npremium_eur_per_ha := 54 if {\n\tinput.farm.year >= 2024\n}\n\npremium_eur_per_ha := null if {\n\tinput.farm.year < 2023\n}\n\ndistrict_in_exception_area if {\n\tstate := input.farm.region.federal_state\n\tallowed := data.drought_2026_exception_districts[state]\n\t\"all\" in allowed\n}\n\ndistrict_in_exception_area if {\n\tstate := input.farm.region.federal_state\n\tdistrict := input.farm.region.district\n\tallowed := data.drought_2026_exception_districts[state]\n\tdistrict in allowed\n}\n\ndefault drought_exception_applies := false\n\ndrought_exception_applies if {\n\tinput.farm.year == 2026\n\tinput.documentation.drought_no_harvestable_stand == true\n\tdistrict_in_exception_area\n}\n\ndecision := {\n\t\"measure\": \"o6_24\",\n\t\"eligible_area_ha\": eligible_area_ha,\n\t\"minimum_participation_met\": minimum_participation_met,\n\t\"fertilizer_limits_met\": fertilizer_limits_met,\n\t\"application_periods_met\": application_periods_met,\n\t\"farm_book_complete\": farm_book_complete,\n\t\"all_measure_conditions_met\": all_measure_conditions_met,\n\t\"premium_eur_per_ha\": premium_eur_per_ha,\n\t\"drought_exception_applies\": drought_exception_applies,\n}\n\nallowed_combination contains code if {\n\tsome code in data.allowed_measure_combinations\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_24-luna-high-20261005/workspace/tools/opa",
+            "fmt",
+            "tests/o6_24_test.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_24_test\n\nimport data.oepul.o6_24\nimport rego.v1\n\nvalid_input := {\n\t\"farm\": {\"year\": 2026, \"region\": {\"federal_state\": \"Steiermark\", \"district\": \"Graz\"}},\n\t\"land\": {\"parcels\": [{\n\t\t\"area_ha\": 2.5,\n\t\t\"land_use\": \"arable\",\n\t\t\"constraints\": {\"is_wrrl_area\": true, \"wrrl_higher_n_authorization\": false},\n\t\t\"operations\": {\"fertilizer\": {\n\t\t\t\"annual_effective_n_kg_per_ha\": 120,\n\t\t\t\"wrrl_annual_limit_kg_per_ha\": 130,\n\t\t\t\"application_period_compliant\": true,\n\t\t}},\n\t}]},\n\t\"documentation\": {\"wrrl_farm_book_complete\": true},\n}\n\ntest_valid_wrrl_participation if {\n\tresult := o6_24.decision with input as valid_input\n\tresult.all_measure_conditions_met\n\tresult.premium_eur_per_ha == 54\n}\n\ntest_minimum_participation_failure if {\n\tresult := o6_24.decision with input as {\n\t\t\"farm\": {\"year\": 2026, \"region\": {\"federal_state\": \"Steiermark\", \"district\": \"Graz\"}},\n\t\t\"land\": {\"parcels\": [{\n\t\t\t\"area_ha\": 1.9,\n\t\t\t\"land_use\": \"arable\",\n\t\t\t\"constraints\": {\"is_wrrl_area\": true, \"wrrl_higher_n_authorization\": false},\n\t\t\t\"operations\": {\"fertilizer\": {\n\t\t\t\t\"annual_effective_n_kg_per_ha\": 100,\n\t\t\t\t\"wrrl_annual_limit_kg_per_ha\": 130,\n\t\t\t\t\"application_period_compliant\": true,\n\t\t\t}},\n\t\t}]},\n\t\t\"documentation\": {\"wrrl_farm_book_complete\": true},\n\t}\n\tnot result.minimum_participation_met\n}\n\ntest_high_n_authorization_excluded if {\n\tresult := o6_24.decision with input as {\n\t\t\"farm\": {\"year\": 2026, \"region\": {\"federal_state\": \"Steiermark\", \"district\": \"Graz\"}},\n\t\t\"land\": {\"parcels\": [{\n\t\t\t\"area_ha\": 2.5,\n\t\t\t\"land_use\": \"arable\",\n\t\t\t\"constraints\": {\"is_wrrl_area\": true, \"wrrl_higher_n_authorization\": true},\n\t\t\t\"operations\": {\"fertilizer\": {\n\t\t\t\t\"annual_effective_n_kg_per_ha\": 100,\n\t\t\t\t\"wrrl_annual_limit_kg_per_ha\": 130,\n\t\t\t\t\"application_period_compliant\": true,\n\t\t\t}},\n\t\t}]},\n\t\t\"documentation\": {\"wrrl_farm_book_complete\": true},\n\t}\n\tnot result.minimum_participation_met\n}\n\ntest_combination_table_reference if {\n\t\"1A\" in o6_24.allowed_combination\n\t\"23\" in o6_24.allowed_combination\n\tnot \"14\" in o6_24.allowed_combination\n}\n\ntest_drought_exception_styria if {\n\tresult := o6_24.decision with input as {\n\t\t\"farm\": {\"year\": 2026, \"region\": {\"federal_state\": \"Steiermark\", \"district\": \"Weiz\"}},\n\t\t\"documentation\": {\"drought_no_harvestable_stand\": true},\n\t}\n\tresult.drought_exception_applies\n}\n\ntest_drought_exception_not_applied_outside_area if {\n\tresult := o6_24.decision with input as {\n\t\t\"farm\": {\"year\": 2026, \"region\": {\"federal_state\": \"Steiermark\", \"district\": \"Murau\"}},\n\t\t\"documentation\": {\"drought_no_harvestable_stand\": true},\n\t}\n\tnot result.drought_exception_applies\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_24-luna-high-20261005/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 22,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 6/6\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_24-luna-high-20261005/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 89,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_24-luna-high-20261005/workspace"
+}
