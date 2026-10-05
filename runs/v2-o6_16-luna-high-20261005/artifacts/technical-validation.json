@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 181,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_16-luna-high-20261005/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_16.rego",
+    "tests/o6_16_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_16-luna-high-20261005/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 19,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_16.rego",
+        "tests/o6_16_test.rego"
+      ],
+      "duration_ms": 30,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_16-luna-high-20261005/workspace/tools/opa",
+            "fmt",
+            "policy/o6_16.rego"
+          ],
+          "duration_ms": 17,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_16\n\nimport data as reference\nimport rego.v1\n\ndefault eligible := false\n\npremium_value(component) := value if {\n\tsome row in reference.premium_eur_per_ha_from_2024\n\trow.component == component\n\tvalue := row.value\n}\n\narea_catalog_contains_kg(kg_number) if {\n\tsome entry in reference.area_catalog.entries\n\tentry.kg_number == kg_number\n}\n\nhigh_reduction_zone if input.farm.region.federal_state == \"Wien\"\nhigh_reduction_zone if input.farm.region.federal_state == \"Burgenland\"\nhigh_reduction_zone if input.farm.region.is_eastern_lower_austria_or_tullnerfeld\n\nreduction_factor := 0.8 if high_reduction_zone\nreduction_factor := 0.6 if not high_reduction_zone\n\nnitrogen_threshold := 20 if input.farm.year >= 2025\nnitrogen_threshold := 10 if input.farm.year < 2025\n\nnitrogen_transfer(surplus) := transfer if {\n\tsurplus > nitrogen_threshold\n\tuncapped := surplus * reduction_factor\n\tinput.farm.year >= 2025\n\ttransfer := min([uncapped, 100 * reduction_factor])\n}\n\nnitrogen_transfer(surplus) := transfer if {\n\tsurplus > nitrogen_threshold\n\tinput.farm.year < 2025\n\ttransfer := surplus * reduction_factor\n}\n\nnitrogen_transfer(surplus) := 0 if surplus <= nitrogen_threshold\n\nrequired_soil_samples := ceil(input.land.groundwater_arable_area_ha / 5)\n\nparcel_requires_field_record(parcel) if {\n\tparcel.in_groundwater_area\n\tparcel.crop_area_ha > 0.30\n}\n\nforbidden_psm(parcel) if {\n\tparcel.in_groundwater_area\n\tparcel.crop_category in {\"sorghum\", \"sudangrass\", \"maize\", \"oilseed\", \"root\"}\n\tsome active in parcel.psm_active_ingredients\n\tsome forbidden in reference.forbidden_active_ingredients\n\tforbidden != \"Bentazon (bei Wiederzulassung)\"\n\tactive == forbidden\n}\n\nforbidden_psm(parcel) if {\n\tparcel.in_groundwater_area\n\tparcel.crop_category in {\"sorghum\", \"sudangrass\", \"maize\", \"oilseed\", \"root\"}\n\tinput.farm.year >= 2025\n\tinput.farm.bentazon_reauthorized\n\tsome active in parcel.psm_active_ingredients\n\tsome forbidden in reference.forbidden_active_ingredients\n\tforbidden == \"Bentazon (bei Wiederzulassung)\"\n\tactive == \"Bentazon\"\n}\n\nviolation[msg] if {\n\tinput.measure.requested\n\tinput.measure.first_participation_year == input.farm.year\n\tinput.land.groundwater_arable_area_ha < 2\n\tmsg := \"first_participation_requires_2_ha_in_annex_g\"\n}\n\nviolation[msg] if {\n\tinput.measure.requested\n\tnot input.measure.participates_cover_intercrop\n\tnot input.measure.participates_cover_evergreen\n\tmsg := \"combination_with_cover_measure_required\"\n}\n\nviolation[msg] if {\n\tinput.measure.requested\n\tsome parcel in input.land.parcels\n\tparcel.in_groundwater_area\n\tnot area_catalog_contains_kg(parcel.kg_number)\n\tmsg := \"parcel_not_in_annex_g_catalog\"\n}\n\nviolation[msg] if {\n\tinput.measure.requested\n\tnot input.records.farm_planning_completed_by_02_28\n\tmsg := \"farm_nutrient_plan_missing_or_late\"\n}\n\nviolation[msg] if {\n\tinput.measure.requested\n\tnot input.records.farm_balance_completed_by_next_01_31\n\tmsg := \"farm_nutrient_balance_missing_or_late\"\n}\n\nviolation[msg] if {\n\tinput.measure.requested\n\tsome parcel in input.land.parcels\n\tparcel_requires_field_record(parcel)\n\tnot parcel.field_record_complete\n\tmsg := \"field_nutrient_record_missing\"\n}\n\nviolation[msg] if {\n\tinput.measure.requested\n\tinput.records.education_hours < 10\n\tmsg := \"ten_hours_training_required\"\n}\n\nviolation[msg] if {\n\tinput.measure.requested\n\tnot input.records.education_provider_recognized\n\tmsg := \"training_provider_not_recognized\"\n}\n\nviolation[msg] if {\n\tinput.measure.requested\n\tinput.records.education_completed_date > \"2026-12-31\"\n\tmsg := \"training_deadline_2026_12_31_missed\"\n}\n\nviolation[msg] if {\n\tinput.measure.requested\n\tnot input.records.water_protection_concept_complete\n\tmsg := \"water_protection_concept_missing\"\n}\n\nviolation[msg] if {\n\tinput.measure.requested\n\tcount(input.records.soil_samples) < required_soil_samples\n\tmsg := \"insufficient_soil_samples\"\n}\n\nviolation[msg] if {\n\tinput.measure.requested\n\tsome sample in input.records.soil_samples\n\tsample.lab_accredited == false\n\tmsg := \"soil_sample_lab_not_accredited\"\n}\n\nviolation[msg] if {\n\tinput.measure.requested\n\tsome sample in input.records.soil_samples\n\tsample.draw_date < \"2022-01-01\"\n\tmsg := \"soil_sample_too_old\"\n}\n\nviolation[msg] if {\n\tinput.measure.requested\n\tsome parcel in input.land.parcels\n\tforbidden_psm(parcel)\n\tmsg := \"forbidden_plant_protection_active_ingredient\"\n}\n\nviolation[msg] if {\n\tinput.measure.requested\n\tinput.farm.region.federal_state == \"Oberösterreich\"\n\tinput.measure.oo_variant_3_cover\n\tmsg := \"upper_austria_variant_3_not_allowed\"\n}\n\nviolation[msg] if {\n\tinput.measure.requested\n\tinput.farm.region.federal_state == \"Oberösterreich\"\n\tinput.measure.oo_chemical_psm_application\n\tnot input.records.oo_ipm_inspection_or_warning_documented\n\tmsg := \"upper_austria_ipm_precheck_missing\"\n}\n\nviolation[msg] if {\n\tinput.measure.requested\n\tsome parcel in input.land.parcels\n\tparcel.in_groundwater_area\n\tparcel.nitrogen_surplus_kg_per_ha > 30\n\tnot parcel.following_crop_planted_by_11_15\n\tnot parcel.cover_crop_planted_by_11_15\n\tmsg := \"following_crop_or_cover_due_by_11_15\"\n}\n\nviolation[msg] if {\n\tinput.measure.requested\n\tsome parcel in input.land.parcels\n\tparcel.in_groundwater_area\n\tnitrogen_transfer(parcel.nitrogen_surplus_kg_per_ha) > 0\n\tparcel.following_crop_reduction_kg_per_ha < nitrogen_transfer(parcel.nitrogen_surplus_kg_per_ha)\n\tmsg := \"following_crop_nitrogen_reduction_insufficient\"\n}\n\nviolation[msg] if {\n\tinput.options.washout_risk.requested\n\tcount(input.options.washout_risk.parcel_ids) == 0\n\tmsg := \"washout_option_requires_at_least_one_parcel\"\n}\n\nviolation[msg] if {\n\tinput.options.washout_risk.requested\n\tsome parcel in input.land.parcels\n\tparcel.id in input.options.washout_risk.parcel_ids\n\tparcel.average_ackerzahl > 40\n\tmsg := \"washout_option_average_ackerzahl_over_40\"\n}\n\nviolation[msg] if {\n\tinput.options.washout_risk.requested\n\tsome parcel in input.land.parcels\n\tparcel.id in input.options.washout_risk.parcel_ids\n\tparcel.washout_cover_new_sown\n\tparcel.washout_cover_contains_legumes\n\tmsg := \"washout_new_cover_must_be_without_legumes\"\n}\n\nviolation[msg] if {\n\tinput.options.washout_risk.requested\n\tsome parcel in input.land.parcels\n\tparcel.id in input.options.washout_risk.parcel_ids\n\tparcel.washout_psm_or_fertilizer_used\n\tmsg := \"washout_option_psm_and_fertilizer_prohibited\"\n}\n\nviolation[msg] if {\n\tinput.options.washout_risk.requested\n\tsome parcel in input.land.parcels\n\tparcel.id in input.options.washout_risk.parcel_ids\n\tnot parcel.washout_mown_or_chopped_every_two_years\n\tmsg := \"washout_option_maintenance_missing\"\n}\n\nviolation[msg] if {\n\tinput.options.washout_risk.requested\n\tsome parcel in input.land.parcels\n\tparcel.id in input.options.washout_risk.parcel_ids\n\tparcel.washout_grazed_or_threshed\n\tmsg := \"washout_option_grazing_and_threshing_prohibited\"\n}\n\nviolation[msg] if {\n\tinput.options.washout_risk.requested\n\tsome parcel in input.land.parcels\n\tparcel.id in input.options.washout_risk.parcel_ids\n\tparcel.washout_years_since_start < 2\n\tparcel.washout_broken_up\n\tmsg := \"washout_option_breakup_too_early\"\n}\n\nviolation[msg] if {\n\tinput.options.vienna_humus.requested\n\tinput.farm.region.federal_state != \"Wien\"\n\tmsg := \"vienna_humus_option_requires_vienna_area\"\n}\n\nviolation[msg] if {\n\tinput.options.vienna_humus.requested\n\tinput.options.vienna_humus.turning_tillage_other_than_after_maize\n\tmsg := \"vienna_humus_option_turning_tillage_prohibited\"\n}\n\nviolation[msg] if {\n\tinput.options.vienna_humus.requested\n\tnot input.options.vienna_humus.recognized_carbon_project_confirmation\n\tmsg := \"vienna_humus_project_confirmation_missing\"\n}\n\nviolation[msg] if {\n\tinput.options.vienna_humus.requested\n\tinput.records.vienna_extra_education_hours < 3\n\tmsg := \"vienna_humus_extra_three_hours_missing\"\n}\n\nviolation[msg] if {\n\tinput.options.vienna_humus.requested\n\tcount(input.records.soil_samples) < 2 * required_soil_samples\n\tmsg := \"vienna_humus_requires_double_soil_samples\"\n}\n\npig_feed_limit(category) := row if {\n\tsome row in reference.pig_feed_limits_g_per_kg_dm_88_percent\n\trow.category == category\n}\n\npig_feed_compliant(feed) if {\n\tlimit := pig_feed_limit(feed.category)\n\tfeed.average_g_per_kg <= limit.average_max\n}\n\npig_feed_compliant(feed) if {\n\tfeed.category == \"young_fattening_pigs_and_unmated_gilts_32_to_60_kg\"\n\tlimit := pig_feed_limit(feed.category)\n\tfeed.phase_g_per_kg <= limit.phase_max\n}\n\nviolation[msg] if {\n\tinput.options.strong_n_reduced_pig_feeding.requested\n\tinput.livestock.pig_gve_average / input.land.total_arable_area_ha < 1\n\tmsg := \"pig_option_requires_one_gve_per_ha_arable_land\"\n}\n\nviolation[msg] if {\n\tinput.options.strong_n_reduced_pig_feeding.requested\n\tsome feed in input.options.strong_n_reduced_pig_feeding.feed_categories\n\tnot pig_feed_compliant(feed)\n\tmsg := \"pig_feed_raw_protein_limit_exceeded\"\n}\n\nviolation[msg] if {\n\tinput.options.strong_n_reduced_pig_feeding.requested\n\tnot input.records.pig_feed_recipe_evidence\n\tmsg := \"pig_feed_recipe_evidence_missing\"\n}\n\nviolation[msg] if {\n\tinput.options.cultan.requested\n\tinput.farm.year < 2025\n\tmsg := \"cultan_option_only_from_2025\"\n}\n\nviolation[msg] if {\n\tinput.options.cultan.requested\n\tnot input.options.cultan.has_ammonium_depot_injection\n\tmsg := \"cultan_ammonium_depot_injection_required\"\n}\n\nviolation[msg] if {\n\tinput.options.cultan.requested\n\tnot input.records.cultan_field_records_complete\n\tmsg := \"cultan_field_records_missing\"\n}\n\nviolation[msg] if {\n\tinput.options.cultan.requested\n\tinput.options.cultan.external_equipment\n\tnot input.records.cultan_external_service_evidence\n\tmsg := \"cultan_external_equipment_evidence_missing\"\n}\n\nviolation[msg] if {\n\tinput.options.psm_avoidance_surcharge.requested\n\tinput.measure.participates_organic\n\tmsg := \"psm_avoidance_surcharge_not_combinable_with_organic\"\n}\n\nviolation[msg] if {\n\tinput.options.washout_risk.requested\n\tsome parcel in input.land.parcels\n\tparcel.id in input.options.washout_risk.parcel_ids\n\tparcel.has_base_premium\n\tmsg := \"washout_option_area_receives_no_base_premium\"\n}\n\nviolation[msg] if {\n\tinput.options.strong_n_reduced_pig_feeding.requested\n\tinput.options.strong_n_reduced_pig_feeding.also_claimed_in_liquid_manure_measure\n\tmsg := \"pig_option_double_claim_not_allowed\"\n}\n\nbase_premium_rate := premium_value(\"base_with_organic_or_input_restriction\") if input.measure.participates_organic\nbase_premium_rate := premium_value(\"base_without_organic_or_input_restriction\") if not input.measure.participates_organic\n\npremium_components := components if {\n\tcomponents := array.concat([{\"component\": \"base\", \"eur_per_ha\": base_premium_rate}], [\n\t\t{\"component\": \"education_first_10_ha\", \"eur_per_ha\": premium_value(\"education_first_10_ha\")},\n\t])\n}\n\neligible if {\n\tinput.measure.requested\n\tcount(violation) == 0\n}\n\ndecision := {\n\t\"eligible\": eligible,\n\t\"violations\": sort([message | violation[message]]),\n\t\"required_soil_samples\": required_soil_samples,\n\t\"nitrogen_reduction_factor\": reduction_factor,\n\t\"premium_components_from_2024\": premium_components,\n\t\"annex_g_catalog_matches\": count([entry | some entry in reference.area_catalog.entries; some parcel in input.land.parcels; entry.kg_number == parcel.kg_number]),\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_16-luna-high-20261005/workspace/tools/opa",
+            "fmt",
+            "tests/o6_16_test.rego"
+          ],
+          "duration_ms": 12,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_16_test\n\nimport data.oepul.o6_16\nimport rego.v1\n\ntest_eligible_minimal_participant if {\n\to6_16.eligible with input as {\n\t\t\"farm\": {\"year\": 2026, \"region\": {\"federal_state\": \"Burgenland\", \"is_eastern_lower_austria_or_tullnerfeld\": false, \"bentazon_reauthorized\": false}},\n\t\t\"measure\": {\"requested\": true, \"first_participation_year\": 2024, \"participates_cover_intercrop\": true, \"participates_cover_evergreen\": false, \"participates_organic\": false},\n\t\t\"land\": {\"total_arable_area_ha\": 10, \"groundwater_arable_area_ha\": 5.03, \"parcels\": [{\"id\": \"p1\", \"kg_number\": \"32001\", \"in_groundwater_area\": true, \"crop_area_ha\": 0.2, \"crop_category\": \"cereal\", \"psm_active_ingredients\": [], \"field_record_complete\": true, \"nitrogen_surplus_kg_per_ha\": 0, \"following_crop_reduction_kg_per_ha\": 0, \"following_crop_planted_by_11_15\": true, \"cover_crop_planted_by_11_15\": false}]},\n\t\t\"records\": {\"farm_planning_completed_by_02_28\": true, \"farm_balance_completed_by_next_01_31\": true, \"education_hours\": 10, \"education_provider_recognized\": true, \"education_completed_date\": \"2026-12-31\", \"water_protection_concept_complete\": true, \"soil_samples\": [{\"lab_accredited\": true, \"draw_date\": \"2024-01-01\"}, {\"lab_accredited\": true, \"draw_date\": \"2025-01-01\"}], \"oo_ipm_inspection_or_warning_documented\": true, \"vienna_extra_education_hours\": 0, \"pig_feed_recipe_evidence\": true, \"cultan_field_records_complete\": true, \"cultan_external_service_evidence\": true},\n\t\t\"options\": {\"washout_risk\": {\"requested\": false, \"parcel_ids\": []}, \"vienna_humus\": {\"requested\": false, \"turning_tillage_other_than_after_maize\": false, \"recognized_carbon_project_confirmation\": false}, \"strong_n_reduced_pig_feeding\": {\"requested\": false, \"feed_categories\": [], \"also_claimed_in_liquid_manure_measure\": false}, \"cultan\": {\"requested\": false, \"has_ammonium_depot_injection\": false, \"external_equipment\": false}, \"psm_avoidance_surcharge\": {\"requested\": false}},\n\t}\n}\n\ntest_nitrogen_threshold_and_reduction if {\n\tcontext := {\"farm\": {\"year\": 2026, \"region\": {\"federal_state\": \"Burgenland\", \"is_eastern_lower_austria_or_tullnerfeld\": false}}}\n\to6_16.nitrogen_transfer(30) == 24 with input as context\n\to6_16.nitrogen_transfer(20) == 0 with input as context\n\to6_16.nitrogen_transfer(100) == 80 with input as context\n\to6_16.reduction_factor == 0.8 with input as context\n}\n\ntest_forbidden_psm_detected if {\n\tviolations := o6_16.decision.violations with input as {\n\t\t\"farm\": {\"year\": 2026, \"region\": {\"federal_state\": \"Burgenland\", \"is_eastern_lower_austria_or_tullnerfeld\": false, \"bentazon_reauthorized\": false}},\n\t\t\"measure\": {\"requested\": true, \"first_participation_year\": 2024, \"participates_cover_intercrop\": true, \"participates_cover_evergreen\": false, \"participates_organic\": false},\n\t\t\"land\": {\"total_arable_area_ha\": 10, \"groundwater_arable_area_ha\": 5, \"parcels\": [{\"id\": \"p1\", \"kg_number\": \"32001\", \"in_groundwater_area\": true, \"crop_area_ha\": 1, \"crop_category\": \"maize\", \"psm_active_ingredients\": [\"Metazachlor\"], \"field_record_complete\": true, \"nitrogen_surplus_kg_per_ha\": 0, \"following_crop_reduction_kg_per_ha\": 0, \"following_crop_planted_by_11_15\": true, \"cover_crop_planted_by_11_15\": false}]},\n\t\t\"records\": {\"farm_planning_completed_by_02_28\": true, \"farm_balance_completed_by_next_01_31\": true, \"education_hours\": 10, \"education_provider_recognized\": true, \"education_completed_date\": \"2026-12-31\", \"water_protection_concept_complete\": true, \"soil_samples\": [{\"lab_accredited\": true, \"draw_date\": \"2024-01-01\"}], \"oo_ipm_inspection_or_warning_documented\": true, \"vienna_extra_education_hours\": 0, \"pig_feed_recipe_evidence\": true, \"cultan_field_records_complete\": true, \"cultan_external_service_evidence\": true},\n\t\t\"options\": {\"washout_risk\": {\"requested\": false, \"parcel_ids\": []}, \"vienna_humus\": {\"requested\": false, \"turning_tillage_other_than_after_maize\": false, \"recognized_carbon_project_confirmation\": false}, \"strong_n_reduced_pig_feeding\": {\"requested\": false, \"feed_categories\": [], \"also_claimed_in_liquid_manure_measure\": false}, \"cultan\": {\"requested\": false, \"has_ammonium_depot_injection\": false, \"external_equipment\": false}, \"psm_avoidance_surcharge\": {\"requested\": false}},\n\t}\n\t\"forbidden_plant_protection_active_ingredient\" in violations\n}\n\ntest_bentazon_reauthorization_path if {\n\to6_16.forbidden_psm({\n\t\t\"in_groundwater_area\": true,\n\t\t\"crop_category\": \"maize\",\n\t\t\"psm_active_ingredients\": [\"Bentazon\"],\n\t}) with input as {\n\t\t\"farm\": {\"year\": 2026, \"bentazon_reauthorized\": true},\n\t}\n}\n\ntest_upper_austria_specific_inputs if {\n\tviolations := o6_16.decision.violations with input as {\n\t\t\"farm\": {\"year\": 2026, \"region\": {\"federal_state\": \"Oberösterreich\", \"is_eastern_lower_austria_or_tullnerfeld\": false, \"bentazon_reauthorized\": false}},\n\t\t\"measure\": {\"requested\": true, \"participates_organic\": false, \"oo_variant_3_cover\": true, \"oo_chemical_psm_application\": true},\n\t\t\"land\": {\"groundwater_arable_area_ha\": 2, \"total_arable_area_ha\": 10, \"parcels\": []},\n\t\t\"records\": {\"oo_ipm_inspection_or_warning_documented\": false, \"soil_samples\": []},\n\t\t\"options\": {},\n\t}\n\t\"upper_austria_variant_3_not_allowed\" in violations\n\t\"upper_austria_ipm_precheck_missing\" in violations\n}\n\ntest_pig_gve_average_path if {\n\tviolations := o6_16.decision.violations with input as {\n\t\t\"farm\": {\"year\": 2026, \"region\": {\"federal_state\": \"Burgenland\", \"is_eastern_lower_austria_or_tullnerfeld\": false, \"bentazon_reauthorized\": false}},\n\t\t\"measure\": {\"requested\": true, \"participates_cover_intercrop\": true, \"participates_cover_evergreen\": false, \"participates_organic\": false},\n\t\t\"land\": {\"groundwater_arable_area_ha\": 2, \"total_arable_area_ha\": 10, \"parcels\": []},\n\t\t\"livestock\": {\"pig_gve_average\": 5},\n\t\t\"records\": {\"farm_planning_completed_by_02_28\": true, \"farm_balance_completed_by_next_01_31\": true, \"education_hours\": 10, \"education_provider_recognized\": true, \"education_completed_date\": \"2026-12-31\", \"water_protection_concept_complete\": true, \"soil_samples\": []},\n\t\t\"options\": {\"strong_n_reduced_pig_feeding\": {\"requested\": true, \"feed_categories\": [], \"also_claimed_in_liquid_manure_measure\": false}},\n\t}\n\t\"pig_option_requires_one_gve_per_ha_arable_land\" in violations\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_16-luna-high-20261005/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 46,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 6/6\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_16-luna-high-20261005/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 85,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_16-luna-high-20261005/workspace"
+}
