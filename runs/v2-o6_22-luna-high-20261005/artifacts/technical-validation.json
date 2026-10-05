@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 143,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_22-luna-high-20261005/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_22.rego",
+    "tests/o6_22_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_22-luna-high-20261005/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 15,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_22.rego",
+        "tests/o6_22_test.rego"
+      ],
+      "duration_ms": 27,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_22-luna-high-20261005/workspace/tools/opa",
+            "fmt",
+            "policy/o6_22.rego"
+          ],
+          "duration_ms": 15,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_22\n\nimport rego.v1\n\ndefault eligible := false\n\nmeasure_scope if {\n\tinput.livestock.o6_22.measure == \"o6_22\"\n}\n\neligible if {\n\tmeasure_scope\n\tinput.livestock.o6_22.participation_gve >= 2\n}\n\ncategory_definition(category_id) := category if {\n\tsome category in data.o6_22.categories\n\tcategory.id == category_id\n}\n\ngve_factor(category_id) := factor if {\n\tcategory := category_definition(category_id)\n\tfactor := category.gve_per_head\n}\n\nrequired_space(category_id, weight_band) := requirement if {\n\tsome requirement in data.o6_22.stall_space_requirements\n\trequirement.category == category_id\n\trequirement.weight_band == weight_band\n}\n\nsow_required_space(sow_type) := requirement if {\n\tsome requirement in data.o6_22.sow_space_requirements\n\trequirement.category == sow_type\n}\n\npremium_eur_per_gve(category_id, year) := amount if {\n\tcategory := category_definition(category_id)\n\tyear == 2023\n\tamount := category.base_premium_eur_per_gve_2023\n}\n\npremium_eur_per_gve(category_id, year) := amount if {\n\tcategory := category_definition(category_id)\n\tyear >= 2024\n\tamount := category.base_premium_eur_per_gve_from_2024\n}\n\nuncut_surcharge_eur_per_gve(category_id, year) := amount if {\n\tcategory := category_definition(category_id)\n\tcategory.uncut_surcharge_eur_per_gve_2023 != null\n\tyear == 2023\n\tamount := category.uncut_surcharge_eur_per_gve_2023\n}\n\nuncut_surcharge_eur_per_gve(category_id, year) := amount if {\n\tcategory := category_definition(category_id)\n\tcategory.uncut_surcharge_eur_per_gve_from_2024 != null\n\tyear >= 2024\n\tamount := category.uncut_surcharge_eur_per_gve_from_2024\n}\n\nprotein_surcharge_eur_per_gve(category_id, year) := amount if {\n\tcategory := category_definition(category_id)\n\tyear == 2023\n\tamount := category.protein_surcharge_eur_per_gve_2023\n}\n\nprotein_surcharge_eur_per_gve(category_id, year) := amount if {\n\tcategory := category_definition(category_id)\n\tyear >= 2024\n\tamount := category.protein_surcharge_eur_per_gve_from_2024\n}\n\ncompost_surcharge_eur_per_gve(category_id, year) := amount if {\n\tcategory := category_definition(category_id)\n\tyear >= 2025\n\tamount := category.compost_surcharge_eur_per_gve_from_2025\n}\n\nfree_range_max_gve_per_ha := data.o6_22.free_range.fallback_max_gve_per_ha\n\nfree_range_density_ok if {\n\tauthority_limit := input.livestock.o6_22.free_range.authority_max_gve_per_ha\n\tauthority_limit != null\n\tauthority_limit >= input.livestock.o6_22.free_range.actual_gve_per_ha\n}\n\nfree_range_density_ok if {\n\tinput.livestock.o6_22.free_range.authority_max_gve_per_ha == null\n\tinput.livestock.o6_22.free_range.actual_gve_per_ha <= free_range_max_gve_per_ha\n}\n\nsow_shelter_ok if {\n\tinput.livestock.o6_22.sow_type != \"breeding_sows\"\n}\n\nsow_shelter_ok if {\n\tinput.livestock.o6_22.sow_type == \"breeding_sows\"\n\tinput.livestock.o6_22.free_range.farrowing_huts_available\n}\n\nfree_range_compliant if {\n\tfree_range_density_ok\n\tinput.livestock.o6_22.free_range.continuous_use_years <= data.o6_22.free_range.max_continuous_use_years\n\tinput.livestock.o6_22.free_range.wild_boar_exclusion\n\tinput.livestock.o6_22.free_range.feed_and_water_separated\n\tinput.livestock.o6_22.free_range.feed_on_hard_surface_or_moved_regularly\n\tinput.livestock.o6_22.free_range.feed_roofed\n\tinput.livestock.o6_22.free_range.roofed_three_sided_bedded_shelter\n\tinput.livestock.o6_22.free_range.all_animals_can_lie_simultaneously\n\tsow_shelter_ok\n}\n\nstall_area_compliant(category_id, weight_band, animals, usable_area_m2, bedded_area_m2) if {\n\trequirement := required_space(category_id, weight_band)\n\tusable_area_m2 >= animals * requirement.total_area_m2_per_animal\n\tbedded_area_m2 >= usable_area_m2 * 0.4\n\tbedded_area_m2 >= animals * requirement.lying_area_m2_per_animal\n}\n\nsow_space_compliant(sow_type, animals, usable_area_m2, bedded_area_m2) if {\n\trequirement := sow_required_space(sow_type)\n\tusable_area_m2 >= animals * requirement.total_area_m2_per_animal\n\tbedded_area_m2 >= animals * requirement.lying_area_m2_per_animal\n}\n\nuncut_surcharge_eligible if {\n\tinput.livestock.o6_22.supplement_facts.uncut_requested\n\tinput.livestock.o6_22.supplement_facts.all_participating_animals_uncut\n\tinput.livestock.o6_22.supplement_facts.applies_to_whole_category\n}\n\nprotein_surcharge_eligible if {\n\tinput.livestock.o6_22.supplement_facts.protein_requested\n\tinput.livestock.o6_22.supplement_facts.all_farm_pigs_compliant\n\tinput.livestock.o6_22.supplement_facts.no_noncompliant_protein_feed_storage_or_feeding\n\tinput.livestock.o6_22.supplement_facts.protein_feed_evidence_available\n}\n\ncompost_surcharge_eligible if {\n\tinput.livestock.o6_22.year >= 2025\n\tinput.livestock.o6_22.supplement_facts.compost_requested\n\tinput.livestock.o6_22.supplement_facts.all_farm_solid_manure_composted\n\tinput.livestock.o6_22.supplement_facts.compost_turn_count >= 2\n\tinput.livestock.o6_22.supplement_facts.compost_turn_interval_days >= 14\n\tinput.livestock.o6_22.supplement_facts.compost_documentation_complete\n\tnot input.livestock.o6_22.supplement_facts.compost_stall\n}\n\ncompost_equipment_compliant if {\n\tinput.livestock.o6_22.supplement_facts.composter_on_farm\n}\n\ncompost_equipment_compliant if {\n\tnot input.livestock.o6_22.supplement_facts.composter_on_farm\n\tinput.livestock.o6_22.supplement_facts.inter_farm_use_documented\n}\n\ncompost_alternative_compliant if {\n\tinput.livestock.o6_22.supplement_facts.organic_mix_present\n\tinput.livestock.o6_22.supplement_facts.composting_process_applied\n}\n\ncompost_documentation_compliant if {\n\tinput.livestock.o6_22.supplement_facts.compost_log_complete\n}\n\nreport_deregistration_required if {\n\tinput.livestock.o6_22.reporting.category_conditions_not_met\n}\n\nreport_deregistration_required if {\n\tinput.livestock.o6_22.individual_housing_days > 10\n}\n\neligible_gve_from_heads := result if {\n\tresult := (input.livestock.o6_22.applied_heads - input.livestock.o6_22.deregistered_heads) * gve_factor(input.livestock.o6_22.category)\n}\n\nuncut_surcharge_total := 0 if {\n\tnot input.livestock.o6_22.supplement_facts.uncut_requested\n}\n\nuncut_surcharge_total := result if {\n\tuncut_surcharge_eligible\n\tresult := input.livestock.o6_22.eligible_gve * uncut_surcharge_eur_per_gve(input.livestock.o6_22.category, input.livestock.o6_22.year)\n}\n\nprotein_surcharge_total := 0 if {\n\tnot input.livestock.o6_22.supplement_facts.protein_requested\n}\n\nprotein_surcharge_total := result if {\n\tprotein_surcharge_eligible\n\tresult := input.livestock.o6_22.eligible_gve * protein_surcharge_eur_per_gve(input.livestock.o6_22.category, input.livestock.o6_22.year)\n}\n\ncompost_surcharge_total := 0 if {\n\tnot input.livestock.o6_22.supplement_facts.compost_requested\n}\n\ncompost_surcharge_total := result if {\n\tcompost_surcharge_eligible\n\tresult := input.livestock.o6_22.eligible_gve * compost_surcharge_eur_per_gve(input.livestock.o6_22.category, input.livestock.o6_22.year)\n}\n\npremium_total_eur := total if {\n\tbase := input.livestock.o6_22.eligible_gve * premium_eur_per_gve(input.livestock.o6_22.category, input.livestock.o6_22.year)\n\ttotal := ((base + uncut_surcharge_total) + protein_surcharge_total) + compost_surcharge_total\n}\n\nmodulation_factor := 1 if {\n\tinput.land.total_area_ha <= 200\n}\n\nmodulation_factor := 0.9 if {\n\tinput.land.total_area_ha > 200\n\tinput.land.total_area_ha <= 300\n}\n\nmodulation_factor := 0.85 if {\n\tinput.land.total_area_ha > 300\n\tinput.land.total_area_ha <= 1000\n}\n\nmodulation_factor := 0.75 if {\n\tinput.land.total_area_ha > 1000\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_22-luna-high-20261005/workspace/tools/opa",
+            "fmt",
+            "tests/o6_22_test.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_22_test\n\nimport rego.v1\n\ntest_minimum_participation_is_two_gve if {\n\tdata.oepul.o6_22.eligible with input as {\n\t\t\"livestock\": {\"o6_22\": {\"measure\": \"o6_22\", \"participation_gve\": 2}},\n\t}\n}\n\ntest_below_minimum_is_not_eligible if {\n\tnot data.oepul.o6_22.eligible with input as {\n\t\t\"livestock\": {\"o6_22\": {\"measure\": \"o6_22\", \"participation_gve\": 1.99}},\n\t}\n}\n\ntest_piglet_space_table if {\n\tdata.oepul.o6_22.required_space(\"piglets\", \"up_to_20_kg\") == {\n\t\t\"category\": \"piglets\",\n\t\t\"weight_band\": \"up_to_20_kg\",\n\t\t\"max_weight_kg\": 20,\n\t\t\"lying_area_m2_per_animal\": 0.12,\n\t\t\"total_area_m2_per_animal\": 0.3,\n\t}\n}\n\ntest_stall_area_requires_forty_percent_bedding if {\n\tdata.oepul.o6_22.stall_area_compliant(\"growers_and_fattening_pigs\", \"over_85_kg\", 10, 11, 4.4)\n\tnot data.oepul.o6_22.stall_area_compliant(\"growers_and_fattening_pigs\", \"over_85_kg\", 10, 11, 4.39)\n}\n\ntest_free_range_fallback_density if {\n\tdata.oepul.o6_22.free_range_compliant with input as {\n\t\t\"livestock\": {\"o6_22\": {\n\t\t\t\"sow_type\": \"mated_gilts\",\n\t\t\t\"free_range\": {\n\t\t\t\t\"authority_max_gve_per_ha\": null,\n\t\t\t\t\"actual_gve_per_ha\": 4,\n\t\t\t\t\"continuous_use_years\": 1,\n\t\t\t\t\"wild_boar_exclusion\": true,\n\t\t\t\t\"feed_and_water_separated\": true,\n\t\t\t\t\"feed_on_hard_surface_or_moved_regularly\": true,\n\t\t\t\t\"feed_roofed\": true,\n\t\t\t\t\"roofed_three_sided_bedded_shelter\": true,\n\t\t\t\t\"all_animals_can_lie_simultaneously\": true,\n\t\t\t\t\"farrowing_huts_available\": false,\n\t\t\t},\n\t\t}},\n\t}\n}\n\ntest_compost_requires_fourteen_day_interval if {\n\tdata.oepul.o6_22.compost_surcharge_eligible with input as {\n\t\t\"livestock\": {\"o6_22\": {\n\t\t\t\"year\": 2025,\n\t\t\t\"supplement_facts\": {\n\t\t\t\t\"compost_requested\": true,\n\t\t\t\t\"all_farm_solid_manure_composted\": true,\n\t\t\t\t\"compost_turn_count\": 2,\n\t\t\t\t\"compost_turn_interval_days\": 14,\n\t\t\t\t\"compost_documentation_complete\": true,\n\t\t\t\t\"compost_stall\": false,\n\t\t\t},\n\t\t}},\n\t}\n}\n\ntest_long_individual_housing_requires_deregistration if {\n\tdata.oepul.o6_22.report_deregistration_required with input as {\n\t\t\"livestock\": {\"o6_22\": {\"individual_housing_days\": 11, \"reporting\": {\"category_conditions_not_met\": false}}},\n\t}\n}\n\ntest_premium_from_2024 if {\n\tdata.oepul.o6_22.premium_eur_per_gve(\"piglets\", 2026) == 194.4\n}\n\ntest_premium_calculation_uses_deregistered_heads if {\n\tresult := data.oepul.o6_22.eligible_gve_from_heads with input as {\n\t\t\"livestock\": {\"o6_22\": {\n\t\t\t\"category\": \"piglets\",\n\t\t\t\"applied_heads\": 100,\n\t\t\t\"deregistered_heads\": 10,\n\t\t}},\n\t}\n\tresult == 6.3\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_22-luna-high-20261005/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 22,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 9/9\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_22-luna-high-20261005/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 78,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_22-luna-high-20261005/workspace"
+}
