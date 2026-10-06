@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 470,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_12-luna-high-20261003/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_12.rego",
+    "tests/o6_12_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_12-luna-high-20261003/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 68,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_12.rego",
+        "tests/o6_12_test.rego"
+      ],
+      "duration_ms": 115,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_12-luna-high-20261003/workspace/tools/opa",
+            "fmt",
+            "policy/o6_12.rego"
+          ],
+          "duration_ms": 60,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_12\n\nimport rego.v1\n\ntarget_parcel(parcel) if {\n\tparcel.crop.crop_category == \"vineyard\"\n\tparcel.crop.crop_name != \"rebschule\"\n\tparcel.land_use != \"other_wine\"\n\tparcel.land_use != \"other_special_crop\"\n\tparcel.land_use != \"nursery\"\n}\n\ntarget_parcel(parcel) if {\n\tparcel.crop.crop_category == \"orchard\"\n\tparcel.crop.crop_name in data.eligible_obst_crops\n\tparcel.crop.crop_name != \"rebschule\"\n\tparcel.land_use != \"other_wine\"\n\tparcel.land_use != \"other_special_crop\"\n\tparcel.land_use != \"nursery\"\n}\n\ntarget_parcel(parcel) if {\n\tparcel.crop.crop_category == \"hop\"\n\tparcel.crop.crop_name != \"rebschule\"\n\tparcel.land_use != \"other_wine\"\n\tparcel.land_use != \"other_special_crop\"\n\tparcel.land_use != \"nursery\"\n}\n\ntarget_parcels contains parcel if {\n\tparcel := input.land.parcels[_]\n\ttarget_parcel(parcel)\n}\n\ntarget_area_ha := sum([parcel.area_ha | parcel := input.land.parcels[_]; target_parcel(parcel)])\n\nminimum_participation_met if {\n\tinput.farm.measures.o6_12.participating == true\n\tinput.farm.measures.o6_12.first_participation_year == input.farm.year\n\ttarget_area_ha >= 0.5\n}\n\nminimum_participation_met if {\n\tinput.farm.measures.o6_12.participating == true\n\tinput.farm.measures.o6_12.first_participation_year < input.farm.year\n}\n\ncontract_end_year := 2028 if {\n\tinput.farm.measures.o6_12.participating == true\n}\n\ncontract_years := 6 if {\n\tinput.farm.measures.o6_12.contract_start_year == 2023\n}\n\ncontract_years := 5 if {\n\tinput.farm.measures.o6_12.contract_start_year == 2024\n}\n\ncontract_years := 4 if {\n\tinput.farm.measures.o6_12.contract_start_year == 2025\n}\n\ninsecticide_violation contains parcel.parcel_id if {\n\tparcel := input.land.parcels[_]\n\ttarget_parcel(parcel)\n\tparcel.operations.insecticide_use == true\n\tnot parcel.operations.insecticide_is_bio_permitted\n\tnot parcel.operations.insecticide_authority_order\n}\n\ninsecticide_violation contains parcel.parcel_id if {\n\tparcel := input.land.parcels[_]\n\ttarget_parcel(parcel)\n\tparcel.operations.insecticide_authority_order == true\n\tnot parcel.operations.insecticide_authority_documented\n}\n\npurchase_storage_violation contains parcel.parcel_id if {\n\tparcel := input.land.parcels[_]\n\ttarget_parcel(parcel)\n\tparcel.operations.insecticide_purchase_or_storage == true\n\tnot parcel.operations.insecticide_in_other_culture\n}\n\npurchase_storage_violation contains parcel.parcel_id if {\n\tparcel := input.land.parcels[_]\n\ttarget_parcel(parcel)\n\tparcel.operations.insecticide_purchase_or_storage == true\n\tparcel.operations.insecticide_in_other_culture == true\n\tnot parcel.operations.insecticide_purchase_storage_plausible\n}\n\nreporting_code_required if {\n\tinput.farm.year <= 2025\n\tinput.farm.measures.o6_12.area_wide_psm_application == true\n}\n\nreporting_code_required if {\n\tinput.farm.year <= 2025\n\tinput.farm.measures.o6_12.chemical_synthetic_insecticide_used == true\n}\n\nreporting_code_required if {\n\tinput.farm.year <= 2025\n\tinput.farm.measures.o6_12.authority_ordered_chemical_synthetic_insecticide == true\n}\n\nreporting_not_required if {\n\tinput.farm.year >= 2026\n}\n\nreporting_code := \"PSMCSI\" if {\n\tinput.farm.year <= 2025\n\tinput.farm.measures.o6_12.chemical_synthetic_insecticide_used == true\n}\n\nreporting_code := \"PSMCS\" if {\n\tinput.farm.year <= 2025\n\tinput.farm.measures.o6_12.chemical_synthetic_insecticide_used == false\n\tinput.farm.measures.o6_12.area_wide_psm_application == true\n}\n\npremium_rate_eur_per_ha := rate if {\n\tparcel_type := input.farm.measures.o6_12.premium_target_type\n\trow := data.premium_rates_eur_per_ha[_]\n\trow.target_type == parcel_type\n\tinput.farm.year == 2023\n\trow.from_year == 2023\n\trate := row.rate\n}\n\npremium_rate_eur_per_ha := rate if {\n\tparcel_type := input.farm.measures.o6_12.premium_target_type\n\trow := data.premium_rates_eur_per_ha[_]\n\trow.target_type == parcel_type\n\tinput.farm.year >= 2024\n\trow.from_year == 2024\n\trate := row.rate\n}\n\npremium_eligible if {\n\tminimum_participation_met\n\tcount(insecticide_violation) == 0\n\tcount(purchase_storage_violation) == 0\n\tinput.farm.measures.o6_12.quality_planting_material_ok == true\n\tinput.farm.measures.o6_12.sonstige_target_land_use == false\n}\n\ncombination_allowed if {\n\tinput.farm.measures.o6_12.biological_farming_participation == false\n}\n\ncombination_allowed if {\n\tinput.farm.measures.o6_12.biological_farming_participation == true\n\tinput.farm.measures.o6_12.biological_farming_scope == \"part_farm_arable_grassland\"\n}\n\nswitch_to_biological_allowed if {\n\tinput.farm.measures.o6_12.switch_request_date <= \"2025-12-31\"\n}\n\nearly_exit_2026_without_repayment if {\n\tinput.farm.year >= 2026\n\tinput.farm.measures.o6_12.early_exit_reason == \"american_rebzikade_control\"\n\tinput.farm.measures.o6_12.early_exit_approved == true\n}\n\nearly_exit_premium_2026 := 0.0 if {\n\tearly_exit_2026_without_repayment\n\tinput.farm.year == 2026\n}\n\nauthority_order_exception if {\n\tinput.farm.measures.o6_12.authority_ordered_control == true\n\tinput.farm.measures.o6_12.authority_order_documented == true\n\tinput.farm.measures.o6_12.authority_ordered_substance_allowed == true\n}\n\nauthority_order_exception if {\n\tinput.farm.measures.o6_12.authority_ordered_control == true\n\tinput.farm.measures.o6_12.authority_order_documented == true\n\tinput.farm.measures.o6_12.authority_ordered_substance_allowed == false\n\tinput.farm.region.federal_state in {\"Steiermark\", \"Burgenland\", \"Niederösterreich\"}\n\tinput.farm.measures.o6_12.authority_ordered_area == true\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_12-luna-high-20261003/workspace/tools/opa",
+            "fmt",
+            "tests/o6_12_test.rego"
+          ],
+          "duration_ms": 53,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_12_test\n\nimport data.oepul.o6_12\nimport rego.v1\n\nbase := {\n\t\"farm\": {\n\t\t\"year\": 2024,\n\t\t\"region\": {\"federal_state\": \"Niederösterreich\"},\n\t\t\"measures\": {\n\t\t\t\"o6_12\": {\n\t\t\t\t\"participating\": true,\n\t\t\t\t\"first_participation_year\": 2024,\n\t\t\t\t\"contract_start_year\": 2024,\n\t\t\t\t\"premium_target_type\": \"vineyard\",\n\t\t\t\t\"quality_planting_material_ok\": true,\n\t\t\t\t\"sonstige_target_land_use\": false,\n\t\t\t\t\"biological_farming_participation\": false,\n\t\t\t\t\"area_wide_psm_application\": false,\n\t\t\t\t\"chemical_synthetic_insecticide_used\": false,\n\t\t\t},\n\t\t},\n\t},\n\t\"land\": {\n\t\t\"parcels\": [\n\t\t\t{\n\t\t\t\t\"parcel_id\": \"W1\",\n\t\t\t\t\"area_ha\": 0.6,\n\t\t\t\t\"land_use\": \"vineyard\",\n\t\t\t\t\"crop\": {\"crop_category\": \"vineyard\", \"crop_name\": \"Schnittweingarten\"},\n\t\t\t\t\"operations\": {\n\t\t\t\t\t\"insecticide_use\": false,\n\t\t\t\t\t\"insecticide_is_bio_permitted\": false,\n\t\t\t\t\t\"insecticide_authority_order\": false,\n\t\t\t\t\t\"insecticide_authority_documented\": false,\n\t\t\t\t\t\"insecticide_purchase_or_storage\": false,\n\t\t\t\t\t\"insecticide_in_other_culture\": false,\n\t\t\t\t\t\"insecticide_purchase_storage_plausible\": true,\n\t\t\t\t},\n\t\t\t},\n\t\t],\n\t},\n}\n\ntest_minimum_area_and_rate if {\n\to6_12.minimum_participation_met with input as base\n\to6_12.premium_rate_eur_per_ha == 270.0 with input as base\n}\n\ntest_unauthorized_insecticide_is_violation if {\n\tbad_operations := object.union(base.land.parcels[0].operations, {\"insecticide_use\": true})\n\tbad_parcel := object.union(base.land.parcels[0], {\"operations\": bad_operations})\n\tbad_land := object.union(base.land, {\"parcels\": [bad_parcel]})\n\tbad := object.union(base, {\"land\": bad_land})\n\t\"W1\" in o6_12.insecticide_violation with input as bad\n}\n\ntest_bio_permitted_insecticide_is_allowed if {\n\tallowed_operations := object.union(base.land.parcels[0].operations, {\"insecticide_use\": true, \"insecticide_is_bio_permitted\": true})\n\tallowed_parcel := object.union(base.land.parcels[0], {\"operations\": allowed_operations})\n\tallowed_land := object.union(base.land, {\"parcels\": [allowed_parcel]})\n\tallowed_bio := object.union(base, {\"land\": allowed_land})\n\tviolations := o6_12.insecticide_violation with input as allowed_bio\n\tcount(violations) == 0\n}\n\ntest_early_exit_without_repayment if {\n\tmeasure_year := object.union(base.farm.measures.o6_12, {\"early_exit_reason\": \"american_rebzikade_control\", \"early_exit_approved\": true})\n\tmeasures_year := object.union(base.farm.measures, {\"o6_12\": measure_year})\n\tfarm_year := object.union(base.farm, {\"measures\": measures_year})\n\tcase_approved := object.union(base, {\"farm\": object.union(farm_year, {\"year\": 2026})})\n\to6_12.early_exit_2026_without_repayment with input as case_approved\n\to6_12.early_exit_premium_2026 == 0.0 with input as case_approved\n}\n\ntest_psm_reporting_ends_in_2026 if {\n\tcase_2026 := object.union(base, {\"farm\": object.union(base.farm, {\"year\": 2026})})\n\tnot o6_12.reporting_code_required with input as case_2026\n\to6_12.reporting_not_required with input as case_2026\n}\n\ntest_bio_combination_allowed_only_for_part_farm_arable_grassland if {\n\tmeasure_bio := object.union(base.farm.measures.o6_12, {\"biological_farming_participation\": true})\n\tmeasures_bio := object.union(base.farm.measures, {\"o6_12\": measure_bio})\n\tfarm_bio := object.union(base.farm, {\"measures\": measures_bio})\n\tcase_bio := object.union(base, {\"farm\": farm_bio})\n\tnot o6_12.combination_allowed with input as case_bio\n\tmeasure_bio_part := object.union(measure_bio, {\"biological_farming_scope\": \"part_farm_arable_grassland\"})\n\tmeasures_bio_part := object.union(base.farm.measures, {\"o6_12\": measure_bio_part})\n\tfarm_bio_part := object.union(base.farm, {\"measures\": measures_bio_part})\n\tcase_bio_part := object.union(base, {\"farm\": farm_bio_part})\n\to6_12.combination_allowed with input as case_bio_part\n}\n\ntest_obst_reference_table_controls_orchard_scope if {\n\torchard := object.union(base.land.parcels[0], {\n\t\t\"parcel_id\": \"O1\",\n\t\t\"land_use\": \"orchard\",\n\t\t\"crop\": {\"crop_category\": \"orchard\", \"crop_name\": \"Apfel\"},\n\t})\n\tvalid_land := object.union(base.land, {\"parcels\": [orchard]})\n\tvalid := object.union(base, {\"land\": valid_land})\n\tvalid_targets := o6_12.target_parcels with input as valid\n\tcount(valid_targets) == 1\n\n\tunknown_orchard := object.union(orchard, {\"crop\": {\"crop_category\": \"orchard\", \"crop_name\": \"Kakao\"}})\n\tunknown_land := object.union(base.land, {\"parcels\": [unknown_orchard]})\n\tunknown := object.union(base, {\"land\": unknown_land})\n\tunknown_targets := o6_12.target_parcels with input as unknown\n\tcount(unknown_targets) == 0\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_12-luna-high-20261003/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 97,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 7/7\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_12-luna-high-20261003/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 185,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_12-luna-high-20261003/workspace"
+}
