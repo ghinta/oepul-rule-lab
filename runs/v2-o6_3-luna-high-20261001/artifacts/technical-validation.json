@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 66,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_3-luna-high-20261001/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_3_heuwirtschaft.rego",
+    "tests/o6_3_heuwirtschaft_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_3-luna-high-20261001/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 13,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_3_heuwirtschaft.rego",
+        "tests/o6_3_heuwirtschaft_test.rego"
+      ],
+      "duration_ms": 22,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_3-luna-high-20261001/workspace/tools/opa",
+            "fmt",
+            "policy/o6_3_heuwirtschaft.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_3\n\nimport rego.v1\n\ndefault eligible := false\n\ndefault first_year_access := false\n\ndefault drought_exception_applies := false\n\neligible if {\n\tinput.farm.heuwirtschaft.measure == \"o6_3\"\n\tfirst_year_access\n\tinput.farm.heuwirtschaft.contract_start_year >= 2023\n\tinput.farm.heuwirtschaft.contract_start_year <= 2025\n\tcompliance_ok\n\tcount(violation) == 0\n}\n\ncompliance_ok if {\n\tinput.farm.heuwirtschaft.silage_preparation_and_feeding == false\n\tinput.farm.heuwirtschaft.feed_fermentation == false\n\tinput.farm.heuwirtschaft.silage_storage == false\n\tinput.farm.heuwirtschaft.green_feeding_majority_april_to_september == true\n\tinput.farm.heuwirtschaft.third_party_cuttings_only_dry_hay == true\n}\n\nfirst_year_access if {\n\tinput.farm.heuwirtschaft.participation.combined_measure in data.eligible_combinations\n\tinput.farm.heuwirtschaft.first_year.mown_meadow_meadow_pasture_ha >= 2\n\ttierholding(input)\n}\n\ntierholding(profile) if {\n\tfodder_area_for(profile) > 0\n\trgve_total_for(profile) / fodder_area_for(profile) >= 0.3\n}\n\ntierholding(profile) := false if {\n\tfodder_area_for(profile) <= 0\n}\n\ntierholding(profile) := false if {\n\tfodder_area_for(profile) > 0\n\trgve_total_for(profile) / fodder_area_for(profile) < 0.3\n}\n\nrgve_total := rgve_total_for(input)\n\nrgve_total_for(profile) := 0 if {\n\tcount(profile.livestock.species_groups) == 0\n}\n\nrgve_total_for(profile) := total if {\n\tcount(profile.livestock.species_groups) > 0\n\ttotal := sum([value |\n\t\tgroup := profile.livestock.species_groups[_]\n\t\tfactor := rgve_rate(group)\n\t\tvalue := group.animal_count * factor\n\t])\n}\n\nrgve_rate(group) := rate if {\n\trow := data.rgve_rates[_]\n\trow.animal == rgve_animal(group.species)\n\trow.class == group.category\n\trate := row.rgve\n}\n\nrgve_animal(\"cattle\") := \"rinder\"\nrgve_animal(\"sheep_goats\") := \"schafe\"\nrgve_animal(\"horses\") := \"grosse_equiden\"\n\nfodder_area_ha := fodder_area_for(input)\n\nfodder_area_for(profile) := total if {\n\ttotal := sum([value |\n\t\tparcel := profile.land.parcels[_]\n\t\tparcel.oepul.is_applied == true\n\t\tobject.get(parcel.oepul, \"is_second_crop\", false) == false\n\t\tfodder_parcel(parcel)\n\t\tvalue := parcel.area_ha\n\t])\n}\n\nfodder_parcel(parcel) if {\n\tparcel.land_use == \"grassland\"\n}\n\nfodder_parcel(parcel) if {\n\tparcel.land_use == \"arable\"\n\tparcel.oepul.crop_name in data.arable_fodder_for_livestock_calculation\n}\n\npremium_area_ha := total if {\n\ttotal := sum([value |\n\t\tparcel := input.land.parcels[_]\n\t\tparcel.oepul.is_applied == true\n\t\tparcel.oepul.is_premium_eligible == true\n\t\tobject.get(parcel.oepul, \"is_second_crop\", false) == false\n\t\tvalue := parcel.area_ha\n\t])\n}\n\npremium_eur_per_ha := rate if {\n\trow := data.premium_rates_eur_per_ha[_]\n\tinput.farm.heuwirtschaft.year >= row.from_year\n\trate_year_valid(row)\n\trow.tierholding == tierholding(input)\n\trow.no_mower_conditioner == input.farm.heuwirtschaft.no_mower_conditioner_option\n\trate := row.rate\n}\n\npremium_eur_per_ha := 0 if {\n\tnot tierholding(input)\n}\n\nrate_year_valid(row) if {\n\trow.to_year == null\n}\n\nrate_year_valid(row) if {\n\trow.to_year != null\n\tinput.farm.heuwirtschaft.year <= row.to_year\n}\n\npremium_eur := premium_eur_per_ha * premium_area_ha\n\ndrought_exception_applies if {\n\tinput.farm.heuwirtschaft.year == 2026\n\tinput.farm.heuwirtschaft.drought_exception_area == true\n\tinput.farm.heuwirtschaft.no_harvestable_stand == true\n\tsome parcel in input.land.parcels\n\tparcel.land_use == \"arable\"\n}\n\nviolation contains {\"id\": \"O63.V.SILAGE_PREPARATION\", \"message\": \"Silagebereitung oder Silagefütterung ist am gesamten Betrieb nicht zulässig.\"} if {\n\tinput.farm.heuwirtschaft.silage_preparation_and_feeding != false\n}\n\nviolation contains {\"id\": \"O63.V.FERMENTATION\", \"message\": \"Ein Gärungsprozess bei Futter oder eingesetzten Nebenprodukten muss ausgeschlossen sein.\"} if {\n\tinput.farm.heuwirtschaft.feed_fermentation != false\n}\n\nviolation contains {\"id\": \"O63.V.SILAGE_STORAGE\", \"message\": \"Silage darf ab Vertragsbeginn am gesamten Betrieb nicht gelagert werden.\"} if {\n\tinput.farm.heuwirtschaft.silage_storage != false\n}\n\nviolation contains {\"id\": \"O63.V.GREEN_FEEDING\", \"message\": \"Heugewinnung ist im überwiegenden Teil der Vegetationsperiode mit Eingrasen oder Weide für alle raufutterverzehrenden Tiere zu kombinieren.\"} if {\n\tinput.farm.heuwirtschaft.green_feeding_majority_april_to_september != true\n}\n\nviolation contains {\"id\": \"O63.V.HAY_DELIVERY\", \"message\": \"Mähgut darf an Dritte nur als trockenes Heu abgegeben werden.\"} if {\n\tinput.farm.heuwirtschaft.third_party_cuttings_only_dry_hay != true\n}\n\nviolation contains {\"id\": \"O63.V.MOWER_CONDITIONER\", \"message\": \"Bei beantragter Option darf kein Mähaufbereiter eingesetzt werden oder am Betrieb vorhanden sein.\"} if {\n\tinput.farm.heuwirtschaft.no_mower_conditioner_option == true\n\tmower_conditioner_noncompliant\n}\n\nmower_conditioner_noncompliant if {\n\tinput.farm.heuwirtschaft.mower_conditioner_used == true\n}\n\nmower_conditioner_noncompliant if {\n\tinput.farm.heuwirtschaft.mower_conditioner_present == true\n}\n\nviolation contains {\"id\": \"O63.V.MINIMUM_AREA\", \"message\": \"Im ersten Verpflichtungsjahr müssen mindestens 2,00 ha Mähwiesen und Mähweiden ohne Streuwiesen und Bergmähder bewirtschaftet werden.\"} if {\n\tinput.farm.heuwirtschaft.first_year.mown_meadow_meadow_pasture_ha < 2\n}\n\nviolation contains {\"id\": \"O63.V.TIERHOLDING\", \"message\": \"Im ersten Verpflichtungsjahr müssen mindestens 0,30 RGVE je ha Futterfläche erreicht werden.\"} if {\n\tnot tierholding(input)\n}\n\nresult := {\n\t\"eligible\": eligible,\n\t\"first_year_access\": first_year_access,\n\t\"rgve_total\": rgve_total,\n\t\"fodder_area_ha\": fodder_area_ha,\n\t\"premium_area_ha\": premium_area_ha,\n\t\"premium_eur_per_ha\": premium_eur_per_ha,\n\t\"premium_eur\": premium_eur,\n\t\"drought_exception_applies\": drought_exception_applies,\n\t\"violations\": violation,\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_3-luna-high-20261001/workspace/tools/opa",
+            "fmt",
+            "tests/o6_3_heuwirtschaft_test.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_3_test\n\nimport rego.v1\n\ntest_valid_heuwirtschaft_with_option if {\n\tresult := data.oepul.o6_3.result with input as {\n\t\t\"farm\": {\"heuwirtschaft\": {\n\t\t\t\"measure\": \"o6_3\",\n\t\t\t\"contract_start_year\": 2025,\n\t\t\t\"year\": 2025,\n\t\t\t\"participation\": {\"combined_measure\": \"o6_1a\"},\n\t\t\t\"first_year\": {\"mown_meadow_meadow_pasture_ha\": 2.5, \"rgve_total\": 3.9, \"fodder_area_ha\": 10},\n\t\t\t\"silage_preparation_and_feeding\": false,\n\t\t\t\"feed_fermentation\": false,\n\t\t\t\"silage_storage\": false,\n\t\t\t\"green_feeding_majority_april_to_september\": true,\n\t\t\t\"third_party_cuttings_only_dry_hay\": true,\n\t\t\t\"mower_conditioner_used\": false,\n\t\t\t\"mower_conditioner_present\": false,\n\t\t\t\"no_mower_conditioner_option\": true,\n\t\t}},\n\t\t\"land\": {\"parcels\": [\n\t\t\t{\"area_ha\": 10, \"land_use\": \"grassland\", \"oepul\": {\"is_applied\": true, \"is_second_crop\": false, \"is_premium_eligible\": true}},\n\t\t]},\n\t\t\"livestock\": {\"species_groups\": [\n\t\t\t{\"species\": \"cattle\", \"category\": \"ab_2_jahre\", \"animal_count\": 3},\n\t\t\t{\"species\": \"sheep_goats\", \"category\": \"ab_1_jahr\", \"animal_count\": 6},\n\t\t]},\n\t}\n\tresult.eligible == true\n\tresult.first_year_access == true\n\tresult.rgve_total == 3.9\n\tresult.fodder_area_ha == 10\n\tresult.premium_eur_per_ha == 167.4\n\tresult.premium_eur == 1674\n\tcount(result.violations) == 0\n}\n\ntest_second_year_low_stock_does_not_change_rate_rule_input if {\n\tresult := data.oepul.o6_3.result with input as {\n\t\t\"farm\": {\"heuwirtschaft\": {\n\t\t\t\"measure\": \"o6_3\",\n\t\t\t\"contract_start_year\": 2024,\n\t\t\t\"year\": 2026,\n\t\t\t\"participation\": {\"combined_measure\": \"o6_1b\"},\n\t\t\t\"first_year\": {\"mown_meadow_meadow_pasture_ha\": 2, \"rgve_total\": 0.6, \"fodder_area_ha\": 2},\n\t\t\t\"silage_preparation_and_feeding\": false,\n\t\t\t\"feed_fermentation\": false,\n\t\t\t\"silage_storage\": false,\n\t\t\t\"green_feeding_majority_april_to_september\": true,\n\t\t\t\"third_party_cuttings_only_dry_hay\": true,\n\t\t\t\"no_mower_conditioner_option\": false,\n\t\t}},\n\t\t\"land\": {\"parcels\": [{\"area_ha\": 2, \"land_use\": \"grassland\", \"oepul\": {\"is_applied\": true, \"is_second_crop\": false, \"is_premium_eligible\": true}}]},\n\t\t\"livestock\": {\"species_groups\": [{\"species\": \"cattle\", \"category\": \"ab_2_jahre\", \"animal_count\": 1}]},\n\t}\n\tresult.first_year_access == true\n\tresult.premium_eur_per_ha == 145.8\n}\n\ntest_noncompliance_is_reported if {\n\tresult := data.oepul.o6_3.result with input as {\n\t\t\"farm\": {\"heuwirtschaft\": {\n\t\t\t\"measure\": \"o6_3\",\n\t\t\t\"contract_start_year\": 2025,\n\t\t\t\"year\": 2025,\n\t\t\t\"participation\": {\"combined_measure\": \"o6_1a\"},\n\t\t\t\"first_year\": {\"mown_meadow_meadow_pasture_ha\": 1.5, \"rgve_total\": 0.2, \"fodder_area_ha\": 2},\n\t\t\t\"silage_preparation_and_feeding\": true,\n\t\t\t\"feed_fermentation\": true,\n\t\t\t\"silage_storage\": true,\n\t\t\t\"green_feeding_majority_april_to_september\": false,\n\t\t\t\"third_party_cuttings_only_dry_hay\": false,\n\t\t\t\"no_mower_conditioner_option\": false,\n\t\t}},\n\t\t\"land\": {\"parcels\": [{\"area_ha\": 2, \"land_use\": \"grassland\", \"oepul\": {\"is_applied\": true, \"is_second_crop\": false, \"is_premium_eligible\": true}}]},\n\t\t\"livestock\": {\"species_groups\": []},\n\t}\n\tresult.eligible == false\n\tcount(result.violations) >= 5\n}\n\ntest_second_crop_is_excluded_from_fodder_area if {\n\tresult := data.oepul.o6_3.result with input as {\n\t\t\"farm\": {\"heuwirtschaft\": {\n\t\t\t\"measure\": \"o6_3\",\n\t\t\t\"contract_start_year\": 2025,\n\t\t\t\"year\": 2025,\n\t\t\t\"participation\": {\"combined_measure\": \"o6_1a\"},\n\t\t\t\"first_year\": {\"mown_meadow_meadow_pasture_ha\": 2, \"rgve_total\": 0.6, \"fodder_area_ha\": 2},\n\t\t\t\"silage_preparation_and_feeding\": false,\n\t\t\t\"feed_fermentation\": false,\n\t\t\t\"silage_storage\": false,\n\t\t\t\"green_feeding_majority_april_to_september\": true,\n\t\t\t\"third_party_cuttings_only_dry_hay\": true,\n\t\t\t\"no_mower_conditioner_option\": false,\n\t\t}},\n\t\t\"land\": {\"parcels\": [\n\t\t\t{\"area_ha\": 2, \"land_use\": \"grassland\", \"oepul\": {\"is_applied\": true, \"is_second_crop\": false, \"is_premium_eligible\": true}},\n\t\t\t{\"area_ha\": 3, \"land_use\": \"arable\", \"oepul\": {\"is_applied\": true, \"crop_name\": \"klee\", \"is_second_crop\": true, \"is_premium_eligible\": false}},\n\t\t]},\n\t\t\"livestock\": {\"species_groups\": [{\"species\": \"cattle\", \"category\": \"ab_2_jahre\", \"animal_count\": 1}]},\n\t}\n\tresult.fodder_area_ha == 2\n\tresult.premium_area_ha == 2\n\tresult.premium_eur_per_ha == 145.8\n}\n\ntest_drought_2026_exception_is_explicit if {\n\tresult := data.oepul.o6_3.result with input as {\n\t\t\"farm\": {\"heuwirtschaft\": {\n\t\t\t\"measure\": \"o6_3\",\n\t\t\t\"contract_start_year\": 2025,\n\t\t\t\"year\": 2026,\n\t\t\t\"participation\": {\"combined_measure\": \"o6_1a\"},\n\t\t\t\"first_year\": {\"mown_meadow_meadow_pasture_ha\": 2, \"rgve_total\": 0.6, \"fodder_area_ha\": 2},\n\t\t\t\"silage_preparation_and_feeding\": false,\n\t\t\t\"feed_fermentation\": false,\n\t\t\t\"silage_storage\": false,\n\t\t\t\"green_feeding_majority_april_to_september\": true,\n\t\t\t\"third_party_cuttings_only_dry_hay\": true,\n\t\t\t\"no_mower_conditioner_option\": false,\n\t\t\t\"drought_exception_area\": true,\n\t\t\t\"no_harvestable_stand\": true,\n\t\t}},\n\t\t\"land\": {\"parcels\": [{\"area_ha\": 2, \"land_use\": \"arable\", \"oepul\": {\"is_applied\": true, \"crop_name\": \"futtergräser\", \"is_second_crop\": false, \"is_premium_eligible\": true}}]},\n\t\t\"livestock\": {\"species_groups\": [{\"species\": \"cattle\", \"category\": \"ab_2_jahre\", \"animal_count\": 1}]},\n\t}\n\tresult.drought_exception_applies == true\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_3-luna-high-20261001/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 19,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 5/5\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_3-luna-high-20261001/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 10,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_3-luna-high-20261001/workspace"
+}
