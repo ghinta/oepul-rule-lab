@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 770,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_13-luna-high-20261004/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_13.rego",
+    "tests/o6_13_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_13-luna-high-20261004/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 208,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_13.rego",
+        "tests/o6_13_test.rego"
+      ],
+      "duration_ms": 124,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_13-luna-high-20261004/workspace/tools/opa",
+            "fmt",
+            "policy/o6_13.rego"
+          ],
+          "duration_ms": 65,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_13\n\nimport rego.v1\n\ndefault eligible := false\n\nfarm := object.get(input, \"farm\", {})\nland := object.get(input, \"land\", {})\napplication := object.get(farm, \"measure_application\", {})\nparcels := object.get(land, \"parcels\", [])\nregion := object.get(farm, \"region\", {})\n\ndefault application_deadline_met := false\n\ndefault entry_year_valid := false\n\ndefault operation_program_exclusion := false\n\ndefault minimum_business_size_met := false\n\ndefault all_selected_parcels_valid := false\n\ndefault contract_active := false\n\ndefault premium_per_ha := 0\n\ndefault modulation_factor := 1\n\nselected_parcels := [p | p := parcels[_]; object.get(object.get(p, \"measure_application\", {}), \"requested\", false) == true]\n\neligible_selected_parcels := [p |\n\tp := selected_parcels[_]\n\tparcel_is_eligible(p)\n]\n\nselected_area_ha := sum([p.area_ha | p := eligible_selected_parcels[_]])\n\nparcel_is_eligible(p) if {\n\tpc := object.get(p, \"protected_cultivation\", {})\n\tpc.is_protected_cultivation == true\n\tpc.active_production == true\n\tpc.structure_type in data.o6_13_reference_data.eligible_structure_types\n\tpc.cultivation_medium in data.o6_13_reference_data.eligible_cultivation_media\n\tpc.area_role in data.o6_13_reference_data.eligible_area_roles\n\tnot excluded_area_role(pc.area_role)\n\taisle_scope_valid(pc)\n\tobject.get(object.get(p, \"measure_application\", {}), \"code\", \"\") == \"NUE\"\n\tland_use_matches(p)\n}\n\nexcluded_area_role(role) if {\n\trole in data.o6_13_reference_data.excluded_area_roles\n}\n\naisle_scope_valid(pc) if {\n\tpc.area_role != \"necessary_aisle\"\n}\n\naisle_scope_valid(pc) if {\n\tpc.area_role == \"necessary_aisle\"\n\tobject.get(pc, \"aisle_necessary\", false) == true\n}\n\nland_use_matches(p) if {\n\tpc := object.get(p, \"protected_cultivation\", {})\n\tmedium := object.get(pc, \"classification_medium_april_1\", pc.cultivation_medium)\n\tp.land_use == data.o6_13_reference_data.eligible_land_use_by_medium[medium]\n}\n\napplication_deadline_met if {\n\tyear := application.contract_year\n\tapplication.submitted_by <= sprintf(\"%d-12-31\", [year - 1])\n}\n\nentry_year_valid if {\n\tapplication.contract_year >= 2023\n\tapplication.contract_year <= data.o6_13_reference_data.maximum_entry_year\n}\n\noperation_program_exclusion if {\n\tprogram := object.get(farm, \"operation_program\", {})\n\tprogram.member == true\n\tprogram.organism_use_compensated == true\n}\n\nminimum_business_size_met if {\n\tobject.get(application, \"first_participation\", false) == false\n}\n\nminimum_business_size_met if {\n\tobject.get(application, \"first_participation\", false) == true\n\tselected_area_ha >= data.o6_13_reference_data.minimum_participation_area_ha\n}\n\nminimum_business_size_met if {\n\tobject.get(application, \"first_participation\", false) == true\n\tprotected_area_ha := sum([p.area_ha | p := parcels[_]; object.get(object.get(p, \"protected_cultivation\", {}), \"is_protected_cultivation\", false) == true])\n\tagricultural_area_ha := ((object.get(land, \"arable_area_ha\", 0) + object.get(land, \"grassland_area_ha\", 0)) + object.get(land, \"special_crops_area_ha\", 0)) + object.get(land, \"alpine_pasture_area_ha\", 0)\n\tprotected_area_ha < data.o6_13_reference_data.minimum_participation_area_ha\n\tagricultural_area_ha + sum([p.area_ha | p := parcels[_]; p.land_use == \"special_crop\"; object.get(object.get(p, \"protected_cultivation\", {}), \"is_protected_cultivation\", false) == true]) >= data.o6_13_reference_data.general_alternative_area_ha\n}\n\nharvest_requirement_met(p) if {\n\tobject.get(object.get(p, \"measure_application\", {}), \"harvested_percent\", 0) >= data.o6_13_reference_data.harvest_minimum_percent\n\tobject.get(object.get(p, \"measure_application\", {}), \"proper_cultivation\", false) == true\n\tobject.get(object.get(p, \"measure_application\", {}), \"proper_annual_care\", false) == true\n}\n\nharvest_requirement_met(p) if {\n\tapplication.contract_year == 2026\n\tapplication.drought_no_harvestable_stock == true\n\tregion_in_drought_scope\n\tobject.get(object.get(p, \"measure_application\", {}), \"crop_is_late_summer_or_autumn\", false) == true\n\tobject.get(object.get(p, \"measure_application\", {}), \"proper_cultivation\", false) == true\n\tobject.get(object.get(p, \"measure_application\", {}), \"proper_annual_care\", false) == true\n}\n\nregion_in_drought_scope if {\n\tdistricts := data.o6_13_reference_data.drought_2026_automatic_higher_force_districts[region.federal_state]\n\tdistricts[_] == \"all\"\n}\n\nregion_in_drought_scope if {\n\tdistricts := data.o6_13_reference_data.drought_2026_automatic_higher_force_districts[region.federal_state]\n\tdistricts[_] == region.district\n}\n\nrecord_complete(p) if {\n\trecord := object.get(p, \"organism_application\", {})\n\trecord.organism_type != \"\"\n\trecord.quantity > 0\n\trecord.ages_register_entry == true\n\trecord.application_rate_compliant == true\n\trecord.replaces_plant_protection_use == true\n\trecord.purchase_evidence == true\n\trecord.reason != \"\"\n\trecord.goal != \"\"\n\trecord.date != \"\"\n\trecord.is_pollinator_only != true\n}\n\nall_selected_parcels_valid if {\n\tcount(selected_parcels) > 0\n\tcount(eligible_selected_parcels) == count(selected_parcels)\n\t[true | p := selected_parcels[_]; harvest_requirement_met(p)] == [true | _ := selected_parcels[_]]\n\t[true | p := selected_parcels[_]; record_complete(p)] == [true | _ := selected_parcels[_]]\n\t[true | p := selected_parcels[_]; object.get(object.get(p, \"measure_application\", {}), \"other_premium\", false) != true] == [true | _ := selected_parcels[_]]\n}\n\ncontract_active if {\n\tapplication.contract_year == input.farm.year\n\tcount(eligible_selected_parcels) > 0\n}\n\neligible if {\n\tapplication.requested == true\n\tregion.country == \"AT\"\n\tentry_year_valid\n\tapplication_deadline_met\n\tnot operation_program_exclusion\n\tminimum_business_size_met\n\tall_selected_parcels_valid\n\tcontract_active\n}\n\npremium_per_ha := data.o6_13_reference_data.premium_eur_per_ha[\"2023\"] if {\n\tapplication.contract_year == 2023\n}\n\npremium_per_ha := data.o6_13_reference_data.premium_eur_per_ha.from_2024 if {\n\tapplication.contract_year >= 2024\n}\n\nmodulation_factor := 1 if {\n\tarea := object.get(land, \"total_area_ha\", 0)\n\tarea <= 200\n}\n\nmodulation_factor := (200 + ((area - 200) * 0.9)) / area if {\n\tarea := object.get(land, \"total_area_ha\", 0)\n\tarea > 200\n\tarea <= 300\n}\n\nmodulation_factor := ((200 + (100 * 0.9)) + ((area - 300) * 0.85)) / area if {\n\tarea := object.get(land, \"total_area_ha\", 0)\n\tarea > 300\n\tarea <= 1000\n}\n\nmodulation_factor := (((200 + (100 * 0.9)) + (700 * 0.85)) + ((area - 1000) * 0.75)) / area if {\n\tarea := object.get(land, \"total_area_ha\", 0)\n\tarea > 1000\n}\n\npremium_eur := (premium_per_ha * selected_area_ha) * modulation_factor if {\n\teligible\n}\n\ndefault premium_eur := 0\n\ndecision := {\n\t\"eligible\": eligible,\n\t\"contract_active\": contract_active,\n\t\"selected_area_ha\": selected_area_ha,\n\t\"premium_eur_per_ha\": premium_per_ha,\n\t\"modulation_factor\": modulation_factor,\n\t\"premium_eur\": premium_eur,\n\t\"entry_year_valid\": entry_year_valid,\n\t\"minimum_business_size_met\": minimum_business_size_met,\n\t\"application_deadline_met\": application_deadline_met,\n\t\"operation_program_exclusion\": operation_program_exclusion,\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_13-luna-high-20261004/workspace/tools/opa",
+            "fmt",
+            "tests/o6_13_test.rego"
+          ],
+          "duration_ms": 55,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_13_test\n\nimport data.oepul.o6_13\nimport rego.v1\n\nvalid_input := {\n\t\"farm\": {\n\t\t\"year\": 2026,\n\t\t\"region\": {\"country\": \"AT\", \"federal_state\": \"Wien\", \"district\": \"Donaustadt\"},\n\t\t\"measure_application\": {\n\t\t\t\"requested\": true,\n\t\t\t\"contract_year\": 2026,\n\t\t\t\"first_participation\": true,\n\t\t\t\"submitted_by\": \"2025-12-31\",\n\t\t},\n\t\t\"operation_program\": {\"member\": false, \"organism_use_compensated\": false},\n\t},\n\t\"land\": {\n\t\t\"total_area_ha\": 10,\n\t\t\"arable_area_ha\": 0,\n\t\t\"grassland_area_ha\": 0,\n\t\t\"special_crops_area_ha\": 0,\n\t\t\"alpine_pasture_area_ha\": 0,\n\t\t\"parcels\": [{\n\t\t\t\"area_ha\": 0.6,\n\t\t\t\"land_use\": \"A\",\n\t\t\t\"protected_cultivation\": {\n\t\t\t\t\"is_protected_cultivation\": true,\n\t\t\t\t\"active_production\": true,\n\t\t\t\t\"structure_type\": \"fixed_greenhouse_glass\",\n\t\t\t\t\"cultivation_medium\": \"grown_soil\",\n\t\t\t\t\"area_role\": \"production\",\n\t\t\t},\n\t\t\t\"measure_application\": {\n\t\t\t\t\"requested\": true,\n\t\t\t\t\"code\": \"NUE\",\n\t\t\t\t\"harvested_percent\": 100,\n\t\t\t\t\"other_premium\": false,\n\t\t\t\t\"proper_cultivation\": true,\n\t\t\t\t\"proper_annual_care\": true,\n\t\t\t\t\"crop_is_late_summer_or_autumn\": false,\n\t\t\t},\n\t\t\t\"organism_application\": {\n\t\t\t\t\"organism_type\": \"predatory_mite\",\n\t\t\t\t\"quantity\": 1000,\n\t\t\t\t\"ages_register_entry\": true,\n\t\t\t\t\"application_rate_compliant\": true,\n\t\t\t\t\"replaces_plant_protection_use\": true,\n\t\t\t\t\"purchase_evidence\": true,\n\t\t\t\t\"reason\": \"biological pest control\",\n\t\t\t\t\"goal\": \"control of pests\",\n\t\t\t\t\"date\": \"2026-04-15\",\n\t\t\t\t\"is_pollinator_only\": false,\n\t\t\t},\n\t\t}],\n\t},\n}\n\ntest_valid_protected_cultivation if {\n\tresult := o6_13.decision with input as valid_input\n\tresult.eligible == true\n\tresult.premium_eur_per_ha == 2160\n}\n\ntest_operation_program_excludes if {\n\tresult := o6_13.decision with input as object.union(valid_input, {\n\t\t\"farm\": object.union(valid_input.farm, {\"operation_program\": {\"member\": true, \"organism_use_compensated\": true}}),\n\t})\n\tresult.eligible == false\n\tresult.operation_program_exclusion == true\n}\n\ntest_pollinator_only_is_not_an_eligible_nue_use if {\n\tresult := o6_13.decision with input as object.union(valid_input, {\n\t\t\"land\": object.union(valid_input.land, {\"parcels\": [object.union(valid_input.land.parcels[0], {\"organism_application\": object.union(valid_input.land.parcels[0].organism_application, {\"is_pollinator_only\": true})})]}),\n\t})\n\tresult.eligible == false\n}\n\ntest_drought_exception_replaces_harvest_threshold_in_2026_scope if {\n\tbase := object.union(valid_input, {\n\t\t\"farm\": object.union(valid_input.farm, {\n\t\t\t\"region\": {\"federal_state\": \"Burgenland\", \"district\": \"Neusiedl am See\"},\n\t\t\t\"measure_application\": object.union(valid_input.farm.measure_application, {\"drought_no_harvestable_stock\": true}),\n\t\t}),\n\t\t\"land\": object.union(valid_input.land, {\"parcels\": [object.union(valid_input.land.parcels[0], {\"measure_application\": object.union(valid_input.land.parcels[0].measure_application, {\"harvested_percent\": 0, \"crop_is_late_summer_or_autumn\": true})})]}),\n\t})\n\tresult := o6_13.decision with input as base\n\tresult.eligible == true\n}\n\ntest_substrate_requires_ga_land_use if {\n\tbase := object.union(valid_input, {\"land\": object.union(valid_input.land, {\"parcels\": [object.union(valid_input.land.parcels[0], {\n\t\t\"land_use\": \"GA\",\n\t\t\"protected_cultivation\": object.union(valid_input.land.parcels[0].protected_cultivation, {\"cultivation_medium\": \"substrate\"}),\n\t})]})})\n\tresult := o6_13.decision with input as base\n\tresult.eligible == true\n}\n\ntest_other_premium_is_not_combinable_on_same_area if {\n\tbase := object.union(valid_input, {\"land\": object.union(valid_input.land, {\"parcels\": [object.union(valid_input.land.parcels[0], {\n\t\t\"measure_application\": object.union(valid_input.land.parcels[0].measure_application, {\"other_premium\": true}),\n\t})]})})\n\tresult := o6_13.decision with input as base\n\tresult.eligible == false\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_13-luna-high-20261004/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 185,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 6/6\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_13-luna-high-20261004/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 245,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_13-luna-high-20261004/workspace"
+}
