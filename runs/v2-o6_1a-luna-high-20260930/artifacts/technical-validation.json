@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 149,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1a-luna-high-20260930/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_1a.rego",
+    "tests/o6_1a_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1a-luna-high-20260930/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 16,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_1a.rego",
+        "tests/o6_1a_test.rego"
+      ],
+      "duration_ms": 27,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1a-luna-high-20260930/workspace/tools/opa",
+            "fmt",
+            "policy/o6_1a.rego"
+          ],
+          "duration_ms": 15,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package o6_1a\n\nimport rego.v1\n\ncontract_end := \"2028-12-31\"\n\narable_minimum_ok if {\n\tinput.land.arable_area_ha <= 2\n}\n\narable_minimum_ok if {\n\tinput.land.arable_area_ha > 2\n\tinput.documentation.arable_div_ha >= 0.07 * input.land.arable_area_ha\n}\n\ngrassland_minimum_ok if {\n\tinput.land.grassland_area_ha <= 2\n}\n\ngrassland_minimum_ok if {\n\tinput.land.grassland_area_ha > 2\n\tinput.documentation.grassland_div_ha >= 0.07 * input.land.grassland_area_ha\n}\n\narable_fieldpiece_ok if {\n\tinput.land.arable_area_ha < 10\n}\n\narable_fieldpiece_ok if {\n\tinput.land.arable_area_ha >= 10\n\tevery fieldpiece in input.documentation.arable_fieldpieces {\n\t\tarable_fieldpiece_satisfied(fieldpiece)\n\t}\n}\n\narable_fieldpiece_satisfied(fieldpiece) if {\n\tfieldpiece.area_ha <= 5\n}\n\narable_fieldpiece_satisfied(fieldpiece) if {\n\tfieldpiece.area_ha > 5\n\tfieldpiece.div_plus_eligible_ha >= 0.15\n}\n\ngrassland_fieldpiece_ok if {\n\tinput.land.grassland_area_ha < 10\n}\n\ngrassland_fieldpiece_ok if {\n\tinput.land.grassland_area_ha >= 10\n\tevery fieldpiece in input.documentation.grassland_fieldpieces {\n\t\tgrassland_fieldpiece_satisfied(fieldpiece)\n\t}\n}\n\ngrassland_fieldpiece_satisfied(fieldpiece) if {\n\tfieldpiece.mown_area_ha <= 5\n}\n\ngrassland_fieldpiece_satisfied(fieldpiece) if {\n\tfieldpiece.mown_area_ha > 5\n\tfieldpiece.div_plus_eligible_ha >= 0.15\n}\n\narable_maintenance_ok if {\n\tinput.farm.year < 2025\n\tinput.documentation.arable_uses_in_two_years >= 1\n\tinput.documentation.arable_uses_this_year <= 2\n\tinput.documentation.arable_grazing == false\n\tinput.documentation.arable_threshing == false\n}\n\narable_maintenance_ok if {\n\tinput.farm.year >= 2025\n\tinput.documentation.arable_uses_in_two_years >= 1\n\tinput.documentation.arable_uses_this_year <= 2\n\tinput.documentation.arable_threshing == false\n\tinput.documentation.arable_grazing == false\n}\n\narable_maintenance_ok if {\n\tinput.farm.year >= 2025\n\tinput.documentation.arable_uses_in_two_years >= 1\n\tinput.documentation.arable_uses_this_year <= 2\n\tinput.documentation.arable_threshing == false\n\tinput.documentation.arable_grazing == true\n\tinput.documentation.arable_first_grazing_date >= \"08-01\"\n}\n\narable_inputs_ok if {\n\tinput.documentation.arable_psm_used == false\n\tinput.documentation.arable_fertilizer_used == false\n\tinput.documentation.arable_removal_method == \"mechanical\"\n}\n\ngrassland_nfz_ok if {\n\tinput.documentation.grassland_fallow_days >= 63\n\tinput.documentation.grassland_vehicle_entry_during_fallow == false\n\tinput.documentation.grassland_fertilization_during_fallow == false\n\tinput.documentation.grassland_second_use == true\n}\n\nregional_seed_ok if {\n\tinput.documentation.regional_seed_species_count >= 30\n\tinput.documentation.regional_seed_plant_families >= 7\n\tinput.documentation.regional_seed_rate_kg_per_ha >= 20\n\tinput.documentation.regional_seed_max_species_weight_share <= 0.05\n\tinput.documentation.regional_origin_proven == true\n}\n\nregional_grassland_seed_ok if {\n\tinput.documentation.regional_grassland_number >= 30\n\tinput.land.parcels[0].slope_percent < 18\n\tregional_seed_ok\n}\n\nwild_bird_ok if {\n\tinput.documentation.wild_bird_cereal == true\n\tinput.documentation.wild_bird_row_spacing_cm >= 20\n\tinput.documentation.wild_bird_undersown == false\n\tinput.documentation.wild_bird_protected_period_compliant == true\n}\n\npheromone_ok if {\n\tinput.farm.year >= 2025\n\tinput.documentation.pheromone_traps_per_ha >= 15\n\tinput.documentation.pheromone_days_after_sowing <= 14\n\tinput.documentation.pheromone_field_days >= 35\n\tinput.documentation.pheromone_emptyings >= 2\n\tinput.documentation.pheromone_records_complete == true\n}\n\nmodulation_factor := 1 if {\n\tinput.land.total_area_ha <= 200\n}\n\nmodulation_factor := (200 + ((input.land.total_area_ha - 200) * 0.9)) / input.land.total_area_ha if {\n\tinput.land.total_area_ha > 200\n\tinput.land.total_area_ha <= 300\n}\n\nmodulation_factor := ((200 + (100 * 0.9)) + ((input.land.total_area_ha - 300) * 0.85)) / input.land.total_area_ha if {\n\tinput.land.total_area_ha > 300\n\tinput.land.total_area_ha <= 1000\n}\n\nmodulation_factor := (((200 + (100 * 0.9)) + (700 * 0.85)) + ((input.land.total_area_ha - 1000) * 0.75)) / input.land.total_area_ha if {\n\tinput.land.total_area_ha > 1000\n}\n\narable_base_premium := data.premium_rates_eur_per_ha.arable_base[\"2023\"] if {\n\tinput.farm.year == 2023\n}\n\narable_base_premium := data.premium_rates_eur_per_ha.arable_base[\"2024\"] if {\n\tinput.farm.year == 2024\n}\n\narable_base_premium := data.premium_rates_eur_per_ha.arable_base[\"2025_plus\"] if {\n\tinput.farm.year >= 2025\n}\n\ngrassland_base_premium := data.premium_rates_eur_per_ha.grassland_base_livestock[\"2024_plus\"] if {\n\tinput.farm.year >= 2024\n\tinput.documentation.livestock_status == \"livestock\"\n}\n\ngrassland_base_premium := data.premium_rates_eur_per_ha.grassland_base_non_livestock[\"2024_plus\"] if {\n\tinput.farm.year >= 2024\n\tinput.documentation.livestock_status == \"non_livestock\"\n}\n\ndrought_third_use_allowed if {\n\tinput.farm.year == 2026\n\tinput.documentation.drought_2026.third_use == true\n\tinput.documentation.drought_2026.relief_code in {\"OPUBB\", \"OPBIO\"}\n}\n\ndeny contains \"arable_7_percent\" if {\n\tnot arable_minimum_ok\n}\n\ndeny contains \"grassland_7_percent\" if {\n\tnot grassland_minimum_ok\n}\n\ndeny contains \"arable_fieldpiece_0_15_ha\" if {\n\tnot arable_fieldpiece_ok\n}\n\ndeny contains \"grassland_fieldpiece_0_15_ha\" if {\n\tnot grassland_fieldpiece_ok\n}\n\ndeny contains \"arable_maintenance\" if {\n\tnot arable_maintenance_ok\n}\n\ndeny contains \"arable_inputs\" if {\n\tnot arable_inputs_ok\n}\n\ndeny contains \"grassland_nfz\" if {\n\tinput.land.parcels[0].biodiversity_management.variant == \"DIVNFZ\"\n\tnot grassland_nfz_ok\n}\n\ndeny contains \"regional_seed\" if {\n\tinput.documentation.regional_seed == true\n\tnot regional_seed_ok\n}\n\ndeny contains \"pheromone\" if {\n\tinput.documentation.pheromone == true\n\tnot pheromone_ok\n}\n\ndecision := {\n\t\"eligible\": count(deny) == 0,\n\t\"deny\": deny,\n\t\"contract_end\": contract_end,\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1a-luna-high-20260930/workspace/tools/opa",
+            "fmt",
+            "tests/o6_1a_test.rego"
+          ],
+          "duration_ms": 12,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package o6_1a_test\n\nimport data.o6_1a\nimport rego.v1\n\ntest_arable_minimum_passes if {\n\to6_1a.arable_minimum_ok with input as {\n\t\t\"farm\": {\"year\": 2026},\n\t\t\"land\": {\"arable_area_ha\": 10},\n\t\t\"documentation\": {\"arable_div_ha\": 0.7},\n\t}\n}\n\ntest_arable_minimum_fails if {\n\tnot o6_1a.arable_minimum_ok with input as {\n\t\t\"farm\": {\"year\": 2026},\n\t\t\"land\": {\"arable_area_ha\": 10},\n\t\t\"documentation\": {\"arable_div_ha\": 0.69},\n\t}\n}\n\ntest_arable_fieldpiece_passes if {\n\to6_1a.arable_fieldpiece_ok with input as {\n\t\t\"land\": {\"arable_area_ha\": 20},\n\t\t\"documentation\": {\"arable_fieldpieces\": [{\"area_ha\": 6, \"div_plus_eligible_ha\": 0.15}]},\n\t}\n}\n\ntest_grassland_nfz_requires_63_days if {\n\tnot o6_1a.grassland_nfz_ok with input as {\n\t\t\"documentation\": {\n\t\t\t\"grassland_fallow_days\": 62,\n\t\t\t\"grassland_vehicle_entry_during_fallow\": false,\n\t\t\t\"grassland_fertilization_during_fallow\": false,\n\t\t\t\"grassland_second_use\": true,\n\t\t},\n\t}\n}\n\ntest_regional_seed_passes if {\n\to6_1a.regional_seed_ok with input as {\n\t\t\"documentation\": {\n\t\t\t\"regional_seed_species_count\": 30,\n\t\t\t\"regional_seed_plant_families\": 7,\n\t\t\t\"regional_seed_rate_kg_per_ha\": 20,\n\t\t\t\"regional_seed_max_species_weight_share\": 0.05,\n\t\t\t\"regional_origin_proven\": true,\n\t\t},\n\t}\n}\n\ntest_regional_grassland_seed_rejects_steepness if {\n\tnot o6_1a.regional_grassland_seed_ok with input as {\n\t\t\"land\": {\"parcels\": [{\"slope_percent\": 18}]},\n\t\t\"documentation\": {\n\t\t\t\"regional_grassland_number\": 30,\n\t\t\t\"regional_seed_species_count\": 30,\n\t\t\t\"regional_seed_plant_families\": 7,\n\t\t\t\"regional_seed_rate_kg_per_ha\": 20,\n\t\t\t\"regional_seed_max_species_weight_share\": 0.05,\n\t\t\t\"regional_origin_proven\": true,\n\t\t},\n\t}\n}\n\ntest_pheromone_requires_five_weeks if {\n\tnot o6_1a.pheromone_ok with input as {\n\t\t\"farm\": {\"year\": 2026},\n\t\t\"documentation\": {\n\t\t\t\"pheromone_traps_per_ha\": 15,\n\t\t\t\"pheromone_days_after_sowing\": 14,\n\t\t\t\"pheromone_field_days\": 34,\n\t\t\t\"pheromone_emptyings\": 2,\n\t\t\t\"pheromone_records_complete\": true,\n\t\t},\n\t}\n}\n\ntest_drought_third_use_codes if {\n\to6_1a.drought_third_use_allowed with input as {\n\t\t\"farm\": {\"year\": 2026},\n\t\t\"documentation\": {\"drought_2026\": {\"third_use\": true, \"relief_code\": \"OPBIO\"}},\n\t}\n}\n\ntest_arable_premium_2025 if {\n\to6_1a.arable_base_premium == 85 with input as {\"farm\": {\"year\": 2025}}\n}\n\ntest_modulation_200_is_full if {\n\to6_1a.modulation_factor == 1 with input as {\"land\": {\"total_area_ha\": 200}}\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1a-luna-high-20260930/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 18,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 10/10\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1a-luna-high-20260930/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 88,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_1a-luna-high-20260930/workspace"
+}
