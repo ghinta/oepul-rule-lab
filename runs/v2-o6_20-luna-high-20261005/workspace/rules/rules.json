@@ -1,0 +1,1015 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_20",
+  "rules": [
+    {
+      "id": "o620-eligibility-scope",
+      "rule_type": "eligibility",
+      "statement": "Die Maßnahme fördert Weidehaltung von Rindern, Schafen, Ziegen, Equiden und Neuweltkamelen.",
+      "conditions": [],
+      "result": {
+        "outcome": "eligible_species",
+        "description": "Die zulässigen Tierarten werden auf die in der Quelle genannten raufutterverzehrenden Tierarten begrenzt."
+      },
+      "source_reference_ids": [
+        "sr-o620-overview",
+        "sr-o620-categories"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.category_records"
+      ]
+    },
+    {
+      "id": "o620-annual-contract",
+      "rule_type": "contract_period",
+      "statement": "Der Verpflichtungs- und Vertragszeitraum beträgt grundsätzlich ein Kalenderjahr vom 1. Jänner bis 31. Dezember.",
+      "conditions": [
+        {
+          "expression": "measure_requested == true",
+          "description": "Die Maßnahme wurde beantragt.",
+          "input_paths": [
+            "o6_20_application.measure_requested"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "annual_contract",
+        "description": "Die Verpflichtung gilt für das jeweilige Kalenderjahr und verlängert sich nach den allgemeinen Regeln, wenn sie nicht abgemeldet wird."
+      },
+      "source_reference_ids": [
+        "sr-o620-contract",
+        "sr-o620-legal-duration"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.decision"
+      ]
+    },
+    {
+      "id": "o620-minimum-rgve",
+      "rule_type": "access_threshold",
+      "statement": "Im jeweiligen Teilnahmejahr müssen über alle beantragten Kategorien durchschnittlich mindestens 2,00 RGVE erreicht werden.",
+      "conditions": [
+        {
+          "expression": "sum(category.average_rgve) >= 2.00",
+          "description": "Die RGVE der beantragten Kategorien werden zusammengezählt.",
+          "input_paths": [
+            "farm.livestock.o6_20[].average_rgve"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "minimum_rgve",
+        "description": "Die Mindestteilnahme ist erfüllt, wenn die Summe mindestens 2,00 RGVE beträgt."
+      },
+      "source_reference_ids": [
+        "sr-o620-min-rgve"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.total_rgve",
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-minimum-category-presence",
+      "rule_type": "access_threshold",
+      "statement": "Für jede beantragte Kategorie muss zumindest ein prämienfähiges Tier die Mindestteilnahme erreichen; ein Ersatz durch andere Tiere ist zulässig, wenn die Summe die Mindestdauer erreicht.",
+      "conditions": [
+        {
+          "expression": "animal_count >= 1",
+          "description": "Die Kategorie enthält zumindest ein teilnehmendes Tier.",
+          "input_paths": [
+            "farm.livestock.o6_20[].animal_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "category_presence",
+        "description": "Die Kategorie wird nur mit mindestens einem prämienfähigen Tier als teilnehmend bewertet."
+      },
+      "source_reference_ids": [
+        "sr-o620-min-category",
+        "sr-o620-reapply"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-valid-categories",
+      "rule_type": "closed_list",
+      "statement": "Die Teilnahme ist nur mit den in data/o6_20_categories.json erfassten zulässigen Maßnahmekategorien möglich.",
+      "conditions": [
+        {
+          "expression": "category in data.categories",
+          "description": "Die Kategorie muss in der vollständigen geschlossenen Kategorienliste vorkommen.",
+          "input_paths": [
+            "farm.livestock.o6_20[].category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "category_set",
+        "description": "Ungültige Kategorien werden abgewiesen; die Liste wird aus der Datendatei gelesen."
+      },
+      "source_reference_ids": [
+        "sr-o620-categories",
+        "sr-o620-equid-cats",
+        "sr-o620-camel"
+      ],
+      "rego_symbols": [
+        "data.categories"
+      ]
+    },
+    {
+      "id": "o620-weide-period",
+      "rule_type": "time_window",
+      "statement": "Die Weidehaltung muss zwischen 1. April und 31. Oktober stattfinden.",
+      "conditions": [
+        {
+          "expression": "weide_period_valid == true",
+          "description": "Die gemeldeten Weidezeiträume liegen im zulässigen Zeitfenster.",
+          "input_paths": [
+            "farm.livestock.o6_20[].weide_period_valid"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "minimum_period",
+        "description": "Die Kategorie erfüllt die Zeitfensterbedingung nur bei gültigem Zeitraum."
+      },
+      "source_reference_ids": [
+        "sr-o620-weide-period",
+        "sr-o620-legal-obligations"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-minimum-weide-days",
+      "rule_type": "threshold",
+      "statement": "Ohne optionalen Zuschlag sind mindestens 120 Weidetage, mit Zuschlag mindestens 150 Weidetage erforderlich.",
+      "conditions": [
+        {
+          "expression": "weide_days >= (optional_150_days ? 150 : 120)",
+          "description": "Die gezählten Weidetage werden mit dem kategorienbezogenen Schwellenwert verglichen.",
+          "input_paths": [
+            "farm.livestock.o6_20[].weide_days",
+            "farm.livestock.o6_20[].optional_150_days"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "minimum_weide_days",
+        "description": "Die Mindestweidedauer wird kategorienbezogen und für alle teilnehmenden Tiere geprüft."
+      },
+      "source_reference_ids": [
+        "sr-o620-weide-period",
+        "sr-o620-option-150",
+        "sr-o620-legal-obligations"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.category_threshold",
+        "data.oepul.o6_20.category_minimum_met"
+      ]
+    },
+    {
+      "id": "o620-all-category-animals",
+      "rule_type": "scope",
+      "statement": "Grundsätzlich müssen alle Tiere der jeweils beantragten Kategorie teilnehmen.",
+      "conditions": [
+        {
+          "expression": "all_category_animals_participate == true",
+          "description": "Die Kategorie ist vollständig erfasst.",
+          "input_paths": [
+            "farm.livestock.o6_20[].all_category_animals_participate"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "all_animals",
+        "description": "Die Verpflichtung gilt für alle Tiere der beantragten Kategorie."
+      },
+      "source_reference_ids": [
+        "sr-o620-weide-period"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-alm-common-credit",
+      "rule_type": "crediting",
+      "statement": "Weidezeiten auf Almen und Gemeinschaftsweiden werden auf die 120 bzw. optional 150 Mindestweidetage angerechnet.",
+      "conditions": [
+        {
+          "expression": "pasture_days_are_counted == true",
+          "description": "Alm- und Gemeinschaftsweidezeiten fließen in die Tageszählung ein.",
+          "input_paths": [
+            "farm.livestock.o6_20[].pasture_days_are_counted"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "credited",
+        "description": "Anrechenbare Weidetage werden unabhängig vom Weideort berücksichtigt."
+      },
+      "source_reference_ids": [
+        "sr-o620-alm-common"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.category_results"
+      ]
+    },
+    {
+      "id": "o620-groundfeed-grazing",
+      "rule_type": "animal_welfare",
+      "statement": "Der Grundfutterbedarf muss während der gesamten Weidedauer überwiegend durch Beweidung gedeckt werden.",
+      "conditions": [
+        {
+          "expression": "groundfeed_predominantly_grazing == true",
+          "description": "Die überwiegende Grundfutterdeckung durch Beweidung ist angegeben.",
+          "input_paths": [
+            "farm.livestock.o6_20[].groundfeed_predominantly_grazing"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "groundfeed",
+        "description": "Die Grundfutterbedingung ist erfüllt, wenn die Beweidung überwiegt."
+      },
+      "source_reference_ids": [
+        "sr-o620-feed"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-substantial-day-grazing",
+      "rule_type": "animal_welfare",
+      "statement": "Die Beweidung muss über einen wesentlichen Teil des Tages erfolgen; eine starre Mindeststundenzahl ist nicht vorgegeben.",
+      "conditions": [
+        {
+          "expression": "grazing_substantial_part_of_day == true",
+          "description": "Der wesentliche Tagesanteil ist plausibilisiert.",
+          "input_paths": [
+            "farm.livestock.o6_20[].grazing_substantial_part_of_day"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "day_part",
+        "description": "Die Tagesanteilsbedingung ist erfüllt, wenn der wesentliche Teil des Tages beweidet wird."
+      },
+      "source_reference_ids": [
+        "sr-o620-day"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-water-shelter",
+      "rule_type": "animal_welfare",
+      "statement": "Während der Weidehaltung muss Zugang zu Tränke und Unterstellmöglichkeit oder rascher Stallverbringung bestehen.",
+      "conditions": [
+        {
+          "expression": "water_access == true and shelter_access == true",
+          "description": "Beide Zugangsmöglichkeiten sind vorhanden.",
+          "input_paths": [
+            "farm.livestock.o6_20[].water_access",
+            "farm.livestock.o6_20[].shelter_access"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access",
+        "description": "Tränke und Unterstell-/Stallmöglichkeit sind Förderbedingungen."
+      },
+      "source_reference_ids": [
+        "sr-o620-access",
+        "sr-o620-legal-access"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-diary",
+      "rule_type": "documentation",
+      "statement": "Die Weidehaltung ist laufend in einem Weidetagebuch zu dokumentieren.",
+      "conditions": [
+        {
+          "expression": "weide_diary_complete == true",
+          "description": "Die Aufzeichnung ist vollständig.",
+          "input_paths": [
+            "farm.livestock.o6_20[].weide_diary_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "documented",
+        "description": "Das Weidetagebuch muss die Weidehaltung laufend dokumentieren."
+      },
+      "source_reference_ids": [
+        "sr-o620-diary"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-diary-content",
+      "rule_type": "documentation",
+      "statement": "Das Weidetagebuch muss Kategorie/Gruppe, Weideort, Beginn und Ende zusammenhängender Weidezeiträume sowie Hinderungs- und Unterbrechungsgründe enthalten.",
+      "conditions": [
+        {
+          "expression": "weide_diary_complete == true",
+          "description": "Die erforderlichen Tagebuchangaben werden als vollständig angenommen.",
+          "input_paths": [
+            "farm.livestock.o6_20[].weide_diary_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "diary_fields",
+        "description": "Die Dokumentation umfasst die in der Maßnahme genannten Angaben."
+      },
+      "source_reference_ids": [
+        "sr-o620-diary"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-missed-days-report",
+      "rule_type": "reporting",
+      "statement": "Bei Nichterreichung der Mindestweidedauer für einzelne Tiere, mehrere Tiere oder die ganze Kategorie ist eine AMA-Meldung/Korrektur erforderlich; für betroffene Tiere wird keine Prämie gewährt.",
+      "conditions": [
+        {
+          "expression": "minimum_met == true or correction_or_report == true",
+          "description": "Nichterreichung ist entweder ausgeschlossen oder gemeldet/korrigiert.",
+          "input_paths": [
+            "farm.livestock.o6_20[].weide_days",
+            "farm.livestock.o6_20[].correction_or_report"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "report_or_no_premium",
+        "description": "Nicht gemeldete Nichterreichung verletzt die Meldepflicht; gemeldete betroffene Tiere bleiben ohne Prämie."
+      },
+      "source_reference_ids": [
+        "sr-o620-report"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-cattle-report",
+      "rule_type": "reporting",
+      "statement": "Bei Rindern ist die ohrmarkenbezogene Abmeldung unmittelbar ab Bekanntwerden des Hinderungsgrundes vorzunehmen; Alters- und Rinderdatenbankfälle haben Sonderregeln.",
+      "conditions": [
+        {
+          "expression": "cattle_special_report_required == false or cattle_report_immediate == true",
+          "description": "Ein meldepflichtiger Rinderfall ist unmittelbar gemeldet.",
+          "input_paths": [
+            "farm.livestock.o6_20[].cattle_special_report_required",
+            "farm.livestock.o6_20[].cattle_report_immediate"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "cattle_report",
+        "description": "Rinderspezifische Korrekturen werden unmittelbar online vorgenommen."
+      },
+      "source_reference_ids": [
+        "sr-o620-cattle",
+        "sr-o620-cattle-calc"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-sheep-goat-entry-7-days",
+      "rule_type": "deadline",
+      "statement": "Zugänge weiblicher Schafe und Ziegen nach dem 1. April sind binnen 7 Tagen online zu melden.",
+      "conditions": [
+        {
+          "expression": "entry_after_april == false or entry_report_within_7_days == true",
+          "description": "Die Zugangsmeldung liegt fristgerecht vor.",
+          "input_paths": [
+            "farm.livestock.o6_20[].entry_after_april",
+            "farm.livestock.o6_20[].entry_report_within_7_days"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "entry_report",
+        "description": "Bei verspäteter Meldung können höchstens 7 Weidetage vor dem Meldedatum berücksichtigt werden."
+      },
+      "source_reference_ids": [
+        "sr-o620-sheep-entry",
+        "sr-o620-sheep-late"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-sheep-goat-exit-7-days",
+      "rule_type": "deadline",
+      "statement": "Abgänge beantragter weiblicher Schafe und Ziegen sind binnen 7 Tagen zu melden.",
+      "conditions": [
+        {
+          "expression": "exit_after_april == false or exit_report_within_7_days == true",
+          "description": "Die Abgangsmeldung liegt fristgerecht vor.",
+          "input_paths": [
+            "farm.livestock.o6_20[].exit_after_april",
+            "farm.livestock.o6_20[].exit_report_within_7_days"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exit_report",
+        "description": "Abgänge werden anteilig berücksichtigt, sofern die Tiere bis zum Abgang mitgeweidet wurden."
+      },
+      "source_reference_ids": [
+        "sr-o620-sheep-exit"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-sheep-goat-pasture-not-exit",
+      "rule_type": "exception",
+      "statement": "Vorübergehender Aufenthalt auf Zinsweide, Alm- oder Gemeinschaftsweide gilt nicht als Abgang, wenn die Verfügungsgewalt beim Heimbetrieb bleibt.",
+      "conditions": [
+        {
+          "expression": "temporary_pasture_stay == true and pasture_treated_as_exit == false",
+          "description": "Der Weideaufenthalt ist nicht als Abgang behandelt.",
+          "input_paths": [
+            "farm.livestock.o6_20[].temporary_pasture_stay",
+            "farm.livestock.o6_20[].pasture_treated_as_exit"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_exit",
+        "description": "Der Aufenthalt wird nur im Weidetagebuch dokumentiert."
+      },
+      "source_reference_ids": [
+        "sr-o620-pasture-not-exit"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-equid-camel-correction",
+      "rule_type": "correction",
+      "statement": "Bei Equiden und Neuweltkamelen ist bei Nichterreichung der Mindestweidetage die beantragte Anzahl auf die tatsächliche Anzahl zu korrigieren.",
+      "conditions": [
+        {
+          "expression": "minimum_met == true or replacement_by_growing_animals == true or count_correction_done == true",
+          "description": "Die Mindererreichung ist durch Ersatztiere gedeckt oder korrigiert.",
+          "input_paths": [
+            "farm.livestock.o6_20[].weide_days",
+            "farm.livestock.o6_20[].replacement_by_growing_animals",
+            "farm.livestock.o6_20[].count_correction_done"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "count_correction",
+        "description": "Ohne zulässigen Ersatz ist die Anzahl online zu korrigieren."
+      },
+      "source_reference_ids": [
+        "sr-o620-equid-correction"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-equid-camel-replacement",
+      "rule_type": "exception",
+      "statement": "Während der Weideperiode altersmäßig in die Kategorie hineinwachsende Equiden/Neuweltkamele können abgegangene Tiere ersetzen, wenn sie die Mindestweidetage erreichen.",
+      "conditions": [
+        {
+          "expression": "replacement_by_growing_animals == true",
+          "description": "Ersatz durch hineingewachsene Tiere ist angegeben.",
+          "input_paths": [
+            "farm.livestock.o6_20[].replacement_by_growing_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "replacement",
+        "description": "Bei erfüllter Mindestdauer ist keine Reduktionskorrektur erforderlich."
+      },
+      "source_reference_ids": [
+        "sr-o620-equid-replacement"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.category_results"
+      ]
+    },
+    {
+      "id": "o620-vis-reporting",
+      "rule_type": "reporting",
+      "statement": "Tierbewegungen von Schafen/Ziegen sowie die Identifikation und Meldung von Equiden müssen nach den genannten VIS-/Datenbankvorschriften vollständig gemeldet werden.",
+      "conditions": [
+        {
+          "expression": "vis_reporting_complete == true",
+          "description": "Die erforderlichen VIS-Meldungen sind vollständig.",
+          "input_paths": [
+            "farm.livestock.o6_20[].vis_reporting_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "vis_complete",
+        "description": "Die tierhaltende Person ist für Richtigkeit und Vollständigkeit der Tierinformationen verantwortlich."
+      },
+      "source_reference_ids": [
+        "sr-o620-vis"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-application-deadline",
+      "rule_type": "deadline",
+      "statement": "Die auswählbaren Tierkategorien sind vor Vertragsbeginn bis spätestens 31. Dezember für das Folgejahr zu beantragen.",
+      "conditions": [
+        {
+          "expression": "application_date_before_31_december == true",
+          "description": "Der Maßnahmenantrag wurde fristgerecht gestellt.",
+          "input_paths": [
+            "o6_20_application.application_date_before_31_december"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "application_valid",
+        "description": "Ein gültiger Vertrag ab Folgejahr setzt den fristgerechten Maßnahmenantrag voraus."
+      },
+      "source_reference_ids": [
+        "sr-o620-application",
+        "sr-o620-legal-application"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.has_valid_application"
+      ]
+    },
+    {
+      "id": "o620-last-entry",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg in Kategorien der Maßnahme ist mit Förderjahr 2027 möglich; Antragsschluss dafür ist 31. Dezember 2026.",
+      "conditions": [
+        {
+          "expression": "year <= 2027",
+          "description": "Das Förderjahr liegt innerhalb der letzten Einstiegsmöglichkeit.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "entry_allowed",
+        "description": "Ab Förderjahr 2028 ist kein neuer Kategorieeinstieg vorgesehen."
+      },
+      "source_reference_ids": [
+        "sr-o620-last-entry"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20"
+      ]
+    },
+    {
+      "id": "o620-150-application",
+      "rule_type": "deadline",
+      "statement": "Der optionale Zuschlag für mindestens 150 Weidetage ist jährlich bis 15. April, in den Jahren 2023 und 2028 bis 17. April, gesondert zu beantragen.",
+      "conditions": [
+        {
+          "expression": "option_150_application_on_time == true",
+          "description": "Der Zuschlag wurde fristgerecht beantragt.",
+          "input_paths": [
+            "o6_20_application.option_150_application_on_time"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "optional_150_requested",
+        "description": "Bei Auswahl des Zuschlags gilt die längere Dauer für alle Tiere der Kategorie."
+      },
+      "source_reference_ids": [
+        "sr-o620-150-application",
+        "sr-o620-option-150"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.category_threshold"
+      ]
+    },
+    {
+      "id": "o620-reapply-after-no-animal",
+      "rule_type": "contract_effect",
+      "statement": "Wenn in einem Förderjahr keine Kategorie mit mindestens einem prämienfähigen Tier teilnimmt, erlischt der Vertrag für diese Kategorie.",
+      "conditions": [
+        {
+          "expression": "animal_count >= 1",
+          "description": "Die Kategorie enthält im Förderjahr mindestens ein prämienfähiges Tier.",
+          "input_paths": [
+            "farm.livestock.o6_20[].animal_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "category_contract",
+        "description": "Für eine spätere Teilnahme ist ein neuer fristgerechter Maßnahmenantrag erforderlich."
+      },
+      "source_reference_ids": [
+        "sr-o620-reapply"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-cattle-auto-calculation",
+      "rule_type": "calculation",
+      "statement": "Prämienfähige Rinder werden für den Zeitraum 1. April bis 31. Oktober automatisch aus der Rinderdatenbank berechnet.",
+      "conditions": [
+        {
+          "expression": "cattle_database_calculated == true",
+          "description": "Die Rinderermittlung stammt aus der Rinderdatenbank.",
+          "input_paths": [
+            "o6_20_application.cattle_database_calculated"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "automatic_cattle_calculation",
+        "description": "Eine separate einzeltierbezogene Beantragung der Rinder ist nicht erforderlich."
+      },
+      "source_reference_ids": [
+        "sr-o620-cattle-calc"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20"
+      ]
+    },
+    {
+      "id": "o620-sheep-goat-individual",
+      "rule_type": "application_data",
+      "statement": "Weibliche Schafe und Ziegen ab 1 Jahr sind einzeltierbezogen mit Tierart, Ohrmarke, Geschlecht und Geburtsdatum zu beantragen.",
+      "conditions": [
+        {
+          "expression": "individual_animal_data_complete == true",
+          "description": "Die geforderten tierbezogenen Angaben sind vorhanden.",
+          "input_paths": [
+            "o6_20_application.individual_animal_data_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "individual_application",
+        "description": "Nach Stichtag 1. April hinzuwachsende Tiere können vor Erreichen der Altersschwelle vorbeantragt werden."
+      },
+      "source_reference_ids": [
+        "sr-o620-sheep-calc"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20"
+      ]
+    },
+    {
+      "id": "o620-equid-categories",
+      "rule_type": "closed_list",
+      "statement": "Equiden werden nach Größe/Gewicht sowie Jungtier- oder erwachsener Kategorie in vier Kategorien beantragt.",
+      "conditions": [
+        {
+          "expression": "equid_category in data.categories",
+          "description": "Die Equidenkategorie stammt aus der Datendatei.",
+          "input_paths": [
+            "farm.livestock.o6_20[].category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "equid_category",
+        "description": "Die vier geschlossenen Equidenkategorien verwenden die RGVE-Faktoren 0,30/0,50/0,60/1,00."
+      },
+      "source_reference_ids": [
+        "sr-o620-equid-cats",
+        "sr-o620-rgve-factors"
+      ],
+      "rego_symbols": [
+        "data.categories"
+      ]
+    },
+    {
+      "id": "o620-camel-category",
+      "rule_type": "application_data",
+      "statement": "Neuweltkamele ab 1 Jahr werden mit der Anzahl in der Weide/Stallhaltungs-Beilage beantragt.",
+      "conditions": [
+        {
+          "expression": "camel_application_count_present == true",
+          "description": "Die beantragte Anzahl ist angegeben.",
+          "input_paths": [
+            "o6_20_application.camel_application_count_present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "camel_application",
+        "description": "Während des Weidezeitraums einjährige Tiere können bei Erfüllung der Mindestdauer berücksichtigt werden."
+      },
+      "source_reference_ids": [
+        "sr-o620-camel"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20"
+      ]
+    },
+    {
+      "id": "o620-withdrawal",
+      "rule_type": "withdrawal",
+      "statement": "Nach Erfüllung des einjährigen Vertragszeitraums ist ein vollständiger oder kategorieweiser Ausstieg möglich; eine Abmeldung im laufenden Jahr macht die Maßnahme für dieses Jahr ungültig.",
+      "conditions": [
+        {
+          "expression": "withdrawal_after_31_december == true",
+          "description": "Die Abmeldung erfolgt erst ab 1. Jänner des Folgejahres.",
+          "input_paths": [
+            "o6_20_application.withdrawal_after_31_december"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "withdrawal",
+        "description": "Der Ausstieg wird online im aktuellen Mehrfachantrag bekannt gegeben."
+      },
+      "source_reference_ids": [
+        "sr-o620-withdrawal",
+        "sr-o620-contract"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20"
+      ]
+    },
+    {
+      "id": "o620-premium",
+      "rule_type": "premium",
+      "statement": "Die Basisprämie beträgt 40,0 bis 60,0 €/RGVE; der optionale Zuschlag für mindestens 150 Tage beträgt 16,0 bis 24,0 €/RGVE.",
+      "conditions": [],
+      "result": {
+        "outcome": "premium_band",
+        "description": "Der garantierte Mindestbetrag ist 40,0 €/RGVE bzw. 16,0 €/RGVE für den Zuschlag; die Auszahlung liegt innerhalb des Bandes.",
+        "value": {
+          "base_min": 40,
+          "base_max": 60,
+          "optional_150_min": 16,
+          "optional_150_max": 24
+        }
+      },
+      "source_reference_ids": [
+        "sr-o620-premium",
+        "sr-o620-legal-premium"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.premium_amounts"
+      ]
+    },
+    {
+      "id": "o620-coupled-support-half",
+      "rule_type": "premium_adjustment",
+      "statement": "Bei gleichzeitiger tierbezogener fakultativ gekoppelter Stützung für aufgetriebene Rinder, Schafe oder Ziegen wird die Basisprämie für betroffene Tiere halbiert.",
+      "conditions": [
+        {
+          "expression": "coupled_alpine_support_claimed == true",
+          "description": "Die gekoppelte Stützung ist gleichzeitig beantragt.",
+          "input_paths": [
+            "farm.livestock.o6_20[].coupled_alpine_support_claimed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "half_base_premium",
+        "description": "Für betroffene Tiere gilt der Basisfaktor 0,5."
+      },
+      "source_reference_ids": [
+        "sr-o620-coupled"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.premium_amounts"
+      ]
+    },
+    {
+      "id": "o620-common-pasture-full",
+      "rule_type": "premium_adjustment",
+      "statement": "Tiere auf Gemeinschaftsweiden ohne Beantragung der gekoppelten Stützung erhalten die volle Weideprämie.",
+      "conditions": [
+        {
+          "expression": "on_common_pasture == true and coupled_alpine_support_claimed == false",
+          "description": "Die Gemeinschaftsweide liegt ohne gekoppelte Stützung vor.",
+          "input_paths": [
+            "farm.livestock.o6_20[].on_common_pasture",
+            "farm.livestock.o6_20[].coupled_alpine_support_claimed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "full_base_premium",
+        "description": "Der Basisfaktor bleibt 1,0."
+      },
+      "source_reference_ids": [
+        "sr-o620-common-full"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.premium_amounts"
+      ]
+    },
+    {
+      "id": "o620-proration",
+      "rule_type": "calculation",
+      "statement": "Nicht während des gesamten Zeitraums am Betrieb gemeldete Tiere werden anteilig für den Zeitraum 1. April bis 31. Oktober berücksichtigt.",
+      "conditions": [
+        {
+          "expression": "average_rgve is prorated == true",
+          "description": "Die durchschnittliche RGVE ist zeitanteilig ermittelt.",
+          "input_paths": [
+            "farm.livestock.o6_20[].average_rgve",
+            "farm.livestock.o6_20[].days_present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "prorated_rgve",
+        "description": "Die Prämienberechnung verwendet die zeitanteilige durchschnittliche RGVE."
+      },
+      "source_reference_ids": [
+        "sr-o620-proration",
+        "sr-o620-cattle-calc"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.total_rgve"
+      ]
+    },
+    {
+      "id": "o620-rgve-factors",
+      "rule_type": "calculation",
+      "statement": "Für die förderfähigen RGVE sind die Anhang-A-Umrechnungsfaktoren je Tierkategorie anzuwenden.",
+      "conditions": [
+        {
+          "expression": "rgve_factor_from_data == true",
+          "description": "Der Faktor wird aus der geschlossenen Datentabelle entnommen.",
+          "input_paths": [
+            "farm.livestock.o6_20[].category",
+            "farm.livestock.o6_20[].average_rgve"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rgve_factor",
+        "description": "Die vollständige Faktorentabelle ist in data/o6_20_categories.json operationalisiert."
+      },
+      "source_reference_ids": [
+        "sr-o620-rgve-factors",
+        "sr-o620-premium"
+      ],
+      "rego_symbols": [
+        "data.categories"
+      ]
+    },
+    {
+      "id": "o620-austria-location",
+      "rule_type": "eligibility",
+      "statement": "Die geförderten Tiere müssen in Österreich gehalten werden.",
+      "conditions": [
+        {
+          "expression": "animals_held_in_austria == true",
+          "description": "Der Haltungsort liegt in Österreich.",
+          "input_paths": [
+            "farm.livestock.o6_20[].animals_held_in_austria"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "domestic_animals",
+        "description": "Außerhalb Österreichs gehaltene Tiere sind nicht prämienrelevant."
+      },
+      "source_reference_ids": [
+        "sr-o620-legal-location"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-drought-control-context",
+      "rule_type": "control_context",
+      "statement": "Bei der Vor-Ort-Kontrolle wird im Jahr 2026 die besondere Trockenheitssituation, unter anderem beim Grundfutterbedarf auf der Weide, berücksichtigt.",
+      "conditions": [
+        {
+          "expression": "year == 2026 and drought_2026 == true",
+          "description": "Der aktuelle Kontrollkontext ist das Antragsjahr 2026 mit Dürre.",
+          "input_paths": [
+            "farm.year",
+            "context.drought_2026"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "control_note",
+        "description": "Die Meldung schafft keine automatische Aufhebung der Weideverpflichtung."
+      },
+      "source_reference_ids": [
+        "notice-2026-drought-weide"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    },
+    {
+      "id": "o620-modulation",
+      "rule_type": "premium_adjustment",
+      "statement": "Das Prämienausmaß wird nach der gesamten Betriebsfläche moduliert: bis 200 ha 100 %, über 200 bis 300 ha 90 %, über 300 bis 1.000 ha 85 %, über 1.000 ha 75 %.",
+      "conditions": [
+        {
+          "expression": "total_farm_area_ha >= 0",
+          "description": "Die Betriebsfläche ist für die Modulation bekannt.",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "modulated_premium",
+        "description": "Der Modulationsfaktor folgt den allgemeinen ÖPUL-Stufen."
+      },
+      "source_reference_ids": [
+        "sr-o620-legal-modulation"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.premium_amounts"
+      ]
+    },
+    {
+      "id": "o620-measure-takeover",
+      "rule_type": "transfer",
+      "statement": "Eine Übernahme von Tierwohl-Weide ist nur in Einzelfällen im Zuge von Betriebsauflösung, -teilung oder -zusammenlegung möglich; Tiere und Flächen müssen vom selben Vorbetrieb stammen.",
+      "conditions": [
+        {
+          "expression": "takeover_due_to_restructuring == true and animals_and_land_same_predecessor == true",
+          "description": "Die engen Übernahmebedingungen sind erfüllt.",
+          "input_paths": [
+            "o6_20_application.takeover_due_to_restructuring",
+            "o6_20_application.animals_and_land_same_predecessor"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "takeover_allowed",
+        "description": "Die Übernahme ist online einzureichen und AMA-genehmigungspflichtig."
+      },
+      "source_reference_ids": [
+        "sr-o620-legal-takeover"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20"
+      ]
+    },
+    {
+      "id": "o620-control-sanctions",
+      "rule_type": "sanction",
+      "statement": "Verstöße können je nach Schwere, Ausmaß, Dauer und Häufigkeit zu Verwarnung, Kürzungen bis 100 % oder Ausschluss/Rückforderung führen.",
+      "conditions": [
+        {
+          "expression": "compliance_checked == true",
+          "description": "Die Einhaltung wird durch Verwaltungskontrolle, Vor-Ort-Kontrolle oder Monitoring geprüft.",
+          "input_paths": [
+            "documentation.field_records_complete",
+            "documentation.livestock_records_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "sanction_scale",
+        "description": "Die allgemeine Sanktionsskala ist bei fachlichen Verstößen maßnahmenbezogen anzuwenden."
+      },
+      "source_reference_ids": [
+        "general-2026-control-penalty"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.violations"
+      ]
+    }
+  ]
+}
