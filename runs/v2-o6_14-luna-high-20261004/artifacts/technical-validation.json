@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 127,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_14-luna-high-20261004/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/almbewirtschaftung.rego",
+    "tests/almbewirtschaftung_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_14-luna-high-20261004/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 19,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/almbewirtschaftung.rego",
+        "tests/almbewirtschaftung_test.rego"
+      ],
+      "duration_ms": 27,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_14-luna-high-20261004/workspace/tools/opa",
+            "fmt",
+            "policy/almbewirtschaftung.rego"
+          ],
+          "duration_ms": 16,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_14\n\nimport rego.v1\n\nfarm := object.get(input, \"farm\", {})\nland := object.get(input, \"land\", {})\nlivestock := object.get(input, \"livestock\", {})\ndocumentation := object.get(input, \"documentation\", {})\npreferences := object.get(input, \"preferences_constraints\", {})\n\nalms := object.get(land, \"alpine_pastures\", [])\nanimals := object.get(livestock, \"alpine_movements\", [])\noptions := object.get(preferences, \"oepul_options\", {})\nnaturschutz_option := object.get(options, \"naturschutz_auf_der_alm\", false)\nalmweideplan_option := object.get(options, \"almweideplan\", false)\nreports := object.get(documentation, \"oepul_reports\", {})\nyear := object.get(farm, \"year\", 0)\nparticipate := object.get(preferences, \"oepul_participation_requested\", false)\nfirst_participation_year := object.get(preferences, \"oepul_first_participation_year\", false)\ncontract_start_year := object.get(preferences, \"oepul_contract_start_year\", 0)\n\ndefault eligible := false\n\neligible if {\n\tparticipate\n\tcount(alms) > 0\n\tcount(animals) > 0\n\tfirst_year_conditions\n\tall_alms_are_domestic\n\tall_animals_are_domestic\n\tall_alms_density_compliant\n\tall_animals_meet_minimum_days\n\tanimal_species_eligible\n\tnot incompatible_options\n\tno_prohibited_practices\n\tnaturschutz_compliant\n\talmweideplan_compliant\n\treporting_compliant\n}\n\nfirst_year_conditions if {\n\tnot first_participation_year\n}\n\nfirst_year_conditions if {\n\tfirst_participation_year\n\ttotal_area >= 3\n\ttotal_eligible_rgve >= 3\n}\n\ntotal_area := sum([alm.area_ha | alm := alms[_]])\n\ntotal_eligible_rgve := sum([animal.gve | animal := animals[_]; animal.alpung_days >= 60])\n\nall_alms_are_domestic if {\n\tnot some_alm_is_foreign\n}\n\nsome_alm_is_foreign if {\n\talm := alms[_]\n\talm.is_in_austria != true\n}\n\nall_animals_are_domestic if {\n\tnot some_animal_is_foreign\n}\n\nsome_animal_is_foreign if {\n\tanimal := animals[_]\n\tanimal.is_held_in_austria != true\n}\n\nall_animals_meet_minimum_days if {\n\tnot animal_shorter_than_60_days\n\tall_alm_stocking_days_compliant\n}\n\nanimal_shorter_than_60_days if {\n\tanimal := animals[_]\n\tanimal.alpung_days < 60\n}\n\nminimum_alm_stocking_days[alm.alm_id] := sum([animal.alpung_days | animal := animals[_]; animal.alm_id == alm.alm_id]) if {\n\talm := alms[_]\n}\n\nalm_stocking_day_violation[alm.alm_id] if {\n\talm := alms[_]\n\tminimum_alm_stocking_days[alm.alm_id] < 60\n}\n\nall_alm_stocking_days_compliant if {\n\tnot some_alm_stocking_violation\n}\n\nsome_alm_stocking_violation if {\n\talm_stocking_day_violation[_]\n}\n\nalm_rgve[alm.alm_id] := total if {\n\talm := alms[_]\n\ttotal := sum([animal.gve | animal := animals[_]; animal.alm_id == alm.alm_id; animal.alpung_days >= 60])\n}\n\nalm_density[alm.alm_id] := density if {\n\talm := alms[_]\n\tdensity := alm_rgve[alm.alm_id] / alm.area_ha\n}\n\nalm_density_limit(_) := 1.5 if {\n\tnaturschutz_option == true\n}\n\nalm_density_limit(alm) := 2.4 if {\n\tnaturschutz_option != true\n\talmweideplan_option == true\n\tobject.get(object.get(alm, \"almweideplan\", {}), \"strong_intensity\", false) == true\n\tobject.get(object.get(alm, \"almweideplan\", {}), \"strong_intensity_reason\", \"\") != \"\"\n}\n\nalm_density_limit(_) := 2.0 if {\n\tnaturschutz_option != true\n\tnot almweideplan_option == true\n}\n\nalm_density_limit(alm) := 2.0 if {\n\tnaturschutz_option != true\n\talmweideplan_option == true\n\tnot object.get(object.get(alm, \"almweideplan\", {}), \"strong_intensity\", false) == true\n}\n\nalm_density_violation[alm.alm_id] if {\n\talm := alms[_]\n\talm_density[alm.alm_id] > alm_density_limit(alm)\n}\n\nall_alms_density_compliant if {\n\tnot some_alm_density_violation\n}\n\nsome_alm_density_violation if {\n\talm_density_violation[_]\n}\n\nincompatible_options if {\n\tnaturschutz_option == true\n\talmweideplan_option == true\n}\n\nno_prohibited_practices if {\n\tfeed_compliant\n\tpesticide_compliant\n\tfertilizer_compliant\n}\n\nfeed_compliant if {\n\tnot some_alm_feed_violation\n}\n\nsome_alm_feed_violation if {\n\talm := alms[_]\n\tfeed := object.get(alm, \"feed_practices\", {})\n\tfeed.natural_fodder_sufficient != true\n}\n\nsome_alm_feed_violation if {\n\talm := alms[_]\n\tfeed := object.get(alm, \"feed_practices\", {})\n\tfeed.non_alpine_silage_or_green_fodder == true\n}\n\nsome_alm_feed_violation if {\n\talm := alms[_]\n\tfeed := object.get(alm, \"feed_practices\", {})\n\tfeed.own_alpine_silage == true\n\tfeed.own_alpine_silage_fed_on_same_alm != true\n}\n\npesticide_compliant if {\n\tnot some_alm_pesticide_violation\n}\n\nsome_alm_pesticide_violation if {\n\talm := alms[_]\n\tinputs := object.get(alm, \"alm_inputs\", {})\n\tinputs.pesticide_used == true\n\tinputs.pesticide_bio_only != true\n}\n\nfertilizer_compliant if {\n\tnot some_alm_fertilizer_violation\n}\n\nsome_alm_fertilizer_violation if {\n\talm := alms[_]\n\tinputs := object.get(alm, \"alm_inputs\", {})\n\tinputs.fertilizer_used == true\n\tinputs.fertilizer_bio_allowed != true\n}\n\nsome_alm_fertilizer_violation if {\n\talm := alms[_]\n\tinputs := object.get(alm, \"alm_inputs\", {})\n\tinputs.non_alpine_slurry_or_liquid_manure == true\n}\n\nsome_alm_fertilizer_violation if {\n\talm := alms[_]\n\tinputs := object.get(alm, \"alm_inputs\", {})\n\tinputs.sewage_sludge == true\n}\n\nsome_alm_fertilizer_violation if {\n\talm := alms[_]\n\tinputs := object.get(alm, \"alm_inputs\", {})\n\tinputs.separated_home_farm_slurry_solids == true\n}\n\ncontract_end_year := 2028\n\ncontract_years := 2029 - contract_start_year if {\n\tcontract_start_year >= 2023\n\tcontract_start_year <= 2025\n}\n\ncontract_years := 1 if {\n\talmweideplan_option == true\n}\n\nrecognized_animal_species := {\"cattle\", \"sheep\", \"goats\", \"equines\", \"camelids\"}\nrgve_factors := data.o6_14.rgve_factors\nannex_e_footnotes := data.o6_14.annex_e_footnotes\n\nanimal_species_eligible if {\n\tnot some_ineligible_species\n}\n\nsome_ineligible_species if {\n\tanimal := animals[_]\n\tnot animal.species in recognized_animal_species\n}\n\neligible_animals[animal.animal_id] := animal if {\n\tanimal := animals[_]\n\tanimal.alpung_days >= 60\n}\n\ndays_counting_rule := {\n\t\"arrival_day_included\": true,\n\t\"departure_day_included\": false,\n\t\"interruptions_count\": false,\n}\n\nreporting_rules := {\n\t\"cattle\": {\"arrival_days\": 14, \"departure_days\": 14, \"late_credit_days\": 14},\n\t\"sheep_goats\": {\"arrival_days\": 7, \"departure_days\": 7, \"late_credit_days\": 7},\n\t\"equines_camelids\": {\"arrival_days\": 7, \"departure_days\": 7, \"late_credit_days\": 7},\n}\n\nreporting_compliant if {\n\treports.cattle_arrival_days <= 14\n\treports.cattle_departure_days <= 14\n\treports.other_arrival_days <= 7\n\treports.other_departure_days <= 7\n}\n\nnaturschutz_compliant if {\n\tnaturschutz_option != true\n}\n\nnaturschutz_compliant if {\n\tnaturschutz_option == true\n\tnot some_naturschutz_violation\n}\n\nsome_naturschutz_violation if {\n\talm := alms[_]\n\tns := object.get(alm, \"naturschutz\", {})\n\tns.project_confirmation_for_all_parcels != true\n}\n\nsome_naturschutz_violation if {\n\talm := alms[_]\n\tns := object.get(alm, \"naturschutz\", {})\n\tns.sensitive_area_fertilizer_free != true\n}\n\nsome_naturschutz_violation if {\n\talm := alms[_]\n\tns := object.get(alm, \"naturschutz\", {})\n\tns.no_terrain_correction != true\n}\n\nsome_naturschutz_violation if {\n\talm := alms[_]\n\tns := object.get(alm, \"naturschutz\", {})\n\tns.no_new_drainage != true\n}\n\nsome_naturschutz_violation if {\n\talm := alms[_]\n\tns := object.get(alm, \"naturschutz\", {})\n\tns.troughs_not_in_wetlands != true\n}\n\nsome_naturschutz_violation if {\n\talm := alms[_]\n\tcourse := object.get(object.get(alm, \"naturschutz\", {}), \"course\", {})\n\tcourse.hours < 4\n}\n\nsome_naturschutz_violation if {\n\talm := alms[_]\n\tcourse := object.get(object.get(alm, \"naturschutz\", {}), \"course\", {})\n\tcourse.completed_by > \"2025-12-31\"\n}\n\nsome_naturschutz_violation if {\n\talm := alms[_]\n\tcourse := object.get(object.get(alm, \"naturschutz\", {}), \"course\", {})\n\tcourse.relevant_content != true\n}\n\nsome_naturschutz_violation if {\n\talm := alms[_]\n\tcourse := object.get(object.get(alm, \"naturschutz\", {}), \"course\", {})\n\tcourse.recognized_provider != true\n}\n\nalmweideplan_compliant if {\n\talmweideplan_option != true\n}\n\nalmweideplan_compliant if {\n\talmweideplan_option == true\n\tnot some_almweideplan_violation\n}\n\nsome_almweideplan_violation if {\n\talm := alms[_]\n\tplan := object.get(alm, \"almweideplan\", {})\n\tplan.plan_for_all_alms != true\n}\n\nsome_almweideplan_violation if {\n\talm := alms[_]\n\tplan := object.get(alm, \"almweideplan\", {})\n\tplan.course.hours < 4\n}\n\nsome_almweideplan_violation if {\n\talm := alms[_]\n\tplan := object.get(alm, \"almweideplan\", {})\n\tplan.course.relevant_content != true\n}\n\nsome_almweideplan_violation if {\n\talm := alms[_]\n\tplan := object.get(alm, \"almweideplan\", {})\n\tplan.course.recognized_provider != true\n}\n\nsome_almweideplan_violation if {\n\talm := alms[_]\n\tplan := object.get(alm, \"almweideplan\", {})\n\tplan.plan_created_by_deadline != true\n}\n\nsome_almweideplan_violation if {\n\talm := alms[_]\n\tplan := object.get(alm, \"almweideplan\", {})\n\tplan.contains_required_assessment != true\n}\n\nsome_almweideplan_violation if {\n\talm := alms[_]\n\tplan := object.get(alm, \"almweideplan\", {})\n\tplan.communicated_to_workers != true\n}\n\napplication_deadline_met if {\n\tdocumentation.oepul_application_date <= sprintf(\"%d-12-31\", [year - 1])\n}\n\nfield_list_deadline_met if {\n\tyear != 2023\n\tyear != 2028\n\tdocumentation.oepul_field_list_date <= sprintf(\"%d-04-15\", [year])\n}\n\nfield_list_deadline_met if {\n\tyear == 2023\n\tdocumentation.oepul_field_list_date <= \"2023-04-17\"\n}\n\nfield_list_deadline_met if {\n\tyear == 2028\n\tdocumentation.oepul_field_list_date <= \"2028-04-17\"\n}\n\nstocking_list_deadline_met if {\n\tyear != 2023\n\tyear != 2028\n\tdocumentation.oepul_stocking_list_date <= sprintf(\"%d-07-15\", [year])\n}\n\nstocking_list_deadline_met if {\n\tyear == 2023\n\tdocumentation.oepul_stocking_list_date <= \"2023-07-17\"\n}\n\nstocking_list_deadline_met if {\n\tyear == 2028\n\tdocumentation.oepul_stocking_list_date <= \"2028-07-17\"\n}\n\npayment_application := \"Alm/Gemeinschaftsweide-Auftriebsliste or Alm-/Weidemeldung Rinder\"\n\nstocking_list_waiver if {\n\tdocumentation.oepul_only_cattle == true\n\tall_alms_stage_one\n\tdocumentation.oepul_participates_tierwohl_behirtung != true\n\tnot some_strong_almweideplan\n}\n\nall_alms_stage_one if {\n\tnot some_non_stage_one_alm\n}\n\nsome_non_stage_one_alm if {\n\talm := alms[_]\n\talm.access_stage != \"stage_1\"\n}\n\nsome_strong_almweideplan if {\n\talm := alms[_]\n\tobject.get(object.get(alm, \"almweideplan\", {}), \"strong_intensity\", false) == true\n}\n\nnata_required if {\n\tnaturschutz_option == true\n}\n\npremium_area[alm.alm_id] := min([alm.area_ha, alm_rgve[alm.alm_id]]) if {\n\talm := alms[_]\n}\n\npremium_base[alm.alm_id] := value if {\n\talm := alms[_]\n\tarea := premium_area[alm.alm_id]\n\trate := data.o6_14.rates.almweide[alm.access_stage][sprintf(\"%d\", [year])]\n\tvalue := area * rate\n}\n\nnaturschutz_codes[code] if {\n\talm := alms[_]\n\tcode_object := object.get(object.get(alm, \"naturschutz\", {}), \"project_codes\", [])[_]\n\tcode := code_object.code\n}\n\nnaturschutz_code_premium_per_ha := sum([data.o6_14.naturschutz_code_rates[code] | naturschutz_codes[code]])\n\nnaturschutz_base_premium_per_ha := data.o6_14.rates.naturschutz_base[sprintf(\"%d\", [year])] if {\n\tnaturschutz_option == true\n}\n\nalmweideplan_premium[alm.alm_id] := value if {\n\talm := alms[_]\n\talmweideplan_option == true\n\tvalue := min([20, premium_area[alm.alm_id]]) * data.o6_14.rates.almweideplan[sprintf(\"%d\", [year])]\n}\n\npremium_base_total := sum([premium_base[id] | id := object.keys(premium_base)[_]])\nmodulation_basis := min([total_area, total_eligible_rgve])\n\nmodulation_factor := 1.0 if {\n\tmodulation_basis <= 200\n}\n\nmodulation_factor := (200 + ((modulation_basis - 200) * 0.9)) / modulation_basis if {\n\tmodulation_basis > 200\n\tmodulation_basis <= 300\n}\n\nmodulation_factor := ((200 + (100 * 0.9)) + ((modulation_basis - 300) * 0.85)) / modulation_basis if {\n\tmodulation_basis > 300\n\tmodulation_basis <= 1000\n}\n\nmodulation_factor := (((200 + (100 * 0.9)) + (700 * 0.85)) + ((modulation_basis - 1000) * 0.75)) / modulation_basis if {\n\tmodulation_basis > 1000\n}\n\nmodulated_premium_total := premium_base_total * modulation_factor\n\nrego_symbols := {\n\t\"eligible\": eligible,\n\t\"alm_density\": alm_density,\n\t\"premium_base\": premium_base,\n\t\"modulation_factor\": modulation_factor,\n\t\"reporting_rules\": reporting_rules,\n\t\"days_counting_rule\": days_counting_rule,\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_14-luna-high-20261004/workspace/tools/opa",
+            "fmt",
+            "tests/almbewirtschaftung_test.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_14_test\n\nimport rego.v1\n\ntest_first_year_minimum_and_density_pass if {\n\tresult := data.oepul.o6_14 with input as {\n\t\t\"farm\": {\"year\": 2026},\n\t\t\"land\": {\"alpine_pastures\": [{\n\t\t\t\"alm_id\": \"A\",\n\t\t\t\"area_ha\": 3,\n\t\t\t\"access_stage\": \"stage_2\",\n\t\t\t\"is_in_austria\": true,\n\t\t\t\"feed_practices\": {\"natural_fodder_sufficient\": true, \"non_alpine_silage_or_green_fodder\": false},\n\t\t\t\"alm_inputs\": {\"pesticide_used\": false, \"fertilizer_used\": false},\n\t\t}]},\n\t\t\"livestock\": {\"alpine_movements\": [{\n\t\t\t\"animal_id\": \"c1\",\n\t\t\t\"alm_id\": \"A\",\n\t\t\t\"species\": \"cattle\",\n\t\t\t\"gve\": 3,\n\t\t\t\"alpung_days\": 60,\n\t\t\t\"is_held_in_austria\": true,\n\t\t}]},\n\t\t\"preferences_constraints\": {\n\t\t\t\"oepul_participation_requested\": true,\n\t\t\t\"oepul_first_participation_year\": true,\n\t\t\t\"oepul_options\": {},\n\t\t},\n\t\t\"documentation\": {\"oepul_reports\": {\n\t\t\t\"cattle_arrival_days\": 14,\n\t\t\t\"cattle_departure_days\": 14,\n\t\t\t\"other_arrival_days\": 7,\n\t\t\t\"other_departure_days\": 7,\n\t\t}},\n\t}\n\tresult.eligible\n}\n\ntest_first_year_minimum_fails if {\n\tresult := data.oepul.o6_14 with input as {\n\t\t\"farm\": {\"year\": 2026},\n\t\t\"land\": {\"alpine_pastures\": [{\n\t\t\t\"alm_id\": \"A\",\n\t\t\t\"area_ha\": 2.9,\n\t\t\t\"access_stage\": \"stage_1\",\n\t\t\t\"is_in_austria\": true,\n\t\t\t\"feed_practices\": {\"natural_fodder_sufficient\": true, \"non_alpine_silage_or_green_fodder\": false},\n\t\t\t\"alm_inputs\": {\"pesticide_used\": false, \"fertilizer_used\": false},\n\t\t}]},\n\t\t\"livestock\": {\"alpine_movements\": [{\n\t\t\t\"animal_id\": \"c1\",\n\t\t\t\"alm_id\": \"A\",\n\t\t\t\"species\": \"cattle\",\n\t\t\t\"gve\": 3,\n\t\t\t\"alpung_days\": 60,\n\t\t\t\"is_held_in_austria\": true,\n\t\t}]},\n\t\t\"preferences_constraints\": {\n\t\t\t\"oepul_participation_requested\": true,\n\t\t\t\"oepul_first_participation_year\": true,\n\t\t\t\"oepul_options\": {},\n\t\t},\n\t\t\"documentation\": {\"oepul_reports\": {\n\t\t\t\"cattle_arrival_days\": 14,\n\t\t\t\"cattle_departure_days\": 14,\n\t\t\t\"other_arrival_days\": 7,\n\t\t\t\"other_departure_days\": 7,\n\t\t}},\n\t}\n\tnot result.eligible\n}\n\ntest_naturschutz_density_and_incompatibility if {\n\tresult := data.oepul.o6_14 with input as {\n\t\t\"farm\": {\"year\": 2026},\n\t\t\"land\": {\"alpine_pastures\": [{\n\t\t\t\"alm_id\": \"A\",\n\t\t\t\"area_ha\": 10,\n\t\t\t\"access_stage\": \"stage_2\",\n\t\t\t\"is_in_austria\": true,\n\t\t\t\"feed_practices\": {\"natural_fodder_sufficient\": true, \"non_alpine_silage_or_green_fodder\": false},\n\t\t\t\"alm_inputs\": {\"pesticide_used\": false, \"fertilizer_used\": false},\n\t\t}]},\n\t\t\"livestock\": {\"alpine_movements\": [{\n\t\t\t\"animal_id\": \"c1\",\n\t\t\t\"alm_id\": \"A\",\n\t\t\t\"species\": \"cattle\",\n\t\t\t\"gve\": 15,\n\t\t\t\"alpung_days\": 60,\n\t\t\t\"is_held_in_austria\": true,\n\t\t}]},\n\t\t\"preferences_constraints\": {\n\t\t\t\"oepul_participation_requested\": true,\n\t\t\t\"oepul_options\": {\"naturschutz_auf_der_alm\": true, \"almweideplan\": true},\n\t\t},\n\t\t\"documentation\": {\"oepul_reports\": {\n\t\t\t\"cattle_arrival_days\": 14,\n\t\t\t\"cattle_departure_days\": 14,\n\t\t\t\"other_arrival_days\": 7,\n\t\t\t\"other_departure_days\": 7,\n\t\t}},\n\t}\n\tnot result.eligible\n}\n\ntest_premium_cap_and_modulation if {\n\tresult := data.oepul.o6_14 with input as {\n\t\t\"farm\": {\"year\": 2026},\n\t\t\"land\": {\"alpine_pastures\": [{\n\t\t\t\"alm_id\": \"A\",\n\t\t\t\"area_ha\": 50,\n\t\t\t\"access_stage\": \"stage_2\",\n\t\t\t\"is_in_austria\": true,\n\t\t\t\"feed_practices\": {\"natural_fodder_sufficient\": true, \"non_alpine_silage_or_green_fodder\": false},\n\t\t\t\"alm_inputs\": {\"pesticide_used\": false, \"fertilizer_used\": false},\n\t\t}]},\n\t\t\"livestock\": {\"alpine_movements\": [{\n\t\t\t\"animal_id\": \"c1\",\n\t\t\t\"alm_id\": \"A\",\n\t\t\t\"species\": \"cattle\",\n\t\t\t\"gve\": 43,\n\t\t\t\"alpung_days\": 60,\n\t\t\t\"is_held_in_austria\": true,\n\t\t}]},\n\t\t\"preferences_constraints\": {\n\t\t\t\"oepul_participation_requested\": false,\n\t\t\t\"oepul_options\": {},\n\t\t},\n\t\t\"documentation\": {\"oepul_reports\": {\n\t\t\t\"cattle_arrival_days\": 14,\n\t\t\t\"cattle_departure_days\": 14,\n\t\t\t\"other_arrival_days\": 7,\n\t\t\t\"other_departure_days\": 7,\n\t\t}},\n\t}\n\tresult.premium_area.A == 43\n\tresult.modulation_factor == 1\n}\n\ntest_reporting_rules if {\n\tdata.oepul.o6_14.reporting_rules.cattle.arrival_days == 14\n\tdata.oepul.o6_14.reporting_rules.sheep_goats.late_credit_days == 7\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_14-luna-high-20261004/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 24,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 5/5\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_14-luna-high-20261004/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 57,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_14-luna-high-20261004/workspace"
+}
