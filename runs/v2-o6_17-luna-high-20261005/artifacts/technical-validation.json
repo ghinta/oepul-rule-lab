@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 114,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_17-luna-high-20261005/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_17.rego",
+    "tests/o6_17_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_17-luna-high-20261005/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 14,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_17.rego",
+        "tests/o6_17_test.rego"
+      ],
+      "duration_ms": 25,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_17-luna-high-20261005/workspace/tools/opa",
+            "fmt",
+            "policy/o6_17.rego"
+          ],
+          "duration_ms": 15,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_17\n\nimport data.o6_17_kennarten.kennarten\nimport data.o6_17_rgve_schluessel.rgve_factors\nimport rego.v1\n\ndefault eligible := false\n\ncontract_years := {2023: 6, 2024: 5, 2025: 4, 2026: 3, 2027: 2, 2028: 1}\n\neligible if {\n\tinput.oepul.o6_17.participating == true\n\tinput.farm.year >= 2023\n\tinput.farm.year <= 2028\n\tfirst_year_access_ok\n\tcombination_ok\n\tno_unresolved_contract_break\n}\n\nfirst_year_access_ok if {\n\tinput.oepul.o6_17.is_first_participation_year == true\n\tinput.land.grassland_area_ha >= 2\n\tinput.oepul.o6_17.grassland_share_excluding_alpine_percent >= 40\n\ttierholding\n}\n\nfirst_year_access_ok if {\n\tinput.oepul.o6_17.is_first_participation_year != true\n}\n\ncombination_ok if {\n\tinput.oepul.o6_17.combination in {\"ubb\", \"bio\", \"bio_part_farm\"}\n}\n\ntierholding if {\n\tinput.oepul.o6_17.rgve_total / input.oepul.o6_17.forage_area_ha >= 0.3\n}\n\nno_unresolved_contract_break if {\n\tinput.oepul.o6_17.grassland_break_documented != true\n}\n\ncontract_duration_years := contract_years[input.oepul.o6_17.contract_start_year]\n\nbase_eligible_parcels contains parcel_id if {\n\tsome parcel in input.land.parcels\n\tparcel.land_use == \"grassland\"\n\tparcel.slope_percent != null\n\tparcel.slope_percent < 18\n\tparcel.constraints.is_contract_nature_area != true\n\tparcel.o6_17.gloez2_or_gloez4_or_gloez9 != true\n\tparcel_id := parcel.parcel_id\n}\n\nbonus_eligible_parcels contains parcel_id if {\n\tsome parcel in input.land.parcels\n\tparcel.land_use == \"grassland\"\n\tparcel.slope_percent != null\n\tbonus_slope_qualifies(parcel.slope_percent)\n\tparcel.o6_17.is_bergmaehder != true\n\tspecies_rich(parcel)\n\tparcel_id := parcel.parcel_id\n}\n\nspecies_rich(parcel) if {\n\tparcel.o6_17.is_one_cut_meadow == true\n}\n\nspecies_rich(parcel) if {\n\tcount({name |\n\t\tsome observed in parcel.o6_17.observed_kennarten\n\t\tname := observed.name\n\t\tkennart_exists(name)\n\t}) >= 5\n}\n\nbonus_slope_qualifies(slope) if {\n\tslope < 18\n}\n\nbonus_slope_qualifies(slope) if {\n\tinput.farm.year >= 2025\n\tslope >= 18\n}\n\nkennart_exists(name) if {\n\tsome item in kennarten\n\titem.name == name\n}\n\nrequired_soil_samples := ceil(input.oepul.o6_17.soil_basis_grassland_under_18_ha / 5)\n\nbonus_cap_ha := max([2, input.oepul.o6_17.mown_grassland_area_ha * bonus_cap_rate])\n\nbonus_cap_rate := 0.15 if {\n\tinput.farm.year <= 2024\n}\n\nbonus_cap_rate := 0.25 if {\n\tinput.farm.year >= 2025\n}\n\nbase_premium_eur_per_ha := value if {\n\tscore := input.oepul.o6_17.average_grassland_score\n\tscore < 20\n\tvalue := 32.4\n}\n\nbase_premium_eur_per_ha := value if {\n\tscore := input.oepul.o6_17.average_grassland_score\n\tscore >= 20\n\tscore < 30\n\tvalue := 54\n}\n\nbase_premium_eur_per_ha := value if {\n\tscore := input.oepul.o6_17.average_grassland_score\n\tscore >= 30\n\tscore < 40\n\tvalue := 75.6\n}\n\nbase_premium_eur_per_ha := value if {\n\tinput.oepul.o6_17.average_grassland_score >= 40\n\tvalue := 108\n}\n\nbonus_premium_eur_per_ha := value if {\n\tinput.farm.year == 2023\n\tinput.oepul.o6_17.slope_percent < 18\n\tvalue := 150\n}\n\nbonus_premium_eur_per_ha := value if {\n\tinput.farm.year == 2024\n\tinput.oepul.o6_17.slope_percent < 18\n\tvalue := 262\n}\n\nbonus_premium_eur_per_ha := value if {\n\tinput.farm.year >= 2025\n\tinput.oepul.o6_17.slope_percent < 18\n\tvalue := 262\n}\n\nbonus_premium_eur_per_ha := value if {\n\tinput.farm.year >= 2025\n\tinput.oepul.o6_17.slope_percent >= 18\n\tvalue := 162\n}\n\nrgve_factor(species, category) := factor if {\n\tsome item in rgve_factors\n\titem.species == species\n\titem.category == category\n\tfactor := item.rgve_per_animal\n}\n\npremium_multiplier := 1 if {\n\tinput.oepul.o6_17.total_farm_area_ha <= 200\n}\n\npremium_multiplier := 0.9 if {\n\tinput.oepul.o6_17.total_farm_area_ha > 200\n\tinput.oepul.o6_17.total_farm_area_ha <= 300\n}\n\npremium_multiplier := 0.85 if {\n\tinput.oepul.o6_17.total_farm_area_ha > 300\n\tinput.oepul.o6_17.total_farm_area_ha <= 1000\n}\n\npremium_multiplier := 0.75 if {\n\tinput.oepul.o6_17.total_farm_area_ha > 1000\n}\n\nviolations contains \"missing_combination\" if {\n\tnot combination_ok\n}\n\nviolations contains \"first_year_minimum_participation\" if {\n\tinput.oepul.o6_17.is_first_participation_year == true\n\tnot first_year_access_ok\n}\n\nviolations contains \"grassland_break\" if {\n\tinput.oepul.o6_17.grassland_break_documented == true\n}\n\nviolations contains \"soil_samples_missing\" if {\n\tinput.oepul.o6_17.soil_samples_submitted < required_soil_samples\n}\n\ndecision := {\n\t\"eligible\": eligible,\n\t\"contract_duration_years\": contract_duration_years,\n\t\"base_eligible_parcels\": base_eligible_parcels,\n\t\"bonus_eligible_parcels\": bonus_eligible_parcels,\n\t\"required_soil_samples\": required_soil_samples,\n\t\"bonus_cap_ha\": bonus_cap_ha,\n\t\"base_premium_eur_per_ha\": base_premium_eur_per_ha,\n\t\"bonus_premium_eur_per_ha\": bonus_premium_eur_per_ha,\n\t\"premium_multiplier\": premium_multiplier,\n\t\"violations\": violations,\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_17-luna-high-20261005/workspace/tools/opa",
+            "fmt",
+            "tests/o6_17_test.rego"
+          ],
+          "duration_ms": 10,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_17_test\n\nimport data.oepul.o6_17\nimport rego.v1\n\ntest_first_year_eligibility_and_premium if {\n\tprofile := {\n\t\t\"farm\": {\"year\": 2025},\n\t\t\"land\": {\"grassland_area_ha\": 10, \"parcels\": []},\n\t\t\"oepul\": {\n\t\t\t\"o6_17\": {\n\t\t\t\t\"participating\": true,\n\t\t\t\t\"is_first_participation_year\": true,\n\t\t\t\t\"grassland_share_excluding_alpine_percent\": 50,\n\t\t\t\t\"rgve_total\": 3,\n\t\t\t\t\"forage_area_ha\": 10,\n\t\t\t\t\"combination\": \"ubb\",\n\t\t\t\t\"contract_start_year\": 2025,\n\t\t\t\t\"soil_basis_grassland_under_18_ha\": 10.4,\n\t\t\t\t\"mown_grassland_area_ha\": 10,\n\t\t\t\t\"average_grassland_score\": 25,\n\t\t\t\t\"slope_percent\": 12,\n\t\t\t\t\"soil_samples_submitted\": 3,\n\t\t\t\t\"grassland_break_documented\": false,\n\t\t\t\t\"total_farm_area_ha\": 100,\n\t\t\t},\n\t\t},\n\t}\n\tresult := o6_17.decision with input as profile\n\tresult == {\n\t\t\"eligible\": true,\n\t\t\"contract_duration_years\": 4,\n\t\t\"base_eligible_parcels\": set(),\n\t\t\"bonus_eligible_parcels\": set(),\n\t\t\"required_soil_samples\": 3,\n\t\t\"bonus_cap_ha\": 2.5,\n\t\t\"base_premium_eur_per_ha\": 54,\n\t\t\"bonus_premium_eur_per_ha\": 262,\n\t\t\"premium_multiplier\": 1,\n\t\t\"violations\": set(),\n\t}\n}\n\ntest_parcel_base_and_bonus_boundaries if {\n\tprofile := {\n\t\t\"farm\": {\"year\": 2025},\n\t\t\"land\": {\n\t\t\t\"grassland_area_ha\": 4,\n\t\t\t\"parcels\": [\n\t\t\t\t{\n\t\t\t\t\t\"parcel_id\": \"under18\",\n\t\t\t\t\t\"land_use\": \"grassland\",\n\t\t\t\t\t\"slope_percent\": 17.9,\n\t\t\t\t\t\"constraints\": {\"is_contract_nature_area\": false},\n\t\t\t\t\t\"o6_17\": {\"is_bergmaehder\": false, \"is_one_cut_meadow\": true, \"gloez2_or_gloez4_or_gloez9\": false},\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"parcel_id\": \"over18-rich\",\n\t\t\t\t\t\"land_use\": \"grassland\",\n\t\t\t\t\t\"slope_percent\": 18,\n\t\t\t\t\t\"constraints\": {\"is_contract_nature_area\": false},\n\t\t\t\t\t\"o6_17\": {\"is_bergmaehder\": false, \"is_one_cut_meadow\": false, \"observed_kennarten\": [{\"name\": \"Wiesen-Salbei\"}, {\"name\": \"Wiesen-Margerite\"}, {\"name\": \"Zittergras\"}, {\"name\": \"Hornklee\"}, {\"name\": \"Bibernelle\"}], \"gloez2_or_gloez4_or_gloez9\": true},\n\t\t\t\t},\n\t\t\t],\n\t\t},\n\t\t\"oepul\": {\"o6_17\": {\"participating\": true, \"contract_start_year\": 2025, \"mown_grassland_area_ha\": 4, \"soil_basis_grassland_under_18_ha\": 0, \"total_farm_area_ha\": 100, \"grassland_break_documented\": false, \"combination\": \"bio\", \"is_first_participation_year\": false}},\n\t}\n\to6_17.base_eligible_parcels with input as profile == {\"under18\"}\n\to6_17.bonus_eligible_parcels with input as profile == {\"under18\", \"over18-rich\"}\n}\n\ntest_rgve_lookup if {\n\to6_17.rgve_factor(\"cattle\", \"at_least_2_years\") == 1\n\to6_17.rgve_factor(\"sheep\", \"under_1_year\") == 0.07\n}\n\ntest_modulation_tiers if {\n\tprofile := {\"oepul\": {\"o6_17\": {\"total_farm_area_ha\": 350}}}\n\tresult := o6_17.premium_multiplier with input as profile\n\tresult == 0.85\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_17-luna-high-20261005/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 15,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 4/4\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_17-luna-high-20261005/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 59,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_17-luna-high-20261005/workspace"
+}
