@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 165,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_23-luna-high-20261005/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_23.rego",
+    "tests/o6_23_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_23-luna-high-20261005/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 19,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_23.rego",
+        "tests/o6_23_test.rego"
+      ],
+      "duration_ms": 28,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_23-luna-high-20261005/workspace/tools/opa",
+            "fmt",
+            "policy/o6_23.rego"
+          ],
+          "duration_ms": 17,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_23\n\nimport rego.v1\n\no623 := object.get(object.get(input, \"measure\", {}), \"o6_23\", {})\nparcels := object.get(object.get(input, \"land\", {}), \"parcels\", [])\napplication_year := object.get(object.get(input, \"farm\", {}), \"year\", 0)\n\nrequired_n2_codes := [record.code | record := data.o6_23.premium_codes[_]]\n\npremium_record(parcel) := record if {\n\tcode := object.get(parcel, \"n2_code\", \"\")\n\trecord := data.o6_23.premium_codes[_]\n\trecord.code == code\n}\n\ncode_known(parcel) if {\n\tpremium_record(parcel)\n}\n\nfertilizer_applied(parcel) if {\n\tobject.get(parcel, \"fertilizer_applied\", false)\n}\n\nfertilizer_applied(parcel) if {\n\tfertilizer := object.get(object.get(object.get(parcel, \"operations\", {}), \"fertilizer\", {}), \"mineral_n_kg_per_ha\", null)\n\tfertilizer != null\n\tfertilizer > 0\n}\n\nfertilizer_applied(parcel) if {\n\tfertilizer := object.get(object.get(object.get(parcel, \"operations\", {}), \"fertilizer\", {}), \"organic_n_kg_per_ha\", null)\n\tfertilizer != null\n\tfertilizer > 0\n}\n\nfertilizer_compliant(parcel) if {\n\trecord := premium_record(parcel)\n\trecord.fertilizer != \"none\"\n}\n\nfertilizer_compliant(parcel) if {\n\trecord := premium_record(parcel)\n\trecord.fertilizer == \"none\"\n\tnot fertilizer_applied(parcel)\n}\n\nfertilizer_compliant(parcel) := false if {\n\trecord := premium_record(parcel)\n\trecord.fertilizer == \"none\"\n\tfertilizer_applied(parcel)\n}\n\ncountry_ok(parcel) if {\n\tobject.get(parcel, \"country\", \"\") == \"AT\"\n}\n\nscope_conditions(parcel) if {\n\tobject.get(parcel, \"land_use\", \"\") == \"grassland\"\n\tobject.get(parcel, \"is_natura2000_or_high_nature_value\", false)\n\tobject.get(parcel, \"project_confirmation\", false)\n\tcountry_ok(parcel)\n\tcode_known(parcel)\n\tfertilizer_compliant(parcel)\n\tapplication_code_ok(parcel)\n\tcut_date_ok(parcel)\n\tobligation_combination_ok(parcel)\n}\n\nscope_ok(parcel) if {\n\tscope_conditions(parcel)\n}\n\nscope_ok(parcel) := false if {\n\tnot scope_conditions(parcel)\n}\n\napplication_code_ok(parcel) := value if {\n\tvalue := object.get(parcel, \"application_code\", \"\") == \"N2\"\n}\n\ncut_date_ok(parcel) if {\n\tcutoff := object.get(parcel, \"project_confirmation_cut_date\", null)\n\tcutoff == null\n}\n\ncut_date_ok(parcel) if {\n\tcutoff := object.get(parcel, \"project_confirmation_cut_date\", null)\n\tcutoff != null\n\tdates := object.get(object.get(parcel, \"operations\", {}), \"cutting_dates\", [])\n\tcount(dates) == 0\n}\n\ncut_date_ok(parcel) if {\n\tcutoff := object.get(parcel, \"project_confirmation_cut_date\", null)\n\tcutoff != null\n\tdates := object.get(object.get(parcel, \"operations\", {}), \"cutting_dates\", [])\n\tcount(dates) > 0\n\tdates[0] >= cutoff\n}\n\ncut_date_ok(_) if {\n\texception_2026_cut_date\n}\n\ncut_date_ok(parcel) if {\n\tcutoff := object.get(parcel, \"project_confirmation_cut_date\", null)\n\tcutoff != null\n\tdates := object.get(object.get(parcel, \"operations\", {}), \"cutting_dates\", [])\n\tcount(dates) > 0\n\tdates[0] < cutoff\n\tnot exception_2026_cut_date\n}\n\nparcel_result(parcel) := result if {\n\trecord := premium_record(parcel)\n\tvalid := scope_ok(parcel)\n\tresult := {\n\t\t\"parcel_id\": object.get(parcel, \"parcel_id\", null),\n\t\t\"code\": record.code,\n\t\t\"valid\": valid,\n\t\t\"land_use\": object.get(parcel, \"land_use\", null),\n\t\t\"in_scope_area\": object.get(parcel, \"is_natura2000_or_high_nature_value\", false),\n\t\t\"project_confirmation\": object.get(parcel, \"project_confirmation\", false),\n\t\t\"application_code_ok\": application_code_ok(parcel),\n\t\t\"fertilizer_ok\": fertilizer_compliant(parcel),\n\t\t\"cut_date_ok\": cut_date_ok(parcel),\n\t\t\"premium_eur_ha\": premium_per_ha(record),\n\t}\n}\n\npremium_per_ha(record) := value if {\n\tapplication_year == 2023\n\tvalue := record.premium_eur_ha_2023\n}\n\npremium_per_ha(record) := value if {\n\tapplication_year >= 2024\n\tvalue := record.premium_eur_ha_from_2024\n}\n\npremium_per_ha(record) := value if {\n\tapplication_year < 2023\n\tvalue := record.premium_eur_ha_from_2024\n}\n\nparcel_results := [parcel_result(parcel) | parcel := parcels[_]; code_known(parcel)]\n\ninvalid_parcel if {\n\tresult := parcel_results[_]\n\tnot result.valid\n}\n\nall_parcels_valid if {\n\tcount(parcel_results) > 0\n\tnot invalid_parcel\n}\n\nminimum_participation if {\n\tcount([result | result := parcel_results[_]; result.valid]) >= 1\n}\n\nannual_contract_ok if {\n\tobject.get(o623, \"contract_years\", 1) == 1\n}\n\nauto_extension_ok if {\n\tannual_contract_ok\n\tobject.get(o623, \"withdrawal_not_declared\", false)\n}\n\napplication_on_time if {\n\tdate := object.get(o623, \"application_date\", \"\")\n\tdate != \"\"\n\tdate <= sprintf(\"%d-12-31\", [application_year - 1])\n}\n\nlast_entry_ok if {\n\tapplication_year <= 2027\n}\n\ndisallowed_measure(measure) if {\n\tnot measure in data.o6_23.allowed_measure_combinations\n}\n\nallowed_measure(measure) if {\n\tmeasure in data.o6_23.allowed_measure_combinations\n}\n\ninvalid_combination if {\n\tmeasure := object.get(o623, \"other_measures\", [])[_]\n\tdisallowed_measure(measure)\n}\n\ndefault invalid_combination := false\n\ndefault base_requirements_ok := false\n\ndefault application_on_time := false\n\ndefault last_entry_ok := false\n\ndefault annual_contract_ok := false\n\ndefault auto_extension_ok := false\n\ndefault minimum_participation := false\n\ndefault all_parcels_valid := false\n\ndefault premium_cap_ok := false\n\ndefault withdrawal_allowed := false\n\ndefault withdrawal_invalid_current_year := false\n\ndefault exception_2026_cut_date := false\n\ndefault divsz_2026_early_use_allowed := false\n\nbase_requirements_ok if {\n\tobject.get(o623, \"requested\", false)\n\tminimum_participation\n\tall_parcels_valid\n\tannual_contract_ok\n\tapplication_on_time\n\tlast_entry_ok\n\tnot invalid_combination\n}\n\nparcel_premium(parcel) := value if {\n\tscope_ok(parcel)\n\tvalue := premium_per_ha(premium_record(parcel)) * object.get(parcel, \"area_ha\", 0)\n}\n\npremium_total := sum([parcel_premium(parcel) | parcel := parcels[_]])\n\nmodulation_factor := 1 if {\n\ttotal_area := object.get(object.get(input, \"land\", {}), \"total_area_ha\", 0)\n\ttotal_area <= 200\n}\n\nmodulation_factor := (200 + ((total_area - 200) * 0.9)) / total_area if {\n\ttotal_area := object.get(object.get(input, \"land\", {}), \"total_area_ha\", 0)\n\ttotal_area > 200\n\ttotal_area <= 300\n}\n\nmodulation_factor := ((200 + (100 * 0.9)) + ((total_area - 300) * 0.85)) / total_area if {\n\ttotal_area := object.get(object.get(input, \"land\", {}), \"total_area_ha\", 0)\n\ttotal_area > 300\n\ttotal_area <= 1000\n}\n\nmodulation_factor := (((200 + (100 * 0.9)) + (700 * 0.85)) + ((total_area - 1000) * 0.75)) / total_area if {\n\ttotal_area := object.get(object.get(input, \"land\", {}), \"total_area_ha\", 0)\n\ttotal_area > 1000\n}\n\nmodulated_premium_total := premium_total * modulation_factor\n\npremium_cap_ok if {\n\tcombined := object.get(o623, \"combined_premium_eur_ha\", null)\n\tcombined == null\n}\n\npremium_cap_ok if {\n\tcombined := object.get(o623, \"combined_premium_eur_ha\", null)\n\tcombined != null\n\tcombined <= 1300\n}\n\nwithdrawal_allowed if {\n\tobject.get(o623, \"contract_year_completed\", false)\n}\n\nwithdrawal_invalid_current_year if {\n\tdate := object.get(o623, \"withdrawal_date\", \"\")\n\tdate >= sprintf(\"%d-01-01\", [application_year])\n\tdate <= sprintf(\"%d-12-31\", [application_year])\n}\n\ngeneral_grassland_management_ok(parcel) if {\n\tobject.get(parcel, \"land_use\", \"\") != \"grassland\"\n}\n\ngeneral_grassland_management_ok(parcel) if {\n\tobject.get(parcel, \"land_use\", \"\") == \"grassland\"\n\tobject.get(parcel, \"annual_full_area_mown_or_grazed\", false)\n}\n\nexception_2026_cut_date if {\n\tapplication_year == 2026\n\tobject.get(o623, \"state_regulation_adjusted\", false)\n\tobject.get(o623, \"cut_date_changed\", false)\n}\n\ndivsz_2026_early_use_allowed if {\n\tapplication_year == 2026\n\tobject.get(o623, \"biodiversity_area_code\", \"\") == \"DIVSZ\"\n\tobject.get(o623, \"early_use_days\", 0) > 0\n\tobject.get(o623, \"second_mowing_on_comparable_fields\", false)\n}\n\ndivsz_2026_premium_status := \"not_paid\" if {\n\tdivsz_2026_early_use_allowed\n\tobject.get(o623, \"early_use_premium_code\", \"\") in [\"OPUBB\", \"OPBIO\"]\n}\n\ndivsz_2026_premium_status := \"paid\" if {\n\tnot divsz_2026_early_use_allowed\n}\n\ndivsz_2026_premium_status := \"invalid\" if {\n\tdivsz_2026_early_use_allowed\n\tnot object.get(o623, \"early_use_premium_code\", \"\") in [\"OPUBB\", \"OPBIO\"]\n}\n\ndefault divsz_2026_premium_status := \"paid\"\n\nstatus := \"eligible\" if {\n\tbase_requirements_ok\n}\n\nstatus := \"not_eligible\" if {\n\tnot base_requirements_ok\n}\n\napplication_status := \"requested\" if {\n\tobject.get(o623, \"requested\", false)\n}\n\napplication_status := \"not_requested\" if {\n\tnot object.get(o623, \"requested\", false)\n}\n\nallowed_chapter_pair(chapter_a, chapter_b) := allowed if {\n\tallowed := object.get(object.get(object.get(data.o6_23, \"combination_chapters\", {}), chapter_a, {}), chapter_b, false)\n}\n\nchapter_pair_is_allowed(chapter_a, chapter_b) := allowed if {\n\tallowed := allowed_chapter_pair(chapter_a, chapter_b)\n}\n\nobligation_chapters(parcel) := chapters if {\n\tobligations := object.get(parcel, \"project_confirmation_obligations\", [])\n\tchapters := [object.get(obligation, \"chapter\", \"\") | obligation := obligations[_]]\n}\n\ninvalid_obligation_combination(parcel) if {\n\tchapters := obligation_chapters(parcel)\n\tfirst := chapters[i]\n\tsecond := chapters[j]\n\ti < j\n\tnot chapter_pair_is_allowed(first, second)\n}\n\nobligation_combination_ok(parcel) if {\n\tnot invalid_obligation_combination(parcel)\n}\n\nevaluate := {\n\t\"measure\": \"o6_23\",\n\t\"compliant\": base_requirements_ok,\n\t\"status\": status,\n\t\"application_status\": application_status,\n\t\"application_on_time\": application_on_time,\n\t\"last_entry_ok\": last_entry_ok,\n\t\"annual_contract_ok\": annual_contract_ok,\n\t\"auto_extension_ok\": auto_extension_ok,\n\t\"minimum_participation\": minimum_participation,\n\t\"all_parcels_valid\": all_parcels_valid,\n\t\"invalid_combination\": invalid_combination,\n\t\"premium_eur\": premium_total,\n\t\"modulation_factor\": modulation_factor,\n\t\"modulated_premium_eur\": modulated_premium_total,\n\t\"premium_cap_ok\": premium_cap_ok,\n\t\"withdrawal_allowed\": withdrawal_allowed,\n\t\"withdrawal_invalid_current_year\": withdrawal_invalid_current_year,\n\t\"exception_2026_cut_date\": exception_2026_cut_date,\n\t\"divsz_2026_early_use_allowed\": divsz_2026_early_use_allowed,\n\t\"divsz_2026_premium_status\": divsz_2026_premium_status,\n\t\"parcel_results\": parcel_results,\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_23-luna-high-20261005/workspace/tools/opa",
+            "fmt",
+            "tests/o6_23_test.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_23_test\n\nimport rego.v1\n\nimport data.oepul.o6_23\n\nvalid_input := {\n\t\"farm\": {\"year\": 2026},\n\t\"land\": {\n\t\t\"total_area_ha\": 100,\n\t\t\"parcels\": [{\n\t\t\t\"parcel_id\": \"P1\",\n\t\t\t\"area_ha\": 2,\n\t\t\t\"land_use\": \"grassland\",\n\t\t\t\"country\": \"AT\",\n\t\t\t\"is_natura2000_or_high_nature_value\": true,\n\t\t\t\"project_confirmation\": true,\n\t\t\t\"application_code\": \"N2\",\n\t\t\t\"n2_code\": \"N2GI05\",\n\t\t\t\"annual_full_area_mown_or_grazed\": true,\n\t\t\t\"operations\": {\"fertilizer\": {\"mineral_n_kg_per_ha\": 0, \"organic_n_kg_per_ha\": 0}, \"cutting_dates\": []},\n\t\t}],\n\t},\n\t\"measure\": {\"o6_23\": {\n\t\t\"requested\": true,\n\t\t\"contract_years\": 1,\n\t\t\"application_date\": \"2025-12-31\",\n\t\t\"other_measures\": [\"o6_1a\"],\n\t}},\n}\n\ntest_valid_n2gi05 if {\n\tresult := o6_23.evaluate with input as valid_input\n\tresult.compliant\n\tresult.premium_eur == 702\n\tresult.parcel_results[0].premium_eur_ha == 351\n}\n\ntest_2023_rate_table if {\n\tresult := o6_23.evaluate with input as object.union(valid_input, {\"farm\": {\"year\": 2023}})\n\tresult.parcel_results[0].premium_eur_ha == 325\n}\n\ntest_gi_fertilizer_is_noncompliant if {\n\tresult := o6_23.evaluate with input as object.union(valid_input, {\n\t\t\"land\": {\"total_area_ha\": 100, \"parcels\": [{\n\t\t\t\"parcel_id\": \"P1\", \"area_ha\": 2, \"land_use\": \"grassland\", \"country\": \"AT\",\n\t\t\t\"is_natura2000_or_high_nature_value\": true, \"project_confirmation\": true,\n\t\t\t\"application_code\": \"N2\", \"n2_code\": \"N2GI06\", \"fertilizer_applied\": true,\n\t\t\t\"annual_full_area_mown_or_grazed\": true,\n\t\t}]},\n\t})\n\tnot result.compliant\n\tnot result.all_parcels_valid\n}\n\ntest_missing_n2_application_code_is_noncompliant if {\n\tresult := o6_23.evaluate with input as object.union(valid_input, {\n\t\t\"land\": {\"total_area_ha\": 100, \"parcels\": [{\n\t\t\t\"parcel_id\": \"P1\", \"area_ha\": 2, \"land_use\": \"grassland\", \"country\": \"AT\",\n\t\t\t\"is_natura2000_or_high_nature_value\": true, \"project_confirmation\": true,\n\t\t\t\"application_code\": \"\", \"n2_code\": \"N2GL37\", \"annual_full_area_mown_or_grazed\": true,\n\t\t}]},\n\t})\n\tnot result.compliant\n}\n\ntest_disallowed_measure_is_noncompliant if {\n\tresult := o6_23.evaluate with input as object.union(valid_input, {\n\t\t\"measure\": {\"o6_23\": {\"requested\": true, \"contract_years\": 1, \"application_date\": \"2025-12-31\", \"other_measures\": [\"o6_3\"]}},\n\t})\n\tnot result.compliant\n\tresult.invalid_combination\n}\n\ntest_annex_j_matrix_is_used if {\n\to6_23.chapter_pair_is_allowed(\"G\", \"A\") == false\n\to6_23.chapter_pair_is_allowed(\"G\", \"L\")\n}\n\ntest_annex_j_invalid_obligation_combination_is_noncompliant if {\n\tresult := o6_23.evaluate with input as object.union(valid_input, {\n\t\t\"land\": {\"total_area_ha\": 100, \"parcels\": [{\n\t\t\t\"parcel_id\": \"P1\", \"area_ha\": 2, \"land_use\": \"grassland\", \"country\": \"AT\",\n\t\t\t\"is_natura2000_or_high_nature_value\": true, \"project_confirmation\": true,\n\t\t\t\"application_code\": \"N2\", \"n2_code\": \"N2GI05\", \"annual_full_area_mown_or_grazed\": true,\n\t\t\t\"project_confirmation_obligations\": [{\"chapter\": \"G\", \"code\": \"GL02\"}, {\"chapter\": \"A\", \"code\": \"AA01\"}],\n\t\t}]},\n\t})\n\tnot result.compliant\n\tnot result.all_parcels_valid\n}\n\ntest_2026_cut_date_exception_preserves_premium if {\n\tresult := o6_23.evaluate with input as object.union(valid_input, {\n\t\t\"land\": {\"total_area_ha\": 100, \"parcels\": [{\n\t\t\t\"parcel_id\": \"P1\", \"area_ha\": 1, \"land_use\": \"grassland\", \"country\": \"AT\",\n\t\t\t\"is_natura2000_or_high_nature_value\": true, \"project_confirmation\": true,\n\t\t\t\"application_code\": \"N2\", \"n2_code\": \"N2GL04\", \"project_confirmation_cut_date\": \"2026-07-15\",\n\t\t\t\"operations\": {\"cutting_dates\": [\"2026-07-01\"]}, \"annual_full_area_mown_or_grazed\": true,\n\t\t}]},\n\t\t\"measure\": {\"o6_23\": {\"requested\": true, \"contract_years\": 1, \"application_date\": \"2025-12-31\", \"state_regulation_adjusted\": true, \"cut_date_changed\": true}},\n\t})\n\tresult.compliant\n\tresult.exception_2026_cut_date\n\tresult.parcel_results[0].premium_eur_ha == 226.8\n}\n\ntest_modulation_is_progressive if {\n\tresult := o6_23.evaluate with input as object.union(valid_input, {\"land\": {\"total_area_ha\": 220, \"parcels\": valid_input.land.parcels}})\n\tresult.modulation_factor > 0.9909\n\tresult.modulation_factor < 0.9910\n}\n\ntest_withdrawal_current_year_invalidates if {\n\tresult := o6_23.evaluate with input as object.union(valid_input, {\"measure\": {\"o6_23\": {\"requested\": true, \"contract_years\": 1, \"application_date\": \"2025-12-31\", \"contract_year_completed\": true, \"withdrawal_date\": \"2026-06-01\"}}})\n\tresult.withdrawal_allowed\n\tresult.withdrawal_invalid_current_year\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_23-luna-high-20261005/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 29,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 10/10\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_23-luna-high-20261005/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 89,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_23-luna-high-20261005/workspace"
+}
