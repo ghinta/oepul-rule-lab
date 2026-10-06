@@ -1,0 +1,12 @@
+# Annahmen und offene Punkte
+
+- Das Canonical Farm Profile enthält keine ÖPUL-Maßnahmenstruktur. Die fehlenden Eingaben werden ausschließlich in `rules/profile_changes.json` vorgeschlagen; das Canonical Profile bleibt unverändert.
+- Die Rego-Prüfung verwendet für die Ausführung ein ergänzendes `input.measure.o6_7`-Objekt. Die vorgeschlagenen Profile-Ergänzungen bilden die dafür benötigten Felder ab.
+- Datumswerte werden in Rego für die technischen Tests als Tag des Jahres modelliert. Die fachliche Regel verwendet die im Quellenbeleg genannten Kalendertage; eine produktive Integration muss die Kalender-/Schaltjahrkonvertierung zentral vornehmen.
+- Die 2026-Ausnahmen sind als zeitlich begrenzte Sachverhaltsregeln modelliert. Eine Glaubhaftmachung bzw. Vor-Ort-Prüfung ist fachlich erforderlich, kann aber nicht allein aus dem Canonical Profile automatisiert bewiesen werden.
+- Die Quellen unterscheiden bei später Zwischenfruchtanlage zwischen „ausschließlich winterhart“ in älteren Formulierungen und „überwiegend winterhart“ ab Antragsjahr 2025. Für `o6_7` wird ab 2025 die ausdrücklich aktualisierte überwiegende Winterhärte mit einer strikten Mehr-als-50-%-Prüfung operationalisiert; Grenzfälle mit genau 50 % bleiben als Verstoß offen.
+- Anhang L enthält die vollständige Kombinationstabelle. Für die Maßnahme o6_7 werden die maßgeblichen Zeilen in `data/annex_l_combination_table.json` strukturiert referenziert; die übrigen Tabellenzeilen und Fußnoten bleiben zur Nachvollziehbarkeit vollständig erhalten.
+- Die HTML-Quelle vom 22.05.2026 betrifft Biodiversitätsflächen, die Quelle vom 12.06.2026 den Insektizidverzicht. Beide wurden vollständig gelesen und als `not_rule` für o6_7 dokumentiert.
+- Die 2026-Mitteilung vom 12.08.2026 lockert nur die 30-/50-Tage-Abstände unter Glaubhaftmachung; die ausdrücklich genannten absoluten Anlagegrenzen (20. September bei abfrostenden Mischungen, 15. Oktober bei überwiegend winterharten Begrünungen) und die 42-Tage-Mindestdauer bleiben verbindlich.
+- Die allgemeine 85-%-Ernteverpflichtung wird als eigenständige Zugang-/Bewirtschaftungsbedingung modelliert. Die Dürreausnahme 2026 hebt sie nur bei fehlendem erntbarem Bestand in der veröffentlichten Bezirkskulisse auf; sie ersetzt nicht die o6_7-Begrünungsquote.
+- Die Quellen nennen die bestehende o6_7-Datenstruktur nicht im Canonical Profile. Für neue zeit- oder ereignisbezogene Sachverhalte (GLÖZ-8-Klassifikation 2024, Futternutzung/Nachwuchs, Pflegezeitpunkt) werden deshalb repräsentative Profile-Ergänzungen im `discover`-Modus vorgeschlagen.
