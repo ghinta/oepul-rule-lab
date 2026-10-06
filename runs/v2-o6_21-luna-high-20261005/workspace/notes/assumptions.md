@@ -1,0 +1,9 @@
+# Fachliche Annahmen und offene Punkte
+
+- Der Gewichtswert „ab 500 kg“ überschneidet sich sprachlich mit „bis 500 kg“. Die ausführbare Auslegung ordnet exakt 500 kg der Zeile „bis 500 kg“ und Werte über 500 kg der letzten Zeile zu. Eine rechtliche Präzisierung wäre für Grenzfälle wünschenswert.
+- Die 2025er Erweiterung der Festmistkompostierung wird als wendefreie Variante modelliert, wenn Mischung/Schichtung und ein geeignetes Kompostierungsverfahren vorliegen. Die konkrete Ausprägung des „nennenswerten Ausmaßes“ (Beispiel 50:50) bleibt eine fachliche Tatsachenfrage.
+- „Qplus Rind oder vergleichbare Programme“ wird als boolesche Eingabe modelliert. Das Maßnahmenblatt nennt aktuell kein vergleichbares Programm; die Eingabe bleibt dennoch offen, damit die Regel auch bei einer später anerkannten Vergleichsregel ausführbar bleibt.
+- Die 2023-Abweichungen bei Tiergesundheitsdienst und Qplus wurden dokumentiert, aber nicht als aktuelles Default-Verhalten für den Run 2026 implementiert.
+- Die Rego-Schnittstelle verwendet `farm.o6_21` als vorgeschlagenes, maßnahmenspezifisches Profilobjekt. Das Canonical Farm Profile wurde nicht verändert; die fehlenden Felder sind ausschließlich in `rules/profile_changes.json` im discover-Modus vorgeschlagen.
+- Die beiden Flächenschwellen der allgemeinen Betriebsmindestgröße und die allgemeine Tierhaltereigenschaft sind als Zugangskontext aufgenommen. Die konkreten Feldableitungen aus dem Mehrfachantrag sind im Ausgangsprofil nicht vorhanden und werden deshalb nicht in die Tierprämienformel hineingerechnet.
+- Die HTML-Hinweise vom Mai, Juni und August 2026 wurden vollständig geprüft. Sie betreffen Biodiversitätsflächen, Insektizidverzicht, Acker-/Begrünungsregeln, Naturschutz oder gefährdete Nutztierrassen, enthalten aber keine Änderung für o6_21.

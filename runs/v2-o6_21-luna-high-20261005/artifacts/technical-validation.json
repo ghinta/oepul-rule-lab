@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 445,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_21-luna-high-20261005/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_21.rego",
+    "tests/o6_21_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_21-luna-high-20261005/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 75,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_21.rego",
+        "tests/o6_21_test.rego"
+      ],
+      "duration_ms": 97,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_21-luna-high-20261005/workspace/tools/opa",
+            "fmt",
+            "policy/o6_21.rego"
+          ],
+          "duration_ms": 46,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package policy.o6_21\n\nimport rego.v1\n\nprofile := object.get(object.get(input, \"farm\", {}), \"o6_21\", {})\nstall := object.get(profile, \"stall\", {})\nanimals := object.get(profile, \"animals\", [])\ncategories := object.get(profile, \"participating_categories\", [])\nyear := object.get(profile, \"year\", object.get(input, \"year\", 0))\n\ndefault decision := {\n\t\"eligible\": false,\n\t\"violations\": [],\n\t\"premium_eur\": 0,\n\t\"application\": \"unknown\",\n\t\"contract_year\": \"unknown\",\n}\n\ndecision := {\n\t\"eligible\": count(violations) == 0,\n\t\"violations\": violations,\n\t\"premium_eur\": premium_eur,\n\t\"application\": application_status,\n\t\"contract_year\": contract_status,\n}\n\nviolations := [violation | violation := violation_set[_]]\n\nviolation_set contains {\"rule_id\": \"O621-MIN-RGVE\", \"reason\": \"Der durchschnittliche förderfähige Bestand muss mindestens 2,00 RGVE erreichen.\"} if {\n\tobject.get(profile, \"average_fundable_rgve\", 0) < 2\n}\n\nviolation_set contains {\"rule_id\": \"O621-CATEGORIES\", \"reason\": \"Es ist nur eine der vier zugelassenen Rinderkategorien beantragt.\"} if {\n\tsome category in categories\n\tnot category_allowed(category)\n}\n\ncategory_allowed(category) if {\n\tsome row in data.categories\n\trow.id == category\n}\n\nviolation_set contains {\"rule_id\": \"O621-STALL-DEFINITION\", \"reason\": \"Die baulichen Mindestmerkmale des Stalls sind nicht vollständig nachgewiesen.\"} if {\n\tnot object.get(stall, \"structural_requirements_met\", false)\n}\n\nviolation_set contains {\"rule_id\": \"O621-OPEN-STALL\", \"reason\": \"Die besonderen Anforderungen an ein Offenstallhaltungssystem sind nicht vollständig erfüllt.\"} if {\n\tobject.get(profile, \"open_stall\", false)\n\tnot object.get(stall, \"open_stall_requirements_met\", false)\n}\n\nviolation_set contains {\"rule_id\": \"O621-USABLE-AREA\", \"reason\": \"Die als nutzbare Gesamtfläche angesetzte Fläche ist nicht befestigt oder nicht ständig zugänglich.\"} if {\n\tnot object.get(stall, \"usable_area_definition_met\", false)\n}\n\nviolation_set contains {\"rule_id\": \"O621-ALL-ANIMALS\", \"reason\": \"Grundsätzlich muss mit allen Tieren der jeweiligen Kategorie teilgenommen werden.\"} if {\n\tnot object.get(profile, \"all_eligible_animals_participating\", false)\n}\n\nviolation_set contains {\"rule_id\": \"O621-HEALTH-SERVICE\", \"reason\": \"Bei mehr als 10,00 RGVE förderbaren Rindern fehlt die Teilnahme am anerkannten Tiergesundheitsdienst.\"} if {\n\tobject.get(profile, \"fundable_rgve_total\", 0) > 10\n\tnot object.get(profile, \"health_service_participation\", false)\n}\n\nviolation_set contains {\"rule_id\": \"O621-QPLUS\", \"reason\": \"Bei weiblichen Rindern fehlt Qplus Rind oder ein vergleichbares Programm.\"} if {\n\tany_female_category\n\tnot object.get(profile, \"qplus_rind_or_comparable\", false)\n}\n\nany_female_category if {\n\tsome category in categories\n\tcategory == \"female_under_half_year\"\n}\n\nany_female_category if {\n\tsome category in categories\n\tcategory == \"female_half_to_two_years\"\n}\n\nviolation_set contains {\"rule_id\": \"O621-MILK-DELIVERY\", \"reason\": \"Betriebe mit Milchanlieferung dürfen die Kategorie weibliche Rinder ab ½ bis unter 2 Jahre nicht beantragen.\"} if {\n\t\"female_half_to_two_years\" in categories\n\tobject.get(profile, \"milk_delivery_to_dairy\", false)\n}\n\nviolation_set contains {\"rule_id\": \"O621-HOUSING-PERIOD\", \"reason\": \"Die alters-, abgangs- und zukaufsbezogenen Haltungszeiträume sind nicht vollständig dokumentiert.\"} if {\n\tnot object.get(profile, \"housing_periods_documented\", false)\n}\n\nviolation_set contains {\"rule_id\": \"O621-GROUP-LITTER\", \"reason\": \"Die Haltung muss in Gruppen und auf eingestreuten Systemen erfolgen.\"} if {\n\tnot object.get(stall, \"group_housing\", false)\n}\n\nviolation_set contains {\"rule_id\": \"O621-GROUP-LITTER\", \"reason\": \"Die Haltung muss in Gruppen und auf eingestreuten Systemen erfolgen.\"} if {\n\tnot object.get(stall, \"littered_system\", false)\n}\n\nviolation_set contains {\"rule_id\": \"O621-LYING-SURFACE\", \"reason\": \"Die Liegefläche muss planbefestigt sein; höchstens 5 % Perforation gelten als planbefestigt.\"} if {\n\tobject.get(stall, \"perforation_percent\", 100) > 5\n}\n\nviolation_set contains {\"rule_id\": \"O621-LITTER-PERCENT\", \"reason\": \"Mindestens 40 % der geforderten nutzbaren Gesamtfläche müssen eingestreute Liegefläche sein.\"} if {\n\tobject.get(stall, \"littered_lying_area_percent\", 0) < 40\n}\n\nviolation_set contains {\"rule_id\": \"O621-SOFT-DRY\", \"reason\": \"Die eingestreute Liegefläche muss weich und trocken sein.\"} if {\n\tnot object.get(stall, \"lying_area_soft_and_dry\", false)\n}\n\nviolation_set contains {\"rule_id\": \"O621-LITTER-QUALITY\", \"reason\": \"Bei harter oder befestigter Liegefläche fehlt die mindestens 3 cm dicke Einstreudecke.\"} if {\n\tobject.get(stall, \"hard_surface\", false)\n\tobject.get(stall, \"litter_depth_cm\", 0) < 3\n}\n\nviolation_set contains {\"rule_id\": \"O621-SPACE\", \"reason\": \"Der erforderliche Mindestplatzbedarf je Tier ist nicht erfüllt.\"} if {\n\tsome animal in animals\n\trequirement := space_requirement_for(object.get(animal, \"weight_kg\", 0))\n\tactual := object.get(stall, \"total_area_m2_per_animal\", 0)\n\tactual < requirement.total_area_m2_per_animal\n}\n\nviolation_set contains {\"rule_id\": \"O621-SPACE\", \"reason\": \"Der erforderliche Mindestplatzbedarf je Tier ist nicht erfüllt.\"} if {\n\tsome animal in animals\n\trequirement := space_requirement_for(object.get(animal, \"weight_kg\", 0))\n\tactual := object.get(stall, \"lying_area_m2_per_animal\", 0)\n\tactual < requirement.lying_area_m2_per_animal\n}\n\nspace_requirement_for(weight) := row if {\n\trows := [candidate | candidate := data.space_requirements[_]; candidate.max_weight_kg != null; weight <= candidate.max_weight_kg]\n\tcount(rows) > 0\n\trow := rows[0]\n}\n\nspace_requirement_for(weight) := row if {\n\trow := data.space_requirements[4]\n\tweight > 500\n}\n\nviolation_set contains {\"rule_id\": \"O621-SINGLE-HOUSING\", \"reason\": \"Einzelhaltung ist nur aus gesundheitlichen Gründen und höchstens 10 Tage prämienunschädlich.\"} if {\n\tobject.get(profile, \"individual_housing_days\", 0) > 10\n}\n\nviolation_set contains {\"rule_id\": \"O621-SINGLE-HOUSING\", \"reason\": \"Erkrankte oder verletzte Tiere in Einzeltierhaltung müssen auf eingestreuten Systemen gehalten werden.\"} if {\n\tobject.get(profile, \"individual_housing_days\", 0) > 0\n\tnot object.get(stall, \"individual_housing_littered\", false)\n}\n\nviolation_set contains {\"rule_id\": \"O621-CALF-SOCIAL\", \"reason\": \"Kälber unter 21 Tagen in Einzelhaltung müssen ausreichenden Sozialkontakt haben.\"} if {\n\tobject.get(profile, \"calves_under_21_days_individually_housed\", false)\n\tnot object.get(profile, \"calf_social_contact\", false)\n}\n\nviolation_set contains {\"rule_id\": \"O621-SINGLE-HOUSING\", \"reason\": \"Die Krankheit/Verletzung und Dauer der Einzeltierhaltung müssen am Betrieb dokumentiert werden.\"} if {\n\tobject.get(profile, \"individual_housing_days\", 0) > 0\n\tnot object.get(profile, \"individual_housing_records_complete\", false)\n}\n\nviolation_set contains {\"rule_id\": \"O621-SHARED-ANIMALS\", \"reason\": \"Bei gemeinsamer Haltung wurden die Platzbedarfe nicht für alle Tiere der Box berechnet.\"} if {\n\tobject.get(profile, \"shared_group\", false)\n\tnot object.get(profile, \"shared_group_area_calculated_for_all\", false)\n}\n\nviolation_set contains {\"rule_id\": \"O621-COWS\", \"reason\": \"Die zusätzlichen Flächenanforderungen für gemeinsam gehaltene Kühe wurden nicht berücksichtigt.\"} if {\n\tobject.get(profile, \"cow_count\", 0) > 0\n\tnot object.get(profile, \"cow_group_area_calculated\", false)\n}\n\nviolation_set contains {\"rule_id\": \"O621-STALL-PLAN-HISTORY\", \"reason\": \"Für ein Antragsjahr bis einschließlich 2024 fehlt die damals erforderliche Stallskizze oder der Belegungsplan.\"} if {\n\tyear <= 2024\n\tnot object.get(profile, \"stall_sketch_and_occupancy_plan_available\", false)\n}\n\nviolation_set contains {\"rule_id\": \"O621-COMPOST\", \"reason\": \"Für den Zuschlag muss der gesamte am Betrieb anfallende Festmist ordnungsgemäß kompostiert und dokumentiert werden.\"} if {\n\tobject.get(profile, \"compost_surcharge_requested\", false)\n\tcompost := object.get(profile, \"compost\", {})\n\tnot compost_valid(compost)\n}\n\nviolation_set contains {\"rule_id\": \"O621-REPORTING\", \"reason\": \"Betroffene Tiere müssen umgehend ohrmarkenbezogen abgemeldet werden.\"} if {\n\tobject.get(profile, \"noncompliant_animals_count\", 0) > 0\n\tnot object.get(profile, \"noncompliant_animals_reported_immediately\", false)\n}\n\ncompost_valid(compost) if {\n\tobject.get(compost, \"all_solid_manure_in_piles\", false)\n\tobject.get(compost, \"mode\", \"\") == \"turned\"\n\tobject.get(compost, \"turns\", 0) >= 2\n\tobject.get(compost, \"minimum_interval_days\", 0) >= 14\n\tobject.get(compost, \"turning_equipment_available_or_proven\", false)\n\tobject.get(compost, \"records_complete\", false)\n\tobject.get(compost, \"napv_compliant\", false)\n\tnot object.get(compost, \"compost_barn\", false)\n}\n\ncompost_valid(compost) if {\n\tobject.get(compost, \"all_solid_manure_in_piles\", false)\n\tobject.get(compost, \"mode\", \"\") == \"mixed_or_layered_no_turn\"\n\tobject.get(compost, \"records_complete\", false)\n\tobject.get(compost, \"napv_compliant\", false)\n\tnot object.get(compost, \"compost_barn\", false)\n}\n\ncompost_valid(compost) if {\n\tobject.get(compost, \"all_solid_manure_in_piles\", false)\n\tobject.get(compost, \"mode\", \"\") == \"alternative_organic_material_process\"\n\tobject.get(compost, \"additional_organic_material_nondisregarded\", false)\n\tobject.get(compost, \"composting_process\", false)\n\tobject.get(compost, \"records_complete\", false)\n\tobject.get(compost, \"napv_compliant\", false)\n\tnot object.get(compost, \"compost_barn\", false)\n}\n\napplication_status := \"valid\" if {\n\tobject.get(profile, \"application_submitted_by_december_31\", false)\n}\n\napplication_status := \"late_or_missing\" if {\n\tnot object.get(profile, \"application_submitted_by_december_31\", false)\n}\n\ncontract_status := \"one_year_and_auto_renewing\" if {\n\tobject.get(profile, \"minimum_participation_met\", false)\n}\n\ncontract_status := \"expires_for_measure\" if {\n\tnot object.get(profile, \"minimum_participation_met\", false)\n}\n\npremium_eur := value if {\n\taverage_rgve := object.get(profile, \"average_fundable_rgve\", 0)\n\trates := [rate | rate := data.premium_rates_eur_per_rgve[_]; rate.year_band == \"2023\"; year == 2023]\n\trate := rates[0]\n\tbase := premium_component(rate, profile)\n\tsurcharge := compost_component(rate, profile)\n\tvalue := (average_rgve * base) + (average_rgve * surcharge)\n}\n\npremium_eur := value if {\n\taverage_rgve := object.get(profile, \"average_fundable_rgve\", 0)\n\trates := [rate | rate := data.premium_rates_eur_per_rgve[_]; rate.year_band == \"from_2024\"; year >= 2024]\n\trate := rates[0]\n\tbase := premium_component(rate, profile)\n\tsurcharge := compost_component(rate, profile)\n\tvalue := (average_rgve * base) + (average_rgve * surcharge)\n}\n\npremium_component(rate, profile) := rate.overlap_premium if {\n\tobject.get(profile, \"overlap_with_alp_or_weide\", false)\n}\n\npremium_component(rate, profile) := rate.animal_premium if {\n\tnot object.get(profile, \"overlap_with_alp_or_weide\", false)\n}\n\ncompost_component(rate, profile) := rate.compost_surcharge if {\n\tobject.get(profile, \"compost_surcharge_requested\", false)\n}\n\ncompost_component(_, profile) := 0 if {\n\tnot object.get(profile, \"compost_surcharge_requested\", false)\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_21-luna-high-20261005/workspace/tools/opa",
+            "fmt",
+            "tests/o6_21_test.rego"
+          ],
+          "duration_ms": 50,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package tests.o6_21\n\nimport data.policy.o6_21 as measure\nimport rego.v1\n\nvalid_input := {\n\t\"farm\": {\n\t\t\"o6_21\": {\n\t\t\t\"year\": 2026,\n\t\t\t\"participating_categories\": [\"male_from_half_year\"],\n\t\t\t\"average_fundable_rgve\": 5,\n\t\t\t\"fundable_rgve_total\": 5,\n\t\t\t\"all_eligible_animals_participating\": true,\n\t\t\t\"health_service_participation\": false,\n\t\t\t\"qplus_rind_or_comparable\": false,\n\t\t\t\"milk_delivery_to_dairy\": false,\n\t\t\t\"minimum_participation_met\": true,\n\t\t\t\"application_submitted_by_december_31\": true,\n\t\t\t\"overlap_with_alp_or_weide\": false,\n\t\t\t\"compost_surcharge_requested\": false,\n\t\t\t\"housing_periods_documented\": true,\n\t\t\t\"animals\": [{\"animal_id\": \"r1\", \"weight_kg\": 501}],\n\t\t\t\"stall\": {\n\t\t\t\t\"structural_requirements_met\": true,\n\t\t\t\t\"usable_area_definition_met\": true,\n\t\t\t\t\"group_housing\": true,\n\t\t\t\t\"littered_system\": true,\n\t\t\t\t\"perforation_percent\": 0,\n\t\t\t\t\"littered_lying_area_percent\": 40,\n\t\t\t\t\"lying_area_soft_and_dry\": true,\n\t\t\t\t\"total_area_m2_per_animal\": 4.2,\n\t\t\t\t\"lying_area_m2_per_animal\": 1.68,\n\t\t\t\t\"individual_housing_littered\": true,\n\t\t\t},\n\t\t},\n\t},\n}\n\ntest_valid_application_and_premium if {\n\tresult := measure.decision with input as valid_input\n\tresult.eligible\n\tresult.premium_eur == 972\n\tresult.application == \"valid\"\n\tresult.contract_year == \"one_year_and_auto_renewing\"\n}\n\ntest_minimum_rgve_is_required if {\n\tbroken_profile := object.union(valid_input.farm.o6_21, {\"average_fundable_rgve\": 1.99})\n\tbroken := {\"farm\": {\"o6_21\": broken_profile}}\n\tresult := measure.decision with input as broken\n\tnot result.eligible\n\t[violation | violation := result.violations[_]; violation.rule_id == \"O621-MIN-RGVE\"]\n}\n\ntest_space_table_is_enforced if {\n\tbroken_profile := object.union(valid_input.farm.o6_21, {\"stall\": object.union(valid_input.farm.o6_21.stall, {\"total_area_m2_per_animal\": 4.19})})\n\tbroken := {\"farm\": {\"o6_21\": broken_profile}}\n\tresult := measure.decision with input as broken\n\tnot result.eligible\n\t[violation | violation := result.violations[_]; violation.rule_id == \"O621-SPACE\"]\n}\n\ntest_female_milk_delivery_exclusion if {\n\tbroken_profile := object.union(valid_input.farm.o6_21, {\"participating_categories\": [\"female_half_to_two_years\"], \"milk_delivery_to_dairy\": true, \"qplus_rind_or_comparable\": true})\n\tbroken := {\"farm\": {\"o6_21\": broken_profile}}\n\tresult := measure.decision with input as broken\n\tnot result.eligible\n\t[violation | violation := result.violations[_]; violation.rule_id == \"O621-MILK-DELIVERY\"]\n}\n\ntest_compost_surcharge_turning_path if {\n\tvalid_compost := {\n\t\t\"all_solid_manure_in_piles\": true,\n\t\t\"mode\": \"turned\",\n\t\t\"turns\": 2,\n\t\t\"minimum_interval_days\": 14,\n\t\t\"turning_equipment_available_or_proven\": true,\n\t\t\"records_complete\": true,\n\t\t\"napv_compliant\": true,\n\t\t\"compost_barn\": false,\n\t}\n\twith_compost_profile := object.union(valid_input.farm.o6_21, {\"compost_surcharge_requested\": true, \"compost\": valid_compost})\n\twith_compost := {\"farm\": {\"o6_21\": with_compost_profile}}\n\tresult := measure.decision with input as with_compost\n\tresult.eligible\n\tresult.premium_eur == 1080\n}\n\ntest_overlap_uses_reduced_animal_rate if {\n\toverlap_profile := object.union(valid_input.farm.o6_21, {\"overlap_with_alp_or_weide\": true})\n\toverlap := {\"farm\": {\"o6_21\": overlap_profile}}\n\tresult := measure.decision with input as overlap\n\tresult.premium_eur == 810\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_21-luna-high-20261005/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 96,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 6/6\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_21-luna-high-20261005/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 170,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_21-luna-high-20261005/workspace"
+}
