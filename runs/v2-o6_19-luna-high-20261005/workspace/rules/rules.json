@@ -1,0 +1,935 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_19",
+  "rules": [
+    {
+      "id": "EBW-001",
+      "rule_type": "eligibility",
+      "statement": "EBW supports selected project-confirmed arable and grassland areas managed for biodiversity objectives.",
+      "conditions": [
+        {
+          "expression": "measure.requested == true",
+          "description": "The measure is requested.",
+          "input_paths": [
+            "measure.requested"
+          ]
+        },
+        {
+          "expression": "measure.project_confirmation.present == true",
+          "description": "A project confirmation exists.",
+          "input_paths": [
+            "measure.project_confirmation.present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_if_confirmed",
+        "description": "The area can be considered only within the project-confirmed EBW scope."
+      },
+      "source_reference_ids": [
+        "MEAS-P1-OVERVIEW",
+        "MEAS-P2-PROJECT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.eligible"
+      ]
+    },
+    {
+      "id": "EBW-002",
+      "rule_type": "contract_duration",
+      "statement": "The EBW contract runs to 31 December 2028; start years 2023, 2024 and 2025 imply 6, 5 and 4 years respectively.",
+      "conditions": [
+        {
+          "expression": "measure.start_year in {2023,2024,2025}",
+          "description": "The start year is an available EBW entry year.",
+          "input_paths": [
+            "measure.start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_end_2028",
+        "description": "The required commitment duration is mapped by start year.",
+        "value": {
+          "2023": 6,
+          "2024": 5,
+          "2025": 4
+        }
+      },
+      "source_reference_ids": [
+        "MEAS-P1-CONTRACT",
+        "MEAS-P2-CONTRACT",
+        "GEN-P11-CONTRACT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.contract_years"
+      ]
+    },
+    {
+      "id": "EBW-003",
+      "rule_type": "minimum_participation",
+      "statement": "At least 1.00 ha of eligible area is required in the first participation year; thereafter at least one plot must be managed under EBW each participation year.",
+      "conditions": [
+        {
+          "expression": "measure.first_commitment_year == true",
+          "description": "This is the first commitment year.",
+          "input_paths": [
+            "measure.first_commitment_year"
+          ]
+        },
+        {
+          "expression": "measure.eligible_area_ha >= 1",
+          "description": "The first-year eligible area reaches 1.00 ha.",
+          "input_paths": [
+            "measure.eligible_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "minimum_area_met",
+        "description": "The first-year minimum is satisfied."
+      },
+      "source_reference_ids": [
+        "MEAS-P2-MINIMUM",
+        "LEGAL-P82-ACCESS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.first_year_area_ok"
+      ]
+    },
+    {
+      "id": "EBW-004",
+      "rule_type": "project_confirmation",
+      "statement": "The competent coordination body issues the project confirmation for selected arable and grassland plots and sets plot-specific mandatory indicators.",
+      "conditions": [
+        {
+          "expression": "measure.project_confirmation.present == true",
+          "description": "A project confirmation is available.",
+          "input_paths": [
+            "measure.project_confirmation.present"
+          ]
+        },
+        {
+          "expression": "measure.project_confirmation.reference_area_present == true",
+          "description": "The graphical EBW reference area exists.",
+          "input_paths": [
+            "measure.project_confirmation.reference_area_present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "project_scope_defined",
+        "description": "Only the confirmed plots and their indicators define the operative scope."
+      },
+      "source_reference_ids": [
+        "MEAS-P2-PROJECT",
+        "LEGAL-P20-EBW-BODY"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.eligible"
+      ]
+    },
+    {
+      "id": "EBW-005",
+      "rule_type": "indicator_compliance",
+      "statement": "Mandatory indicators in the project confirmation must be achieved for each applied plot; additional indicators are non-binding.",
+      "conditions": [
+        {
+          "expression": "every parcel in measure.project_confirmation.parcels has mandatory_indicators_met == true",
+          "description": "Every confirmed plot meets its mandatory indicators.",
+          "input_paths": [
+            "measure.project_confirmation.parcels"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "indicators_met",
+        "description": "The mandatory indicator obligation is fulfilled."
+      },
+      "source_reference_ids": [
+        "MEAS-P3-INDICATORS",
+        "LEGAL-P82-OBLIGATIONS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.all_project_indicators_met",
+        "data.oepul.o6_19.violation"
+      ]
+    },
+    {
+      "id": "EBW-006",
+      "rule_type": "maintenance",
+      "statement": "Eligible plots needing regular care must be used or maintained at least every second year.",
+      "conditions": [
+        {
+          "expression": "measure.project_confirmation.regular_care_every_second_year == true",
+          "description": "The required use or maintenance occurs at least every second year.",
+          "input_paths": [
+            "measure.project_confirmation.regular_care_every_second_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "maintenance_interval_met",
+        "description": "The regular-care obligation is fulfilled."
+      },
+      "source_reference_ids": [
+        "MEAS-P3-CARE",
+        "LEGAL-P82-OBLIGATIONS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.eligible",
+        "data.oepul.o6_19.violation"
+      ]
+    },
+    {
+      "id": "EBW-007",
+      "rule_type": "recordkeeping",
+      "statement": "Plot-specific indicators must be continuously observed and recorded in the prescribed database structure.",
+      "conditions": [
+        {
+          "expression": "measure.project_confirmation.indicator_observation_database_current == true",
+          "description": "The prescribed observation database is current.",
+          "input_paths": [
+            "measure.project_confirmation.indicator_observation_database_current"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "records_current",
+        "description": "The indicator recordkeeping requirement is fulfilled."
+      },
+      "source_reference_ids": [
+        "MEAS-P3-RECORDS",
+        "LEGAL-P82-OBLIGATIONS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.eligible",
+        "data.oepul.o6_19.violation"
+      ]
+    },
+    {
+      "id": "EBW-008",
+      "rule_type": "training_deadline",
+      "statement": "By 31 December 2026 the beneficiary must attend at least one regional networking meeting.",
+      "conditions": [
+        {
+          "expression": "measure.application_year <= 2026",
+          "description": "The application year is within the training deadline period.",
+          "input_paths": [
+            "measure.application_year"
+          ]
+        },
+        {
+          "expression": "measure.training.regional_network_meeting_by_2026_12_31 == true",
+          "description": "At least one meeting was attended by the deadline.",
+          "input_paths": [
+            "measure.training.regional_network_meeting_by_2026_12_31"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "training_completed",
+        "description": "The training obligation is fulfilled by the deadline."
+      },
+      "source_reference_ids": [
+        "MEAS-P3-TRAINING",
+        "LEGAL-P82-TRAINING"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.training_ok"
+      ]
+    },
+    {
+      "id": "EBW-009",
+      "rule_type": "training_delegate",
+      "statement": "A materially active person involved in farm management may attend the networking meeting.",
+      "conditions": [
+        {
+          "expression": "measure.training.participant_is_farm_person == true",
+          "description": "The substitute participant is materially active and involved in management.",
+          "input_paths": [
+            "measure.training.participant_is_farm_person"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "delegate_allowed",
+        "description": "Delegated attendance is accepted subject to the personal binding rule."
+      },
+      "source_reference_ids": [
+        "MEAS-P3-TRAINING",
+        "LEGAL-P82-TRAINING"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.training_ok"
+      ]
+    },
+    {
+      "id": "EBW-010",
+      "rule_type": "training_evidence",
+      "statement": "Written attendance evidence must be supplied on request and one event cannot be double-counted.",
+      "conditions": [
+        {
+          "expression": "measure.training.not_double_counted == true",
+          "description": "The event is not counted for multiple obligations.",
+          "input_paths": [
+            "measure.training.not_double_counted"
+          ]
+        },
+        {
+          "expression": "measure.training.written_confirmation_available == true",
+          "description": "Written attendance confirmation is available when required.",
+          "input_paths": [
+            "measure.training.written_confirmation_available"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "evidence_and_unique_count",
+        "description": "Attendance evidence and non-duplication are required."
+      },
+      "source_reference_ids": [
+        "MEAS-P3-TRAINING",
+        "LEGAL-P82-TRAINING"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.training_ok"
+      ]
+    },
+    {
+      "id": "EBW-011",
+      "rule_type": "regional_surcharge",
+      "statement": "The optional Regional Nature Conservation Plan surcharge is 250 EUR in 2023 and 270 EUR from 2024 per farm and year when requested and supported by annual confirmation.",
+      "conditions": [
+        {
+          "expression": "measure.regional_nature_conservation_plan.requested == true",
+          "description": "The optional surcharge is requested.",
+          "input_paths": [
+            "measure.regional_nature_conservation_plan.requested"
+          ]
+        },
+        {
+          "expression": "measure.regional_nature_conservation_plan.annual_confirmation_present == true",
+          "description": "The annual participation confirmation exists.",
+          "input_paths": [
+            "measure.regional_nature_conservation_plan.annual_confirmation_present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "surcharge_granted",
+        "description": "The annual farm surcharge is 270 EUR.",
+        "value": 270
+      },
+      "source_reference_ids": [
+        "MEAS-P2-REGIONAL",
+        "LEGAL-P83-REGIONAL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.regional_plan_surcharge_eur"
+      ]
+    },
+    {
+      "id": "EBW-012",
+      "rule_type": "regional_plan",
+      "statement": "The Regional Nature Conservation Plan defines regional objectives and its required indicators are recorded in the project confirmation.",
+      "conditions": [
+        {
+          "expression": "measure.regional_nature_conservation_plan.annual_confirmation_present == true",
+          "description": "The responsible body confirms annual participation.",
+          "input_paths": [
+            "measure.regional_nature_conservation_plan.annual_confirmation_present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "regional_objectives_documented",
+        "description": "Regional planning and its plot indicators are part of the confirmation."
+      },
+      "source_reference_ids": [
+        "MEAS-P5-REGIONAL",
+        "LEGAL-P81-REGIONAL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.regional_plan_once_per_farm"
+      ]
+    },
+    {
+      "id": "EBW-013",
+      "rule_type": "application_deadline",
+      "statement": "EBW and its optional regional-plan surcharge must be requested by 31 December before the following contract year.",
+      "conditions": [
+        {
+          "expression": "measure.application_date <= 31 December before measure.start_year",
+          "description": "The measures application was timely.",
+          "input_paths": [
+            "measure.application_date",
+            "measure.start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "application_timely",
+        "description": "A valid following-year contract can be established."
+      },
+      "source_reference_ids": [
+        "MEAS-P5-APPLICATION",
+        "LEGAL-P21-APPLICATION"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "EBW-014",
+      "rule_type": "last_entry",
+      "statement": "The last EBW entry was funding year 2025; the regional-plan surcharge last entered for 2028.",
+      "conditions": [
+        {
+          "expression": "measure.entry_year <= 2025",
+          "description": "The EBW entry year is not later than 2025.",
+          "input_paths": [
+            "measure.entry_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "entry_window_respected",
+        "description": "The entry window is respected.",
+        "value": {
+          "ebw_last_entry": 2025,
+          "regional_plan_last_entry": 2028
+        }
+      },
+      "source_reference_ids": [
+        "MEAS-P5-LAST-ENTRY",
+        "GEN-P12-LAST-ENTRY"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "EBW-015",
+      "rule_type": "application_code",
+      "statement": "An EBW plot must carry code EBW and a corresponding EBW reference area must exist for payment.",
+      "conditions": [
+        {
+          "expression": "measure.parcel_code == EBW",
+          "description": "The plot carries the EBW code.",
+          "input_paths": [
+            "measure.parcel_code"
+          ]
+        },
+        {
+          "expression": "measure.project_confirmation.reference_area_present == true",
+          "description": "The graphical EBW reference area is present.",
+          "input_paths": [
+            "measure.project_confirmation.reference_area_present"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "plot_claim_valid",
+        "description": "The plot is technically claimable for EBW."
+      },
+      "source_reference_ids": [
+        "MEAS-P5-CODE",
+        "MEAS-P6-REFERENCE"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "EBW-016",
+      "rule_type": "combination_div",
+      "statement": "UBB or BIO may count eligible EBW fallows or listed grassland habitats toward biodiversity obligations only with the specified DIV/DIVSZ codes; project-confirmation obligations remain applicable.",
+      "conditions": [
+        {
+          "expression": "measure.other_measure in {ubb,bio}",
+          "description": "UBB or BIO is also selected.",
+          "input_paths": [
+            "measure.other_measure"
+          ]
+        },
+        {
+          "expression": "measure.div_code in {DIV,DIVSZ}",
+          "description": "The required biodiversity code is present.",
+          "input_paths": [
+            "measure.div_code"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "div_cross_credit_allowed_with_codes",
+        "description": "Cross-credit is allowed only with the specified codes and confirmation obligations."
+      },
+      "source_reference_ids": [
+        "MEAS-P4-COMBINATION",
+        "MEAS-P6-DIV-CODES",
+        "LEGAL-P29-DIV-CREDIT"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "EBW-017",
+      "rule_type": "combination_naturschutz",
+      "statement": "EBW may be combined with Naturschutz at farm level; the regional-plan surcharge is paid only once per farm and participation year.",
+      "conditions": [
+        {
+          "expression": "measure.other_measure == naturschutz",
+          "description": "Both farm-level measures are selected.",
+          "input_paths": [
+            "measure.other_measure"
+          ]
+        },
+        {
+          "expression": "measure.regional_nature_conservation_plan.awards_this_year == 1",
+          "description": "Only one regional surcharge award is recorded.",
+          "input_paths": [
+            "measure.regional_nature_conservation_plan.awards_this_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "farm_combination_once",
+        "description": "The combination is allowed and the surcharge is not duplicated."
+      },
+      "source_reference_ids": [
+        "MEAS-P5-NATURSCHUTZ",
+        "MEAS-P7-REGIONAL-ONCE",
+        "LEGAL-P83-REGIONAL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.field_combination_allowed",
+        "data.oepul.o6_19.regional_plan_once_per_farm"
+      ]
+    },
+    {
+      "id": "EBW-018",
+      "rule_type": "biodiversity_minimum",
+      "statement": "If all farm land is in EBW and UBB or BIO is also selected, at least 0.15 ha is required on field pieces larger than 5.00 ha.",
+      "conditions": [
+        {
+          "expression": "measure.all_oepul_area_in_ebw == true",
+          "description": "All eligible farm land is in EBW.",
+          "input_paths": [
+            "measure.all_oepul_area_in_ebw"
+          ]
+        },
+        {
+          "expression": "measure.field_piece_area_ha > 5",
+          "description": "The field piece exceeds 5.00 ha.",
+          "input_paths": [
+            "measure.field_piece_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "minimum_div_area_required",
+        "description": "At least 0.15 ha must be separately available as DIV/DIVSZ where no EBW plot is countable.",
+        "value": 0.15
+      },
+      "source_reference_ids": [
+        "MEAS-P4-BIODIVERSITY",
+        "MEAS-P5-BIODIVERSITY-EXAMPLE"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "EBW-019",
+      "rule_type": "non_premium_area",
+      "statement": "GLÖZ 4 buffer strips and, through 2024, GLÖZ 8 fallows are not EBW-premium eligible on the affected part.",
+      "conditions": [
+        {
+          "expression": "measure.parcel_code in {GLÖZ4,NPF}",
+          "description": "The affected subarea is a GLÖZ 4 or eligible-period GLÖZ 8 area.",
+          "input_paths": [
+            "measure.parcel_code"
+          ]
+        },
+        {
+          "expression": "measure.application_year <= 2024",
+          "description": "The GLÖZ 8 transition period has not ended.",
+          "input_paths": [
+            "measure.application_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_ebw_premium_on_subarea",
+        "description": "The subarea is excluded from EBW payment."
+      },
+      "source_reference_ids": [
+        "MEAS-P6-NONPREMIUM",
+        "LEGAL-P83-NONPREMIUM"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "EBW-020",
+      "rule_type": "fallow_cap",
+      "statement": "EBW arable fallows are eligible up to 25% of farm arable area, but at least 2.00 ha is eligible under the stated floor.",
+      "conditions": [
+        {
+          "expression": "measure.arable_area_ha >= 0",
+          "description": "The farm arable area is known.",
+          "input_paths": [
+            "measure.arable_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "fallow_area_cap",
+        "description": "The operational cap is the greater of 25% of arable area and 2.00 ha."
+      },
+      "source_reference_ids": [
+        "MEAS-P6-FALLOW-CAP",
+        "LEGAL-P83-FALLOW-CAP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.fallow_area_max_ha"
+      ]
+    },
+    {
+      "id": "EBW-021",
+      "rule_type": "premium_combination",
+      "statement": "EBW areas are not premium-combinable with another measure on the same area except Natura 2000 and listed landscape-element compensation.",
+      "conditions": [
+        {
+          "expression": "measure.other_measure in {none,natura_2000,ubb_landscape_element,bio_landscape_element}",
+          "description": "The other title is one of the listed exceptions or none.",
+          "input_paths": [
+            "measure.other_measure"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "field_premium_combination_allowed",
+        "description": "Only the stated same-area premium combinations are allowed."
+      },
+      "source_reference_ids": [
+        "MEAS-P6-FIELD-COMBINATION",
+        "LEGAL-L103-COMBINATION"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.field_combination_allowed"
+      ]
+    },
+    {
+      "id": "EBW-022",
+      "rule_type": "premium_table",
+      "statement": "The EBW base premium is determined by project-confirmed habitat, conservation status and, for meadows, difficulty class; complete rates are data-backed.",
+      "conditions": [
+        {
+          "expression": "measure.premium.habitat exists in data.premium_rates_eur_per_ha",
+          "description": "The project-confirmed premium key is present in the rate table.",
+          "input_paths": [
+            "measure.premium.habitat"
+          ]
+        },
+        {
+          "expression": "measure.premium.conservation_status in {A,B,C}",
+          "description": "The conservation status is listed.",
+          "input_paths": [
+            "measure.premium.conservation_status"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_lookup",
+        "description": "The applicable rate is read from the complete Anhang-K rate data."
+      },
+      "source_reference_ids": [
+        "LEGAL-K98-BASIS",
+        "LEGAL-K101-RATES",
+        "LEGAL-K102-RATES"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.premium_rate_eur_per_ha"
+      ]
+    },
+    {
+      "id": "EBW-023",
+      "rule_type": "indicator_catalog",
+      "statement": "The accepted EBW indicator codes and thresholds are the complete Anhang-K catalog, including arable, grassland, animal, bird and neophyte indicators.",
+      "conditions": [
+        {
+          "expression": "measure.indicator_code in data.indicator_catalog[*].code",
+          "description": "The selected code is present in the catalog.",
+          "input_paths": [
+            "measure.indicator_code"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "indicator_code_recognized",
+        "description": "The code can be evaluated against its source text and project-specific parameters."
+      },
+      "source_reference_ids": [
+        "LEGAL-K91-INDICATORS",
+        "LEGAL-K92-INDICATORS",
+        "LEGAL-K93-INDICATORS",
+        "LEGAL-K94-INDICATORS",
+        "LEGAL-K95-INDICATORS",
+        "LEGAL-K96-INDICATORS",
+        "LEGAL-K97-INDICATORS",
+        "MEAS-P7-HABITATS"
+      ],
+      "rego_symbols": [
+        "data.indicator_catalog"
+      ]
+    },
+    {
+      "id": "EBW-024",
+      "rule_type": "surcharge_ebba",
+      "statement": "EBBA01 is 108 EUR/ha and once per area for documented qualifying effort; EBBA02 is 162 EUR/ha from 2025 for very-good conservation status.",
+      "conditions": [
+        {
+          "expression": "measure.surcharges.ebba01.reason_documented == true and measure.surcharges.ebba01.awards_on_area == 0",
+          "description": "The first special-effort surcharge is documented and not already awarded.",
+          "input_paths": [
+            "measure.surcharges.ebba01.reason_documented",
+            "measure.surcharges.ebba01.awards_on_area"
+          ]
+        },
+        {
+          "expression": "measure.surcharges.ebba02.very_good_conservation_status == true and measure.application_year >= 2025",
+          "description": "The second tier's status and year conditions hold.",
+          "input_paths": [
+            "measure.surcharges.ebba02.very_good_conservation_status",
+            "measure.application_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "special_effort_surcharge",
+        "description": "The applicable special-effort surcharge is 108 or 162 EUR/ha."
+      },
+      "source_reference_ids": [
+        "LEGAL-K98-EBBA",
+        "LEGAL-K99-EBBA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.ebba01_allowed",
+        "data.oepul.o6_19.ebba02_allowed"
+      ]
+    },
+    {
+      "id": "EBW-025",
+      "rule_type": "surcharge_ebhg",
+      "statement": "The EBHG habitat surcharge is 108 EUR/ha only when at least 50% of the plot is in the protection layer.",
+      "conditions": [
+        {
+          "expression": "measure.surcharges.ebhg.protection_layer_share >= 0.5",
+          "description": "At least half of the plot is in the Schutzgutflächen layer.",
+          "input_paths": [
+            "measure.surcharges.ebhg.protection_layer_share"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "habitat_surcharge",
+        "description": "The habitat surcharge is available when the GIS and share conditions are met.",
+        "value": 108
+      },
+      "source_reference_ids": [
+        "LEGAL-K100-EBHG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.ebhg_allowed"
+      ]
+    },
+    {
+      "id": "EBW-026",
+      "rule_type": "area_accession",
+      "statement": "EBW additions are fully premium eligible in 2024 and 2025; later additions are limited to 50% of the 2025 base, with up to 5 ha always allowed.",
+      "conditions": [
+        {
+          "expression": "measure.application_year in {2024,2025} or measure.accession_area_ha <= max(50% of measure.area_2025_ha,5)",
+          "description": "The accession is within the year-specific premium limit.",
+          "input_paths": [
+            "measure.application_year",
+            "measure.accession_area_ha",
+            "measure.area_2025_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "accession_limit_applied",
+        "description": "The year-specific accession premium limit is applied."
+      },
+      "source_reference_ids": [
+        "GEN-P16-AREA-ACCESS",
+        "GEN-P17-AREA-ACCESS",
+        "LEGAL-P14-AREA-ACCESS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.accession_premium_allowed_area_ha"
+      ]
+    },
+    {
+      "id": "EBW-027",
+      "rule_type": "area_reduction",
+      "statement": "A yearly EBW area reduction is permitted up to 5%, up to 5.00 ha, and in any event 0.50 ha; exceeding the limits triggers repayment for the differential area.",
+      "conditions": [
+        {
+          "expression": "measure.reduction_ha <= min(5% of measure.prior_year_measure_area_ha,5) or measure.reduction_ha <= 0.5",
+          "description": "The reduction stays within the tolerance.",
+          "input_paths": [
+            "measure.reduction_ha",
+            "measure.prior_year_measure_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_tolerated_or_repaid",
+        "description": "Within tolerance no repayment follows; otherwise the differential area is repayable."
+      },
+      "source_reference_ids": [
+        "GEN-P16-AREA-REDUCTION",
+        "LEGAL-P13-AREA-REDUCTION"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "EBW-028",
+      "rule_type": "measure_conversion",
+      "statement": "By 31 December 2025 EBW could be converted into Naturschutz or vice versa without repayment for the original measure; higher-value obligations apply for the remaining term.",
+      "conditions": [
+        {
+          "expression": "measure.conversion_date <= 2025-12-31",
+          "description": "The conversion is requested by the final date.",
+          "input_paths": [
+            "measure.conversion_date"
+          ]
+        },
+        {
+          "expression": "measure.conversion_target in {naturschutz,ebw}",
+          "description": "The target is the reciprocal measure.",
+          "input_paths": [
+            "measure.conversion_target"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "conversion_without_original_repayment",
+        "description": "The higher-value measure's obligations govern the remaining term."
+      },
+      "source_reference_ids": [
+        "MEAS-P5-MEASURE-SWITCH",
+        "GEN-P15-MEASURE-SWITCH"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "EBW-029",
+      "rule_type": "measure_takeover",
+      "statement": "A running EBW obligation may be taken over by another non-participating farm by 15 April, or 17 April in 2023 and 2028, subject to AMA approval and the 50% expansion limit.",
+      "conditions": [
+        {
+          "expression": "measure.takeover_date <= measure.applicable_takeover_deadline",
+          "description": "The takeover is timely.",
+          "input_paths": [
+            "measure.takeover_date",
+            "measure.applicable_takeover_deadline"
+          ]
+        },
+        {
+          "expression": "measure.expansion_percent <= 50",
+          "description": "The takeover does not expand the obligation by more than 50%.",
+          "input_paths": [
+            "measure.expansion_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "takeover_possible_with_approval",
+        "description": "The takeover continues for the remaining term if AMA approves it."
+      },
+      "source_reference_ids": [
+        "GEN-P14-TAKEOVER",
+        "GEN-P15-TAKEOVER",
+        "LEGAL-P14-TAKEOVER"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "EBW-030",
+      "rule_type": "control_consequence",
+      "statement": "Violations can cause warning or 2%, 5%, 10%, 25%, 50% or 100% reductions; two 100% reductions cause exclusion and repayment, and from 2027 warning becomes 1% retention.",
+      "conditions": [
+        {
+          "expression": "measure.violation_assessed == true",
+          "description": "A violation is established by administrative or on-site control.",
+          "input_paths": [
+            "measure.violation_assessed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "sanction_scale",
+        "description": "The measure-specific sanction scale applies, including possible repayment and exclusion."
+      },
+      "source_reference_ids": [
+        "GEN-P17-CONTROLS",
+        "GEN-P18-SANCTIONS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.violation"
+      ]
+    },
+    {
+      "id": "EBW-031",
+      "rule_type": "farm_modulation",
+      "statement": "All measure premiums are modulated by total farm area: 100% to 200 ha, 90% over 200 to 300 ha, 85% over 300 to 1,000 ha, and 75% above 1,000 ha.",
+      "conditions": [
+        {
+          "expression": "measure.total_farm_area_ha >= 0",
+          "description": "Total farm area is available for progressive modulation.",
+          "input_paths": [
+            "measure.total_farm_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "progressive_modulation",
+        "description": "The weighted modulation factor is applied to all EBW premiums."
+      },
+      "source_reference_ids": [
+        "GEN-P19-MODULATION",
+        "GEN-P20-MODULATION"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.modulation_factor"
+      ]
+    },
+    {
+      "id": "EBW-032",
+      "rule_type": "drought_2026_exception",
+      "statement": "In 2026 Acker-Biodiversitätsflächen also in EBW remain governed by the project confirmation; the general drought permission does not override EBW obligations.",
+      "conditions": [
+        {
+          "expression": "measure.application_year == 2026 and measure.drought_2026.affected_biodiversity_area_in_ebw == true",
+          "description": "The drought year and EBW overlap apply.",
+          "input_paths": [
+            "measure.application_year",
+            "measure.drought_2026.affected_biodiversity_area_in_ebw"
+          ]
+        },
+        {
+          "expression": "measure.drought_2026.proposed_use_follows_project_confirmation == true",
+          "description": "The proposed use follows the EBW project confirmation.",
+          "input_paths": [
+            "measure.drought_2026.proposed_use_follows_project_confirmation"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "project_confirmation_remains_controlling",
+        "description": "The 2026 general biodiversity exception is not an override for EBW areas."
+      },
+      "source_reference_ids": [
+        "DROUGHT-2026-08-12-EBW"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_19.drought_2026_ebw_use_allowed"
+      ]
+    }
+  ]
+}
