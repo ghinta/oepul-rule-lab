@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 120,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_15-luna-high-20261004/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/behirtung.rego",
+    "tests/behirtung_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_15-luna-high-20261004/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 15,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/behirtung.rego",
+        "tests/behirtung_test.rego"
+      ],
+      "duration_ms": 24,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_15-luna-high-20261004/workspace/tools/opa",
+            "fmt",
+            "policy/behirtung.rego"
+          ],
+          "duration_ms": 12,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package opul.o6_15\n\nimport rego.v1\n\nallowed_categories := {\"Milchkühe\", \"Sonstige Rinder\", \"Schafe\", \"Ziegen\", \"Equiden\", \"Neuweltkamele\"}\nallowed_species := {\"cattle\", \"sheep\", \"goat\", \"equine\", \"camelid\"}\n\ndefault annual_contract_valid := false\n\nannual_contract_valid if {\n\tinput.farm.year >= 2023\n\tinput.farm.year <= 2028\n\tinput.farm.o6_15_application_date <= sprintf(\"%d-12-31\", [input.farm.year - 1])\n}\n\ndefault participation_valid := false\n\nparticipation_valid if {\n\tinput.farm.participates_almbewirtschaftung\n\tbehirtete_rgve >= 3\n\tcount(herded_groups) > 0\n\tall_animals_are_eligible\n\tall_requested_categories_allowed\n}\n\nall_requested_categories_allowed if {\n\tevery group in herded_groups {\n\t\tgroup.category in allowed_categories\n\t}\n}\n\nall_animals_are_eligible if {\n\tevery group in input.livestock.species_groups {\n\t\tgroup.species in allowed_species\n\t}\n}\n\nmilk_cow_category_valid if {\n\tsome group in input.livestock.species_groups\n\tgroup.category == \"Milchkühe\"\n\tgroup.age_years >= 2\n\tgroup.calvings >= 1\n\tgroup.milked_days_on_alms >= 45\n}\n\nmilk_sheep_or_goat_category_valid if {\n\tsome group in input.livestock.species_groups\n\tgroup.category in {\"Schafe\", \"Ziegen\"}\n\tgroup.age_years >= 1\n\tgroup.milked_days_on_alms >= 45\n}\n\ndefault sixty_day_requirement_valid := false\n\nsixty_day_requirement_valid if {\n\tevery group in herded_groups {\n\t\tgroup.herding_days >= 60\n\t}\n\tevery parcel in input.land.parcels {\n\t\talm_stocking_valid(parcel)\n\t}\n}\n\nalm_stocking_valid(parcel) if {\n\tnot parcel.is_alm\n}\n\nalm_stocking_valid(parcel) if {\n\tparcel.is_alm\n\tparcel.stocking_days >= 60\n}\n\ndefault care_requirement_valid := false\n\ncare_requirement_valid if {\n\tevery parcel in input.land.parcels {\n\t\tcare_valid(parcel)\n\t}\n}\n\ncare_valid(parcel) if {\n\tnot parcel.is_alm\n}\n\ncare_valid(parcel) if {\n\tparcel.is_alm\n\tparcel.care.daily_care\n\tparcel.care.care_essential_part_of_day\n\tparcel.care.water_available\n\tparcel.care.animal_care\n\tparcel.care.disease_and_injury_treatment\n\tparcel.care.security_measures\n}\n\ndefault grazing_management_valid := false\n\ngrazing_management_valid if {\n\tevery parcel in input.land.parcels {\n\t\tgrazing_valid(parcel)\n\t}\n}\n\ngrazing_valid(parcel) if {\n\tnot parcel.is_alm\n}\n\ngrazing_valid(parcel) if {\n\tparcel.is_alm\n\tparcel.grazing_management.site_adapted_grazing\n\tparcel.grazing_management.subarea_rotation_or_fencing\n}\n\ndefault accommodation_valid := false\n\naccommodation_valid if {\n\tevery parcel in input.land.parcels {\n\t\taccommodation_valid_for_parcel(parcel)\n\t}\n}\n\naccommodation_valid_for_parcel(parcel) if {\n\tnot parcel.is_alm\n}\n\naccommodation_valid_for_parcel(parcel) if {\n\tparcel.is_alm\n\tparcel.accommodation_available\n}\n\ndefault herd_protection_dog_valid := false\n\nherd_protection_dog_valid if {\n\tinput.livestock.herd_protection_dog.requested\n\tinput.livestock.herd_protection_dog.days_on_single_alm >= 60\n\tinput.livestock.herd_protection_dog.days_on_single_alm >= input.livestock.herd_protection_dog.herded_animals_total_days\n\tinput.livestock.herd_protection_dog.certificate_recognized\n\tinput.livestock.herd_protection_dog.liability_insurance\n\tinput.livestock.herd_protection_dog.permanent_herd_member\n\tinput.livestock.herd_protection_dog.day_and_night_with_herd\n\tinput.livestock.herd_protection_dog.works_without_direct_commands\n\tinput.livestock.herd_protection_dog.dogs_on_alm <= 5\n}\n\ndefault reporting_valid := false\n\nreporting_valid if {\n\tinput.farm.o6_15_payment_application_date <= payment_deadline\n\tevery group in input.livestock.species_groups {\n\t\treport_valid(group)\n\t}\n}\n\nreport_valid(group) if {\n\tnot group.report\n}\n\nreport_valid(group) if {\n\tgroup.report.days_after_event <= group.report.deadline_days\n}\n\ndefault exit_valid := false\n\nexit_valid if {\n\tinput.farm.o6_15_exit.requested\n\tinput.farm.o6_15_exit.exit_effective_date >= sprintf(\"%d-01-01\", [input.farm.year + 1])\n}\n\ndefault drought_higher_force_possible := false\n\ndrought_higher_force_possible if {\n\tinput.farm.year == 2026\n\tinput.farm.o6_15_drought.drought_prevented_obligation\n\tinput.farm.o6_15_drought.higher_force_application_submitted\n}\n\nherded_groups := [group | some group in input.livestock.species_groups; group.herded]\n\nbehirtete_rgve := total if {\n\ttotal := sum([group.gve | some group in herded_groups])\n}\n\nmilchvieh_rgve := total if {\n\ttotal := sum([group.gve | some group in herded_groups; milk_category(group.category); group.milked_days_on_alms >= 45])\n}\n\nmilk_category(category) if {\n\tcategory == \"Milchkühe\"\n}\n\nmilk_category(category) if {\n\tcategory == \"Schafe\"\n}\n\nmilk_category(category) if {\n\tcategory == \"Ziegen\"\n}\n\npremium_rate := rate if {\n\tsome rate in data.rates\n\trate.from_year <= input.farm.year\n\trate.to_year == null\n}\n\npremium_rate := rate if {\n\tsome rate in data.rates\n\trate.from_year <= input.farm.year\n\trate.to_year != null\n\tinput.farm.year <= rate.to_year\n}\n\npayment_deadline := sprintf(\"%d-07-17\", [input.farm.year]) if {\n\tinput.farm.year == 2023\n}\n\npayment_deadline := sprintf(\"%d-07-17\", [input.farm.year]) if {\n\tinput.farm.year == 2028\n}\n\npayment_deadline := sprintf(\"%d-07-15\", [input.farm.year]) if {\n\tinput.farm.year != 2023\n\tinput.farm.year != 2028\n}\n\nfirst_twenty_rgve := min([20, behirtete_rgve])\nafter_twenty_rgve := max([behirtete_rgve - 20, 0])\nmilchvieh_first_twenty := min([20, milchvieh_rgve])\nmilchvieh_after_twenty := max([milchvieh_rgve - 20, 0])\nbase_premium := (first_twenty_rgve * premium_rate.first_20_rgve) + (after_twenty_rgve * premium_rate.after_20_rgve)\nmilk_premium := (milchvieh_first_twenty * premium_rate.milk_first_20_rgve) + (milchvieh_after_twenty * premium_rate.milk_after_20_rgve)\ndog_premium := input.livestock.herd_protection_dog.dogs_on_alm * premium_rate.dog\npremium_eur := (base_premium + milk_premium) + dog_premium\n\nrgve_lookup(species, category) := value if {\n\tsome entry in data.entries\n\tentry.species == species\n\tentry.category == category\n\tvalue := entry.rgve\n}\n\nrgve_key_complete if {\n\tcount(data.entries) == 25\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_15-luna-high-20261004/workspace/tools/opa",
+            "fmt",
+            "tests/behirtung_test.rego"
+          ],
+          "duration_ms": 12,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package opul.o6_15\n\nimport rego.v1\n\ntest_participation_requires_almbewirtschaftung if {\n\tnot participation_valid with input as {\n\t\t\"farm\": {\"participates_almbewirtschaftung\": false, \"year\": 2026},\n\t\t\"livestock\": {\"species_groups\": [{\"species\": \"sheep\", \"category\": \"Schafe\", \"gve\": 3, \"herded\": true}]},\n\t}\n}\n\ntest_participation_requires_three_rgve if {\n\tnot participation_valid with input as {\n\t\t\"farm\": {\"participates_almbewirtschaftung\": true, \"year\": 2026},\n\t\t\"livestock\": {\"species_groups\": [{\"species\": \"sheep\", \"category\": \"Schafe\", \"gve\": 2.99, \"herded\": true}]},\n\t}\n}\n\ntest_milk_cow_definition if {\n\tmilk_cow_category_valid with input as {\n\t\t\"livestock\": {\"species_groups\": [{\n\t\t\t\"species\": \"cattle\",\n\t\t\t\"category\": \"Milchkühe\",\n\t\t\t\"age_years\": 2,\n\t\t\t\"calvings\": 1,\n\t\t\t\"milked_days_on_alms\": 45,\n\t\t}]},\n\t}\n}\n\ntest_sixty_day_boundary if {\n\tsixty_day_requirement_valid with input as {\n\t\t\"land\": {\"parcels\": [{\"is_alm\": true, \"stocking_days\": 60}]},\n\t\t\"livestock\": {\"species_groups\": [{\"herded\": true, \"herding_days\": 60}]},\n\t}\n}\n\ntest_sixty_day_failure if {\n\tnot sixty_day_requirement_valid with input as {\n\t\t\"land\": {\"parcels\": [{\"is_alm\": true, \"stocking_days\": 60}]},\n\t\t\"livestock\": {\"species_groups\": [{\"herded\": true, \"herding_days\": 59}]},\n\t}\n}\n\ntest_dog_requires_single_alm_minimum if {\n\tnot herd_protection_dog_valid with input as {\n\t\t\"livestock\": {\"herd_protection_dog\": {\n\t\t\t\"requested\": true,\n\t\t\t\"days_on_single_alm\": 40,\n\t\t\t\"herded_animals_total_days\": 80,\n\t\t\t\"certificate_recognized\": true,\n\t\t\t\"liability_insurance\": true,\n\t\t\t\"permanent_herd_member\": true,\n\t\t\t\"day_and_night_with_herd\": true,\n\t\t\t\"works_without_direct_commands\": true,\n\t\t\t\"dogs_on_alm\": 1,\n\t\t}},\n\t}\n}\n\ntest_dog_valid_and_limited_to_five if {\n\therd_protection_dog_valid with input as {\n\t\t\"livestock\": {\"herd_protection_dog\": {\n\t\t\t\"requested\": true,\n\t\t\t\"days_on_single_alm\": 65,\n\t\t\t\"herded_animals_total_days\": 65,\n\t\t\t\"certificate_recognized\": true,\n\t\t\t\"liability_insurance\": true,\n\t\t\t\"permanent_herd_member\": true,\n\t\t\t\"day_and_night_with_herd\": true,\n\t\t\t\"works_without_direct_commands\": true,\n\t\t\t\"dogs_on_alm\": 5,\n\t\t}},\n\t}\n}\n\ntest_rgve_lookup if {\n\trgve_lookup(\"sheep\", \"1_year_or_older\") == 0.15\n}\n\ntest_rgve_data_complete if {\n\trgve_key_complete\n}\n\ntest_premium_boundary if {\n\tpremium_eur == 1620 with input as {\n\t\t\"farm\": {\"year\": 2026},\n\t\t\"livestock\": {\n\t\t\t\"species_groups\": [{\"gve\": 20, \"herded\": true, \"category\": \"Sonstige Rinder\"}],\n\t\t\t\"herd_protection_dog\": {\"dogs_on_alm\": 0},\n\t\t},\n\t}\n}\n\ntest_special_payment_deadline if {\n\tpayment_deadline == \"2028-07-17\" with input as {\"farm\": {\"year\": 2028}}\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_15-luna-high-20261004/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 17,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 11/11\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_15-luna-high-20261004/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 63,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_15-luna-high-20261004/workspace"
+}
