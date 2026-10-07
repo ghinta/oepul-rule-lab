@@ -288,6 +288,25 @@ def validate(
         normative["premium_rates"] == tables["premium_rates_eur_per_ha"],
         "premium rate drift",
     )
+    source_rates = [
+        float(n.replace(",", "."))
+        for n in re.findall(r"\b\d+,\d+\b", evidence["rates-2023-2024"]["quote"])
+    ]
+    require(len(source_rates) == 5, "incomplete premium source block")
+    for row in normative["premium_rates"]:
+        require(row["from_year"] in {2023, 2024}, "unreviewed premium year")
+        index = (
+            0
+            if not row["tierholding"]
+            else (
+                (1 if row["from_year"] == 2023 else 2)
+                + (2 if row["no_mower_conditioner"] else 0)
+            )
+        )
+        require(
+            row["rate"] == source_rates[index],
+            "premium coefficient disagrees with source",
+        )
     for blocker in blockers.values():
         require(
             blocker["rule_id"] in rules and blocker["required_resolution"],
