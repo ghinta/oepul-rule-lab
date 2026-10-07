@@ -13,6 +13,13 @@ Branch: `codex/issue-97-heuwirtschaft`. Lokale Auswertung: 07.10.2026.
   sämtliche in `lineage.json` aufgeführten Hashes geprüft.
 - Schema entspricht den Pydantic-Modellen; Workflow-YAML ist syntaktisch gültig.
 
+Der erste Remote-Lauf bestand die 75 Repository-Tests bereits mit der
+offiziellen gepinnten Binary. Er deckte eine Umgebungsabhängigkeit im
+bestehenden Auto-Auswahl-Test des Validators auf. Dieser Test entfernt
+jetzt ausschließlich die expliziten `OPA_BIN`-/`OPA_RUNTIME`-Overrides,
+damit er die beabsichtigte automatische Workspace-Auswahl prüft. Der
+separate Override-Test bleibt bestehen.
+
 Die lokale Binary hat SHA-256
 `16118120a6a662c25c678b02b411d8cb22e32460f5d47d2ff9466ff2ed5104cc`.
 Sie erfüllt den vorhandenen lokalen Versionscheck (1.18.2). CI lädt separat

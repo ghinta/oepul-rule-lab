@@ -195,7 +195,10 @@ class SourceCaseTests(unittest.TestCase):
 
     def test_foreign_stock_is_not_counted(self):
         value = case(); value["livestock"]["species_groups"][0]["kept_in_austria"] = False
+        value["livestock"]["species_groups"][0]["average_count"] = None
+        value["livestock"]["species_groups"][0]["rgve_category"] = None
         result = self.run_case(value)
+        self.assertEqual("eligible", result["status"])
         self.assertEqual(0, result["current_rgve"])
 
     def test_first_year_area_boundary(self):

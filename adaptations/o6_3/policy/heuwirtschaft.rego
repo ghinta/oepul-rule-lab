@@ -107,17 +107,20 @@ group_count(g) := g.animal_count if {
 collection_missing contains sprintf("livestock.species_groups[%s].rgve_category", [g.group_id]) if {
 	some g in groups
 	not g.species in non_rgve_species
+	object.get(g, "kept_in_austria", null) != false
 	not rgve_row(g)
 }
 
 collection_missing contains sprintf("livestock.species_groups[%s].average_count", [g.group_id]) if {
 	some g in groups
+	object.get(g, "kept_in_austria", null) != false
 	rgve_row(g).average_required
 	object.get(g, "average_count", null) == null
 }
 
 collection_missing contains sprintf("livestock.species_groups[%s].animal_count", [g.group_id]) if {
 	some g in groups
+	object.get(g, "kept_in_austria", null) != false
 	not rgve_row(g).average_required
 	object.get(g, "average_count", null) == null
 	object.get(g, "animal_count", null) == null
@@ -155,6 +158,7 @@ collection_missing contains sprintf("land.parcels[%s].located_in_austria", [p.pa
 
 collection_missing contains sprintf("land.parcels[%s].is_applied", [p.parcel_id]) if {
 	some p in parcels
+	object.get(p, "located_in_austria", null) != false
 	object.get(p, "is_applied", null) == null
 }
 
