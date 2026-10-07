@@ -113,4 +113,3 @@ Run: `v2-o6_12-opus-5.5-high-20260926` (Modus `discover`)
   Belege sind auffindbar.
 - Die Sonderrichtlinie enthält in der Textfassung Extraktionsartefakte, z. B. „au f“
   oder „Fläch en“. Belege wurden daher auf artefaktfreie Zeilenabschnitte beschränkt.
-

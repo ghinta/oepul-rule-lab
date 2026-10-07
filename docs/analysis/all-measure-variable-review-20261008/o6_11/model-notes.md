@@ -53,4 +53,3 @@ Run: `v2-o6_11-opus-5.5-high-20261001` (Modus `discover`)
 - Anhang L wurde aus den Textkoordinaten der PDF-Seite 103 rekonstruiert (Spalten-x-Positionen, Fußnoten als hochgestellte Marker); die Matrix ist für Zeile/Spalte 11 symmetrisch (1A Fn 1, 2, 10, 12). Fehler bei anderen Zellen sind möglich und für Maßnahme 11 ohne Auswirkung.
 - In SRL 1.9.4 wird UBB redaktionell mit „(1B)“ bezeichnet; in `farm_combination_exclusions.json` als 1A interpretiert.
 - `evidence_text` wurde gegen den seitenmarkierten Text und die pypdf-Extraktion derselben Seite (Whitespace normalisiert) bzw. gegen den HTML-Rohtext geprüft. Einige SRL-Zitate enthalten die Original-Leerzeichenartefakte der PDF-Extraktion (z. B. „Fläch en“).
-

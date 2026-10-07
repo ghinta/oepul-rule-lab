@@ -138,4 +138,3 @@ folgenden Annahmen.
   mit Ausnahme der automatischen Anerkennung 2026.
 - Konditionalitätskürzungen nach VO (EU) 2021/2116 werden nur als Hinweis
   ausgegeben, nicht berechnet.
-

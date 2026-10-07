@@ -123,4 +123,3 @@ Run: `v2-o6_14-opus-5.5-high-20260926` (Modus `discover`)
 - Es ist offen, ob die Dürre-Regelungen 2026 zur höheren Gewalt eine Prämie auch
   bei Unterschreiten der 60 Tage ermöglichen. Das Modell weist nur die
   Möglichkeit eines Ansuchens aus.
-

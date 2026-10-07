@@ -112,4 +112,3 @@ als aktuelle Verwaltungsauslegung verwendet, wenn es konkreter ist.
   Anhang L vollständig mit 134 Zellen).
 - Die vorgeschlagenen Eingabefelder stehen in `rules/profile_changes.json`.
   Das Canonical Farm Profile wurde nicht verändert.
-

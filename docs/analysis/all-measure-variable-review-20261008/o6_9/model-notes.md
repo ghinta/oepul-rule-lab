@@ -98,4 +98,3 @@ und die Anhänge gezielt (Anhang A S. 3, Anhang L S. 103). Umfang und Begründun
    Genehmigung durch die AMA ist nicht modelliert.
 5. **Nicht anwendbare 2026-Hinweise.** Die Hinweise zu Biodiversitätsflächen und zum Insektizidverzicht sowie
    weitere Dürre-Erleichterungen betreffen andere Maßnahmen und sind in `coverage.json` als `not_rule` erfasst.
-

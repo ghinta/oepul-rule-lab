@@ -124,4 +124,3 @@ Die vorgeschlagenen Pfade in `rules/profile_changes.json` werden von der Policy 
 greifen Defaults (`object.get`), sodass die Policy auch mit dem unveränderten Profil auswertbar bleibt.
 Agroforststreifen sind als eigenes Array `land.agroforestry_strips` modelliert, da sie Landschaftselemente
 und keine Parzellen im Sinne von `land.parcels` sind.
-

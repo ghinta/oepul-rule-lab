@@ -77,4 +77,3 @@ Run: `v2-o6_13-opus-5.5-high-20260926` (Modus `discover`)
   Zellen); Zeile und Spalte 13 sind leer.
 - Ein Versuch, ein Hilfsskript nach `/tmp` zu schreiben, wurde (Pfad außerhalb des
   Workspace) abgelehnt; Generierung erfolgte über Inline-Python.
-

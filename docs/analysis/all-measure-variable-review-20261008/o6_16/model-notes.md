@@ -129,4 +129,3 @@ Run: `v2-o6_16-opus-5.5-high-20261002` (Modus `discover`)
   25-%-Regel wird über die gesamte Acker-DIV-Fläche des Betriebes geprüft.
 - Die Meldung zum vorzeitigen Ausstieg aus dem Insektizidverzicht (Rebzikade) betrifft nur o6_12 und ist
   `not_rule`.
-

@@ -97,4 +97,3 @@ Run: `v2-o6_23-opus-5.5-high-20260928` (Modus `discover`)
 19. **Mehrjährige Bestimmungen.** Flächenabgangs-Toleranzen und Rückzahlung bei Vertragsbruch
     gelten nur für mehrjährige Maßnahmen und sind für o6_23 bewusst nicht implementiert
     (Coverage `not_rule`).
-

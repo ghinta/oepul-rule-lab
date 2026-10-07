@@ -142,4 +142,3 @@ Run: `v2-o6_22-opus-5.5-high-20260928` (Modus `discover`)
   Nachbeantragung mit schriftlichem Ersuchen, O622-VIS-02 VIS-Abgleich, O622-TGD-03
   Nachweis auf Aufforderung, Selbstanzeige, Revisionsklausel) sind im Katalog erfasst,
   aber mangels entscheidbarer Eingaben nicht als Rego-Prüfung implementiert.
-

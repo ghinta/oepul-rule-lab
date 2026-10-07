@@ -171,4 +171,3 @@ bei Abweichungen gilt die Sonderrichtlinie vor dem Informationsblatt (O6_5-GEN-L
    formuliert allgemein; umgesetzt ist sie für alle Tierarten.)
 4. Maßgebliche Fläche für die Betriebsmindestgröße bei reinen Tierhaltungsbetrieben (A-23).
 5. Umgang mit mehrstufigen Nachbesetzungsketten über zwei Ebenen hinaus (A-13).
-

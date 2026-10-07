@@ -91,4 +91,3 @@ Das Canonical Farm Profile enthält keine ÖPUL-spezifischen Daten (Maßnahmenco
 Nutzungsereignisse, Biodiversitätsflächen, LSE, Monitoring). Alle benötigten Felder sind in
 `rules/profile_changes.json` als Ergänzungen vorgeschlagen; `constraints.biodiversity_area.type` wird zur Umstellung
 auf die UBB-Codes vorgeschlagen.
-

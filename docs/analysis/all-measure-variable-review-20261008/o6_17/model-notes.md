@@ -94,4 +94,3 @@ Run: `v2-o6_17-opus-5.5-high-20261002`, Modus `discover`.
   hat genau einen eindeutigen Top-Level-Schlüssel.
 - Ein Schreibversuch für ein Hilfsskript nach `/tmp` wurde von der Berechtigungsprüfung abgelehnt. Die
   Generierung lief deshalb über Python per stdin direkt in die erlaubten Ausgabedateien.
-

@@ -245,7 +245,7 @@ def outputs(data):
         notes = [f'# {m}: unveränderte Modellnotizen', '', 'Sämtliche Modellannahmen sind unbestätigt. Auch nicht einzeln priorisierte Auslegungen müssen vor Übernahme geprüft werden.', '']
         for model, run in item['runs'].items():
             notes += [f'## {model}: `{run["run_id"]}`', '', (ROOT / run['model_assumptions_file']).read_text(), '']
-        result[f'{m}/model-notes.md'] = '\n'.join(notes)
+        result[f'{m}/model-notes.md'] = '\n'.join(notes).rstrip() + '\n'
     catalogue = questions()
     result['cross-measure-questions.md'] = render_questions(catalogue['cross_measure'], '# Gemeinsame Fachentscheidungen')
     lines = ['# Variablen- und Pfadreview: alle 26 Maßnahmen', '',

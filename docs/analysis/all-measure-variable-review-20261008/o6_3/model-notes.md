@@ -55,4 +55,3 @@ Sämtliche Modellannahmen sind unbestätigt. Auch nicht einzeln priorisierte Aus
 1. Gilt eine vor Vertragsbeginn angeschaffte, aber stillgelegte Mähaufbereiter-Einheit als „am Betrieb vorhanden“? Aktuell zählt jedes vorhandene Gerät als Verstoß.
 2. Zählt eine Streuwiese in der Futterflächenberechnung, wenn sie nur zur Einstreu genutzt wird? Aktuell ja, weil sie Grünland ist.
 3. Die Kombinationsverpflichtung muss laut Merkblatt „zeitgleich“ erfüllt sein. Sie wird jährlich geprüft. Bei Wegfall ab dem 2. Jahr gibt es keine Prämie (SRL 1.12.1.1); ob zusätzlich eine Rückforderung aus dem Vertragszeitraum folgt, ist nicht abschließend geregelt.
-

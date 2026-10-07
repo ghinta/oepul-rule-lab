@@ -130,4 +130,3 @@ Daten liefert:
 - Auszahlungsmodalitäten
 - Maßnahmenwechsel (nicht anwendbar)
 - Flächenabgangs-Toleranz (nicht anwendbar)
-

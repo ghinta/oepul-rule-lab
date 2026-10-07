@@ -113,4 +113,3 @@ Run: `v2-o6_7-opus-5.5-high-20260925` · Modus `discover`
   Immergrün (Anhang L zeigt keine Kombinierbarkeit mit 18/19).
 - Das Merkblatt führt keinen maßnahmenbezogenen OP-Code für System Immergrün an; die
   Eingabe `op_measure_codes` enthält daher den Maßnahmencode „7“.
-

@@ -120,4 +120,3 @@ Alle neuen Eingaben stehen in `rules/profile_changes.json` und nutzen die Notati
 Maßnahmenzuordnung mit Landschaftselement-Komponente, Mahd- und Weidedetails, Düngemittelarten, der
 Bio-PSM-Status und die Nationalparklage. Betriebsbezogen kommen Förderwerberstatus, Heimbetriebsseehöhe,
 Almbetrieb und maßnahmenbezogene Vertrags- und Flächenhistorie hinzu.
-

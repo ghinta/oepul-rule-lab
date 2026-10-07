@@ -72,4 +72,3 @@ Run `v2-o6_18-opus-5.5-high-20260927`, Modus `discover`.
 - **Dürre-Gebietskulisse Ernte:** Sie wird nur auf NAT-Ackerflächen mit Kapitel-A-Auflagen angewendet. Die Mindestbewirtschaftungskriterien gelten laut SRL nur, soweit die Maßnahme nichts Abweichendes bestimmt. Für NAT-Grünland gilt die Nutzung laut Projektbestätigung und „alle 2 Jahre“, deshalb dort keine jährliche Mahdpflicht.
 - **Sanktionsstufen:** Die Zuordnung eines konkreten Verstoßes zu einer Stufe (Schwere, Ausmaß, Dauer, Häufigkeit) ist nicht öffentlich festgelegt. Modelliert sind nur die Stufen, die Änderung ab 2027 und der Ausschluss.
 - **`land.parcels[].constraints.is_contract_nature_area`:** Das vorhandene Feld ist mehrdeutig. Die Teilnahme wird über den Code `NAT` in `land.parcels[].oepul.codes` bestimmt (neu vorgeschlagen).
-

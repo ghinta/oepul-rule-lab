@@ -106,4 +106,3 @@ Das Canonical Farm Profile enthält keine maßnahmenbezogenen Tier-, Melde- und 
 `farm.applicant`, `farm.oepul_participation`, `land.protected_cultivation_area_ha`, der Teilbaum `oepul_measures.tierwohl_weide`
 (inkl. `categories[]` und `animals[]`), `oepul_measures.tierwohl_stallhaltung_rinder` sowie eine Erweiterung des Enums
 `livestock.species_groups[].species` um `new_world_camelids`.
-

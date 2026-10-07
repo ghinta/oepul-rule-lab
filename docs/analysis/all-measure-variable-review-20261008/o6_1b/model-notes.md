@@ -168,4 +168,3 @@ Rego-Entscheidung: TB-003, BV-001, BV-005, BV-006, PSM-002, GL-003, WB-004, WB-0
 DG-014, MO-004, ATB-019, ATB-023, ATB-024, ATB-029, N26-011, N26-012, N26-013. ATB-026
 (Kombinationstabelle Anhang L) ist vollständig als Daten erfasst (`data/o6_1b/combination.json`); die
 Maßnahmenausschlüsse auf Betriebsebene werden über AN-001/AN-002 in Rego geprüft.
-

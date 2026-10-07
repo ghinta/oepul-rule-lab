@@ -110,4 +110,3 @@ Run: `v2-o6_24-opus-5.5-high-20260928` (Modus `discover`)
 Alle neuen Eingabefelder sind in `rules/profile_changes.json` beschrieben. Das vorhandene Feld
 `farm.region.water_protection_zone` reicht nicht aus: Es ist betriebsbezogen und bildet weder die
 konkrete WRRL-Gebietskulisse noch Düngeklassen ab. Es bleibt daher unverändert.
-

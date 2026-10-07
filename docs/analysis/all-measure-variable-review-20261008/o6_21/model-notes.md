@@ -100,4 +100,3 @@ Deshalb werden neue Strukturen vorgeschlagen, statt die bestehenden Felder umzud
 - Die Hilfsdateien `rules/_cites_draft.json` und `rules/_src.json` stammen aus der Generierung. Sie gehören
   nicht zu den erlaubten Artefakten. Das Löschen per Tool wurde in dieser Sitzung verweigert; sie sollten
   manuell entfernt werden.
-

@@ -141,4 +141,3 @@ Run: `v2-o6_15-opus-5.5-high-20260926`, Modus `discover`.
     `alpine_farming` (siehe `rules/profile_changes.json`). Die vorhandenen
     aggregierten `livestock.species_groups` reichen für einzeltierbezogene
     Alpungs- und Meldedaten nicht aus und werden nicht verwendet.
-

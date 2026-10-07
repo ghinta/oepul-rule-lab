@@ -149,4 +149,3 @@ Konditionalitätsprüfungen im Profil nicht abgebildet sind.
   Textextraktion Leerzellen nicht erhält; Zeile und Spalte 2 stimmen überein.
 - Die GSP-AV (u. a. § 6 höhere Gewalt, §§ 42–48 Kürzungen) und das MOG 2021 lagen nicht vor.
   Verweise darauf sind als Querverweise erfasst, aber nicht inhaltlich implementiert.
-
