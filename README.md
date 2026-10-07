@@ -155,6 +155,10 @@ Grundwasserschutz ist ebenfalls als Draft dokumentiert:
 
 ## Manuelle Adaptationen
 
+Der [Quellenreview und Variablenvertrag für die o6_3-App-Integration](docs/analysis/o6_3-variable-contract-20261007/README.md)
+verbindet den Adaptationsvertrag mit dem App-Stand nach PR #135 und weist
+die vor einer vollständigen Empfehlung offenen Nachweise ausdrücklich aus.
+
 `adaptations/o6_3/` enthält den quellengebundenen Heuwirtschaft-Kandidaten
 für [Issue #97](https://github.com/ghinta/oepul-rule-lab/issues/97).
 Die getrennte Lineage erhält die historischen Modell-Runs unverändert.
