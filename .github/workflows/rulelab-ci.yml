@@ -1,0 +1,54 @@
+name: Rule Lab checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Rule Lab
+        run: python -m pip install -e .
+      - name: Stage pinned OPA with repository checksum
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          from rulelab.cli import download_pinned_opa, verify_opa_binary
+          workspace = Path(os.environ['RUNNER_TEMP']) / 'opa-workspace'
+          tools = workspace / 'tools'
+          tools.mkdir(parents=True)
+          version = Path('runner/validation/opa-version.txt').read_text().strip()
+          download_pinned_opa(tools / 'opa', version)
+          verify_opa_binary(tools / 'opa', version)
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write(f'OPA_BIN={tools / "opa"}\nOPA_RUNTIME=local\n')
+          PY
+      - name: Input, provenance and source-derived regression tests
+        run: python -m unittest discover -s tests -v
+      - name: Validator regression tests
+        run: python -m unittest discover -s runner/validation/tests -v
+      - name: Adaptation format, strict compilation and OPA tests
+        run: |
+          python runner/validation/opa_validate.py validate \
+            --workspace adaptations/o6_3 --runtime local --opa-bin "$OPA_BIN" \
+            --target policy --target data --target tests \
+            --result-json "$RUNNER_TEMP/heuwirtschaft-validation.json" --pretty
+          "$OPA_BIN" test --fail-on-empty adaptations/o6_3/policy adaptations/o6_3/data adaptations/o6_3/tests
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: heuwirtschaft-validation
+          path: ${{ runner.temp }}/heuwirtschaft-validation.json
+          if-no-files-found: ignore
