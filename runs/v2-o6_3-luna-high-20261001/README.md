@@ -20,6 +20,15 @@ Der finale, begrenzte Korrekturlauf startete bei 98 % Restbudget. Die
 Stoppschwelle von 5 % wurde nicht erreicht; es wurden keine Reset-Credits
 verwendet.
 
-Die veröffentlichten Dateien enthalten nur die nachvollziehbaren,
-finalisierten Run-Artefakte; Rohprotokolle, Quelldokumente und Arbeitswerkzeuge
-sind nicht Teil dieses Exports.
+## Nachträgliche Finalisierung
+
+Am 7. Oktober 2026 wurde der reguläre Finalizer nach Wiederherstellung des
+unveränderten Generatorlogs aus PR #95 erneut ausgeführt. Status und Metriken
+in `run.json` sowie Inventar und technischer Prüfbericht entsprechen diesem
+erfolgreichen Abschluss. Es wurde kein neuer Modelllauf gestartet; Regeln,
+Belege, Daten und Tests wurden nicht geändert. Der Explorer-Eintrag stimmt
+bereits mit den finalisierten Metriken überein.
+
+Die veröffentlichten Dateien enthalten die nachvollziehbaren Run-Artefakte
+und das ursprüngliche Generatorlog unter `raw/events.jsonl`. Quelldokumente
+und Arbeitswerkzeuge sind nicht Teil dieses Exports.
