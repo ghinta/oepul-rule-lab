@@ -3,6 +3,16 @@
 Dieses Repository dient der möglichst vollständigen Extraktion ausführbarer
 Regeln aus den bereitgestellten ÖPUL-Quellen.
 
+## Geltungsbereich
+
+Die nachfolgenden Vorgaben zu Budget, Änderungswegen und vorbereitetem
+Run-Workspace gelten für Modell-Generierungsaufträge. Separat vom Nutzer
+beauftragte Repository-Wartung und manuelle Adaptationen mit Tests, CI und
+Dokumentation (wie #97) erfolgen auf einem eigenen Branch außerhalb der
+historischen Run-Workspaces. Sie sind keine neuen Modell-Runs.
+Quelldokumente und Canonical Farm Profile bleiben auch dabei unverändert;
+ausführbare fachliche Regeln benötigen dieselben überprüfbaren Quellenbelege.
+
 ## Nutzungsgrenze (Codex und Claude)
 
 Ein Codex- oder Claude-Run darf nur mit mindestens 50 % Restbudget im

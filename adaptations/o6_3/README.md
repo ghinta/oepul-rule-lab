@@ -38,6 +38,7 @@ die Auswahl der tatsächlich aktuellen Daten bleibt Aufgabe von P1/P2.
 | `farm.heuwirtschaft.contract_start_year`, `first_year.*` | Gültiger bestehender Vertrag und datierte Erstjahresnachweise. Folgejahre übernehmen keine heutigen RGVE als damaligen Nachweis. |
 | `land.parcels_complete`, `livestock.species_groups_complete` | Bestätigte Vollständigkeit des effektiven Datenbestands. Importexistenz allein reicht nicht. |
 | `land.parcels[]` | Stabile Schlag-ID, Fläche, Nutzungsart, Österreich-/Antragsbezug; Mahddaten sind Beobachtungen im Prüfjahr bis zum Stichtag. |
+| `crop.forage_crop_type` | Bei beantragtem Ackerland: bekannte Futterkultur aus `data/tables.json` oder ausdrücklich bestätigtes `non_fodder`. Unbekannte, leere oder nicht zugeordnete Importcodes ergeben `missing_data`; der Adapter darf sie nicht als `non_fodder` behandeln. `is_second_crop` wird für Futterkulturen benötigt. |
 | `livestock.species_groups[]` | Stabile Gruppen-ID, Art und geschlossene RGVE-Kategorie aus `data/tables.json`; Alters-/Größenklasse explizit zuordnen. `other` mit bekannter Kategorie kann Wild/Neuweltkamele repräsentieren. |
 | `average_count`, `animal_count` | Quellengebundener Durchschnitt bzw. Stichtagsbestand; kein ungeprüfter Wechsel bei Rindern. |
 | `farm.heuwirtschaft.*` | Aktuelle tatsächliche Angaben zu Silage, Gärung, Grünfütterung, Abgabe und Option; Null/fehlend bedeutet unbekannt, `false` bedeutet ausdrücklich verneint. |
@@ -49,7 +50,7 @@ Consumption-Dependency zum jeweiligen Rego-Check. Herkunft, Übersteuerung,
 Rücknahme und Veraltung müssen im dortigen DecisionTrace erscheinen.
 `missing_data` enthält die hier tatsächlich konsumierten fehlenden Pfade;
 ein registriertes Feld ohne diese Verbindung wäre noch keine Integration.
-Typfehler, doppelte IDs und unmögliche Beobachtungsdaten werden vor OPA als
+Typfehler, nicht endliche Zahlen, doppelte IDs und unmögliche Beobachtungsdaten werden vor OPA als
 Eingabefehler abgelehnt. Fehlend und Null bleiben dagegen echte Datenlücken.
 
 Die drei Slice-Statuswerte unterscheiden Erfüllung, bekannte Nichterfüllung
@@ -60,8 +61,11 @@ unterdrücken oder eine günstige Gesamtentscheidung vorzutäuschen.
 
 ## Herkunft und Grenzen
 
-`citations.json` bindet die wichtigsten Reparaturen an PDF-Seite und
-wörtlichen Beleg. Tests prüfen diese Belege und sämtliche gebundenen
+`citations.json` bindet die Reparaturen und die ausgeführten Pflichten an
+PDF-Seite, Abschnitt und wörtlichen Beleg. `decision.rule_sources` ordnet
+jedem Verpflichtungs-ID den entsprechenden Datensatz zu, einschließlich
+Silagebereitung/-fütterung, Gärung, Lagerung, Grünfütterung und Mähgutabgabe.
+Tests prüfen diese Zuordnung, die Belege und sämtliche gebundenen
 Quellen-/Upstream-Hashes. Die RGVE-/Prämiensätze wurden wertgleich aus dem
 Luna-Quelleninventar übernommen; nur Kategorie-, Arten- und
 Durchschnittsmetadaten sind ergänzt. Die Tabellenwerte sind keine

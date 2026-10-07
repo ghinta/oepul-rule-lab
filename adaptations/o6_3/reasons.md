@@ -27,3 +27,10 @@ Quellenfälle, vollständige Kategorienprüfung, Schema-/Provenienzchecks und
 OPA-Gates laufen lokal und in CI. Diese sichtbaren Entwicklungsfälle sind kein
 Golden-/Held-out-Benchmark. P1/P2 und die tatsächliche App-Promotion folgen;
 dieser begrenzte Kandidat verspricht keine vollständige Förderfähigkeitsprüfung.
+
+Review #99: Unbekannte Kulturcodes bleiben Datenlücken; nur bestätigtes
+`non_fodder` schließt Ackerland aus dem Futterflächen-Nenner aus. Nicht
+endliche Zahlen werden vor OPA abgelehnt. Verpflichtungs-IDs verweisen im
+Ergebnis auf genaue, maschinell geprüfte Quellenbelege. Die `AGENTS.md`
+grenzt Generator-Runs ausdrücklich von beauftragter Repository-Wartung
+und manuellen Adaptationen ab.

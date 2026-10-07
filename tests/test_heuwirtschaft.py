@@ -60,6 +60,25 @@ class InputContractTests(unittest.TestCase):
                 value = case(); value["livestock"]["species_groups"][0]["average_count"] = bad
                 with self.assertRaises(ValidationError): self.validate(value)
 
+    def test_nonfinite_numeric_facts_are_rejected_before_opa(self):
+        paths = [
+            ("land", "parcels", 0, "area_ha"),
+            ("livestock", "species_groups", 0, "animal_count"),
+            ("livestock", "species_groups", 0, "average_count"),
+            *[("farm", "heuwirtschaft", "first_year", field) for field in
+              ["mown_meadow_meadow_pasture_ha", "rgve_total", "fodder_area_ha"]],
+        ]
+        for path in paths:
+            for token in ["1e999", "-1e999", "NaN", "Infinity", "-Infinity"]:
+                with self.subTest(path=path, token=token):
+                    value = case()
+                    target = value
+                    for key in path[:-1]: target = target[key]
+                    target[path[-1]] = "NONFINITE_TEST_VALUE"
+                    payload = json.dumps(value).replace('"NONFINITE_TEST_VALUE"', token)
+                    with self.assertRaises(ValidationError):
+                        evaluate(payload, Path("/does/not/exist/opa"), BUNDLE)
+
     def test_entity_duplicates_are_rejected(self):
         for collection, key in [("land", "parcels"), ("livestock", "species_groups")]:
             with self.subTest(collection=collection):
@@ -258,6 +277,62 @@ class SourceCaseTests(unittest.TestCase):
         result = self.run_case(value)
         self.assertEqual(10, result["forage_area_ha"])
         self.assertEqual(8, result["premium_area_ha"])
+
+    def test_unknown_arable_crop_cannot_shrink_first_year_denominator(self):
+        value = case(year=2025)
+        value["farm"]["heuwirtschaft"]["contract_start_year"] = 2025
+        value["livestock"]["species_groups"][0]["average_count"] = .7
+        value["land"]["parcels"] = [value["land"]["parcels"][0], value["land"]["parcels"][2]]
+        value["land"]["parcels"][0]["area_ha"] = 2
+        value["land"]["parcels"][1]["area_ha"] = 1
+        known = self.run_case(value)
+        self.assertEqual("ineligible", known["status"])
+        self.assertEqual(3, known["forage_area_ha"])
+        for crop in [None, "kleegrass", "unknown", ""]:
+            with self.subTest(crop=crop):
+                value["land"]["parcels"][1]["crop"]["forage_crop_type"] = crop
+                result = self.run_case(value)
+                self.assertEqual("missing_data", result["status"])
+                self.assertIn("land.parcels[A1].crop.forage_crop_type", result["missing_data"])
+                for key in ["forage_area_ha", "premium_area_ha", "indicative_rate_eur_per_ha", "indicative_premium_eur"]:
+                    self.assertIsNone(result[key])
+
+    def test_confirmed_non_fodder_is_a_complete_arable_classification(self):
+        value = case()
+        value["land"]["parcels"][2]["crop"] = {"forage_crop_type": "non_fodder"}
+        result = self.run_case(value)
+        self.assertEqual("eligible", result["status"])
+        self.assertEqual(10, result["forage_area_ha"])
+        self.assertEqual(8, result["premium_area_ha"])
+
+    def test_arable_pasture_counts_in_denominator_without_premium(self):
+        value = case()
+        value["land"]["parcels"][2]["crop"]["forage_crop_type"] = "ackerweide"
+        result = self.run_case(value)
+        self.assertEqual("eligible", result["status"])
+        self.assertEqual(13, result["forage_area_ha"])
+        self.assertEqual(8, result["premium_area_ha"])
+
+    def test_executable_obligations_identify_exact_source_records(self):
+        records = json.loads((BUNDLE / "citations.json").read_text())
+        citations = {record["id"]: record for record in records}
+        self.assertEqual(len(records), len(citations))
+        facts = {"SILAGE": ("silage_preparation_and_feeding", True),
+                 "FERMENTATION": ("feed_fermentation", True),
+                 "STORAGE": ("silage_storage", True),
+                 "GREEN_FEEDING": ("green_feeding_majority_april_to_september", False),
+                 "HAY_TRANSFER": ("third_party_cuttings_only_dry_hay", False)}
+        for obligation, (field, bad) in facts.items():
+            with self.subTest(obligation=obligation):
+                value = case(); value["farm"]["heuwirtschaft"][field] = bad
+                result = self.run_case(value)
+                self.assertIn({"id": obligation, "parcel_id": None}, result["violations"])
+                source = citations[result["rule_sources"][obligation]]
+                self.assertEqual("sources/oepul/originals/o6_3_heuwirtschaft_2025_10.pdf", source["path"])
+                self.assertTrue(source["section"].startswith("5."))
+        sources = self.run_case(case())["rule_sources"]
+        self.assertEqual(set(facts) | {"MOWER_CONDITIONER", "MINIMUM_MANAGEMENT"}, set(sources))
+        self.assertTrue(all(source in citations for source in sources.values()))
 
     def test_option_only_requires_machine_facts_if_requested(self):
         value = case(); value["farm"]["heuwirtschaft"]["no_mower_conditioner_option"] = True

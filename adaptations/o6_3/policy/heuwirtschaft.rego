@@ -137,6 +137,10 @@ total_rgve := sum([amount | some g in groups; not g.species in non_rgve_species;
 # MB p. 2: all applied forage land counts, including nature-protection land.
 is_forage(p) if p.land_use == "grassland"
 
+# citations.json: arable-crop-classification. non_fodder is an explicit host
+# classification of known non-fodder land, never a fallback for unknown codes.
+arable_crop_classes := {crop | some crop in tables.arable_fodder_for_livestock_calculation} | {"non_fodder"}
+
 is_forage(p) if {
 	p.land_use == "arable"
 	object.get(p, ["crop", "forage_crop_type"], null) in tables.arable_fodder_for_livestock_calculation
@@ -173,13 +177,14 @@ collection_missing contains sprintf("land.parcels[%s].crop.forage_crop_type", [p
 	some p in parcels
 	applied(p)
 	p.land_use == "arable"
-	object.get(p, ["crop", "forage_crop_type"], null) == null
+	not object.get(p, ["crop", "forage_crop_type"], null) in arable_crop_classes
 }
 
 collection_missing contains sprintf("land.parcels[%s].crop.is_second_crop", [p.parcel_id]) if {
 	some p in parcels
 	applied(p)
 	p.land_use == "arable"
+	object.get(p, ["crop", "forage_crop_type"], null) in tables.arable_fodder_for_livestock_calculation
 	object.get(p, ["crop", "is_second_crop"], null) == null
 }
 
@@ -268,14 +273,20 @@ basis_failures contains "HISTORICAL_RGVE" if {
 	history.rgve_total / history.fodder_area_ha < 0.3
 }
 
-# MB pp. 2-4. No invented day-count interpretation of 'überwiegend'.
+# Exact obligation sources resolve through citations.json; no invented
+# day-count interpretation of 'überwiegend'.
 fact_rules := {
-	"SILAGE": {"field": "silage_preparation_and_feeding", "expected": false},
-	"FERMENTATION": {"field": "feed_fermentation", "expected": false},
-	"STORAGE": {"field": "silage_storage", "expected": false},
-	"GREEN_FEEDING": {"field": "green_feeding_majority_april_to_september", "expected": true},
-	"HAY_TRANSFER": {"field": "third_party_cuttings_only_dry_hay", "expected": true},
+	"SILAGE": {"field": "silage_preparation_and_feeding", "expected": false, "citation_id": "silage-prohibition"},
+	"FERMENTATION": {"field": "feed_fermentation", "expected": false, "citation_id": "fermentation-prohibition"},
+	"STORAGE": {"field": "silage_storage", "expected": false, "citation_id": "silage-storage-prohibition"},
+	"GREEN_FEEDING": {"field": "green_feeding_majority_april_to_september", "expected": true, "citation_id": "green-feeding-obligation"},
+	"HAY_TRANSFER": {"field": "third_party_cuttings_only_dry_hay", "expected": true, "citation_id": "hay-transfer-obligation"},
 }
+
+rule_sources := object.union({id: rule.citation_id | some id, rule in fact_rules}, {
+	"MOWER_CONDITIONER": "mower-conditioner",
+	"MINIMUM_MANAGEMENT": "forage-management",
+})
 
 fact_due(id) if id != "GREEN_FEEDING"
 
@@ -539,6 +550,7 @@ decision := {
 	"excluded_scope": ["general applicant/area eligibility", "single-parcel combination matrix", "area-growth caps", "modulation/caps/sanctions", "two-year mountain-meadow management", "recognition legal effect", "App P1/P2 wiring"],
 	"basis_failures": basis_failures, "missing_data": missing_data,
 	"violations": violations, "raw_violations": raw_violations, "notes": notes,
+	"rule_sources": rule_sources,
 	"current_rgve": reported_rgve, "forage_area_ha": reported_forage_area,
 	"premium_area_ha": reported_premium_area, "indicative_rate_eur_per_ha": indicative_rate,
 	"indicative_premium_eur": indicative_premium,

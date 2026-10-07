@@ -22,7 +22,7 @@ Identifier = Annotated[str, Field(min_length=1)]
 
 
 class Facts(BaseModel):
-    model_config = ConfigDict(extra="forbid", strict=True)
+    model_config = ConfigDict(extra="forbid", strict=True, allow_inf_nan=False)
 
 
 class Context(Facts):
