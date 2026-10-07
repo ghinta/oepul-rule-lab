@@ -13,6 +13,20 @@ from tools.validate_o6_3_contract import load, validate
 
 
 class VariableDossierTests(unittest.TestCase):
+    def test_removing_promotion_blockers_is_rejected(self):
+        review = copy.deepcopy(load("source-review.json"))
+        review["blockers"] = []
+        with self.assertRaisesRegex(ValueError, "required promotion blocker set"):
+            validate(review=review)
+
+    def test_closing_promotion_blocker_without_new_review_is_rejected(self):
+        review = copy.deepcopy(load("source-review.json"))
+        review["blockers"][0]["status"] = "resolved"
+        with self.assertRaisesRegex(
+            ValueError, "required promotion blocker is not open"
+        ):
+            validate(review=review)
+
     def test_complete_input_rule_source_and_app_inventory_join(self):
         result = validate()
         self.assertEqual(46, result["variables"])

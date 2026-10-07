@@ -19,6 +19,16 @@ from rulelab.heuwirtschaft import Input
 
 ROOT = Path(__file__).resolve().parents[1]
 DOSSIER = ROOT / "docs/analysis/o6_3-variable-contract-20261007"
+REQUIRED_OPEN_BLOCKERS = {
+    "GROUP_IDENTITY",
+    "COUNT_BASIS",
+    "GREEN_FEEDING_HISTORY",
+    "RECOGNITION_TIME",
+    "GENERAL_FUNDING",
+    "ANNUAL_EVIDENCE",
+    "SOURCE_CURRENTNESS",
+    "OPUS_REVISION",
+}
 
 
 def schema_leaves(schema: dict) -> dict[str, dict]:
@@ -73,6 +83,16 @@ def validate(
     rules = indexed(review["rules"], "id")
     evidence = indexed(citations, "id")
     blockers = indexed(review["blockers"], "id")
+    require(
+        set(blockers) == REQUIRED_OPEN_BLOCKERS,
+        "required promotion blocker set changed",
+    )
+    require(
+        all(
+            b["status"] == "open_before_full_recommendation" for b in blockers.values()
+        ),
+        "required promotion blocker is not open",
+    )
     require(review["promotion_ready"] is False, "review is not a promotion approval")
     require(baseline["app_commit"] == inventory["commit"], "App baseline mismatch")
     require(

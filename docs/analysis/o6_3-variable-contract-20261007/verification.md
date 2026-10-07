@@ -4,7 +4,7 @@ Lab-Basis `0760684b5029d65feeca984bf627a3c6269a9955`, App-Referenz
 `14e5422b9977f78eb2f7edfb99313e4aac39f9a7`.
 Branch `codex/issue-136-o6-3-contract`.
 
-Lokal bestanden: 87 Repository-Tests (7 neue), 11 Validator-Tests,
+Lokal bestanden: 89 Repository-Tests (9 neue), 11 Validator-Tests,
 Dossier-Check samt echtem App-Checkout-Abgleich, OPA 1.18.2 fmt/strict check
 und 3/3 direkte OPA-Tests. Die zehn Dossier-Inputs werden zusätzlich zu den
 bisherigen Quellenfällen durch echtes OPA ausgewertet. Python-Compilecheck
@@ -26,9 +26,10 @@ alle 46 nativen Schema-Eingabepfade, 17 Regelgruppen, 46 genaue PDF-Belege,
 Der optionale App-Checkout-Abgleich prüft zusätzlich den exakten Commit und
 Dateiinhalt der Registries, Dependencies und beteiligten Adapter/Services.
 
-Sieben neue Tests prüfen die Integrität sowie konkrete Fehlerfälle: fehlender
+Neun neue Tests prüfen die Integrität sowie konkrete Fehlerfälle: fehlender
 Inputpfad, unzutreffend behaupteter App-Verbrauch, Durchschnitt als GVE-Alias,
-fehlender Quellenbeleg und falscher kleiner-Equiden-Faktor. Der OPA-Test
+fehlender Quellenbeleg und falscher kleiner-Equiden-Faktor. Entfernte oder
+stillschweigend geschlossene Promotionsblocker werden ebenfalls abgelehnt. Der OPA-Test
 reproduziert alle zehn synthetischen Entwicklungsinputs und ihre dokumentierten
 Beobachtungen. Alle bisherigen Lab-/Validator-/OPA-Gates bleiben erforderlich.
 
