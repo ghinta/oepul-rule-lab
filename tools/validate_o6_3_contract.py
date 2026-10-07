@@ -163,6 +163,26 @@ def validate(
             require(bool(variable[key]), f"empty variable metadata {key}: {path}")
         mapping = variable["app"]
         kind = variable["scope"]
+        require(
+            mapping["evidence_purpose"]
+            == (
+                "not_an_editable_evidence_record"
+                if kind in {"host", "identity"}
+                else "current_fact"
+            ),
+            f"evidence purpose drift: {path}",
+        )
+        if kind == "host":
+            require(
+                mapping["input_path"]
+                == {
+                    "context.current_year": "evaluation_context.current_year",
+                    "context.snapshot_year": "evaluation_context.snapshot_year",
+                    "context.as_of": "evaluation_context.as_of",
+                    "farm.year": "payload.farm.year",
+                }[path],
+                f"host context mapping drift: {path}",
+            )
         if kind in {"scalar", "parcel", "livestock", "collection"}:
             native = (
                 path.removeprefix("land.parcels[].")

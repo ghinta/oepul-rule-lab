@@ -19,6 +19,23 @@ nur Mahddaten. Zusätzlich konsumiert sie Bewirtschaftungsereignisse; diese
 sind kein fertiger Ersatz für die neuen vollflächigen Bewirtschaftungsnachweise.
 Der App-PR #135 löst Zeit-/Snapshot-/Szenariotrennung, nicht diese Datenlücken.
 
+Der native Lab-Kandidat liest `input.farm/land/livestock/exceptions/context`.
+Die aktuelle App-Policy liest dagegen `input.payload` und erhält den
+vertrauenswürdigen Kontext separat als `input.evaluation_context`. Der neue
+Maßnahmenadapter muss diese Formen ausdrücklich übersetzen: ausschließlich
+`current_year`, `snapshot_year`, `as_of` in den strikten Lab-`context` kopieren,
+die benötigten geprüften effektiven Betriebsfelder an die nativen Zielpfade
+binden und Snapshot-ID/Digest sowie Quellen im App-Provenienzvertrag behalten.
+Den alten Category-C-Präsenzcheck nicht als neue Förderentscheidung weiterführen.
+Das Mapping ist hier definiert, noch nicht implementiert.
+
+`purpose`/`app.evidence_purpose` in der Variablenmatrix unterscheiden Host-/
+Identitätswerte und `current_fact`; sie führen keinen neuen DB-Purpose ein.
+Historische Erstjahresbelege werden als aktuelle, snapshotgebundene Deklaration
+erfasst und tragen `evidence_time_role: historical_first_year` sowie ihr echtes
+Nachweisjahr. Vertragsbeginn darf nicht aus dem frühesten Beginn irgendeiner
+anderen Maßnahme abgeleitet werden.
+
 **Die maßgebliche neue Strukturfrage ist die Tiergruppenidentität:** Die App
 fasst heute Tiere nach Art zusammen und verwendet die Art als Gruppen-ID.
 Die 20 RGVE-Kategorien brauchen getrennte Alters-/Rassen-/Größenkohorten.
