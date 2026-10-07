@@ -1,0 +1,317 @@
+# o6_1b: Variablen vorher / nachher
+
+Vorher/nachher bezeichnet das Ausgangsprofil und den Modellvorschlag des historischen Runs.
+App vorher bezeichnet nur das deklarierte Blueprint-Schema und die CSV-Registries am festgehaltenen Commit.
+Die Python-Collection-Registry und Adapter benötigen eine gesonderte Konsumprüfung; „nein“ ist kein Laufzeitnachweis.
+App nachher: nicht entschieden. Beispielwerte sind keine Defaults. Keine semantischen Aliase sind freigegeben.
+
+## luna: `v2-o6_1b-luna-high-20260930`
+
+95 Vorschläge; Blattpfade: {'added': 95, 'removed': 0, 'changed': 0}.
+
+| Pfad | Aktion | Vorher im Run | Nachher im Run | App-Blueprint vorher | Exakt CSV-registriert |
+| --- | --- | --- | --- | --- | --- |
+| `application.measures[].measure` | added | nicht vorhanden | `"o6_1b"` | nicht deklariert | nein |
+| `bees.laying_queen` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `bees.occupied_brood_frames` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `biodiversity.arable.exempt_from_new_sowing` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `biodiversity.arable.fertilizer_used` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `biodiversity.arable.insect_pollinated_partners` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `biodiversity.arable.invasive_species_evidence` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `biodiversity.arable.invasive_species_share` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `biodiversity.arable.minimum_duration_years` | added | nicht vorhanden | `2` | nicht deklariert | nein |
+| `biodiversity.arable.non_insect_pollinated_share` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `biodiversity.arable.plant_families` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `biodiversity.arable.sown_date` | added | nicht vorhanden | `"date&#124;null"` | nicht deklariert | nein |
+| `biodiversity.arable.unrestricted_share` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `biodiversity.arable.use_date` | added | nicht vorhanden | `"date&#124;null"` | nicht deklariert | nein |
+| `biodiversity.arable.uses_per_year` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `biodiversity.code` | added | nicht vorhanden | `"OPBIO"` | nicht deklariert | nein |
+| `biodiversity.early_use_before_august` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `biodiversity.grassland.annual_mowing_with_removal` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `biodiversity.grassland.dormant_days` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `biodiversity.grassland.fertilizer_only_manure_or_compost` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `biodiversity.grassland.first_use_date` | added | nicht vorhanden | `"date&#124;null"` | nicht deklariert | nein |
+| `biodiversity.grassland.last_use_date` | added | nicht vorhanden | `"date&#124;null"` | nicht deklariert | nein |
+| `biodiversity.grassland.max_uses_per_year` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `biodiversity.grassland.mowing_with_removal` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `biodiversity.grassland.second_use_in_year` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `biodiversity.grassland.variant` | added | nicht vorhanden | `"DIVSZ"` | nicht deklariert | nein |
+| `biodiversity.regional_seed.ecotype_seed` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `biodiversity.regional_seed.family_count` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `biodiversity.regional_seed.grassland_quality` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `biodiversity.regional_seed.kind` | added | nicht vorhanden | `"arable"` | nicht deklariert | nein |
+| `biodiversity.regional_seed.max_single_species_share` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `biodiversity.regional_seed.regional_origin_documented` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `biodiversity.regional_seed.seed_rate_kg_ha` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `biodiversity.regional_seed.sown_date` | added | nicht vorhanden | `"date&#124;null"` | nicht deklariert | nein |
+| `biodiversity.regional_seed.species_count` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `biodiversity.third_arable_use` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `biodiversity.third_use` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `certifications.organic.control_body` | added | nicht vorhanden | `"string&#124;null"` | nicht deklariert | nein |
+| `certifications.organic.is_certified` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `contract.end_date` | added | nicht vorhanden | `"2028-12-31"` | nicht deklariert | nein |
+| `contract.start_year` | added | nicht vorhanden | `2025` | nicht deklariert | nein |
+| `crop.no_undersow` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `crop.pure_stand` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `crop.row_spacing_cm` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `crop.variety` | added | nicht vorhanden | `"string&#124;null"` | nicht deklariert | nein |
+| `exception.drought_prevents_compliance` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `first_participation_year` | added | nicht vorhanden | `2025` | nicht deklariert | nein |
+| `hedge.herbaceous_share` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `hedge.width_m` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `land.arable_biodiversity_area_ha` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `land.arable_fields_with_more_than_5ha_are_valid` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `land.circular_arable_crop_is_eligible` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `land.circular_arable_share` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `land.circular_grassland_share` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `land.converted_grassland_ha` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `land.fields[].biodiversity_area_ha` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `land.grain_and_maize_share` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `land.grassland_biodiversity_area_for_arable_ha` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `land.grassland_biodiversity_area_ha` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `land.grassland_fields_with_more_than_5ha_are_valid` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `land.max_crop_share` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `land.mowed_grassland_area_ha` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `land.protected_cultivation_area_ha` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `land.worthy_crop_share` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `landscape_elements[].crown_diameter_m` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `landscape_elements[].distance_m` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `livestock.average_rgve_per_forage_ha` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `livestock.biological_equines` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `livestock.category` | added | nicht vorhanden | `"cattle_24_months_plus"` | nicht deklariert | nein |
+| `livestock.conventional_equines_only` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `livestock.is_forage_eating_livestock_farm` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `livestock.rgve` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `livestock.uncertified_chickens` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `livestock.uncertified_fattening_pigs` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `monitoring.data_submitted_annually` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `monitoring.has_gl06_gl15_or_gl25` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `monitoring.introductory_event_completed` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `monitoring.nature_measure` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `monitoring.participation_confirmation` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `monitoring.program` | added | nicht vorhanden | `"biodiversity"` | nicht deklariert | nein |
+| `monitoring.ta01_on_at_least_one_parcel` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `parcel.erosion_compliance` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `parcel.slope_percent` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `partial_farm.independent_facilities_and_land` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `partial_farm.separate_cultivation` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `partial_farm.separate_cultivation_and_storage` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `pheromone_traps.days_on_field` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `pheromone_traps.emptyings_during_minimum_period` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `pheromone_traps.installation_delay_days` | added | nicht vorhanden | `"number&#124;null"` | nicht deklariert | nein |
+| `pheromone_traps.is_sugar_beet_or_previous_sugar_beet_parcel` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `pheromone_traps.records_complete` | added | nicht vorhanden | `false` | nicht deklariert | nein |
+| `pheromone_traps.traps_per_ha` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `training.biodiversity_hours` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `training.organic_hours` | added | nicht vorhanden | `0` | nicht deklariert | nein |
+| `year` | added | nicht vorhanden | `2026` | nicht deklariert | nein |
+
+Originalvorschläge und Quellen: [profile_changes.json](../../../../runs/v2-o6_1b-luna-high-20260930/workspace/rules/profile_changes.json), [citations.json](../../../../runs/v2-o6_1b-luna-high-20260930/workspace/rules/citations.json).
+
+## opus: `v2-o6_1b-opus-5.5-high-20260925`
+
+89 Vorschläge; Blattpfade: {'added': 192, 'removed': 0, 'changed': 0}.
+
+| Pfad | Aktion | Vorher im Run | Nachher im Run | App-Blueprint vorher | Exakt CSV-registriert |
+| --- | --- | --- | --- | --- | --- |
+| `farm.certifications.organic.control_body_change_without_gap` | added | nicht vorhanden | `"boolean&#124;null"` | nicht deklariert | nein |
+| `farm.certifications.organic.control_contract_end_date` | added | nicht vorhanden | `"date&#124;null"` | nicht deklariert | nein |
+| `farm.certifications.organic.control_contract_start_date` | added | nicht vorhanden | `"date&#124;null"` | nicht deklariert | nein |
+| `farm.certifications.organic.registered_with_food_authority` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.field_pieces[].agroforest_strip_area_ha` | added | nicht vorhanden | `"number&#124;null"` | nicht deklariert | nein |
+| `land.field_pieces[].area_ha` | added | nicht vorhanden | `"number"` | nicht deklariert | nein |
+| `land.field_pieces[].field_piece_id` | added | nicht vorhanden | `"string"` | nicht deklariert | nein |
+| `land.field_pieces[].gloez_lse_area_ha` | added | nicht vorhanden | `"number&#124;null"` | nicht deklariert | nein |
+| `land.field_pieces[].land_use` | added | nicht vorhanden | `"enum(arable&#124;grassland&#124;special_crop&#124;alpine_pasture&#124;other)"` | nicht deklariert | nein |
+| `land.field_pieces[].mown_area_ha` | added | nicht vorhanden | `"number&#124;null"` | nicht deklariert | nein |
+| `land.multi_use_hedges[].adjoins_own_arable_field_piece` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.multi_use_hedges[].area_ha` | added | nicht vorhanden | `"number"` | nicht deklariert | nein |
+| `land.multi_use_hedges[].avg_width_m` | added | nicht vorhanden | `"number"` | nicht deklariert | nein |
+| `land.multi_use_hedges[].confirmed_by_state_in_gis` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.multi_use_hedges[].div_coded` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.multi_use_hedges[].fertilizer_or_psm_used` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.multi_use_hedges[].field_piece_id` | added | nicht vorhanden | `"string&#124;null"` | nicht deklariert | nein |
+| `land.multi_use_hedges[].hedge_id` | added | nicht vorhanden | `"string"` | nicht deklariert | nein |
+| `land.multi_use_hedges[].herbaceous_area_used` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.multi_use_hedges[].herbaceous_care_rules_met` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.multi_use_hedges[].herbaceous_share_percent` | added | nicht vorhanden | `"number"` | nicht deklariert | nein |
+| `land.multi_use_hedges[].long_side_adjoins_forest_or_flat_lse` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.multi_use_hedges[].mostly_shrubs_and_fruit_trees` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.multi_use_hedges[].planted_date` | added | nicht vorhanden | `"date"` | nicht deklariert | nein |
+| `land.multi_use_hedges[].state_concept` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].ackerzahl` | added | nicht vorhanden | `"number&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.break_date` | added | nicht vorhanden | `"date&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.care_rules_6_1_4_2_met` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.comparable_second_cut_date` | added | nicht vorhanden | `"date&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.converted_to_grassland` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.divrs_interrupted` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.divrs_variant` | added | nicht vorhanden | `"enum(sonstiges_feldfutter&#124;gruenbrache&#124;null)"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.ebw_fallow` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.ebw_habitat_creditable` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.first_declared_year` | added | nicht vorhanden | `"int&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.first_use_completed_date` | added | nicht vorhanden | `"date&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.followed_by_winter_crop_or_catch_crop` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.gloez4_buffer_strip` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.gloez8_fallow` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.invasive_species_present` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.is_new_sowing` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.loss_of_control` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.nat_area_used` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.nat_auflagen[]` | added | nicht vorhanden | `"string"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.phenology_shift_days` | added | nicht vorhanden | `"int&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.previous_year_code` | added | nicht vorhanden | `"string&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.removal_implement` | added | nicht vorhanden | `"string&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.seed_mixture.documented` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.seed_mixture.ecotype_seed_used` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.seed_mixture.family_count` | added | nicht vorhanden | `"int&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.seed_mixture.insect_pollinated_partners` | added | nicht vorhanden | `"int&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.seed_mixture.max_single_species_weight_percent` | added | nicht vorhanden | `"number&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.seed_mixture.non_insect_share_percent` | added | nicht vorhanden | `"number&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.seed_mixture.plant_families` | added | nicht vorhanden | `"int&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.seed_mixture.regional_origin_certified` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.seed_mixture.seed_rate_kg_ha` | added | nicht vorhanden | `"number&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.seed_mixture.species_count` | added | nicht vorhanden | `"int&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.seed_mixture.species_outside_list` | added | nicht vorhanden | `"int&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.sowing_date` | added | nicht vorhanden | `"date&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.sowing_exempt_existing` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.used_previous_year` | added | nicht vorhanden | `"boolean&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.variant_changes[].date` | added | nicht vorhanden | `"date"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.variant_changes[].from` | added | nicht vorhanden | `"string"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.variant_changes[].to` | added | nicht vorhanden | `"string"` | nicht deklariert | nein |
+| `land.parcels[].constraints.biodiversity_area.year_complete` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].crop.additional_text` | added | nicht vorhanden | `"string&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].crop.autochthonous_seed_production` | added | nicht vorhanden | `"boolean&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].crop.cereal_share_percent` | added | nicht vorhanden | `"number&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].crop.first_year_of_use` | added | nicht vorhanden | `"boolean&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].crop.is_grafted` | added | nicht vorhanden | `"boolean&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].crop.is_variety_pure` | added | nicht vorhanden | `"boolean&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].crop.late_harvest_crop` | added | nicht vorhanden | `"boolean&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].crop.mixture_main_component` | added | nicht vorhanden | `"string&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].crop.multi_year` | added | nicht vorhanden | `"boolean&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].crop.poppy_strip_cultivation` | added | nicht vorhanden | `"boolean&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].crop.second_crop_name` | added | nicht vorhanden | `"string&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].crop.seed_documented` | added | nicht vorhanden | `"boolean&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].crop.seed_harvest_year` | added | nicht vorhanden | `"boolean&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].crop.species` | added | nicht vorhanden | `"string&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].crop.summer_cereal` | added | nicht vorhanden | `"boolean&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].crop.variety` | added | nicht vorhanden | `"string&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].district` | added | nicht vorhanden | `"string&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].federal_state` | added | nicht vorhanden | `"string&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].field_piece_id` | added | nicht vorhanden | `"string&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].gruenlandzahl` | added | nicht vorhanden | `"number&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].in_austria` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].is_bergmaehder` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].is_mown` | added | nicht vorhanden | `"boolean&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].national_park` | added | nicht vorhanden | `"string&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].oepul_area_payment_eur_per_ha` | added | nicht vorhanden | `"number&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].oepul_codes[]` | added | nicht vorhanden | `"string"` | nicht deklariert | nein |
+| `land.parcels[].operations.annual_full_use_done` | added | nicht vorhanden | `"boolean&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].operations.driving_events[].crossing_only` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].operations.driving_events[].date` | added | nicht vorhanden | `"date"` | nicht deklariert | nein |
+| `land.parcels[].operations.erosion_reducing_method` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].operations.fertilizer_applications[].date` | added | nicht vorhanden | `"date"` | nicht deklariert | nein |
+| `land.parcels[].operations.fertilizer_applications[].type` | added | nicht vorhanden | `"enum(solid_manure&#124;solid_manure_compost&#124;slurry&#124;mineral&#124;other)"` | nicht deklariert | nein |
+| `land.parcels[].operations.harvested_share_percent` | added | nicht vorhanden | `"number&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].operations.mechanical_weeding_dates[]` | added | nicht vorhanden | `"date"` | nicht deklariert | nein |
+| `land.parcels[].operations.mulch_direct_striptill` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].operations.no_harvestable_stand_due_to_drought` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].operations.pheromone_traps.days_in_field` | added | nicht vorhanden | `"int"` | nicht deklariert | nein |
+| `land.parcels[].operations.pheromone_traps.emptying_count` | added | nicht vorhanden | `"int"` | nicht deklariert | nein |
+| `land.parcels[].operations.pheromone_traps.installed_within_days_after_sowing` | added | nicht vorhanden | `"int"` | nicht deklariert | nein |
+| `land.parcels[].operations.pheromone_traps.pheromone_receipts_kept` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].operations.pheromone_traps.records_complete` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].operations.pheromone_traps.removed_before_harvest` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].operations.pheromone_traps.traps_per_ha` | added | nicht vorhanden | `"number"` | nicht deklariert | nein |
+| `land.parcels[].operations.prohibited_uses[]` | added | nicht vorhanden | `"enum(irrigation_installation&#124;driving&#124;machine_parking&#124;trailer_parking&#124;storage&#124;turning_area)"` | nicht deklariert | nein |
+| `land.parcels[].operations.psm_application_dates[]` | added | nicht vorhanden | `"date"` | nicht deklariert | nein |
+| `land.parcels[].operations.row_spacing_cm` | added | nicht vorhanden | `"number&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].operations.sowing_date` | added | nicht vorhanden | `"date&#124;null"` | nicht deklariert | nein |
+| `land.parcels[].operations.sugar_beet_previous_year` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].operations.undersown` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].operations.use_events[].after_grazing_care` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].operations.use_events[].cleaning_cut` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].operations.use_events[].date` | added | nicht vorhanden | `"date"` | nicht deklariert | nein |
+| `land.parcels[].operations.use_events[].removed` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.parcels[].operations.use_events[].type` | added | nicht vorhanden | `"enum(mow&#124;chop&#124;graze&#124;mulch&#124;thresh&#124;harvest)"` | nicht deklariert | nein |
+| `land.parcels[].schlagnutzungsart` | added | nicht vorhanden | `"string"` | nicht deklariert | nein |
+| `land.parcels[].species_rich_grassland_o6_17` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.point_landscape_elements[].applied_as` | added | nicht vorhanden | `"string"` | nicht deklariert | nein |
+| `land.point_landscape_elements[].area_m2` | added | nicht vorhanden | `"number"` | nicht deklariert | nein |
+| `land.point_landscape_elements[].crown_diameter_m` | added | nicht vorhanden | `"number"` | nicht deklariert | nein |
+| `land.point_landscape_elements[].distance_to_farmland_m` | added | nicht vorhanden | `"number"` | nicht deklariert | nein |
+| `land.point_landscape_elements[].element_id` | added | nicht vorhanden | `"string"` | nicht deklariert | nein |
+| `land.point_landscape_elements[].field_piece_id` | added | nicht vorhanden | `"string"` | nicht deklariert | nein |
+| `land.point_landscape_elements[].fruit_species` | added | nicht vorhanden | `"string&#124;null"` | nicht deklariert | nein |
+| `land.point_landscape_elements[].has_permanent_support_frame` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.point_landscape_elements[].in_control` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.point_landscape_elements[].is_gloez_element` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.point_landscape_elements[].is_wild_form` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.point_landscape_elements[].min_distance_to_other_element_m` | added | nicht vorhanden | `"number"` | nicht deklariert | nein |
+| `land.point_landscape_elements[].oepul_codes[]` | added | nicht vorhanden | `"string"` | nicht deklariert | nein |
+| `land.point_landscape_elements[].on_alm_or_hutweide` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.point_landscape_elements[].retained_full_year` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `land.point_landscape_elements[].stem_form` | added | nicht vorhanden | `"enum(Hochstamm&#124;Halbstamm&#124;other&#124;null)"` | nicht deklariert | nein |
+| `livestock.species_groups[].is_certified_organic` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `livestock.species_groups[].is_conventional` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `livestock.species_groups[].kept_in_austria` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `livestock.species_groups[].own_use` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `livestock.species_groups[].rgve_key` | added | nicht vorhanden | `"string&#124;null"` | nicht deklariert | nein |
+| `oepul.applicant.farms_in_own_name` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.applicant.has_control_over_areas` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.applicant.is_active_farmer` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.applicant.person_type` | added | nicht vorhanden | `"enum(natural_person&#124;registered_partnership&#124;legal_person&#124;association&#124;public_body)"` | nicht deklariert | nein |
+| `oepul.applicant.public_body_share_percent` | added | nicht vorhanden | `"number"` | nicht deklariert | nein |
+| `oepul.area_changes.current_measure_area_ha` | added | nicht vorhanden | `"number"` | nicht deklariert | nein |
+| `oepul.area_changes.loss_of_control_ha` | added | nicht vorhanden | `"number"` | nicht deklariert | nein |
+| `oepul.area_changes.measure_area_2025_ha` | added | nicht vorhanden | `"number&#124;null"` | nicht deklariert | nein |
+| `oepul.area_changes.permitted_conversion_ha` | added | nicht vorhanden | `"number"` | nicht deklariert | nein |
+| `oepul.area_changes.previous_year_measure_area_ha` | added | nicht vorhanden | `"number"` | nicht deklariert | nein |
+| `oepul.first_participation_year` | added | nicht vorhanden | `"int&#124;null"` | nicht deklariert | nein |
+| `oepul.o6_1b.application_date` | added | nicht vorhanden | `"date"` | nicht deklariert | nein |
+| `oepul.o6_1b.beekeeping.declared_in_mfa` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.o6_1b.beekeeping.economic_colony_hives` | added | nicht vorhanden | `"int"` | nicht deklariert | nein |
+| `oepul.o6_1b.beekeeping.organic_control` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.o6_1b.beekeeping.sector_programme_organic_feed_or_wax_compensated` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.o6_1b.contract_start_year` | added | nicht vorhanden | `"int"` | nicht deklariert | nein |
+| `oepul.o6_1b.conventional_horse_declared_in_mfa` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.o6_1b.exit.date` | added | nicht vorhanden | `"date"` | nicht deklariert | nein |
+| `oepul.o6_1b.exit.reason` | added | nicht vorhanden | `"enum(voluntary&#124;loss_of_control&#124;revision_clause&#124;permanent_circumstances_accepted&#124;measure_switch)"` | nicht deklariert | nein |
+| `oepul.o6_1b.full_reductions_in_contract_period` | added | nicht vorhanden | `"int"` | nicht deklariert | nein |
+| `oepul.o6_1b.grassland.converted_ha` | added | nicht vorhanden | `"number"` | nicht deklariert | nein |
+| `oepul.o6_1b.grassland.new_grassland_ha` | added | nicht vorhanden | `"number"` | nicht deklariert | nein |
+| `oepul.o6_1b.grassland.reference_area_ha` | added | nicht vorhanden | `"number&#124;null"` | nicht deklariert | nein |
+| `oepul.o6_1b.invasive_species_over_25_percent_of_arable_div` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.o6_1b.land_topup_steep_granted` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.o6_1b.monitoring[].applied_in_measure_application` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.o6_1b.monitoring[].data_complete` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.o6_1b.monitoring[].first_year` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.o6_1b.monitoring[].intro_event_completed` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.o6_1b.monitoring[].participation_confirmation` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.o6_1b.monitoring[].programme` | added | nicht vorhanden | `"enum(grosstrappe&#124;biodiversitaet&#124;phaenoflex&#124;schnittzeit_phaenologie)"` | nicht deklariert | nein |
+| `oepul.o6_1b.nat_auflagen_farm[]` | added | nicht vorhanden | `"string"` | nicht deklariert | nein |
+| `oepul.o6_1b.partial_farm.applied_in_measure_application` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.o6_1b.partial_farm.is_partial` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.o6_1b.partial_farm.organic_culture_area` | added | nicht vorhanden | `"enum(arable_grassland&#124;wine_fruit_hops&#124;null)"` | nicht deklariert | nein |
+| `oepul.o6_1b.partial_farm.separate_facilities_and_land` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.o6_1b.partial_farm.separate_input_storage` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.o6_1b.sanction_level` | added | nicht vorhanden | `"int&#124;null"` | nicht deklariert | nein |
+| `oepul.o6_1b.switch_date` | added | nicht vorhanden | `"date&#124;null"` | nicht deklariert | nein |
+| `oepul.o6_1b.switched_from` | added | nicht vorhanden | `"string&#124;null"` | nicht deklariert | nein |
+| `oepul.o6_1b.takeover.date` | added | nicht vorhanden | `"date"` | nicht deklariert | nein |
+| `oepul.o6_1b.takeover.extension_share` | added | nicht vorhanden | `"number"` | nicht deklariert | nein |
+| `oepul.o6_1b.training.courses[].attendee_left_before_deadline` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.o6_1b.training.courses[].credited_elsewhere` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.o6_1b.training.courses[].date` | added | nicht vorhanden | `"date"` | nicht deklariert | nein |
+| `oepul.o6_1b.training.courses[].hours` | added | nicht vorhanden | `"number"` | nicht deklariert | nein |
+| `oepul.o6_1b.training.courses[].provider_recognized` | added | nicht vorhanden | `"boolean"` | nicht deklariert | nein |
+| `oepul.o6_1b.training.courses[].topic` | added | nicht vorhanden | `"enum(biodiversity&#124;organic)"` | nicht deklariert | nein |
+| `oepul.participating_measures[]` | added | nicht vorhanden | `"string"` | nicht deklariert | nein |
+
+Originalvorschläge und Quellen: [profile_changes.json](../../../../runs/v2-o6_1b-opus-5.5-high-20260925/workspace/rules/profile_changes.json), [citations.json](../../../../runs/v2-o6_1b-opus-5.5-high-20260925/workspace/rules/citations.json).
+
+## Grenzen
+
+Deklarierte Regelpfade, Profilvorschläge und tatsächlicher Rego-Konsum sind getrennt erfasst.
+Der Scanner erfasst object.get/Helper/Aliase nicht vollständig. Konsumprüfung bleibt offen.
+Die Anzahl der Vorschläge oder Blattpfade ist kein Qualitätsurteil über Luna bzw. Opus.
