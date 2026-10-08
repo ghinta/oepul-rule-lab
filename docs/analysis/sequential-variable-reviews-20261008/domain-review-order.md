@@ -84,3 +84,21 @@ im Sammelissue #140 betreffen Einheiten, Scope, Quellen, Methoden und echte
 Belegketten; alle bisherigen Frage-IDs bleiben offen. Aktuelle Hinweise sind
 gezielt geprüft, vollständige aktuelle Zulassungs-/Faktor-/Katalogfassungen
 und reale Integrations-Snapshots bleiben erforderlich.
+
+## Vertiefung Block 5: Projekt-, Rechts- und Ausnahmegrundlage
+
+Der [Behörden-/Projektabgleich](../authority-project-review-20261008/README.md)
+trennt NAT-Landesprojekt, EBW-Ziele/Indikatoren, optionales NATA, ordnungsrechtliches
+N2 und WRRL-Verordnung. Individuelle Parameter und Wirkungsfläche kommen aus
+dem konkreten gültigen Beleg; die historische Codevollständigkeit ersetzt diese
+Belege nicht. Verbindliche Indikatoren gegenüber Zusatzindikatoren und
+Projektänderung gegenüber ausdrücklich unveränderter Projektbestätigung bei
+konkreter Dürre-Rechtsroute bleiben getrennt.
+
+Aktuelle App-Proxies14/17/19 können einen positiven Basisstatus liefern;
+insbesondere EBW hat dabei keine Projekt-/Indikatorprüfung. NAT/N2/WRRL bleiben
+konservativ missing_data. Die Restfragen gehen an das Sammelissue #140, keine
+neue individuelle Genehmigung für automatische/gesundheitliche Ausnahmen wird
+erfunden. Experten-/Betreiberwerte gelten vor AMA; Auto bleibt im eigenen
+dokumentierten Snapshot. Kurse/Personen/Anträge und Kombination/Sanktion/Zahlung
+folgen in Block6/7. Alle bisherigen Fragen und o6_3-Blocker bleiben offen.

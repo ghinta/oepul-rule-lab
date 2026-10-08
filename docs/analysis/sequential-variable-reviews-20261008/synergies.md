@@ -23,6 +23,16 @@ Zulassungsquelle bleibt vom bestätigten Experten-/Betreiber-/Auto-Fakt getrennt
 über gleiche Namen aliasiert. Der tatsächliche Regelzugriff folgt der
 bestätigten Eingabebedeutung, nicht bloß einer registrierten Mengen-/Boolzahl.
 
+Die [Vertiefung zu Projekt-/Rechts-/Ausnahmebelegen](../authority-project-review-20261008/README.md)
+prüft gemeinsame Identität, Ausstellerrolle, Version, Wirksamkeitsdatum und
+konkrete Pflicht-/Flächenzuordnung. NAT-Auflagen, EBW verbindliche Indikatoren,
+NATA-Pläne und N2-Landesrecht behalten eigene Parameter- und Ausnahmescopes.
+WRRL-Bewilligung und bewilligungsfreie Erhöhung sind getrennte Rechtswege.
+Öffentliche automatische Ausnahmen erfordern keine erfundene individuelle
+Anerkennung; explizit nötige Bewilligungen bleiben belegt. Positive App-Basis-
+Proxies sind keine vollständige Projektprüfung. Bestehende Fachfragen bleiben
+offen; Kurs-/Zahlungsanteile führen als Querverweise zu Block6/7.
+
 | Gemeinsame Grundlage | Betroffene offene Entscheidungen | Unterschied, der erhalten bleiben muss |
 | --- | --- | --- |
 | RGVE-Kohorten mit stabiler ID und datiertem Bestands-/Alters-/Rassenbeleg; vorhandener App-Backend-Vertrag aus #137 | BIO `RGVE_STOCK_BASIS`, o6_2 `RGVE_FODDER_BASIS`, o6_3 `RGVE_COHORTS_AND_FIRST_YEAR`; bestehende `COUNT_BASIS/GROUP_IDENTITY` | GVE ist kein RGVE. o6_2 klassifiziert jährlich, o6_3 braucht zusätzlich historische Erstjahresnachweise. BIO hat eigene Kategorien-/Ausnahme-/Zuschlagsfragen. Opus-Kuh-Kategorie heißt bei o6_2 `cattle_ge_2y`, bei o6_3 `cattle_2y_plus`; keine automatische String-Gleichsetzung. |
