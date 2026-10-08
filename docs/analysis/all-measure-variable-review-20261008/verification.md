@@ -15,8 +15,10 @@ Geprüfter Stand: dieser Branch gegen Lab main 7a296d2 und App main 5296108.
 
 Die Prüfungen validieren Inventar, Herkunft, Reproduzierbarkeit und offene Zustände.
 Statuskorrektur 08.10.2026: Eine Modellnotizen-Durchsicht und dieses Vorinventar
-entsprechen nicht der Prüftiefe des einzelnen o6_1a-Dossiers. Die übrigen 25
-detaillierten Einzelprüfungen sind damit nicht erledigt. Als Nächstes nur o6_1b.
+entsprechen nicht der Prüftiefe des einzelnen o6_1a-Dossiers. Die früher als
+erledigt gemeldeten 25 Einzelprüfungen waren damit nicht erfolgt. Ausschließlich
+o6_1b wurde danach im [eigenen Slice](../o6_1b-variable-review-20261008/README.md)
+vertieft; die weiteren 24 bleiben ausstehend.
 Sie bestätigen keine fachliche Modellqualität, vollständigen Rego-/Adapter-Konsum,
 aktuelle gesetzliche Anwendbarkeit oder produktive Empfehlungen aller Maßnahmen.
 Kein neuer Modelllauf, keine App-Implementierung, keine Golden-/Hidden-Testbewertung.

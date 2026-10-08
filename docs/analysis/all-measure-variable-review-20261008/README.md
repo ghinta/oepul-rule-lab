@@ -5,7 +5,8 @@ Lab-Basis: `7a296d28cb5b92e2758c5a3889c929ea1db60fe5` · App-Basis nach #137: `5
 
 52 finalisierte historische Runs, je ein Luna- und Opus-Run. Spätere Überarbeitungen sind nicht enthalten.
 Statuskorrektur 08.10.2026: Dieses Paket ist ein automatisiertes Vorinventar mit einer Durchsicht der Modellnotizen.
-Es ersetzt nicht die detaillierte Einzelprüfung wie bei o6_1a in PR #102. Die übrigen 25 Einzelprüfungen stehen noch aus.
+Es ersetzt nicht die detaillierte Einzelprüfung wie bei o6_1a in PR #102; die frühere Abschlussmeldung für die übrigen 25 war zu weitgehend.
+Die nachgeholte [BIO-Einzelprüfung](../o6_1b-variable-review-20261008/README.md) ist ein separater Slice; die weiteren 24 bleiben einzeln ungeprüft.
 129 Fragegruppen sind vorläufige Prüfkandidaten; ihre Zahl belegt keine Vollständigkeit oder Quellenrichtigkeit.
 Regeln und Variablen werden damit nicht in die App übernommen.
 
@@ -44,7 +45,7 @@ Regeln und Variablen werden damit nicht in die App übernommen.
 
 ## Nächster Schritt
 
-Eine Maßnahme nach der anderen detailliert prüfen, beginnend mit o6_1b: Originalquelle, Vorschlag und App-Pfad konkret vergleichen.
+BIO-Befunde und präzisierte Expertenfragen im separaten Slice prüfen; weitere Maßnahmen jeweils einzeln bearbeiten.
 Pro Einzelprüfung: semantische Datengruppen, Entität/Einheit/Zeitbezug, tatsächliche Zugriffe und belegte Unsicherheiten dokumentieren.
 Vorläufige Fragen dabei bestätigen, präzisieren oder begründet verwerfen; Antworten und unklare Zuordnungen niemals vorwegnehmen.
 Expert:innen beantworten die einzeln geprüften Frage-IDs im Sammelissue mit Quelle, Geltungsjahr, Datenstand und Nachweis.
