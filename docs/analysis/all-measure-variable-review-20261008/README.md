@@ -1,10 +1,13 @@
-# Variablen- und Pfadreview: alle 26 Maßnahmen
+# Vorinventar der Variablen und Pfade: alle 26 Maßnahmen
 
 Sammelissue: https://github.com/ghinta/oepul-recommender/issues/140 · Arbeitsauftrag: App #139.
 Lab-Basis: `7a296d28cb5b92e2758c5a3889c929ea1db60fe5` · App-Basis nach #137: `5296108f5756ef1463c25a49d93d4a346e9b5e9c`.
 
 52 finalisierte historische Runs, je ein Luna- und Opus-Run. Spätere Überarbeitungen sind nicht enthalten.
-Dies ist die Vorbereitung der Expertenentscheidung. Regeln und Variablen werden damit nicht in die App übernommen.
+Statuskorrektur 08.10.2026: Dieses Paket ist ein automatisiertes Vorinventar mit einer Durchsicht der Modellnotizen.
+Es ersetzt nicht die detaillierte Einzelprüfung wie bei o6_1a in PR #102. Die übrigen 25 Einzelprüfungen stehen noch aus.
+129 Fragegruppen sind vorläufige Prüfkandidaten; ihre Zahl belegt keine Vollständigkeit oder Quellenrichtigkeit.
+Regeln und Variablen werden damit nicht in die App übernommen.
 
 | Maßnahme | Luna Vorschläge / neue / geänderte Blattpfade | Opus Vorschläge / neue / geänderte Blattpfade | offene Fragegruppen | Dossier |
 | --- | --- | --- | --- | --- |
@@ -41,7 +44,10 @@ Dies ist die Vorbereitung der Expertenentscheidung. Regeln und Variablen werden 
 
 ## Nächster Schritt
 
-Expert:innen beantworten die Frage-IDs im Sammelissue mit Quelle, Geltungsjahr, Datenstand und Nachweis.
+Eine Maßnahme nach der anderen detailliert prüfen, beginnend mit o6_1b: Originalquelle, Vorschlag und App-Pfad konkret vergleichen.
+Pro Einzelprüfung: semantische Datengruppen, Entität/Einheit/Zeitbezug, tatsächliche Zugriffe und belegte Unsicherheiten dokumentieren.
+Vorläufige Fragen dabei bestätigen, präzisieren oder begründet verwerfen; Antworten und unklare Zuordnungen niemals vorwegnehmen.
+Expert:innen beantworten die einzeln geprüften Frage-IDs im Sammelissue mit Quelle, Geltungsjahr, Datenstand und Nachweis.
 Danach: pro Maßnahme zugelassene Variablen, Typ/Einheit/Scope und explizite Adapterpfade festlegen; offene Felder bleiben unknown.
 Erst danach App-Implementierung mit Herkunft/Snapshot, sinnvollen Grenzfalltests und CI. PRs bleiben bis zur Freigabe offen.
 
@@ -51,5 +57,6 @@ Die vorhandene Heuwirtschaft-Adaptation ist keine Freigabe der rohen Luna-/Opus-
 ## Technische Nachvollziehbarkeit
 
 JSON-Blattdiffs enthalten Vorschlags-, Regel- und Quellen-IDs; Originalbelege verbleiben im historischen Run.
-source-manifest.json bindet alle Eingabedateien mit SHA-256. CI rekonstruiert alle Dossiers und schützt Vollständigkeit und offene Zustände.
+source-manifest.json bindet alle Eingabedateien mit SHA-256. CI rekonstruiert das Inventar und schützt dessen Vollständigkeit und offene Zustände.
+Grüne CI bestätigt weder fachliche Vollständigkeit noch die erfolgte Einzelprüfung aller Maßnahmen.
 Exakte gleiche Namen beweisen keine fachliche Gleichheit. Der statische Rego-Scanner ist unvollständig; tatsächlicher Konsum ist noch nicht freigegeben.

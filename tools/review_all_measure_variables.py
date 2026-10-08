@@ -248,24 +248,31 @@ def outputs(data):
         result[f'{m}/model-notes.md'] = '\n'.join(notes).rstrip() + '\n'
     catalogue = questions()
     result['cross-measure-questions.md'] = render_questions(catalogue['cross_measure'], '# Gemeinsame Fachentscheidungen')
-    lines = ['# Variablen- und Pfadreview: alle 26 Maßnahmen', '',
+    lines = ['# Vorinventar der Variablen und Pfade: alle 26 Maßnahmen', '',
         'Sammelissue: https://github.com/ghinta/oepul-recommender/issues/140 · Arbeitsauftrag: App #139.',
         f'Lab-Basis: `{LAB_COMMIT}` · App-Basis nach #137: `{APP_COMMIT}`.', '',
         '52 finalisierte historische Runs, je ein Luna- und Opus-Run. Spätere Überarbeitungen sind nicht enthalten.',
-        'Dies ist die Vorbereitung der Expertenentscheidung. Regeln und Variablen werden damit nicht in die App übernommen.', '',
+        'Statuskorrektur 08.10.2026: Dieses Paket ist ein automatisiertes Vorinventar mit einer Durchsicht der Modellnotizen.',
+        'Es ersetzt nicht die detaillierte Einzelprüfung wie bei o6_1a in PR #102. Die übrigen 25 Einzelprüfungen stehen noch aus.',
+        '129 Fragegruppen sind vorläufige Prüfkandidaten; ihre Zahl belegt keine Vollständigkeit oder Quellenrichtigkeit.',
+        'Regeln und Variablen werden damit nicht in die App übernommen.', '',
         '| Maßnahme | Luna Vorschläge / neue / geänderte Blattpfade | Opus Vorschläge / neue / geänderte Blattpfade | offene Fragegruppen | Dossier |',
         '| --- | --- | --- | --- | --- |']
     for m, item in data.items():
         cols = [f'{r["proposal_count"]} / {r["counts"]["added"]} / {r["counts"]["changed"]}' for r in item['runs'].values()]
         lines.append(f'| {m} | {cols[0]} | {cols[1]} | {len(item["questions"])} | [Diff]({m}/diff.md), [Pfade]({m}/path-review.md), [Fragen]({m}/questions.md), [alle Notizen]({m}/model-notes.md) |')
     lines += ['', '## Offene gemeinsame Entscheidungen', '', '[Quellenstände, Snapshot-Zeitbezug, gemeinsame IDs/Codes/RGVE, fehlende Daten und Behördenentscheidungen](cross-measure-questions.md).', '',
-        '## Nächster Schritt', '', 'Expert:innen beantworten die Frage-IDs im Sammelissue mit Quelle, Geltungsjahr, Datenstand und Nachweis.',
+        '## Nächster Schritt', '', 'Eine Maßnahme nach der anderen detailliert prüfen, beginnend mit o6_1b: Originalquelle, Vorschlag und App-Pfad konkret vergleichen.',
+        'Pro Einzelprüfung: semantische Datengruppen, Entität/Einheit/Zeitbezug, tatsächliche Zugriffe und belegte Unsicherheiten dokumentieren.',
+        'Vorläufige Fragen dabei bestätigen, präzisieren oder begründet verwerfen; Antworten und unklare Zuordnungen niemals vorwegnehmen.',
+        'Expert:innen beantworten die einzeln geprüften Frage-IDs im Sammelissue mit Quelle, Geltungsjahr, Datenstand und Nachweis.',
         'Danach: pro Maßnahme zugelassene Variablen, Typ/Einheit/Scope und explizite Adapterpfade festlegen; offene Felder bleiben unknown.',
         'Erst danach App-Implementierung mit Herkunft/Snapshot, sinnvollen Grenzfalltests und CI. PRs bleiben bis zur Freigabe offen.', '',
         'o6_1a PR #102 bleibt separat offen; dessen zwei Fragen sind hier übernommen. o6_3 #97/acht Blocker und App #133 bleiben fachlich offen.',
         'Die vorhandene Heuwirtschaft-Adaptation ist keine Freigabe der rohen Luna-/Opus-Pfade. Keine Thesis-Datei wird verändert.', '',
         '## Technische Nachvollziehbarkeit', '', 'JSON-Blattdiffs enthalten Vorschlags-, Regel- und Quellen-IDs; Originalbelege verbleiben im historischen Run.',
-        'source-manifest.json bindet alle Eingabedateien mit SHA-256. CI rekonstruiert alle Dossiers und schützt Vollständigkeit und offene Zustände.',
+        'source-manifest.json bindet alle Eingabedateien mit SHA-256. CI rekonstruiert das Inventar und schützt dessen Vollständigkeit und offene Zustände.',
+        'Grüne CI bestätigt weder fachliche Vollständigkeit noch die erfolgte Einzelprüfung aller Maßnahmen.',
         'Exakte gleiche Namen beweisen keine fachliche Gleichheit. Der statische Rego-Scanner ist unvollständig; tatsächlicher Konsum ist noch nicht freigegeben.', '']
     result['README.md'] = '\n'.join(lines)
     return result

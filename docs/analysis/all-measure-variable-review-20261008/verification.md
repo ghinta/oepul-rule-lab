@@ -14,6 +14,9 @@ Geprüfter Stand: dieser Branch gegen Lab main 7a296d2 und App main 5296108.
 - `git diff --check` bestanden.
 
 Die Prüfungen validieren Inventar, Herkunft, Reproduzierbarkeit und offene Zustände.
+Statuskorrektur 08.10.2026: Eine Modellnotizen-Durchsicht und dieses Vorinventar
+entsprechen nicht der Prüftiefe des einzelnen o6_1a-Dossiers. Die übrigen 25
+detaillierten Einzelprüfungen sind damit nicht erledigt. Als Nächstes nur o6_1b.
 Sie bestätigen keine fachliche Modellqualität, vollständigen Rego-/Adapter-Konsum,
 aktuelle gesetzliche Anwendbarkeit oder produktive Empfehlungen aller Maßnahmen.
 Kein neuer Modelllauf, keine App-Implementierung, keine Golden-/Hidden-Testbewertung.
