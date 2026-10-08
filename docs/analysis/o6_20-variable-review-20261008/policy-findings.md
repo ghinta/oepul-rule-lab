@@ -1,0 +1,13 @@
+# Reproduzierbare Original-/Policy-/App-Befunde
+
+Luna erklärt eligible trotz application_valid=false. Es akzeptiert 2029, einen angeblichen Bestand von 3 RGVE bei nur einem Tier und ungemeldete Rinderabweichungen. Die 150-Tage-Option mit 120 Tagen erzeugt vollständige Ablehnung; eine tatsächliche Korrektur und fachliche Basis-/Zuschlagswirkung benötigen Klärung. Bänder sind ausgegeben, jedoch kein einzeltierspezifischer Betrag. Mehrere vorgeschlagene Antrags-/Melde-/Almfelder werden nicht konsumiert.
+
+Opus berechnet für drei volle Rinder 120–180 € Basisband. Dasselbe Band gilt ohne Rechtsform, Erstjahr und Tagebuch trotz drei missing_inputs. Freie average_rgve=3 ohne Tiere oder bei allen ausgeschlossenen Tieren ersetzt die Rohberechnung. Identische Tierkopien verdoppeln Bestand und Band auf 240–360 €. Zukünftige Geburtsdaten und falsches Geschlecht ändern die Kategorie nicht. Der Host-Stichtag begrenzt weder Bestandszeit bis 31.10. noch voraggregierte Weidetage.
+
+Ganzjahresverletzung und andere öffentliche Förderung werden mit no_premium gemeldet, lassen 120–180 € stehen; VIS-Verletzung ebenfalls. Negativer gekoppelter Bestand erhöht das Band auf 180–270 €. Zukunftsabmeldung im Dezember beendet bereits im Oktober den Vertrag. Mit Altstart wird 2029 weiter gezahlt. Eine verspätete Wiederaufnahme wird aus Antrag-/Ersuchenbools ohne Behördenanerkennung akzeptiert.
+
+Das echte verspätete Ziegenbeispiel liefert 138 Bestandstage. Meldung vor dem tatsächlichen Zugang wird dagegen als rechtzeitig behandelt. Mindest-Kategorieanwesenheit, tatsächliche Weidetage jedes Tieres und Zahlungsbestand bleiben unterschiedliche Verträge. Für 150 beantragte Tage bei tatsächlich 120 zahlt Opus nur die Basis und fordert Korrektur. Anerkannte höhere Gewalt unterdrückt Tagesverstöße, ergibt bei null Weidetagen aber null Prämie: die Wirkung ist nicht durchgehend verbunden. Dürrebool mit fehlendem Grundfutter verschiebt den Verstoß in eine Prüfung, ohne aktuelle behördliche Entscheidung.
+
+Schafe-/Ziegenmeldungen, Heim-/Almzugehörigkeit und tatsächliche Equiden-/Neuweltkamel-Ersatzketten benötigen eigene Nachweise; ein Kategorieaggregatewert kann die Einzeltiersperren umgehen. Stundenfeld der App ist keine amtliche feste Tagesstundenschwelle. Die App bleibt Kategorie C: fehlende Pflichtfelder und auch vollständig gelieferte Proxyfelder ergeben missing_data.
+
+Offen: SRL versus Merkblatt zur Halbierung nur der Basis oder auch des Zuschlags, SRL21-Verweis „(21)“ auf Weide, tatsächliche Bandsätze, Modulation, fristgerechte Kategorienwiederaufnahme und Sanktionen. Keine fachlichen Entscheidungen getroffen.

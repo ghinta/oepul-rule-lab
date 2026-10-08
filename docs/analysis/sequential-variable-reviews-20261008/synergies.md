@@ -76,3 +76,11 @@ ergänzt.
 | Projekt/GIS/Behördenversion und tatsächliche Nachweise | o6_18 `PROJECT_ID_VERSION_AUTHORITY_FULL_GEOMETRY_PARAMS_AND_AMENDMENT`; o6_19 `VERSIONED_PROJECT_GIS_INDICATOR_PARAMS_BINDING_AUTHORITY`, `ACTUAL_OBSERVATION_DATABASE_TIME_SPECIES_AND_FREE_TEXT` | NAT verlangt konkrete Bewirtschaftungsauflagen; EBW individuell bestätigte Ergebnisindikatoren, Zusatzindikatoren und laufende Datenbankbeobachtung. |
 | Habitat-/Region-/Zahlungsidentitäten | o6_18 `HABITAT_OFFICIAL_TYPE_SPECIES_LAYER_AND_SHARE_GEOMETRY`, `REGIONAL_PLAN_CONFIRMED_YEAR_REGION_RENEWAL_AND_SINGLE_PAYMENT`; o6_19 `HABITAT_GIS_OFFICIAL_TYPES_SPECIES_SHARE_GEOMETRY`, `REGIONAL_PLAN_ANNUAL_CONFIRMATION_REGION_ONCE_NAT` | Gemeinsamer Typ-/Art-/GIS-Beleg und NAT/EBW-Zuschlag einmal; Anhang-I-Code und EBHG-Indikator sind keine automatischen Aliase. |
 | Tatsächliche Pflege-/Kurs-/Stichtagsereignisse | o6_17 Kursfragen; o6_18 Nutzungsfragen; o6_19 `ACTUAL_BIENNIAL_CARE_AND_PRIOR_WRITTEN_AMENDMENT`, `TRAINING_REAL_PERSON_EVENT_PROVIDER_DATE_REPLACEMENT` | Datierte IDs gemeinsam; EBW-Vernetzung, allgemeine jährliche Pflege und projektbezogene Zweijahresregel fachlich getrennt. |
+
+## Ergänzung aus o6_20
+
+| Wiederverwendbare Erfassung | Offene IDs | Unterschied |
+| --- | --- | --- |
+| Tatsächliche Tierregister-/Aufenthalts-/Meldeereignisse | o6_14/o6_15 Aufenthaltsfragen; o6_18 `GRAZING_IDS_DATED_UNION_RGVE_VS_GVE_LIMITS_AND_DIARY`; o6_20 `FULL_CURRENT_REGISTER_STRUCTURE_CHANGE_AND_UNIQUE_TIERS`, `CATEGORY_PRESENCE_UNION_VERSUS_EACH_ANIMAL_ACTUAL_GRAZING`, `ACTUAL_RGVE214_FULL_ANIMALS_NO_FREE_OVERRIDE` | Tier-ID und Datumsunion gemeinsam; Alm60, Weide120/150, gleichzeitige GVE und Durchschnitt über214 Tage bleiben getrennte Scopes. |
+| Wirkliche Tages-/Futter-/Behördenbelege | o6_9/o6_16 Rationsfragen; o6_18 Weidetagebuch/Dürrefragen; o6_20 `DAILY_DIARY_REAL_GROUP_LOCATION_AND_FULL_CONTENT`, `ACTUAL_FEED_SUBSTANTIAL_DAY_WATER_SHELTER_NO_FIXED_HOURS`, `DROUGHT_ACTUAL_CURRENT_AUTHORITY_SCOPE_AND_PAYMENT` | Inhalt/Version/Datum gemeinsam; Weidegrundfutter ist keine 88%-TM-Schweineration und Kontrollerleichterung keine generelle Pflichtaufhebung. |
+| Tatsächliche gemeinsame Stützung pro Tier | o6_20 `RATES_BANDS_COUPLED_SUPPORT_AND_O6_21_SOURCE_CONFLICT` | Querverweis auf kommende Einzelprüfung21, keine vorweggenommene Zuschlags-/ID-Auslegung. |
