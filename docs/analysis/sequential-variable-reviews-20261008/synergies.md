@@ -5,6 +5,15 @@ Alle 26 Maßnahmen sind einzeln dokumentiert; diese Kandidaten sind keine fachli
 Die jeweiligen Fragen im Sammelissue #140 bleiben offen. Zusammengefasst wird
 die Erfassung von Evidenz; ihre fachliche Auswertung bleibt maßnahmenbezogen.
 
+Die [Vertiefung zu Tierbeständen und Ereignissen](../animal-identity-review-20261008/README.md)
+prüft diese Gemeinsamkeiten gegen die aktuellen App-Pfade. Dokumentierte
+Betreiber-/Expertenaggregate gehen AMA vor und bleiben zulässig; individuelle
+Identität ist nur im erforderlichen Tier-/Maßnahmenscope nötig. Jahresmittel,
+Stichtagsbestand, Aufenthaltsunion und gleichzeitiger Besatz erhalten eigene
+Berechnungen. Die offene Browseranbindung und der eigene Auto-Snapshot sind
+konkrete technische Vorbereitungen. Aktuelle Hinweise ergänzen die historische
+Quellenbasis; bestehende Frage-IDs bleiben vollständig offen.
+
 | Gemeinsame Grundlage | Betroffene offene Entscheidungen | Unterschied, der erhalten bleiben muss |
 | --- | --- | --- |
 | RGVE-Kohorten mit stabiler ID und datiertem Bestands-/Alters-/Rassenbeleg; vorhandener App-Backend-Vertrag aus #137 | BIO `RGVE_STOCK_BASIS`, o6_2 `RGVE_FODDER_BASIS`, o6_3 `RGVE_COHORTS_AND_FIRST_YEAR`; bestehende `COUNT_BASIS/GROUP_IDENTITY` | GVE ist kein RGVE. o6_2 klassifiziert jährlich, o6_3 braucht zusätzlich historische Erstjahresnachweise. BIO hat eigene Kategorien-/Ausnahme-/Zuschlagsfragen. Opus-Kuh-Kategorie heißt bei o6_2 `cattle_ge_2y`, bei o6_3 `cattle_2y_plus`; keine automatische String-Gleichsetzung. |

@@ -46,3 +46,22 @@ das historische Quellenpaket und die gepinnten Einzelprüfungen bleiben unverän
 
 Drafts #102/#103 bleiben offen. Ein Merge und jede fachliche Aufnahme erfolgen
 erst nach gesonderter Freigabe; die Thesis bleibt unverändert.
+
+## Vertiefung Block 3: Tierbestände und Ereignisse
+
+Der [Tier-/Ereignisabgleich](../animal-identity-review-20261008/README.md)
+verbindet 14 betroffene Maßnahmen mit 125 lokalen Originalfundstellen,
+49 vorhandenen App-Pfaden und den bestehenden offenen Fragen. Legacy-
+Artgruppen verlieren Kategorie/Bestandsbasis und individuelle Zuordnung;
+die dokumentierten o6_3-Kohorten sind eine Backend-Teilgrundlage. Unterjähriger
+Belegstand, Jahresabschluss, Almaufenthalt, 214-Tage-Weidebasis und
+gleichzeitiger Besatz bleiben getrennt. Aktuelle AMA-Hinweise sind separat
+belegt; vollständige aktuelle Tierquellen/-tabellen müssen vor Aufnahme folgen.
+
+Dokumentierte Betreiber-/Expertenaggregate bleiben zulässig und gehen AMA vor.
+Auto erhält gemäß Nutzerentscheidung einen eigenen dokumentierten Snapshot.
+Die konkrete Tierneuanlage ist weiterhin eine eigene offene Produktfrage.
+Die Restfragen stehen im Sammelissue #140; sie schließen keine bestehende ID.
+Die nächsten fachlich unabhängigen App-Vorbereitungen betreffen Identität,
+Datumsrollen/Herkunft, typisierte Belege und den Editor. Danach werden bestätigte
+Maßnahmenscopes einzeln angebunden und unabhängig bewertet.
