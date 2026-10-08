@@ -28,6 +28,7 @@ CONFIG_HASHES = {
     'o6_6': 'd8660a9ac3480c212a596a48d04f5b5f9c9f1aa47bdc76abcbf4d0f82833ebef',
     'o6_7': '59879bd31b52525eedb18065278a150f92fc72e09619b0f57079f1de82702488',
     'o6_8': 'd1f08e3eb083152d062b803806f5b13662e7d5dc0c7f0fea02c799a66e8a8531',
+    'o6_9': 'a1354b55f7f75e5d4fa321e7d916a968d904b166afff0d48909d5b0a20f57b79',
 }  # Each completed slice is registered after its manual review.
 INDEX = ROOT / 'docs/analysis/sequential-variable-reviews-20261008/README.md'
 SEQUENCE = tuple(f'o6_{number}' for number in range(2, 25))
@@ -101,8 +102,16 @@ def replay_probes(measure, opa_bin):
                 'observation converted to desired domain behavior')
         if probe['model'] == 'app':
             require(probe['run_id'] is None, 'App probe has invented historical run')
-            policy = ROOT / config['app_probe_policy']
-            require(digest(policy) == config['app_probe_policy_sha256'], 'App probe policy drift')
+            variant = probe.get('policy_variant')
+            if variant is None:
+                policy = ROOT / config['app_probe_policy']
+                expected_sha = config['app_probe_policy_sha256']
+            else:
+                variants = config.get('app_probe_variants', {})
+                require(variant in variants, 'unbound App policy variant')
+                policy = ROOT / variants[variant]['policy_path']
+                expected_sha = variants[variant]['policy_sha256']
+            require(digest(policy) == expected_sha, 'App probe policy drift')
             data_args = ['--data', str(policy)]
         else:
             require(config['run_ids'][probe['model']] == probe['run_id'], 'probe run drift')
@@ -181,6 +190,14 @@ def validate(measure, app_root=None, opa_bin=None):
     require(app['commit'] == APP_COMMIT and app['runtime_values_included'] is False, 'App context drift')
     require(digest(ROOT / config['app_probe_policy']) == config['app_probe_policy_sha256']
             == app['files']['backend/policy/oepul_measures.rego']['sha256'], 'App policy copy drift')
+    for variant in config.get('app_probe_variants', {}).values():
+        require(digest(ROOT / variant['policy_path']) == variant['policy_sha256'],
+                'additional App policy copy drift')
+        if app_root:
+            content = subprocess.check_output(
+                ['git', 'show', f'{variant["commit"]}:{variant["source_path"]}'], cwd=app_root)
+            require(hashlib.sha256(content).hexdigest() == variant['policy_sha256'],
+                    'additional App commit/policy drift')
     if app_root:
         for path, item in app['files'].items():
             content = subprocess.check_output(['git', 'show', f'{APP_COMMIT}:{path}'], cwd=app_root)

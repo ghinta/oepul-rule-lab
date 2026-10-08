@@ -28,3 +28,6 @@ Belege stehen in den jeweiligen Originalfundstellen und Pfad-/Policy-Dossiers.
 Offene gemeinsame Benennung darf die differenzierten fachlichen Scopes nicht
 vorwegnehmen. Weitere Zeilen werden erst nach der betreffenden Einzelprüfung
 ergänzt.
+| Datierte Jahresereignisse/MFA/Vertrag | o6_6, o6_7, o6_8, o6_9 | o6_9-CONTRACT_CURRENT_YEAR_SNAPSHOT_AND_ROOT; o6_9-EVENT_YEAR_VOLUME_DECLARATION_AND_APPLICATION_DEADLINES; jeweilige Vertrags-/Zeitfragen | Ein gemeinsamer Snapshot-/Ereignisrahmen ist möglich; jährliche Mengen, mehrjährige Begrünung, Vertragsantrag und noch offene Jahresfristen bleiben verschiedene Prüfungen. |
+| Vollständige Fläche und GVE-Basis | o6_3, o6_4, o6_5, o6_9 | o6_9-ANNUAL_PIG_GVE_CATTLE_DATABASE_AND_CATEGORIES; o6_9-FERTILIZABLE_AREA_TOTAL_ARABLE_AND_COMBINATION | Identitäten/Vollständigkeit/Jahresnachweis gemeinsam prüfen; Schweine-GVE, Rinderbasis, gesamte Ackerfläche und prämienfähige Fläche sind keine Aliase. |
+| Nachweis gegenüber berechnetem Betrag | o6_4, o6_8, o6_9 | o6_9-THEORETICAL_AMOUNT_VERSUS_CONFIRMED_RECOMMENDATION; o6_9-RECIPE_SOURCE_ACTUAL_PHASE_TECHNOLOGY | Gemeinsam Status unbekannt/bestätigt/Verletzung und theoretischen Betrag kennzeichnen; behördliche Sanktionen nicht durch globale Nullprämie ersetzen. |

@@ -3,6 +3,7 @@ import copy
 import os
 from pathlib import Path
 import unittest
+from unittest import mock
 
 from tools import review_individual_measure as review
 from rulelab.grounding import normalize_evidence
@@ -69,6 +70,29 @@ class IndividualMeasureReviewTests(unittest.TestCase):
     def test_unreviewed_measure_is_not_silently_reported_complete(self):
         with self.assertRaisesRegex(ValueError, 'no completed individual review'):
             review.validate('invented-measure')
+
+    @unittest.skipUnless(os.environ.get('OPA_BIN'), 'set OPA_BIN for App variant checks')
+    def test_app_pilot_observations_require_their_exact_policy(self):
+        for measure in review.CONFIG_HASHES:
+            dossier = review.dossier_path(measure)
+            config = review.read(dossier / 'review.json')
+            variants = config.get('app_probe_variants', {})
+            if not variants:
+                continue
+            original_read = review.read
+            probes = original_read(dossier / 'policy-probes.json')
+            changed = copy.deepcopy(probes)
+            next(p for p in changed if p.get('policy_variant'))['policy_variant'] = 'unbound-pilot'
+            with mock.patch.object(review, 'read', side_effect=lambda path:
+                                   changed if path.name == 'policy-probes.json' else original_read(path)):
+                with self.assertRaisesRegex(ValueError, 'unbound App policy variant'):
+                    review.replay_probes(measure, Path(os.environ['OPA_BIN']))
+            original_digest = review.digest
+            policy_paths = {review.ROOT / v['policy_path'] for v in variants.values()}
+            with mock.patch.object(review, 'digest', side_effect=lambda path:
+                                   '0' * 64 if path in policy_paths else original_digest(path)):
+                with self.assertRaisesRegex(ValueError, 'App probe policy drift'):
+                    review.replay_probes(measure, Path(os.environ['OPA_BIN']))
 
     @unittest.skipUnless(os.environ.get('OPA_BIN'), 'set OPA_BIN for historical observation replay')
     def test_documented_observations_are_reproducible(self):
