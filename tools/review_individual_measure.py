@@ -26,6 +26,7 @@ CONFIG_HASHES = {
     'o6_4': '2e6a4708e444170f9c3aaa15adeb16080550a130558fdc0e3f6cf0c0c3b42ada',
     'o6_5': '769b38b5af5d322099820e6dbbfc7396122bf66c74e766b65e70cb27bdf7f580',
     'o6_6': 'd8660a9ac3480c212a596a48d04f5b5f9c9f1aa47bdc76abcbf4d0f82833ebef',
+    'o6_7': '59879bd31b52525eedb18065278a150f92fc72e09619b0f57079f1de82702488',
 }  # Each completed slice is registered after its manual review.
 INDEX = ROOT / 'docs/analysis/sequential-variable-reviews-20261008/README.md'
 SEQUENCE = tuple(f'o6_{number}' for number in range(2, 25))

@@ -3,7 +3,7 @@
 App-Sammelissue: https://github.com/ghinta/oepul-recommender/issues/140.
 Arbeitsbranch: Draft Lab #103; UBB bleibt separat in Draft #102.
 
-5 weitere Maßnahmen einzeln dokumentiert; 18 weitere Einzelprüfungen ausstehend.
+6 weitere Maßnahmen einzeln dokumentiert; 17 weitere Einzelprüfungen ausstehend.
 Alle fachlichen Aufnahmeentscheidungen bleiben offen. Kein Merge, keine App-Promotion.
 
 | Maßnahme | Einzelprüfung | Blätter / Originalfundstellen / offene Fragen / OPA-Proben |
@@ -13,7 +13,7 @@ Alle fachlichen Aufnahmeentscheidungen bleiben offen. Kein Merge, keine App-Prom
 | o6_4 | [dokumentiert, Aufnahme offen](../o6_4-variable-review-20261008/README.md) | 89 / 79 / 8 / 13 |
 | o6_5 | [dokumentiert, Aufnahme offen](../o6_5-variable-review-20261008/README.md) | 112 / 37 / 9 / 16 |
 | o6_6 | [dokumentiert, Aufnahme offen](../o6_6-variable-review-20261008/README.md) | 205 / 112 / 10 / 18 |
-| o6_7 | einzeln ausstehend | — |
+| o6_7 | [dokumentiert, Aufnahme offen](../o6_7-variable-review-20261008/README.md) | 148 / 108 / 12 / 18 |
 | o6_8 | einzeln ausstehend | — |
 | o6_9 | einzeln ausstehend | — |
 | o6_10 | einzeln ausstehend | — |
