@@ -1,0 +1,1970 @@
+{
+  "schema_version": "block6_app_paths_review.v1",
+  "repo": "ghinta/oepul-recommender",
+  "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+  "review_date": "2026-10-09",
+  "timezone": "Europe/Vienna",
+  "read_only": true,
+  "agent_constraints": "Keine Repo/GitHub/Thesis/Canonical-/Run-Mutationen. Nur /tmp-Ausgaben. Synthetische technische aktuelle Policybeobachtungen ersetzen keine fachliche Freigabe und keine HTTP-/DB-End-to-End-Prüfung.",
+  "search_scope": [
+    "backend/app/ama_raw/models.py",
+    "backend/app/api/canonical_builder.py",
+    "backend/app/api/check_engine.py",
+    "backend/app/api/collection_inputs.py",
+    "backend/app/api/current_fact_views.py",
+    "backend/app/api/current_facts.py",
+    "backend/app/api/heuwirtschaft.py",
+    "backend/app/api/heuwirtschaft_contract.py",
+    "backend/app/api/models.py",
+    "backend/app/api/recommender.py",
+    "backend/app/api/reference/heuwirtschaft/current-dependencies.json",
+    "backend/app/api/reference/parcel_field_registry_v1.csv",
+    "backend/app/api/reference/supplemental_field_registry_v1.csv",
+    "backend/app/api/scenario_generation.py",
+    "backend/app/api/supplemental_inputs.py",
+    "backend/app/core/urls.py",
+    "backend/app/review/adapters/oepul/adapter.py",
+    "backend/app/review/adapters/oepul/scenario_generator.py",
+    "backend/app/review/views.py",
+    "backend/policy/farm_profile_schema_blueprint.json",
+    "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+    "backend/policy/oepul_measures.rego",
+    "frontend/src/components/decision-trace/event-collection-panel.tsx"
+  ],
+  "paths": [
+    {
+      "path": "ama_raw_d619_23_st_oepul_mana.{oepul_massnahmen_nummer,oepul_massnahmen_code,oepul_massnahmen_bezeichnung,oepul_massnahmen_eingangsdatum,oepul_massnahmen_verpflichtungsbeginn,status_lt_oepul_berechnung,oepul_massnahmen_abmeldedatum,oepul_massnahmen_abgebender_betrieb,oepul_massnahmenuebernahme_kommentar,mfa_jahr}",
+      "definition": "RAW-Modell besitzt Antragseingang, Status, Abmeldung und Übernahmehinweise bereits als Textfelder. Der Builder selektiert nur Code, Bezeichnung und Verpflichtungsbeginn; Antragschronologie bleibt unprojiziert.",
+      "entity": "RAW-Betriebs-/MFA-Zeile",
+      "time": "MFA-Jahr, teilweise Rohdatumsfelder",
+      "unit": "raw Text",
+      "provenance": "Dokumentierte Betriebs-/Experteneingaben bleiben zulässig. Herkunft der Eingabe ist von Teilnehmerrolle, Anbieter/Aussteller, Anerkennung und fachlicher Anrechnung zu trennen. Aktuelle factual inputs sind an Snapshot-Digest gebunden; das ersetzt keinen fehlenden normativen Nachweis.",
+      "refs": [
+        "raw_mana_model",
+        "builder_mana_selected",
+        "builder_mana_projection",
+        "builder_mana_deduplication"
+      ],
+      "needed_addition": "Bestätigte tatsächliche Teilnahme/Option/Kategorie, Eingang und Bestätigungsstatus, Beginn/Ende/Abmeldung sowie Übernahme zeitlich getrennt mit geeigneten stabilen Beziehungen erfassen. Noch keine fachlichen Defaultwerte oder neue Canonical-Pfade festgelegt.",
+      "policy_effect": "Alle acht isolierten Produktionsprojektionen ergeben denselben effektiven Input mit leerer oder gefüllter bestehender MANA-Liste."
+    },
+    {
+      "path": "ama_additional.farm.oepul_mana[].{massnahmen_code,massnahmen_bezeichnung,verpflichtungsbeginn_jahr}",
+      "definition": "Builder speichert deduplizierte Maßnahmensignale; gleiches Code-/Bezeichnungs-/Beginntripel wird zusammengeführt. Der generische Adapter überträgt die MANA-Liste nicht ins Policy-Payload.",
+      "entity": "Betrieb/MFA-Jahr, Label-/Codetripel",
+      "time": "Verpflichtungsbeginn ist Jahr, kein vollständiger Vertragszustand",
+      "unit": "string / integer",
+      "provenance": "Dokumentierte Betriebs-/Experteneingaben bleiben zulässig. Herkunft der Eingabe ist von Teilnehmerrolle, Anbieter/Aussteller, Anerkennung und fachlicher Anrechnung zu trennen. Aktuelle factual inputs sind an Snapshot-Digest gebunden; das ersetzt keinen fehlenden normativen Nachweis.",
+      "refs": [
+        "builder_mana_sync",
+        "builder_mana_projection",
+        "builder_mana_deduplication",
+        "adapter_policy_projection"
+      ],
+      "needed_addition": "Tatsächlicher Antrag und bestätigter Vertragszustand müssen getrennt von einer technischen Auswahl oder einem Vorschlag geprüft werden; Source-MFA-Jahr, Fristen, Status, fachliche Rollen und Abmeldung dürfen nicht durch Deduplizierung verloren gehen."
+    },
+    {
+      "path": "ama_raw_d619_23_st_mfa_angaben.{name_der_des_anspruchsberechtigten,angabe_zum_aktiven_landwirt_gemaess_par_6d_abs_9_mog}",
+      "definition": "Name ist quellengestützte reine Anzeigeinformation; Builder importiert ihn, generische Policy-Projektion kopiert ihn nicht. RAW-Angabe zum aktiven Landwirt existiert, wird von der gezeigten MFA-Selektion nicht eingelesen. Kein verknüpfter Personen-/Rollen-/Kursnachweis.",
+      "entity": "Betrieb/Anspruchsberechtigten-Anzeige",
+      "time": "MFA-Jahr",
+      "unit": "raw Text",
+      "provenance": "Dokumentierte Betriebs-/Experteneingaben bleiben zulässig. Herkunft der Eingabe ist von Teilnehmerrolle, Anbieter/Aussteller, Anerkennung und fachlicher Anrechnung zu trennen. Aktuelle factual inputs sind an Snapshot-Digest gebunden; das ersetzt keinen fehlenden normativen Nachweis.",
+      "refs": [
+        "raw_mfa_beneficiary",
+        "raw_mfa_active_farmer",
+        "builder_mfa_selected",
+        "builder_beneficiary_display",
+        "beneficiary_ui_metadata",
+        "adapter_policy_projection"
+      ],
+      "needed_addition": "Stabile interne Personenkennung und belegt zeitliche Beziehung zu Betrieb, Rolle und Teilnahme; Anzeigename nicht als Identität verwenden. Betriebsführer, maßgeblich mitarbeitende Person, Almbewirtschafter und Förderwerber nicht stillschweigend gleichsetzen. Personenname muss für fachliche Zuordnung nicht in OPA übernommen werden."
+    },
+    {
+      "path": "farm / oepul / documentation (aktuelle Personen- und Kursverträge fehlen)",
+      "definition": "Blueprint, aktuelle Projektion und registrierte scalar/collection inputs enthalten keinen Personenbestand oder Kursveranstaltung mit Teilnehmerkennung, Anbieter, Thema, Datum, Unterrichtseinheiten und Anrechnungszuordnung.",
+      "entity": "Noch kein implementierter Personen-/Kurs-/Anrechnungs-Scope",
+      "time": "Noch keine Ereignis-/Rollen-/Fristbindung für Schulung",
+      "unit": "Kein bestehender Kurswerttyp",
+      "provenance": "Dokumentierte Betriebs-/Experteneingaben bleiben zulässig. Herkunft der Eingabe ist von Teilnehmerrolle, Anbieter/Aussteller, Anerkennung und fachlicher Anrechnung zu trennen. Aktuelle factual inputs sind an Snapshot-Digest gebunden; das ersetzt keinen fehlenden normativen Nachweis.",
+      "refs": [
+        "course_free_blueprint_farm",
+        "adapter_policy_projection",
+        "registry_scalar_loader",
+        "registry_collections",
+        "api_collection_catalog"
+      ],
+      "needed_addition": "Person, tatsächliche Kursveranstaltung/Teilnahme, Bestätigung/Anerkennung und maßnahmenspezifische Anrechnung getrennt modellieren. Erforderliche Anbieter/Kurse und Fristen nur je Quellenvertrag, keine Schulungspflicht für alle 26 Maßnahmen erfinden. Dokumentierte Eingaben durch Experte/Betreiber/Auto bleiben möglich.",
+      "policy_effect": "UBB, BIO, Almwirtschaft, Humus-Grünland und EBW erreichen in den acht aktuellen technischen Fällen eligible ohne Kurs-/Personen-/Antragsbelege; o6_2, o6_16 und o6_15 bleiben bei gefüllten bisherigen Inputs konservativ missing_data."
+    },
+    {
+      "path": "farm.heuwirtschaft.{contract_start_year,first_year,participation.combined_measure}",
+      "definition": "Native o6_3-current-Slice besitzt registrierten Vertragsbeginn, getrennte historische Erstjahreswerte und konsumierten kombinierten Maßnahmenstring. Policy prüft aktuelle Jahresbasis, Beginn 2023/2024/2025, Zeitraum und kombinierte Maßnahmenliste. Das ist noch kein gemeinsames Ledger tatsächlicher Anträge, Status, Förderwerber oder Vertragsübernahme.",
+      "entity": "Betrieb o6_3",
+      "time": "Aktuelles Hostjahr/Snapshot, historische Erstjahreswerte separat",
+      "unit": "integer / number / string",
+      "provenance": "Dokumentierte Betriebs-/Experteneingaben bleiben zulässig. Herkunft der Eingabe ist von Teilnehmerrolle, Anbieter/Aussteller, Anerkennung und fachlicher Anrechnung zu trennen. Aktuelle factual inputs sind an Snapshot-Digest gebunden; das ersetzt keinen fehlenden normativen Nachweis.",
+      "refs": [
+        "native_hay_contract",
+        "native_hay_required",
+        "native_hay_start_and_combination",
+        "hay_registry_contract",
+        "hay_current_dependencies",
+        "native_projection"
+      ],
+      "needed_addition": "Bestehende o6_3-Pfade samt acht offenen Fachblockern erhalten; tatsächliche Antrags-/Kombinations-/Übernahmebelege ergänzen, kein generisches confirmed=true als Ersatz für alle Pflichten."
+    },
+    {
+      "path": "land.parcels[].is_applied",
+      "definition": "Native o6_3-Slice verlangt den aktuellen Antragsbezug je Schlag; Feld ist registriert und für Current-Mode konsumiert. Generischer Legacy-Parcelnormalizer überträgt dieses Feld nicht in seine Policy-Projektion.",
+      "entity": "Stabiler parcel_id im o6_3-current-Scope",
+      "time": "Aktuelles Antrags-/Snapshotjahr",
+      "unit": "boolean",
+      "provenance": "Dokumentierte Betriebs-/Experteneingaben bleiben zulässig. Herkunft der Eingabe ist von Teilnehmerrolle, Anbieter/Aussteller, Anerkennung und fachlicher Anrechnung zu trennen. Aktuelle factual inputs sind an Snapshot-Digest gebunden; das ersetzt keinen fehlenden normativen Nachweis.",
+      "refs": [
+        "native_hay_applied_parcel",
+        "native_hay_applied_eligible",
+        "hay_registry_applied",
+        "adapter_parcel_projection"
+      ],
+      "needed_addition": "Schlagbezogenen Antragsnachweis mit tatsächlicher Maßnahme/Option und zuständiger Betriebsperson verbinden; ein dokumentierter Bool bleibt zulässiger Fakt, muss fachlichen Scope und Zeitpunkt belegen."
+    },
+    {
+      "path": "current_fact / evidence collection registry / event_id",
+      "definition": "Current-API nutzt eigenes purpose=current_fact, ausschließlich hostgesteuerten aktuellen Europe/Vienna-Tag, aktuellen Snapshot und Digest; dokumentierte Eingaben sind technisch erfasst. Generischer Editor kann nur bereits registrierte farm-/parcel-Collections bearbeiten. Seine Quellenauswahl kennt farmer_statement/expert_estimate, keinen implementierten Auto-Quellenwert.",
+      "entity": "Betrieb / registrierte parcel parents / event_id",
+      "time": "Aktueller Hosttag + Snapshotdigest, Ereignisdatum je registriertem Objekttyp",
+      "unit": "registrierte Typen",
+      "provenance": "Dokumentierte Betriebs-/Experteneingaben bleiben zulässig. Herkunft der Eingabe ist von Teilnehmerrolle, Anbieter/Aussteller, Anerkennung und fachlicher Anrechnung zu trennen. Aktuelle factual inputs sind an Snapshot-Digest gebunden; das ersetzt keinen fehlenden normativen Nachweis.",
+      "refs": [
+        "current_snapshot_year_digest",
+        "adapter_current_write",
+        "api_current_fact_request",
+        "registry_collections",
+        "registry_collection_sources",
+        "frontend_collection_sources",
+        "frontend_collection_parent",
+        "model_sources"
+      ],
+      "needed_addition": "Aktuelle Nachweismechanismen für neue Personen-/Kurs-/Antragsobjekte erweitern; Rollen-/Anrechnungsdatumsbezug und geeignete stabile Objektidentitäten benötigen einen eigenen fachlichen Vertrag. Userbeschluss Auto= dokumentierter eigener Auto-Snapshot bleibt Ziel und ist nicht bereits umgesetzt."
+    },
+    {
+      "path": "generated_scenario / EvaluationRun / FarmProfileSnapshot",
+      "definition": "Bestehender Generator erzeugt nur deterministisch aus bekannten scalar numerical Targets ableitbare Vorschläge auf einer Arbeitskopie und speichert das EvaluationRun; weder tatsächlichen Kursbesuch noch Antrag/Bestätigung noch neuen Auto-FarmProfileSnapshot. Der bestehende FarmProfileSnapshot hat UniqueConstraint farm_id+year.",
+      "entity": "Betriebsjahr / append-only EvaluationRun",
+      "time": "Zeitpunkt des synthetischen Szenarios, vorhandener Quellsnapshot",
+      "unit": "number/integer Proposals",
+      "provenance": "Dokumentierte Betriebs-/Experteneingaben bleiben zulässig. Herkunft der Eingabe ist von Teilnehmerrolle, Anbieter/Aussteller, Anerkennung und fachlicher Anrechnung zu trennen. Aktuelle factual inputs sind an Snapshot-Digest gebunden; das ersetzt keinen fehlenden normativen Nachweis.",
+      "refs": [
+        "auto_scalar_only",
+        "auto_working_copy",
+        "auto_evaluation_run",
+        "model_snapshot"
+      ],
+      "needed_addition": "Für den bestätigten eigenen Auto-Snapshot muss die Snapshotidentität über farm_id+year hinaus geplant werden. Auto-Werte sichtbar als auto und dokumentiert führen; fiktive Sollwerte, tatsächliche Ereignisse/Anträge und aktuelle Fakten fachlich getrennt prüfbar halten, keine Kursbescheinigung oder Antrag als tatsächlich stattgefunden erfinden."
+    }
+  ],
+  "references": {
+    "http_current_route": {
+      "repo_rel_path": "backend/app/core/urls.py",
+      "line_start": 49,
+      "line_end": 53,
+      "anchor": "path(\"api/check\", check_eligibility),",
+      "end_anchor": "path(\"api/current/v1/fact/deactivate\", current_fact_deactivate, name=\"current_fact_deactivate_v1\"),",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "http_current_view": {
+      "repo_rel_path": "backend/app/api/current_fact_views.py",
+      "line_start": 87,
+      "line_end": 94,
+      "anchor": "@csrf_exempt",
+      "end_anchor": "return _execute(evaluate_current_measure, **body)",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "current_snapshot_year_digest": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 67,
+      "line_end": 95,
+      "anchor": "def _current_snapshot(farm_id: str) -> tuple[FarmProfileSnapshot, CurrentContext]:",
+      "end_anchor": ")",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "current_evaluation_dispatch": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 328,
+      "line_end": 365,
+      "anchor": "def evaluate_current_measure(*, farm_id: str, measure_id: str) -> dict:",
+      "end_anchor": ")",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "current_factual_meta": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 375,
+      "line_end": 403,
+      "anchor": "for item in meta.pop(\"scenario_inputs\", [])",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "current_conservative_dependencies": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 313,
+      "line_end": 324,
+      "anchor": "def _consumed_paths(measure_id: str) -> dict[str, frozenset]:",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "measure_policy_opa_call": {
+      "repo_rel_path": "backend/app/api/check_engine.py",
+      "line_start": 870,
+      "line_end": 880,
+      "anchor": "OPA_MEASURE_URL,",
+      "end_anchor": "normalized = normalize_measure_result(",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "phase1_o6_14_positive": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1324,
+      "line_end": 1351,
+      "anchor": "o6_14_result := {",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "phase1_o6_17_positive": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1505,
+      "line_end": 1536,
+      "anchor": "o6_17_result := {",
+      "end_anchor": "# decision-trace-condition: pre_2025_grassland_below_18_percent_slope_met",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "phase1_o6_19_positive": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1639,
+      "line_end": 1654,
+      "anchor": "o6_19_result := {",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "builder_mfa_selected": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 1055,
+      "line_end": 1066,
+      "anchor": "mfa_rows = AmaRawD619_23_ST_MFA_Angaben.objects.filter(import_run_id=import_run_id).values(",
+      "end_anchor": "for row in mfa_rows.iterator(chunk_size=5000):",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "builder_topic_appliers": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 870,
+      "line_end": 902,
+      "anchor": "TOPIC_APPLIERS = {",
+      "end_anchor": "def build_contexts(import_run_id: int) -> dict[tuple[str, int], dict]:",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "raw_mana_model": {
+      "repo_rel_path": "backend/app/ama_raw/models.py",
+      "line_start": 283,
+      "line_end": 304,
+      "anchor": "class AmaRawD619_23_ST_OEPUL_MANA(RawAmaRow):",
+      "end_anchor": "]",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "raw_mfa_beneficiary": {
+      "repo_rel_path": "backend/app/ama_raw/models.py",
+      "line_start": 247,
+      "line_end": 247,
+      "anchor": "name_der_des_anspruchsberechtigten = models.TextField(db_column='Name der/des Anspruchsberechtigten', null=True, blank=True)",
+      "end_anchor": "name_der_des_anspruchsberechtigten = models.TextField(db_column='Name der/des Anspruchsberechtigten', null=True, blank=True)",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "raw_mfa_active_farmer": {
+      "repo_rel_path": "backend/app/ama_raw/models.py",
+      "line_start": 239,
+      "line_end": 239,
+      "anchor": "angabe_zum_aktiven_landwirt_gemaess_par_6d_abs_9_mog = models.TextField(db_column='Angabe zum aktiven Landwirt gemäß § 6d Abs 9 MOG', null=True, blank=True)",
+      "end_anchor": "angabe_zum_aktiven_landwirt_gemaess_par_6d_abs_9_mog = models.TextField(db_column='Angabe zum aktiven Landwirt gemäß § 6d Abs 9 MOG', null=True, blank=True)",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "builder_mana_selected": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 1208,
+      "line_end": 1216,
+      "anchor": "oepul_rows = AmaRawD619_23_ST_OEPUL_MANA.objects.filter(import_run_id=import_run_id).values(",
+      "end_anchor": "for row in oepul_rows.iterator(chunk_size=5000):",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "builder_mana_projection": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 1221,
+      "line_end": 1236,
+      "anchor": "verpflichtungsbeginn_jahr = parse_year(row[\"oepul_massnahmen_verpflichtungsbeginn\"])",
+      "end_anchor": "for context in contexts.values():",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "builder_mana_deduplication": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 1245,
+      "line_end": 1255,
+      "anchor": "dedupe_key = (",
+      "end_anchor": "context[\"oepul_mana\"] = deduped_oepul",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "builder_mana_sync": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 590,
+      "line_end": 626,
+      "anchor": "def sync_oepul_mana_entries(payload: dict, context: dict) -> list[dict]:",
+      "end_anchor": "return synced_entries",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "builder_beneficiary_display": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 812,
+      "line_end": 818,
+      "anchor": "def apply_beneficiary_name(payload: dict, context: dict) -> None:",
+      "end_anchor": "ama_additional[\"farm\"][\"mfa_angaben\"][\"name_der_des_anspruchsberechtigten\"] = context[\"beneficiary_name\"]",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "adapter_policy_projection": {
+      "repo_rel_path": "backend/app/api/recommender.py",
+      "line_start": 504,
+      "line_end": 592,
+      "anchor": "def adapt_payload_for_measures(payload: dict) -> dict:",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "adapter_parcel_projection": {
+      "repo_rel_path": "backend/app/api/recommender.py",
+      "line_start": 364,
+      "line_end": 397,
+      "anchor": "def _normalize_canonical_parcel(parcel: dict, index: int) -> tuple[dict, bool]:",
+      "end_anchor": "}, identity_is_stable",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "adapter_current_dispatch": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 328,
+      "line_end": 403,
+      "anchor": "def evaluate_current_measure(*, farm_id: str, measure_id: str) -> dict:",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "adapter_current_write": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 131,
+      "line_end": 170,
+      "anchor": "def save_current_fact(",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "api_current_request": {
+      "repo_rel_path": "backend/app/api/current_fact_views.py",
+      "line_start": 88,
+      "line_end": 94,
+      "anchor": "def current_evaluation(request):",
+      "end_anchor": "return _execute(evaluate_current_measure, **body)",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "api_current_fact_request": {
+      "repo_rel_path": "backend/app/api/current_fact_views.py",
+      "line_start": 98,
+      "line_end": 123,
+      "anchor": "def current_fact(request):",
+      "end_anchor": "return _execute(save_current_fact, **body)",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "adapter_scenario_context": {
+      "repo_rel_path": "backend/app/api/check_engine.py",
+      "line_start": 271,
+      "line_end": 332,
+      "anchor": "def _scenario_measure_context(",
+      "end_anchor": "return baseline_measure_payload, scenario_items, evidence_context",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "actual_review_adapter": {
+      "repo_rel_path": "backend/app/review/adapters/oepul/adapter.py",
+      "line_start": 1379,
+      "line_end": 1504,
+      "anchor": "def build_decision_trace(self, *, farm_id: str, year: int, measure_id: str) -> DecisionTraceV1:",
+      "end_anchor": ")",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "actual_review_endpoint": {
+      "repo_rel_path": "backend/app/review/views.py",
+      "line_start": 48,
+      "line_end": 85,
+      "anchor": "def decision_trace_v1(request):",
+      "end_anchor": "return JsonResponse(trace.as_dict())",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "beneficiary_ui_metadata": {
+      "repo_rel_path": "backend/app/review/adapters/oepul/adapter.py",
+      "line_start": 1194,
+      "line_end": 1233,
+      "anchor": "def _build_display_metadata(farm_id: str, year: int) -> FarmDisplayMetadata | None:",
+      "end_anchor": ")",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "registry_scalar_loader": {
+      "repo_rel_path": "backend/app/api/supplemental_inputs.py",
+      "line_start": 131,
+      "line_end": 186,
+      "anchor": "def load_supplemental_field_registry() -> dict[str, SupplementalFieldDefinition]:",
+      "end_anchor": "return registry",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_hay_contract": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft_contract.py",
+      "line_start": 36,
+      "line_end": 54,
+      "anchor": "class Participation(Facts):",
+      "end_anchor": "class Farm(Facts):",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_hay_applied_parcel": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft_contract.py",
+      "line_start": 70,
+      "line_end": 81,
+      "anchor": "class Parcel(Facts):",
+      "end_anchor": "class Land(Facts):",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_projection": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 256,
+      "line_end": 293,
+      "anchor": "def _native_projection(payload: dict, context: dict) -> dict:",
+      "end_anchor": "return native",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_hay_required": {
+      "repo_rel_path": "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+      "line_start": 34,
+      "line_end": 40,
+      "anchor": "required_paths := [",
+      "end_anchor": "]",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_hay_start_and_combination": {
+      "repo_rel_path": "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+      "line_start": 68,
+      "line_end": 90,
+      "anchor": "basis_failures contains \"CONTRACT_START\" if {",
+      "end_anchor": "# MB pp. 2, 5-6; SRL 1.5.5: all RGVE categories, with average cattle counts.",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_hay_applied_eligible": {
+      "repo_rel_path": "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+      "line_start": 152,
+      "line_end": 152,
+      "anchor": "p.is_applied == true",
+      "end_anchor": "p.is_applied == true",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "hay_current_dependencies": {
+      "repo_rel_path": "backend/app/api/reference/heuwirtschaft/current-dependencies.json",
+      "line_start": 5,
+      "line_end": 10,
+      "anchor": "\"farm.heuwirtschaft.contract_start_year\",",
+      "end_anchor": "\"farm.heuwirtschaft.participation.combined_measure\",",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "hay_registry_contract": {
+      "repo_rel_path": "backend/app/api/reference/supplemental_field_registry_v1.csv",
+      "line_start": 17,
+      "line_end": 22,
+      "anchor": "farm.heuwirtschaft.contract_start_year,integer,Beginn des Heuwirtschaftsvertrags,true,true,Lab PR #100; backend/policy/heuwirtschaft/heuwirtschaft.rego; current-mode contract only",
+      "end_anchor": "farm.heuwirtschaft.participation.combined_measure,string,Kombinierte Maßnahme laut gültigem Antrag,true,true,Lab PR #100; backend/policy/heuwirtschaft/heuwirtschaft.rego; current-mode contract only",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "hay_registry_applied": {
+      "repo_rel_path": "backend/app/api/reference/parcel_field_registry_v1.csv",
+      "line_start": 10,
+      "line_end": 10,
+      "anchor": "is_applied,boolean,Fläche im aktuellen Antrag,true,true,Lab PR #100; backend/policy/heuwirtschaft/heuwirtschaft.rego; current-mode contract only",
+      "end_anchor": "is_applied,boolean,Fläche im aktuellen Antrag,true,true,Lab PR #100; backend/policy/heuwirtschaft/heuwirtschaft.rego; current-mode contract only",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "course_free_blueprint_farm": {
+      "repo_rel_path": "backend/policy/farm_profile_schema_blueprint.json",
+      "line_start": 3,
+      "line_end": 24,
+      "anchor": "\"farm\": {",
+      "end_anchor": "\"land\": {",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "actual_policy_ubb_positive": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 227,
+      "line_end": 256,
+      "anchor": "o6_1a_result := {",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "actual_policy_bio_positive": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 466,
+      "line_end": 494,
+      "anchor": "o6_1b_result := {",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "actual_policy_2_inputs": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1656,
+      "line_end": 1660,
+      "anchor": "o6_2_result := c_measure_result(\"o6_2\", [",
+      "end_anchor": "])",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "actual_policy_15_inputs": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1692,
+      "line_end": 1695,
+      "anchor": "o6_15_result := c_measure_result(\"o6_15\", [",
+      "end_anchor": "])",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "actual_policy_16_inputs": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1697,
+      "line_end": 1700,
+      "anchor": "o6_16_result := c_measure_result(\"o6_16\", [",
+      "end_anchor": "])",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "actual_policy_conservative": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1811,
+      "line_end": 1820,
+      "anchor": "c_measure_result(measure_id, pairs) := {",
+      "end_anchor": "count(missing_keys) == 0",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "registry_collections": {
+      "repo_rel_path": "backend/app/api/collection_inputs.py",
+      "line_start": 139,
+      "line_end": 312,
+      "anchor": "_COLLECTION_FIELD_REGISTRY: dict[str, CollectionFieldDefinition] = {",
+      "end_anchor": "def load_collection_field_registry() -> dict[str, CollectionFieldDefinition]:",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "registry_collection_sources": {
+      "repo_rel_path": "backend/app/api/collection_inputs.py",
+      "line_start": 68,
+      "line_end": 71,
+      "anchor": "_KNOWN_SOURCES = (",
+      "end_anchor": ")",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "api_collection_catalog": {
+      "repo_rel_path": "backend/app/review/views.py",
+      "line_start": 694,
+      "line_end": 728,
+      "anchor": "def event_collection_catalog_v1(request):",
+      "end_anchor": "return JsonResponse(catalog.as_dict())",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "api_collection_event_write": {
+      "repo_rel_path": "backend/app/review/views.py",
+      "line_start": 732,
+      "line_end": 793,
+      "anchor": "def collection_event_v1(request):",
+      "end_anchor": "return JsonResponse({\"status\": \"ok\"})",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "frontend_collection_sources": {
+      "repo_rel_path": "frontend/src/components/decision-trace/event-collection-panel.tsx",
+      "line_start": 47,
+      "line_end": 50,
+      "anchor": "const SOURCE_OPTION_LABELS: Record<string, string> = {",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "frontend_collection_parent": {
+      "repo_rel_path": "frontend/src/components/decision-trace/event-collection-panel.tsx",
+      "line_start": 76,
+      "line_end": 79,
+      "anchor": "function parentLabel(parent: CollectionParentEntry): string {",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "model_sources": {
+      "repo_rel_path": "backend/app/api/models.py",
+      "line_start": 20,
+      "line_end": 62,
+      "anchor": "class FarmReviewInput(ReviewEvidenceModel):",
+      "end_anchor": "return f\"{self.farm_id}:{self.year}:{self.variable_path}\"",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "model_snapshot": {
+      "repo_rel_path": "backend/app/api/models.py",
+      "line_start": 323,
+      "line_end": 346,
+      "anchor": "class FarmProfileSnapshot(models.Model):",
+      "end_anchor": "return f\"{self.farm_id}:{self.year}\"",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "auto_scalar_only": {
+      "repo_rel_path": "backend/app/review/adapters/oepul/scenario_generator.py",
+      "line_start": 60,
+      "line_end": 60,
+      "anchor": "_ALLOWED_VALUE_TYPES = (\"number\", \"integer\")",
+      "end_anchor": "_ALLOWED_VALUE_TYPES = (\"number\", \"integer\")",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "auto_working_copy": {
+      "repo_rel_path": "backend/app/api/scenario_generation.py",
+      "line_start": 131,
+      "line_end": 139,
+      "anchor": "def apply_proposals(measure_payload: dict, proposals: list[GeneratedProposal]) -> dict:",
+      "end_anchor": "return updated",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "auto_evaluation_run": {
+      "repo_rel_path": "backend/app/api/scenario_generation.py",
+      "line_start": 142,
+      "line_end": 227,
+      "anchor": "def build_generated_scenario(",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    }
+  },
+  "file_pin_checks": [
+    {
+      "repo_rel_path": "backend/app/ama_raw/models.py",
+      "sha256": "ee291b4372fc78eca55c4508b19bfa995552976c1922f10257a7d74ff715a8a6",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "sha256": "74128e300c65c37d586b431cc3c718e87075afdd565bc0e53f2bef1dbe744342",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/check_engine.py",
+      "sha256": "54b8142437a8b564afc27ada8b036b3f1eaa7c81d8e6ae1ae78ae9a30964b49d",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/collection_inputs.py",
+      "sha256": "02edddd08475981147f42d5681abc2d6900ef5606cbfba9492e07ec76dd67430",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/current_fact_views.py",
+      "sha256": "8f9e7175e92e76342679cc490ae1ea08767ec39f3eddefcb5142cea2fb8ca918",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "sha256": "cfda559a480dc97d6d6006105fae94dad4aa8d368f37711e7595a6dbb6d63a01",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "sha256": "fc6394ed9a2115ec5ec6739180f5a34ebc99716f3e7f61ab765de09b703b101d",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/heuwirtschaft_contract.py",
+      "sha256": "470d6650d8a6d1763e0daeb7e57f5994d5b6373af3caf51e332a977c4ea06b86",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/models.py",
+      "sha256": "ebb13822235d5b36b520a1a7bec74e9cbf90dd0be809b72c5921a31ee2518dba",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/recommender.py",
+      "sha256": "7d86e7f94f2cbcd273a21e44f83531fd72ba24bafe947f42ffb98d3a97c8e9a1",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/reference/heuwirtschaft/current-dependencies.json",
+      "sha256": "cea292928350336998f432e729ef0f6a775825bf0c34f6438a9699c81a6eb67b",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/reference/livestock_field_registry_v1.csv",
+      "sha256": "a9b6caadb682740ff3675fd6cc7c5b231c978df1b36d0b8860306d5b3ceb2813",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/reference/measure_collection_dependency_v1.csv",
+      "sha256": "7e1b910cd0b7a6900bb3fe6bd1189ab1350d524dab68cb7a434b3852f8eeed5c",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/reference/measure_supplemental_dependency_v1.csv",
+      "sha256": "c4b982fdb0f992aa0289e4bb32e88313465a608f464a3b90e1b984aa7b51fe2c",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/reference/parcel_field_registry_v1.csv",
+      "sha256": "8ecff54eabdf69b6095df2a1d65538e1bcfb4e350051915e3d7963266b1276b6",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/reference/supplemental_field_registry_v1.csv",
+      "sha256": "cd25acb132a53d7a89ddd97f0c9ab4f6b5dec12563a624c49c4c3edd295ce6ae",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/scenario_generation.py",
+      "sha256": "dd3f292690a9682e9ecb9fabfb5f8e38af8f25a7cba05e7dd5293dc1e56fb1d0",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/supplemental_inputs.py",
+      "sha256": "8638d6dacfef87a0f7bc6cd43f3216f6946d6d0a32d58d112c78e3dcc0342dfd",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/core/urls.py",
+      "sha256": "30098f6c98dbcdfd788342b29404be13aa1d3aba08545f02879f0fccdd455382",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/review/adapters/oepul/adapter.py",
+      "sha256": "e768311108fe420d60b5d569541f218d47d75430e948cc965227461f2b634fdb",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/review/adapters/oepul/scenario_generator.py",
+      "sha256": "7ec1d6829bb88dc008d4063beeb13427888d6a73c1c695c0d99ffdbbcd0b24d5",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/review/views.py",
+      "sha256": "cbafebe1b8da1eb4a4eac2745cdad85c0ed102db7617e07caf674788c3ebc5af",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/policy/farm_profile_schema_blueprint.json",
+      "sha256": "768688efd4ef3fd21bf7007d40532dfde77f0699401373371f2dfae75f848792",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+      "sha256": "31ebd6c7462c84a4cccb5754f9953746905a7102078ed19bd09dcb031c282220",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "sha256": "c0900ece3b883e1362a6ab1d00518be7ad456f6d4e05dba97a01f4eee48bd35a",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "frontend/src/components/decision-trace/event-collection-panel.tsx",
+      "sha256": "f97390ab4ae8c5680addf896e082df875e344272e07b04c4d284a3be1bb84fa4",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    }
+  ],
+  "known_gaps": [
+    "Kein implementierter gemeinsamer Personen-/Rollenbestand, Kurs-/Anrechnungsledger oder tatsächlicher Maßnahmen-/Zahlungsantragsvertrag in geprüften Inputs/Projektionen. RAW-Antragsmetadaten existieren teilweise; diese Aussage betrifft den aktuellen konsumierten Vertrag, nicht jede Möglichkeit des AMA-Quellsystems.",
+    "Kursanforderungen und Fristen sind maßnahmenspezifisch; Quellenprüfung und Domainentscheidung erfolgen in den anderen Block-6-Teilaufträgen.",
+    "Eigener dokumentierter Auto-Snapshot mit source=auto ist bestätigter Produktvertrag, aktuell noch nicht durch bestehende Arbeitskopie/EvaluationRun implementiert. Keine neue Annahme zur fachlichen Wahrheitswirkung erzeugter Teilnahme-, Kurs- oder Antragswerte.",
+    "Acht vorhandene o6_3-Fachblocker werden unverändert beibehalten. Positive Legacy-Proxys erfüllen keinen vollständigen aktuellen Rechts-/Antragsnachweis.",
+    "Keine tatsächlichen Betriebs-/Personen-/Kursdaten oder aktuellen AMA-Anträge vorgelegen; synthetische Beobachtungen enthalten nur offensichtlich synthetische interne Kennungen und keinen Personenname."
+  ],
+  "projection_observations": [
+    {
+      "id": "UBB_no_person_course_application_MANA_not_projected",
+      "measure_id": "o6_1a",
+      "pair_field": "ama_additional.farm.oepul_mana",
+      "before": [],
+      "after": [
+        {
+          "massnahmen_code": "o6_1a",
+          "massnahmen_bezeichnung": "Synthetisches Teilnahmesignal",
+          "verpflichtungsbeginn_jahr": 2023
+        }
+      ],
+      "effective_payload_unchanged": true,
+      "method": "Unveränderte Produktionsfunktion adapt_payload_for_measures und sämtliche hier erreichten Produktions-Helper per AST isoliert ausgeführt; keine Django-/HTTP-/DB-End-to-End-Auswertung."
+    },
+    {
+      "id": "BIO_no_person_course_application_MANA_not_projected",
+      "measure_id": "o6_1b",
+      "pair_field": "ama_additional.farm.oepul_mana",
+      "before": [],
+      "after": [
+        {
+          "massnahmen_code": "o6_1b",
+          "massnahmen_bezeichnung": "Synthetisches Teilnahmesignal",
+          "verpflichtungsbeginn_jahr": 2023
+        }
+      ],
+      "effective_payload_unchanged": true,
+      "method": "Unveränderte Produktionsfunktion adapt_payload_for_measures und sämtliche hier erreichten Produktions-Helper per AST isoliert ausgeführt; keine Django-/HTTP-/DB-End-to-End-Auswertung."
+    },
+    {
+      "id": "ALM_no_person_course_application_MANA_not_projected",
+      "measure_id": "o6_14",
+      "pair_field": "ama_additional.farm.oepul_mana",
+      "before": [],
+      "after": [
+        {
+          "massnahmen_code": "o6_14",
+          "massnahmen_bezeichnung": "Synthetisches Teilnahmesignal",
+          "verpflichtungsbeginn_jahr": 2023
+        }
+      ],
+      "effective_payload_unchanged": true,
+      "method": "Unveränderte Produktionsfunktion adapt_payload_for_measures und sämtliche hier erreichten Produktions-Helper per AST isoliert ausgeführt; keine Django-/HTTP-/DB-End-to-End-Auswertung."
+    },
+    {
+      "id": "HUMUS_no_person_course_application_MANA_not_projected",
+      "measure_id": "o6_17",
+      "pair_field": "ama_additional.farm.oepul_mana",
+      "before": [],
+      "after": [
+        {
+          "massnahmen_code": "o6_17",
+          "massnahmen_bezeichnung": "Synthetisches Teilnahmesignal",
+          "verpflichtungsbeginn_jahr": 2023
+        }
+      ],
+      "effective_payload_unchanged": true,
+      "method": "Unveränderte Produktionsfunktion adapt_payload_for_measures und sämtliche hier erreichten Produktions-Helper per AST isoliert ausgeführt; keine Django-/HTTP-/DB-End-to-End-Auswertung."
+    },
+    {
+      "id": "EBW_no_person_course_application_MANA_not_projected",
+      "measure_id": "o6_19",
+      "pair_field": "ama_additional.farm.oepul_mana",
+      "before": [],
+      "after": [
+        {
+          "massnahmen_code": "o6_19",
+          "massnahmen_bezeichnung": "Synthetisches Teilnahmesignal",
+          "verpflichtungsbeginn_jahr": 2023
+        }
+      ],
+      "effective_payload_unchanged": true,
+      "method": "Unveränderte Produktionsfunktion adapt_payload_for_measures und sämtliche hier erreichten Produktions-Helper per AST isoliert ausgeführt; keine Django-/HTTP-/DB-End-to-End-Auswertung."
+    },
+    {
+      "id": "RESTRICTION_filled_existing_inputs_no_course_MANA_not_projected",
+      "measure_id": "o6_2",
+      "pair_field": "ama_additional.farm.oepul_mana",
+      "before": [],
+      "after": [
+        {
+          "massnahmen_code": "o6_2",
+          "massnahmen_bezeichnung": "Synthetisches Teilnahmesignal",
+          "verpflichtungsbeginn_jahr": 2023
+        }
+      ],
+      "effective_payload_unchanged": true,
+      "method": "Unveränderte Produktionsfunktion adapt_payload_for_measures und sämtliche hier erreichten Produktions-Helper per AST isoliert ausgeführt; keine Django-/HTTP-/DB-End-to-End-Auswertung."
+    },
+    {
+      "id": "GW_filled_existing_inputs_no_course_MANA_not_projected",
+      "measure_id": "o6_16",
+      "pair_field": "ama_additional.farm.oepul_mana",
+      "before": [],
+      "after": [
+        {
+          "massnahmen_code": "o6_16",
+          "massnahmen_bezeichnung": "Synthetisches Teilnahmesignal",
+          "verpflichtungsbeginn_jahr": 2023
+        }
+      ],
+      "effective_payload_unchanged": true,
+      "method": "Unveränderte Produktionsfunktion adapt_payload_for_measures und sämtliche hier erreichten Produktions-Helper per AST isoliert ausgeführt; keine Django-/HTTP-/DB-End-to-End-Auswertung."
+    },
+    {
+      "id": "BEHIRTUNG_filled_existing_inputs_no_application_MANA_not_projected",
+      "measure_id": "o6_15",
+      "pair_field": "ama_additional.farm.oepul_mana",
+      "before": [],
+      "after": [
+        {
+          "massnahmen_code": "o6_15",
+          "massnahmen_bezeichnung": "Synthetisches Teilnahmesignal",
+          "verpflichtungsbeginn_jahr": 2023
+        }
+      ],
+      "effective_payload_unchanged": true,
+      "method": "Unveränderte Produktionsfunktion adapt_payload_for_measures und sämtliche hier erreichten Produktions-Helper per AST isoliert ausgeführt; keine Django-/HTTP-/DB-End-to-End-Auswertung."
+    }
+  ],
+  "policy_observations": [
+    {
+      "id": "UBB_no_person_course_application",
+      "measure_id": "o6_1a",
+      "input": {
+        "measure_id": "o6_1a",
+        "payload": {
+          "farm": {
+            "farm_id": "synthetic-block6-farm",
+            "year": 2026,
+            "region": {
+              "is_protected_area": null
+            },
+            "certifications": {
+              "organic": {
+                "is_certified": null
+              }
+            }
+          },
+          "land": {
+            "total_area_ha": null,
+            "arable_area_ha": 3.0,
+            "grassland_area_ha": 0.0,
+            "special_crops_area_ha": null,
+            "alpine_pasture_area_ha": null,
+            "parcels": [],
+            "aggregate": {
+              "begruenungsflaeche_ha": null,
+              "existing_biodiversity_area_ha": 0.3,
+              "nitrogen_input_kg_per_ha": null,
+              "tillage_type": null,
+              "soil_cover": null,
+              "mulchsaat_technology_available": null
+            }
+          },
+          "livestock": {
+            "species_groups": []
+          },
+          "documentation": {
+            "nutrient_balance_complete": null
+          },
+          "oepul": {
+            "shared": {
+              "parcels": [],
+              "livestock_events": []
+            },
+            "measures": {
+              "o6_13": {
+                "protected_cultivation_area_ha": null,
+                "parcels": [],
+                "beneficials": []
+              },
+              "o6_15": {
+                "behirtung_days": null
+              }
+            }
+          }
+        },
+        "evaluation_context": {
+          "current_year": 2026,
+          "snapshot_year": 2026,
+          "as_of": "2026-10-09",
+          "snapshot_id": 1,
+          "snapshot_updated_at": "2026-10-09T00:00:00+02:00",
+          "snapshot_digest": "3c6464de119e8eafc49cf6f3bc0d6bfe15017bf34af188b79f4ab6037705e2f5"
+        }
+      },
+      "source_payload": {
+        "farm": {
+          "farm_id": "synthetic-block6-farm",
+          "year": 2026
+        },
+        "land": {
+          "arable_area_ha": 3.0,
+          "grassland_area_ha": 0.0
+        },
+        "livestock": {},
+        "documentation": {},
+        "ama_additional": {
+          "farm": {
+            "oepul_mana": []
+          },
+          "land": {
+            "fsl": {
+              "aggregate": {
+                "existing_biodiversity_area_ha": 0.3
+              }
+            }
+          }
+        }
+      },
+      "expected_technical_status": "eligible",
+      "result": {
+        "failed_conditions": [],
+        "measure_id": "o6_1a",
+        "missing_keys": [],
+        "reasons": [
+          "phase1_baseline_check_passed"
+        ],
+        "satisfied_conditions": [
+          {
+            "actual_values": {
+              "payload.land.aggregate.existing_biodiversity_area_ha": 0.3,
+              "payload.land.arable_area_ha": 3.0,
+              "payload.land.grassland_area_ha": 0.0
+            },
+            "code": "biodiversity_min_share_met",
+            "paths": [
+              "payload.land.arable_area_ha",
+              "payload.land.grassland_area_ha",
+              "payload.land.aggregate.existing_biodiversity_area_ha"
+            ]
+          }
+        ],
+        "status": "eligible"
+      },
+      "has_person_course_or_actual_application_proof": false,
+      "method": "Synthetisches technisches Beispiel mit tatsächlicher Produktionsprojektion und aktuellem Policy-API-Query data.oepul.measure_decision. Hostdatum/Snapshotkontext simuliert, keine echte App-/DB-/HTTP-Auswertung, keine Golden-Freigabe."
+    },
+    {
+      "id": "BIO_no_person_course_application",
+      "measure_id": "o6_1b",
+      "input": {
+        "measure_id": "o6_1b",
+        "payload": {
+          "farm": {
+            "farm_id": "synthetic-block6-farm",
+            "year": 2026,
+            "region": {
+              "is_protected_area": null
+            },
+            "certifications": {
+              "organic": {
+                "is_certified": true
+              }
+            }
+          },
+          "land": {
+            "total_area_ha": null,
+            "arable_area_ha": 1.0,
+            "grassland_area_ha": 0.0,
+            "special_crops_area_ha": 0.0,
+            "alpine_pasture_area_ha": null,
+            "parcels": [],
+            "aggregate": {
+              "begruenungsflaeche_ha": null,
+              "existing_biodiversity_area_ha": null,
+              "nitrogen_input_kg_per_ha": null,
+              "tillage_type": null,
+              "soil_cover": null,
+              "mulchsaat_technology_available": null
+            }
+          },
+          "livestock": {
+            "species_groups": []
+          },
+          "documentation": {
+            "nutrient_balance_complete": null
+          },
+          "oepul": {
+            "shared": {
+              "parcels": [],
+              "livestock_events": []
+            },
+            "measures": {
+              "o6_13": {
+                "protected_cultivation_area_ha": null,
+                "parcels": [],
+                "beneficials": []
+              },
+              "o6_15": {
+                "behirtung_days": null
+              }
+            }
+          }
+        },
+        "evaluation_context": {
+          "current_year": 2026,
+          "snapshot_year": 2026,
+          "as_of": "2026-10-09",
+          "snapshot_id": 1,
+          "snapshot_updated_at": "2026-10-09T00:00:00+02:00",
+          "snapshot_digest": "660f1be709f9e7343bd4325388fd009673ab108ac70e77179287fd095865a96d"
+        }
+      },
+      "source_payload": {
+        "farm": {
+          "farm_id": "synthetic-block6-farm",
+          "year": 2026,
+          "certifications": {
+            "organic": {
+              "is_certified": true
+            }
+          }
+        },
+        "land": {
+          "arable_area_ha": 1.0,
+          "grassland_area_ha": 0.0,
+          "special_crops_area_ha": 0.0
+        },
+        "livestock": {},
+        "documentation": {},
+        "ama_additional": {
+          "farm": {
+            "oepul_mana": []
+          },
+          "land": {
+            "fsl": {
+              "aggregate": {}
+            }
+          }
+        }
+      },
+      "expected_technical_status": "eligible",
+      "result": {
+        "failed_conditions": [],
+        "measure_id": "o6_1b",
+        "missing_keys": [],
+        "reasons": [
+          "phase1_baseline_check_passed"
+        ],
+        "satisfied_conditions": [
+          {
+            "actual_values": {
+              "payload.farm.certifications.organic.is_certified": true,
+              "payload.land.arable_area_ha": 1.0,
+              "payload.land.grassland_area_ha": 0.0,
+              "payload.land.special_crops_area_ha": 0.0
+            },
+            "code": "small_arable_area_baseline_met",
+            "paths": [
+              "payload.farm.certifications.organic.is_certified",
+              "payload.land.arable_area_ha",
+              "payload.land.grassland_area_ha",
+              "payload.land.special_crops_area_ha"
+            ]
+          }
+        ],
+        "status": "eligible"
+      },
+      "has_person_course_or_actual_application_proof": false,
+      "method": "Synthetisches technisches Beispiel mit tatsächlicher Produktionsprojektion und aktuellem Policy-API-Query data.oepul.measure_decision. Hostdatum/Snapshotkontext simuliert, keine echte App-/DB-/HTTP-Auswertung, keine Golden-Freigabe."
+    },
+    {
+      "id": "ALM_no_person_course_application",
+      "measure_id": "o6_14",
+      "input": {
+        "measure_id": "o6_14",
+        "payload": {
+          "farm": {
+            "farm_id": "synthetic-block6-farm",
+            "year": 2026,
+            "region": {
+              "is_protected_area": null
+            },
+            "certifications": {
+              "organic": {
+                "is_certified": null
+              }
+            }
+          },
+          "land": {
+            "total_area_ha": null,
+            "arable_area_ha": null,
+            "grassland_area_ha": null,
+            "special_crops_area_ha": null,
+            "alpine_pasture_area_ha": 3.0,
+            "parcels": [],
+            "aggregate": {
+              "begruenungsflaeche_ha": null,
+              "existing_biodiversity_area_ha": null,
+              "nitrogen_input_kg_per_ha": null,
+              "tillage_type": null,
+              "soil_cover": null,
+              "mulchsaat_technology_available": null
+            }
+          },
+          "livestock": {
+            "species_groups": [
+              {
+                "species": "cattle",
+                "animal_count": null,
+                "gve": 3.0,
+                "housing": {
+                  "stall": {
+                    "stall_area_m2": null,
+                    "floor_type": null,
+                    "bedding_type": null,
+                    "daylight_percentage": null
+                  },
+                  "pasture": {
+                    "weide_days_per_year": 60,
+                    "weide_hours_per_day": null,
+                    "water_availability": null
+                  }
+                },
+                "manure": {
+                  "incorporation_time_hours": null
+                },
+                "nh3_reduction": {
+                  "ammonia_reduction_percent": null
+                }
+              }
+            ]
+          },
+          "documentation": {
+            "nutrient_balance_complete": null
+          },
+          "oepul": {
+            "shared": {
+              "parcels": [],
+              "livestock_events": []
+            },
+            "measures": {
+              "o6_13": {
+                "protected_cultivation_area_ha": null,
+                "parcels": [],
+                "beneficials": []
+              },
+              "o6_15": {
+                "behirtung_days": null
+              }
+            }
+          }
+        },
+        "evaluation_context": {
+          "current_year": 2026,
+          "snapshot_year": 2026,
+          "as_of": "2026-10-09",
+          "snapshot_id": 1,
+          "snapshot_updated_at": "2026-10-09T00:00:00+02:00",
+          "snapshot_digest": "3ae1c9dbcbe1b5b0a6e07e496251c24aea0d9d4fa2ecc6acf78aeaa6702bf3f7"
+        }
+      },
+      "source_payload": {
+        "farm": {
+          "farm_id": "synthetic-block6-farm",
+          "year": 2026
+        },
+        "land": {
+          "alpine_pasture_area_ha": 3.0
+        },
+        "livestock": {
+          "species_groups": [
+            {
+              "species": "cattle",
+              "gve": 3.0,
+              "housing": {
+                "pasture": {
+                  "weide_days_per_year": 60
+                }
+              }
+            }
+          ]
+        },
+        "documentation": {},
+        "ama_additional": {
+          "farm": {
+            "oepul_mana": []
+          },
+          "land": {
+            "fsl": {
+              "aggregate": {}
+            }
+          }
+        }
+      },
+      "expected_technical_status": "eligible",
+      "result": {
+        "failed_conditions": [],
+        "measure_id": "o6_14",
+        "missing_keys": [],
+        "reasons": [
+          "phase1_baseline_check_passed"
+        ],
+        "satisfied_conditions": [
+          {
+            "actual_values": {
+              "max_supported_grazing_days": 60,
+              "payload.land.alpine_pasture_area_ha": 3.0,
+              "total_supported_livestock_gve": 3
+            },
+            "code": "maximum_stocking_density_within_limit",
+            "paths": [
+              "payload.land.alpine_pasture_area_ha",
+              "payload.livestock.species_groups[].gve",
+              "payload.livestock.species_groups[].housing.pasture.weide_days_per_year"
+            ]
+          }
+        ],
+        "status": "eligible"
+      },
+      "has_person_course_or_actual_application_proof": false,
+      "method": "Synthetisches technisches Beispiel mit tatsächlicher Produktionsprojektion und aktuellem Policy-API-Query data.oepul.measure_decision. Hostdatum/Snapshotkontext simuliert, keine echte App-/DB-/HTTP-Auswertung, keine Golden-Freigabe."
+    },
+    {
+      "id": "HUMUS_no_person_course_application",
+      "measure_id": "o6_17",
+      "input": {
+        "measure_id": "o6_17",
+        "payload": {
+          "farm": {
+            "farm_id": "synthetic-block6-farm",
+            "year": 2026,
+            "region": {
+              "is_protected_area": null
+            },
+            "certifications": {
+              "organic": {
+                "is_certified": null
+              }
+            }
+          },
+          "land": {
+            "total_area_ha": 2.0,
+            "arable_area_ha": null,
+            "grassland_area_ha": 2.0,
+            "special_crops_area_ha": null,
+            "alpine_pasture_area_ha": null,
+            "parcels": [
+              {
+                "parcel_id": "synthetic-parcel-1",
+                "area_ha": 2.0,
+                "land_use": "grassland",
+                "slope_percent": 0.0,
+                "raw_label": null,
+                "operations": {
+                  "psm_used": null,
+                  "cutting_dates": null,
+                  "fertilizer": {
+                    "mineral_n_kg_per_ha": null,
+                    "organic_n_kg_per_ha": null
+                  }
+                },
+                "is_biodiversity_area": null,
+                "is_nonproductive_area": null,
+                "is_agroforestry_strip": null
+              }
+            ],
+            "aggregate": {
+              "begruenungsflaeche_ha": null,
+              "existing_biodiversity_area_ha": null,
+              "nitrogen_input_kg_per_ha": null,
+              "tillage_type": null,
+              "soil_cover": null,
+              "mulchsaat_technology_available": null
+            }
+          },
+          "livestock": {
+            "species_groups": []
+          },
+          "documentation": {
+            "nutrient_balance_complete": null
+          },
+          "oepul": {
+            "shared": {
+              "parcels": [],
+              "livestock_events": []
+            },
+            "measures": {
+              "o6_13": {
+                "protected_cultivation_area_ha": null,
+                "parcels": [],
+                "beneficials": []
+              },
+              "o6_15": {
+                "behirtung_days": null
+              }
+            }
+          }
+        },
+        "evaluation_context": {
+          "current_year": 2026,
+          "snapshot_year": 2026,
+          "as_of": "2026-10-09",
+          "snapshot_id": 1,
+          "snapshot_updated_at": "2026-10-09T00:00:00+02:00",
+          "snapshot_digest": "d52fbb0e77505244fb929aa146be36ccc01649251acebe698be8c82b5f639db0"
+        }
+      },
+      "source_payload": {
+        "farm": {
+          "farm_id": "synthetic-block6-farm",
+          "year": 2026
+        },
+        "land": {
+          "total_area_ha": 2.0,
+          "grassland_area_ha": 2.0,
+          "parcels": [
+            {
+              "parcel_id": "synthetic-parcel-1",
+              "area_ha": 2.0,
+              "land_use": "grassland",
+              "slope_percent": 0.0
+            }
+          ]
+        },
+        "livestock": {},
+        "documentation": {},
+        "ama_additional": {
+          "farm": {
+            "oepul_mana": []
+          },
+          "land": {
+            "fsl": {
+              "aggregate": {}
+            }
+          }
+        }
+      },
+      "expected_technical_status": "eligible",
+      "result": {
+        "failed_conditions": [],
+        "measure_id": "o6_17",
+        "missing_keys": [],
+        "reasons": [
+          "phase1_baseline_check_passed"
+        ],
+        "satisfied_conditions": [
+          {
+            "actual_values": {
+              "grassland_parcel_slopes": [
+                {
+                  "parcel_id": "synthetic-parcel-1",
+                  "slope_percent": 0.0
+                }
+              ],
+              "payload.farm.year": 2026,
+              "payload.land.grassland_area_ha": 2.0,
+              "payload.land.total_area_ha": 2.0
+            },
+            "code": "grassland_slope_baseline_met_2025_or_later",
+            "paths": [
+              "payload.farm.year",
+              "payload.land.total_area_ha",
+              "payload.land.grassland_area_ha",
+              "payload.land.parcels[].slope_percent"
+            ]
+          }
+        ],
+        "status": "eligible"
+      },
+      "has_person_course_or_actual_application_proof": false,
+      "method": "Synthetisches technisches Beispiel mit tatsächlicher Produktionsprojektion und aktuellem Policy-API-Query data.oepul.measure_decision. Hostdatum/Snapshotkontext simuliert, keine echte App-/DB-/HTTP-Auswertung, keine Golden-Freigabe."
+    },
+    {
+      "id": "EBW_no_person_course_application",
+      "measure_id": "o6_19",
+      "input": {
+        "measure_id": "o6_19",
+        "payload": {
+          "farm": {
+            "farm_id": "synthetic-block6-farm",
+            "year": 2026,
+            "region": {
+              "is_protected_area": null
+            },
+            "certifications": {
+              "organic": {
+                "is_certified": null
+              }
+            }
+          },
+          "land": {
+            "total_area_ha": null,
+            "arable_area_ha": null,
+            "grassland_area_ha": null,
+            "special_crops_area_ha": null,
+            "alpine_pasture_area_ha": null,
+            "parcels": [
+              {
+                "parcel_id": "synthetic-parcel-1",
+                "area_ha": 1.0,
+                "land_use": "arable",
+                "slope_percent": null,
+                "raw_label": null,
+                "operations": {
+                  "psm_used": null,
+                  "cutting_dates": null,
+                  "fertilizer": {
+                    "mineral_n_kg_per_ha": null,
+                    "organic_n_kg_per_ha": null
+                  }
+                },
+                "is_biodiversity_area": null,
+                "is_nonproductive_area": null,
+                "is_agroforestry_strip": null
+              }
+            ],
+            "aggregate": {
+              "begruenungsflaeche_ha": null,
+              "existing_biodiversity_area_ha": null,
+              "nitrogen_input_kg_per_ha": null,
+              "tillage_type": null,
+              "soil_cover": null,
+              "mulchsaat_technology_available": null
+            }
+          },
+          "livestock": {
+            "species_groups": []
+          },
+          "documentation": {
+            "nutrient_balance_complete": null
+          },
+          "oepul": {
+            "shared": {
+              "parcels": [],
+              "livestock_events": []
+            },
+            "measures": {
+              "o6_13": {
+                "protected_cultivation_area_ha": null,
+                "parcels": [],
+                "beneficials": []
+              },
+              "o6_15": {
+                "behirtung_days": null
+              }
+            }
+          }
+        },
+        "evaluation_context": {
+          "current_year": 2026,
+          "snapshot_year": 2026,
+          "as_of": "2026-10-09",
+          "snapshot_id": 1,
+          "snapshot_updated_at": "2026-10-09T00:00:00+02:00",
+          "snapshot_digest": "e9a7648d0943ed37352a78d1a901499f4ea1c885dedeb6cbfdc9ee8fb2b0b88b"
+        }
+      },
+      "source_payload": {
+        "farm": {
+          "farm_id": "synthetic-block6-farm",
+          "year": 2026
+        },
+        "land": {
+          "parcels": [
+            {
+              "parcel_id": "synthetic-parcel-1",
+              "area_ha": 1.0,
+              "land_use": "arable"
+            }
+          ]
+        },
+        "livestock": {},
+        "documentation": {},
+        "ama_additional": {
+          "farm": {
+            "oepul_mana": []
+          },
+          "land": {
+            "fsl": {
+              "aggregate": {}
+            }
+          }
+        }
+      },
+      "expected_technical_status": "eligible",
+      "result": {
+        "failed_conditions": [],
+        "measure_id": "o6_19",
+        "missing_keys": [],
+        "reasons": [
+          "phase1_baseline_check_passed"
+        ],
+        "satisfied_conditions": [
+          {
+            "actual_values": {
+              "eligible_parcel_area_sum_ha": 1
+            },
+            "code": "minimum_eligible_area_met",
+            "paths": [
+              "payload.land.parcels[].area_ha"
+            ]
+          }
+        ],
+        "status": "eligible"
+      },
+      "has_person_course_or_actual_application_proof": false,
+      "method": "Synthetisches technisches Beispiel mit tatsächlicher Produktionsprojektion und aktuellem Policy-API-Query data.oepul.measure_decision. Hostdatum/Snapshotkontext simuliert, keine echte App-/DB-/HTTP-Auswertung, keine Golden-Freigabe."
+    },
+    {
+      "id": "RESTRICTION_filled_existing_inputs_no_course",
+      "measure_id": "o6_2",
+      "input": {
+        "measure_id": "o6_2",
+        "payload": {
+          "farm": {
+            "farm_id": "synthetic-block6-farm",
+            "year": 2026,
+            "region": {
+              "is_protected_area": null
+            },
+            "certifications": {
+              "organic": {
+                "is_certified": null
+              }
+            }
+          },
+          "land": {
+            "total_area_ha": null,
+            "arable_area_ha": null,
+            "grassland_area_ha": null,
+            "special_crops_area_ha": null,
+            "alpine_pasture_area_ha": null,
+            "parcels": [
+              {
+                "parcel_id": "synthetic-parcel-1",
+                "area_ha": 1.0,
+                "land_use": "arable",
+                "slope_percent": null,
+                "raw_label": null,
+                "operations": {
+                  "psm_used": false,
+                  "cutting_dates": null,
+                  "fertilizer": {
+                    "mineral_n_kg_per_ha": null,
+                    "organic_n_kg_per_ha": null
+                  }
+                },
+                "is_biodiversity_area": null,
+                "is_nonproductive_area": null,
+                "is_agroforestry_strip": null
+              }
+            ],
+            "aggregate": {
+              "begruenungsflaeche_ha": null,
+              "existing_biodiversity_area_ha": null,
+              "nitrogen_input_kg_per_ha": 0.0,
+              "tillage_type": null,
+              "soil_cover": null,
+              "mulchsaat_technology_available": null
+            }
+          },
+          "livestock": {
+            "species_groups": []
+          },
+          "documentation": {
+            "nutrient_balance_complete": true
+          },
+          "oepul": {
+            "shared": {
+              "parcels": [],
+              "livestock_events": []
+            },
+            "measures": {
+              "o6_13": {
+                "protected_cultivation_area_ha": null,
+                "parcels": [],
+                "beneficials": []
+              },
+              "o6_15": {
+                "behirtung_days": null
+              }
+            }
+          }
+        },
+        "evaluation_context": {
+          "current_year": 2026,
+          "snapshot_year": 2026,
+          "as_of": "2026-10-09",
+          "snapshot_id": 1,
+          "snapshot_updated_at": "2026-10-09T00:00:00+02:00",
+          "snapshot_digest": "e9958d735d5e70ced03b43e5eb09975f9f4feb5864a2537ca77c9e53267a3543"
+        }
+      },
+      "source_payload": {
+        "farm": {
+          "farm_id": "synthetic-block6-farm",
+          "year": 2026
+        },
+        "land": {
+          "parcels": [
+            {
+              "parcel_id": "synthetic-parcel-1",
+              "area_ha": 1.0,
+              "land_use": "arable",
+              "operations": {
+                "psm_used": false
+              }
+            }
+          ]
+        },
+        "livestock": {},
+        "documentation": {
+          "nutrient_balance_complete": true
+        },
+        "ama_additional": {
+          "farm": {
+            "oepul_mana": []
+          },
+          "land": {
+            "fsl": {
+              "aggregate": {
+                "nitrogen_input_kg_per_ha": 0.0
+              }
+            }
+          }
+        }
+      },
+      "expected_technical_status": "missing_data",
+      "result": {
+        "failed_conditions": [],
+        "measure_id": "o6_2",
+        "missing_keys": [],
+        "reasons": [
+          "category_c_conservative_missing_data"
+        ],
+        "satisfied_conditions": [],
+        "status": "missing_data"
+      },
+      "has_person_course_or_actual_application_proof": false,
+      "method": "Synthetisches technisches Beispiel mit tatsächlicher Produktionsprojektion und aktuellem Policy-API-Query data.oepul.measure_decision. Hostdatum/Snapshotkontext simuliert, keine echte App-/DB-/HTTP-Auswertung, keine Golden-Freigabe."
+    },
+    {
+      "id": "GW_filled_existing_inputs_no_course",
+      "measure_id": "o6_16",
+      "input": {
+        "measure_id": "o6_16",
+        "payload": {
+          "farm": {
+            "farm_id": "synthetic-block6-farm",
+            "year": 2026,
+            "region": {
+              "is_protected_area": null
+            },
+            "certifications": {
+              "organic": {
+                "is_certified": null
+              }
+            }
+          },
+          "land": {
+            "total_area_ha": null,
+            "arable_area_ha": null,
+            "grassland_area_ha": null,
+            "special_crops_area_ha": null,
+            "alpine_pasture_area_ha": null,
+            "parcels": [],
+            "aggregate": {
+              "begruenungsflaeche_ha": null,
+              "existing_biodiversity_area_ha": null,
+              "nitrogen_input_kg_per_ha": 0.0,
+              "tillage_type": null,
+              "soil_cover": null,
+              "mulchsaat_technology_available": null
+            }
+          },
+          "livestock": {
+            "species_groups": []
+          },
+          "documentation": {
+            "nutrient_balance_complete": true
+          },
+          "oepul": {
+            "shared": {
+              "parcels": [],
+              "livestock_events": []
+            },
+            "measures": {
+              "o6_13": {
+                "protected_cultivation_area_ha": null,
+                "parcels": [],
+                "beneficials": []
+              },
+              "o6_15": {
+                "behirtung_days": null
+              }
+            }
+          }
+        },
+        "evaluation_context": {
+          "current_year": 2026,
+          "snapshot_year": 2026,
+          "as_of": "2026-10-09",
+          "snapshot_id": 1,
+          "snapshot_updated_at": "2026-10-09T00:00:00+02:00",
+          "snapshot_digest": "da3054e7c3c587395c16f3d2262ba5ef6b291a19364c0982f94ae5be3619b7ca"
+        }
+      },
+      "source_payload": {
+        "farm": {
+          "farm_id": "synthetic-block6-farm",
+          "year": 2026
+        },
+        "land": {},
+        "livestock": {},
+        "documentation": {
+          "nutrient_balance_complete": true
+        },
+        "ama_additional": {
+          "farm": {
+            "oepul_mana": []
+          },
+          "land": {
+            "fsl": {
+              "aggregate": {
+                "nitrogen_input_kg_per_ha": 0.0
+              }
+            }
+          }
+        }
+      },
+      "expected_technical_status": "missing_data",
+      "result": {
+        "failed_conditions": [],
+        "measure_id": "o6_16",
+        "missing_keys": [],
+        "reasons": [
+          "category_c_conservative_missing_data"
+        ],
+        "satisfied_conditions": [],
+        "status": "missing_data"
+      },
+      "has_person_course_or_actual_application_proof": false,
+      "method": "Synthetisches technisches Beispiel mit tatsächlicher Produktionsprojektion und aktuellem Policy-API-Query data.oepul.measure_decision. Hostdatum/Snapshotkontext simuliert, keine echte App-/DB-/HTTP-Auswertung, keine Golden-Freigabe."
+    },
+    {
+      "id": "BEHIRTUNG_filled_existing_inputs_no_application",
+      "measure_id": "o6_15",
+      "input": {
+        "measure_id": "o6_15",
+        "payload": {
+          "farm": {
+            "farm_id": "synthetic-block6-farm",
+            "year": 2026,
+            "region": {
+              "is_protected_area": null
+            },
+            "certifications": {
+              "organic": {
+                "is_certified": null
+              }
+            }
+          },
+          "land": {
+            "total_area_ha": null,
+            "arable_area_ha": null,
+            "grassland_area_ha": null,
+            "special_crops_area_ha": null,
+            "alpine_pasture_area_ha": 3.0,
+            "parcels": [],
+            "aggregate": {
+              "begruenungsflaeche_ha": null,
+              "existing_biodiversity_area_ha": null,
+              "nitrogen_input_kg_per_ha": null,
+              "tillage_type": null,
+              "soil_cover": null,
+              "mulchsaat_technology_available": null
+            }
+          },
+          "livestock": {
+            "species_groups": []
+          },
+          "documentation": {
+            "nutrient_balance_complete": null
+          },
+          "oepul": {
+            "shared": {
+              "parcels": [],
+              "livestock_events": []
+            },
+            "measures": {
+              "o6_13": {
+                "protected_cultivation_area_ha": null,
+                "parcels": [],
+                "beneficials": []
+              },
+              "o6_15": {
+                "behirtung_days": 60
+              }
+            }
+          }
+        },
+        "evaluation_context": {
+          "current_year": 2026,
+          "snapshot_year": 2026,
+          "as_of": "2026-10-09",
+          "snapshot_id": 1,
+          "snapshot_updated_at": "2026-10-09T00:00:00+02:00",
+          "snapshot_digest": "28a5b20399e5392195d0a5c0d8c2ba88ffb2d197c95d8066ac5b586830443c1a"
+        }
+      },
+      "source_payload": {
+        "farm": {
+          "farm_id": "synthetic-block6-farm",
+          "year": 2026
+        },
+        "land": {
+          "alpine_pasture_area_ha": 3.0
+        },
+        "livestock": {},
+        "documentation": {},
+        "ama_additional": {
+          "farm": {
+            "oepul_mana": []
+          },
+          "land": {
+            "fsl": {
+              "aggregate": {}
+            }
+          }
+        },
+        "oepul": {
+          "measures": {
+            "o6_15": {
+              "behirtung_days": 60
+            }
+          }
+        }
+      },
+      "expected_technical_status": "missing_data",
+      "result": {
+        "failed_conditions": [],
+        "measure_id": "o6_15",
+        "missing_keys": [],
+        "reasons": [
+          "category_c_conservative_missing_data"
+        ],
+        "satisfied_conditions": [],
+        "status": "missing_data"
+      },
+      "has_person_course_or_actual_application_proof": false,
+      "method": "Synthetisches technisches Beispiel mit tatsächlicher Produktionsprojektion und aktuellem Policy-API-Query data.oepul.measure_decision. Hostdatum/Snapshotkontext simuliert, keine echte App-/DB-/HTTP-Auswertung, keine Golden-Freigabe."
+    }
+  ],
+  "verification": {
+    "file_pin_checks_passed": 26,
+    "exact_reference_anchor_checks_passed": 58,
+    "policy_cases_passed": 8,
+    "projection_pair_checks_passed": 8,
+    "opa": {
+      "version": "Version: 1.18.2",
+      "sha256": "9903e5125ac281104f2c4b7371d10cc3b74a98933743fcbfc174f9bf0ab20de8",
+      "official_release_url": "https://github.com/open-policy-agent/opa/releases/download/v1.18.2/opa_linux_amd64_static",
+      "query": "data.oepul.measure_decision"
+    },
+    "production_projection_functions": [
+      "_copy_species_groups",
+      "_derive_biodiversity_proxy",
+      "_derive_text_proxy",
+      "_normalize_canonical_parcel",
+      "_resolve_parcel_identity",
+      "adapt_payload_for_measures",
+      "build_land_parcels_with_identity"
+    ],
+    "projection_method": "Unveränderte per AST extrahierte Funktionskörper und alle in diesen synthetischen Canonical-Schlagfällen erreichten Helper. Kein Mock einer getroffenen fachlichen Entscheidung; kein Django-/Datenbank-/HTTP-Prozess.",
+    "as_of": "2026-10-09 (simuliert, keine Live-Auswertung)",
+    "complete": true
+  }
+}

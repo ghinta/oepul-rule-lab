@@ -102,3 +102,22 @@ neue individuelle Genehmigung für automatische/gesundheitliche Ausnahmen wird
 erfunden. Experten-/Betreiberwerte gelten vor AMA; Auto bleibt im eigenen
 dokumentierten Snapshot. Kurse/Personen/Anträge und Kombination/Sanktion/Zahlung
 folgen in Block6/7. Alle bisherigen Fragen und o6_3-Blocker bleiben offen.
+
+## Vertiefung Block 6: Personen, Kurse und tatsächliche Anträge
+
+Der [Personen-/Kurs-/Antragsabgleich](../person-training-application-review-20261009/README.md)
+trennt konkrete Person und Rolle, tatsächliche Veranstaltung/Teilnahme, datierte
+Anbieteranerkennung, Anrechnung, Maßnahmenantrag, jährlichen Zahlungsantrag und
+Genehmigungsverständigung. Alle 26 Maßnahmen sind zu bestehenden offenen Fragen
+zugeordnet; Kurspflichten werden nur im tatsächlich belegten Scope verlangt.
+Feste2025-/2026-Fristen, Erstjahr Almweideplan/Monitoring, Mehrbetriebsanrechnung,
+Ersatz und Doppelanrechnung bleiben getrennt. HUM-Themenwortlaut und tatsächliche
+Tierantragsjahre bleiben offen; neue UBB-Bio-Option2027 ist gesondert erfasst.
+
+Aktuelle generische Basisprüfungen für UBB/BIO/14/17/19 liefern positiv ohne diese
+Nachweise; acht MANA-Parameterpaare erreichen identische Policy-Eingaben.
+Native o6_3-Teilgrundlage sowie ihre vollständigen acht Fachblocker bleiben erhalten.
+Alle289 Originalfragen offen, keine App-/Thesisänderung und kein Merge.
+Experten-/Betreiberwerte vor AMA und eigener dokumentierter Auto-Snapshot bleiben
+zugelassen. Restfragen gehen ins Sammelissue140; nächster Block: Kombination,
+Sanktion und Zahlung. Erst nach Fachbestätigung folgen konsumierte konkrete Regeln.

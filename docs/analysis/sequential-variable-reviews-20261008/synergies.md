@@ -128,3 +128,22 @@ Durchsicht](domain-review-order.md) bündelt sie nach Evidenzarten, ohne IDs zu 
 ## Ergänzung aus o6_24
 
 `o6_24-REAL_PARCEL_IDS_CLASS_GEOMETRY_UNION_AND_LN` und `o6_24-ACTUAL_EFFECTIVE_N_FULL_EVENTS_UNITS_FACTORS_AND_ROUNDING` mit Grundwasserschutz16: reale Schlag-/GIS-/Kultur-/Düngeereignisse gemeinsam erfassen, jedoch eigene Gebietskulisse, Klassen und externe Rechtsfristen erhalten. `o6_24-FARM_BOOK_ALL_PARCELS_ZERO_N_CONTENT_STORAGE_AND_RETENTION` kann dieselben belegten Ereignisse nutzen, §5-Inhalte und Geltungsumfang sind eigenständig. `o6_24-CURRENT_ANNUAL_CONTRACT_MFA_PROGRAM_END_EXIT_AND_ASOF` mit Natura23: einjähriger Vertrag/aktuelle Jahrescodes/Stichtag, ohne allgemeine Projekt- oder Landesrechtsgleichsetzung. `o6_24-ANNEX_L_REAL_PARCEL_COMBINATIONS_CODES_AND_OVERLAP` bestätigt als Originalbefund16 erlaubt/23 ausgeschlossen; keine automatische Synergie sämtlicher Schutzmaßnahmen oder Code-Aliase.
+
+## Vertiefung Block 6: gemeinsam erfassen, getrennt anrechnen
+
+[Belegter Personen-/Kurs-/Antragsabgleich](../person-training-application-review-20261009/README.md):
+interne Personen-/Betriebs-/Veranstaltungs-/Antragsidentitäten und datierte
+Belegbeziehungen gemeinsam vorbereiten. Themen-/Anbieteranerkennung, Stunden
+gegenüber EBW-Treffen, fixe gegenüber ersten Teilnahmejahren, Meldung gegenüber
+AMA-Genehmigung und jährliche MFA-Ergänzung bleiben konkrete Pflichtscopes.
+Keine neue Kurspflicht für jede Maßnahme oder gemeinsamer freier Stundenpool.
+Vorhandene RAW-Antragsdaten sind nicht schon konsumierter Policy-Vertrag;
+die aktuelle generische Projektion verliert den MANA-Bezug.
+
+114 vorhandene fachliche Frageverweise (69 direkt, 45 begrenzte Querverweise) sind im Index verbunden;
+UBB-spezifische Kurs-/Antrags-ID-Lücke bleibt sichtbar. HUM-Quellenkonflikt,
+datierte vollständige Anbieter-Matrix, Tierantragsjahre und aktuelle Optionen
+bleiben im Sammelissue140 offen. Alle289 Fragen und acht o6_3-Blocker unverändert.
+Dokumentierte Experten-/Betreiberwerte und eigener Auto-Snapshot bleiben zulässig.
+Die Herkunft der Eingabe ersetzt keine tatsächliche Einreichung oder Anerkennung.
+Block7 vertieft konkrete Kombinationen, Sanktionen und Zahlung.
