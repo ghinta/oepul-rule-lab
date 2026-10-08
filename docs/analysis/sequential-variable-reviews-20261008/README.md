@@ -1,13 +1,16 @@
-# Fortlaufende Einzelprüfungen nach UBB, BIO und NPA/AFS
+# Einzelprüfungen der 26 Maßnahmen
 
 App-Sammelissue: https://github.com/ghinta/oepul-recommender/issues/140.
 Arbeitsbranch: Draft Lab #103; UBB bleibt separat in Draft #102.
 
-22 weitere Maßnahmen einzeln dokumentiert; 1 weitere Einzelprüfungen ausstehend.
+Alle 26 Maßnahmen einzeln dokumentiert: UBB separat in #102, BIO, NPA/AFS und 23 weitere Maßnahmen in #103.
 Alle fachlichen Aufnahmeentscheidungen bleiben offen. Kein Merge, keine App-Promotion.
 
 | Maßnahme | Einzelprüfung | Blätter / Originalfundstellen / offene Fragen / OPA-Proben |
 | --- | --- | --- |
+| o6_1a (UBB) | [separate Einzelprüfung in Draft #102](https://github.com/ghinta/oepul-rule-lab/pull/102) | eigene Prüfbasis, nicht in die Zahlen von #103 eingerechnet |
+| o6_1b | [dokumentiert, Aufnahme offen](../o6_1b-variable-review-20261008/README.md) | 287 / 235 / 11 / 8 |
+| o6_1c | [dokumentiert, Aufnahme offen](../o6_1c-variable-review-20261008/README.md) | 150 / 97 / 10 / 13 |
 | o6_2 | [dokumentiert, Aufnahme offen](../o6_2-variable-review-20261008/README.md) | 128 / 149 / 8 / 13 |
 | o6_3 | [dokumentiert, Aufnahme offen](../o6_3-variable-review-20261008/README.md) | 96 / 107 / 8 / 11 |
 | o6_4 | [dokumentiert, Aufnahme offen](../o6_4-variable-review-20261008/README.md) | 89 / 79 / 8 / 13 |
@@ -30,11 +33,11 @@ Alle fachlichen Aufnahmeentscheidungen bleiben offen. Kein Merge, keine App-Prom
 | o6_21 | [dokumentiert, Aufnahme offen](../o6_21-variable-review-20261008/README.md) | 181 / 115 / 15 / 27 |
 | o6_22 | [dokumentiert, Aufnahme offen](../o6_22-variable-review-20261008/README.md) | 168 / 83 / 15 / 32 |
 | o6_23 | [dokumentiert, Aufnahme offen](../o6_23-variable-review-20261008/README.md) | 77 / 68 / 11 / 29 |
-| o6_24 | einzeln ausstehend | — |
+| o6_24 | [dokumentiert, Aufnahme offen](../o6_24-variable-review-20261008/README.md) | 56 / 71 / 13 / 37 |
 
 Zahlen erfassen Prüfumfang, keine fachliche Qualität oder vollständige Rechtsfreigabe.
 Originalfundstellenprüfung bestätigt wörtliche Auffindbarkeit; historische OPA-Ausgaben sind Beobachtungen.
 Mögliche Wiederverwendung wird mit betroffenen Frage-IDs und unterschiedlichen Scopes dokumentiert;
 gemeinsame Namen oder gleiche technische Datentypen begründen keine fachlichen Aliase.
 
-[Laufende, belegte Synergiekandidaten](synergies.md) für die spätere gemeinsame Durchsicht.
+[Belegte Synergiekandidaten](synergies.md) und [Reihenfolge der gemeinsamen Fachklärung](domain-review-order.md).

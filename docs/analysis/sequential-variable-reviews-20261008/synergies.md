@@ -1,7 +1,7 @@
-# Belegte Wiederverwendungskandidaten – laufender Stand
+# Belegte Wiederverwendungskandidaten nach den Einzelprüfungen
 
 Arbeitsnotizen für die gemeinsame Durchsicht nach den Einzelprüfungen.
-Dies ist keine abschließende Analyse aller Maßnahmen und keine Aufnahmefreigabe.
+Alle 26 Maßnahmen sind einzeln dokumentiert; diese Kandidaten sind keine fachliche Aufnahmefreigabe.
 Die jeweiligen Fragen im Sammelissue #140 bleiben offen. Zusammengefasst wird
 die Erfassung von Evidenz; ihre fachliche Auswertung bleibt maßnahmenbezogen.
 
@@ -26,8 +26,8 @@ die Erfassung von Evidenz; ihre fachliche Auswertung bleibt maßnahmenbezogen.
 
 Belege stehen in den jeweiligen Originalfundstellen und Pfad-/Policy-Dossiers.
 Offene gemeinsame Benennung darf die differenzierten fachlichen Scopes nicht
-vorwegnehmen. Weitere Zeilen werden erst nach der betreffenden Einzelprüfung
-ergänzt.
+vorwegnehmen. Die maßnahmenspezifischen Ergänzungen folgen unten. Die [gemeinsame
+Durchsicht](domain-review-order.md) bündelt sie nach Evidenzarten, ohne IDs zu schließen.
 | Datierte Jahresereignisse/MFA/Vertrag | o6_6, o6_7, o6_8, o6_9 | o6_9-CONTRACT_CURRENT_YEAR_SNAPSHOT_AND_ROOT; o6_9-EVENT_YEAR_VOLUME_DECLARATION_AND_APPLICATION_DEADLINES; jeweilige Vertrags-/Zeitfragen | Ein gemeinsamer Snapshot-/Ereignisrahmen ist möglich; jährliche Mengen, mehrjährige Begrünung, Vertragsantrag und noch offene Jahresfristen bleiben verschiedene Prüfungen. |
 | Vollständige Fläche und GVE-Basis | o6_3, o6_4, o6_5, o6_9 | o6_9-ANNUAL_PIG_GVE_CATTLE_DATABASE_AND_CATEGORIES; o6_9-FERTILIZABLE_AREA_TOTAL_ARABLE_AND_COMBINATION | Identitäten/Vollständigkeit/Jahresnachweis gemeinsam prüfen; Schweine-GVE, Rinderbasis, gesamte Ackerfläche und prämienfähige Fläche sind keine Aliase. |
 | Nachweis gegenüber berechnetem Betrag | o6_4, o6_8, o6_9 | o6_9-THEORETICAL_AMOUNT_VERSUS_CONFIRMED_RECOMMENDATION; o6_9-RECIPE_SOURCE_ACTUAL_PHASE_TECHNOLOGY | Gemeinsam Status unbekannt/bestätigt/Verletzung und theoretischen Betrag kennzeichnen; behördliche Sanktionen nicht durch globale Nullprämie ersetzen. |
@@ -96,3 +96,7 @@ ergänzt.
 ## Ergänzung aus o6_23
 
 `o6_23-CURRENT_FULL_PROJECT_LAND_LAW_GIS_SNAPSHOT_AND_HOST` verbindet sich mit NAT18/EBW19 über Behörden-/Projekt-/GIS-Versionen, aber N2-Auflagen stammen aus ordnungsrechtlichem Landesrecht und Dürrefreigabe erfordert angepasste Verordnung. `o6_23-DIVSZ_ACTUAL_ELIGIBLE_AREA_UNION_CREDIT_NO_DOUBLE_AND_DROUGHT` mit UBB/BIO-DIV-Identitäten: Flächenunion und Codejahr gemeinsam, N2-Pflichten bleiben eigenständig. `o6_23-ANNEX_J_WITHIN_G_UNKNOWN_T_ALIAS_AND_NAT_CODE_SCOPE` / `o6_23-ACTUAL_RATE_COMPONENT_CAP_ORDER_OTHER_PAYMENTS_AND_SANCTION` mit NAT18/EBW19: gleiche Quellenmatrix/Cap-Evidenz, keine pauschale Code- oder Sanktionseinstufung. Wasserrahmen24 wird anschließend mit tatsächlichem Bescheid-/Gebietsscope einzeln geprüft.
+
+## Ergänzung aus o6_24
+
+`o6_24-REAL_PARCEL_IDS_CLASS_GEOMETRY_UNION_AND_LN` und `o6_24-ACTUAL_EFFECTIVE_N_FULL_EVENTS_UNITS_FACTORS_AND_ROUNDING` mit Grundwasserschutz16: reale Schlag-/GIS-/Kultur-/Düngeereignisse gemeinsam erfassen, jedoch eigene Gebietskulisse, Klassen und externe Rechtsfristen erhalten. `o6_24-FARM_BOOK_ALL_PARCELS_ZERO_N_CONTENT_STORAGE_AND_RETENTION` kann dieselben belegten Ereignisse nutzen, §5-Inhalte und Geltungsumfang sind eigenständig. `o6_24-CURRENT_ANNUAL_CONTRACT_MFA_PROGRAM_END_EXIT_AND_ASOF` mit Natura23: einjähriger Vertrag/aktuelle Jahrescodes/Stichtag, ohne allgemeine Projekt- oder Landesrechtsgleichsetzung. `o6_24-ANNEX_L_REAL_PARCEL_COMBINATIONS_CODES_AND_OVERLAP` bestätigt als Originalbefund16 erlaubt/23 ausgeschlossen; keine automatische Synergie sämtlicher Schutzmaßnahmen oder Code-Aliase.

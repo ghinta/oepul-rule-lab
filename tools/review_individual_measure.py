@@ -43,6 +43,7 @@ CONFIG_HASHES = {
     'o6_21': 'eb51feca5047604958b9f1f348c104327faab86044b7c0c0114e5482a095fe12',
     'o6_22': 'a634d77614ec369dc7360d3dcb69e87a85b88c568f4080daa2adaa23ede37d07',
     'o6_23': '4221da0284f5d6cec995ccbd54107bb17e4cac749011f9346c8afd46f431a393',
+    'o6_24': 'dbad9c36d7bc8080263f48777c64da04c0bfd9f2d3a28fa299c98e38b49dbaca',
 }  # Each completed slice is registered after its manual review.
 INDEX = ROOT / 'docs/analysis/sequential-variable-reviews-20261008/README.md'
 SEQUENCE = tuple(f'o6_{number}' for number in range(2, 25))
@@ -50,14 +51,23 @@ SEQUENCE = tuple(f'o6_{number}' for number in range(2, 25))
 
 def render_index():
     require(set(CONFIG_HASHES) <= set(SEQUENCE), 'unexpected measure in sequential review')
-    lines = ['# Fortlaufende Einzelprüfungen nach UBB, BIO und NPA/AFS', '',
+    complete = set(CONFIG_HASHES) == set(SEQUENCE)
+    lines = ['# Einzelprüfungen der 26 Maßnahmen', '',
              'App-Sammelissue: https://github.com/ghinta/oepul-recommender/issues/140.',
              'Arbeitsbranch: Draft Lab #103; UBB bleibt separat in Draft #102.', '',
-             f'{len(CONFIG_HASHES)} weitere Maßnahmen einzeln dokumentiert; '
-             f'{len(SEQUENCE)-len(CONFIG_HASHES)} weitere Einzelprüfungen ausstehend.',
+             ('Alle 26 Maßnahmen einzeln dokumentiert: UBB separat in #102, '
+              'BIO, NPA/AFS und 23 weitere Maßnahmen in #103.' if complete else
+              f'{len(CONFIG_HASHES)} weitere Maßnahmen einzeln dokumentiert; '
+              f'{len(SEQUENCE)-len(CONFIG_HASHES)} weitere Einzelprüfungen ausstehend.'),
              'Alle fachlichen Aufnahmeentscheidungen bleiben offen. Kein Merge, keine App-Promotion.', '',
              '| Maßnahme | Einzelprüfung | Blätter / Originalfundstellen / offene Fragen / OPA-Proben |',
              '| --- | --- | --- |']
+    lines.append('| o6_1a (UBB) | [separate Einzelprüfung in Draft #102](https://github.com/ghinta/oepul-rule-lab/pull/102) | eigene Prüfbasis, nicht in die Zahlen von #103 eingerechnet |')
+    for measure in ('o6_1b', 'o6_1c'):
+        base = dossier_path(measure)
+        counts = ' / '.join(str(len(read(base / name))) for name in
+                            ('leaf-review.json', 'citation-audit.json', 'questions.json', 'policy-probes.json'))
+        lines.append(f'| {measure} | [dokumentiert, Aufnahme offen](../{measure}-variable-review-20261008/README.md) | {counts} |')
     for measure in SEQUENCE:
         if measure in CONFIG_HASHES:
             config = read(dossier_path(measure) / 'review.json')
@@ -69,7 +79,7 @@ def render_index():
               'Originalfundstellenprüfung bestätigt wörtliche Auffindbarkeit; historische OPA-Ausgaben sind Beobachtungen.',
               'Mögliche Wiederverwendung wird mit betroffenen Frage-IDs und unterschiedlichen Scopes dokumentiert;',
               'gemeinsame Namen oder gleiche technische Datentypen begründen keine fachlichen Aliase.', '']
-    lines += ['[Laufende, belegte Synergiekandidaten](synergies.md) für die spätere gemeinsame Durchsicht.', '']
+    lines += ['[Belegte Synergiekandidaten](synergies.md) und [Reihenfolge der gemeinsamen Fachklärung](domain-review-order.md).', '']
     return '\n'.join(lines)
 
 
