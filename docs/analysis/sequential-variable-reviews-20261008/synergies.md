@@ -92,3 +92,7 @@ ergänzt.
 ## Ergänzung aus o6_22
 
 `o6_22-ACTUAL_PEN_ALL_OCCUPANTS_WEIGHT_SPACE_AND_BEDDING` mit `o6_21-ACTUAL_WEIGHT_SPACE_ALL_OCCUPANTS_AND500_BOUNDARY`: reale Box-/Besatz-/Baubelege gemeinsam, Gewichtstabellen/500-vs85-Grenze/Sauenausnahmen verschieden. `o6_22-ALL_SPECIES_REAL_COMPOST_NAPV_PROOFS_AND_DUPLICATE21` mit `o6_21-ALL_SPECIES_MANURE_ACTUAL_WINDROW_METHODS_AND_DATES`: tatsächliche ganze Mistbasis/Datums-/Dokumente gemeinsam; doppelte Zuschlagszahlung bleibt offen. `o6_22-GVO_PROTEIN_ALL_SPECIES_STOCKS_EUROPE_AND_REAL_RECIPES` mit o6_9/o6_16 Fütterungsfragen: Chargen-/Rations-/Herkunftsbelege gemeinsam, GVO-Alltierarten-Volljahr ist kein 88%-TM- oder N/P-Rationsscope. Tierliste April1/gegebenenfalls Jahresdurchschnitt ist weder Rinder21-Tages-RGVE noch Weide20-214-Tage-Nenner.
+
+## Ergänzung aus o6_23
+
+`o6_23-CURRENT_FULL_PROJECT_LAND_LAW_GIS_SNAPSHOT_AND_HOST` verbindet sich mit NAT18/EBW19 über Behörden-/Projekt-/GIS-Versionen, aber N2-Auflagen stammen aus ordnungsrechtlichem Landesrecht und Dürrefreigabe erfordert angepasste Verordnung. `o6_23-DIVSZ_ACTUAL_ELIGIBLE_AREA_UNION_CREDIT_NO_DOUBLE_AND_DROUGHT` mit UBB/BIO-DIV-Identitäten: Flächenunion und Codejahr gemeinsam, N2-Pflichten bleiben eigenständig. `o6_23-ANNEX_J_WITHIN_G_UNKNOWN_T_ALIAS_AND_NAT_CODE_SCOPE` / `o6_23-ACTUAL_RATE_COMPONENT_CAP_ORDER_OTHER_PAYMENTS_AND_SANCTION` mit NAT18/EBW19: gleiche Quellenmatrix/Cap-Evidenz, keine pauschale Code- oder Sanktionseinstufung. Wasserrahmen24 wird anschließend mit tatsächlichem Bescheid-/Gebietsscope einzeln geprüft.

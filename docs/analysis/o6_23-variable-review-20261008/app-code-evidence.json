@@ -1,0 +1,41 @@
+{
+  "commit": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+  "runtime_values_included": false,
+  "files": {
+    "backend/app/api/recommender.py": {
+      "sha256": "7d86e7f94f2cbcd273a21e44f83531fd72ba24bafe947f42ffb98d3a97c8e9a1",
+      "excerpts": [
+        {
+          "start_line": 30,
+          "end_line": 145,
+          "text": "    \"o6_10\",\n    \"o6_11\",\n    \"o6_12\",\n    \"o6_13\",\n    \"o6_14\",\n    \"o6_15\",\n    \"o6_16\",\n    \"o6_17\",\n    \"o6_18\",\n    \"o6_19\",\n    \"o6_20\",\n    \"o6_21\",\n    \"o6_22\",\n    \"o6_23\",\n    \"o6_24\",\n)\nSUPPORTED_MEASURE_STATUSES = (\"eligible\", \"not_eligible\", \"missing_data\")\n\n\nREFERENCE_DIR = Path(__file__).resolve().parent / \"reference\"\nMEASURE_SUPPLEMENTAL_DEPENDENCY_PATH = Path(\n    os.getenv(\n        \"OEPUL_MEASURE_SUPPLEMENTAL_DEPENDENCY_PATH\",\n        str(REFERENCE_DIR / \"measure_supplemental_dependency_v1.csv\"),\n    )\n)\nMEASURE_DEPENDENCY_HEADER = (\"measure_id\", \"variable_path\", \"source_note\")\n\n\ndef _resolve_data_path(env_var: str, mounted_path: str, relative_repo_path: str) -> Path:\n    env_value = os.getenv(env_var)\n    candidates = []\n    if env_value:\n        candidates.append(Path(env_value).expanduser())\n\n    current = Path(__file__).resolve()\n    for parent in current.parents:\n        candidates.append(parent / relative_repo_path)\n\n    candidates.append(Path(mounted_path))\n\n    for candidate in candidates:\n        if candidate.exists():\n            return candidate.resolve()\n    return candidates[0].resolve()\n\n\nGROUP_MAPPING_PATH = _resolve_data_path(\n    \"OEPUL_GROUP_MAPPING_PATH\",\n    \"/mapping/20-dictionary/oepul-measure-operational-group-map.csv\",\n    \"docs/mapping/20-dictionary/oepul-measure-operational-group-map.csv\",\n)\nREADINESS_PATH = _resolve_data_path(\n    \"OEPUL_READINESS_PATH\",\n    \"/mapping/20-dictionary/measure-readiness-classification-v1.csv\",\n    \"docs/mapping/20-dictionary/measure-readiness-classification-v1.csv\",\n)\n\nBIODIVERSITY_LABEL_HINTS = (\n    \"gruenbrache\",\n    \"grünbrache\",\n    \"gruenlandbrache\",\n    \"grünlandbrache\",\n    \"biodivers\",\n)\n\nNONPRODUCTIVE_LABEL_HINTS = (\n    \"nichtproduktiv\",\n    \"nonproductive\",\n    \"gruenbrache\",\n    \"grünbrache\",\n    \"brache\",\n    \"stilllegung\",\n    \"biodivers\",\n)\n\nAGROFORESTRY_LABEL_HINTS = (\n    \"agroforst\",\n    \"agro-forest\",\n    \"lse agroforststreifen\",\n)\n\n\n@dataclass(frozen=True)\nclass MeasureSelection:\n    measure_id: str\n    group: str\n\n\ndef _normalize_group_values(selected_groups: list[str] | tuple[str, ...] | None) -> list[str]:\n    if not selected_groups:\n        return []\n    if isinstance(selected_groups, str):\n        selected_groups = [selected_groups]\n    normalized: list[str] = []\n    for value in selected_groups:\n        if not isinstance(value, str):\n            continue\n        stripped = value.strip()\n        if stripped:\n            normalized.append(stripped)\n    return normalized\n\n\ndef normalize_selected_groups(selected_groups: list[str] | tuple[str, ...] | None) -> list[str]:\n    return _normalize_group_values(selected_groups)\n\n\n@lru_cache(maxsize=1)\ndef load_group_mapping() -> tuple[dict[str, tuple[str, ...]], tuple[str, ...]]:\n    group_measures: OrderedDict[str, list[str]] = OrderedDict()\n    ordered_groups: list[str] = []\n\n    with GROUP_MAPPING_PATH.open(\"r\", encoding=\"utf-8\", newline=\"\") as handle:\n        reader = csv.DictReader(handle)\n        for row in reader:"
+        }
+      ]
+    },
+    "backend/policy/oepul_measures.rego": {
+      "sha256": "c0900ece3b883e1362a6ab1d00518be7ad456f6d4e05dba97a01f4eee48bd35a",
+      "excerpts": [
+        {
+          "start_line": 1728,
+          "end_line": 1733,
+          "text": "o6_23_result := c_measure_result(\"o6_23\", [\n  [\"payload.farm.region.is_protected_area\", object.get(farm_region, \"is_protected_area\", null)],\n  [\"payload.oepul.shared.parcels[].project_confirmation_codes\", shared_parcel_project_confirmation_values],\n  [\"payload.land.parcels[].operations.cutting_dates\", parcel_cutting_date_values],\n])\n"
+        },
+        {
+          "start_line": 1793,
+          "end_line": 1828,
+          "text": "c_measure_result(measure_id, pairs) := {\n  \"measure_id\": measure_id,\n  \"status\": \"missing_data\",\n  \"missing_keys\": missing_keys,\n  \"reasons\": [\"required_inputs_missing\"],\n  \"failed_conditions\": [],\n  \"satisfied_conditions\": [],\n} if {\n  missing_keys := missing_required_keys_from_pairs(pairs)\n  count(missing_keys) > 0\n}\n\n# decision-trace-condition: category_c_conservative_missing_data\n# Stable, non-semantic anchor comment (Issue #100 DecisionTrace v1); see note\n# above. This branch is a technical coverage limitation of the checked-in\n# policy (no formalised eligibility rule yet for any of the fifteen measures\n# this helper backs), not a normative rule: the DecisionTrace adapter must\n# never attach a normative source reference to it.\nc_measure_result(measure_id, pairs) := {\n  \"measure_id\": measure_id,\n  \"status\": \"missing_data\",\n  \"missing_keys\": [],\n  \"reasons\": [\"category_c_conservative_missing_data\"],\n  \"failed_conditions\": [],\n  \"satisfied_conditions\": [],\n} if {\n  missing_keys := missing_required_keys_from_pairs(pairs)\n  count(missing_keys) == 0\n}\n\nrequired_value_missing(value) if {\n  value == null\n}\n\nrequired_value_missing(value) if {\n  type_name(value) == \"array\""
+        }
+      ]
+    },
+    "backend/app/review/adapters/oepul/catalog.py": {
+      "sha256": "d0cb92261815faee4fb3a99133afb2922e3b40eb657d04d79103b2c402604528",
+      "excerpts": [
+        {
+          "start_line": 2917,
+          "end_line": 2955,
+          "text": "        measure_id=\"o6_23\",\n        condition_code=\"required_inputs_missing\",\n        label=\"Erforderliche Eingabedaten fehlen\",\n        rule_module=\"oepul\",\n        rule_package=\"oepul\",\n        rule_name=\"c_measure_result\",\n        is_technical_limitation=False,\n        document_id=O6_23_NATURA2000_LANDWIRTSCHAFT_2025_10.document_id,\n        printed_page=\"1\",\n        section=\"1 ÜBERSICHT\",\n        excerpt=_O6_23_UEBERSICHT_EXCERPT,\n        comparator=None,\n        required_value_kind=None,\n        required_value=None,\n        unit=None,\n        observed_registry_paths=(\"farm.region.is_protected_area\",),\n        unsupported_wildcard_paths=(\"payload.oepul.shared.parcels[].project_confirmation_codes\", \"payload.land.parcels[].operations.cutting_dates\"),\n    ),\n    ConditionCatalogEntry(\n        measure_id=\"o6_23\",\n        condition_code=\"category_c_conservative_missing_data\",\n        label=\"Regelprüfung für die Maßnahme noch unvollständig\",\n        rule_module=\"oepul\",\n        rule_package=\"oepul\",\n        rule_name=\"c_measure_result\",\n        is_technical_limitation=True,\n        document_id=None,\n        printed_page=None,\n        section=None,\n        excerpt=None,\n        comparator=None,\n        required_value_kind=None,\n        required_value=None,\n        unit=None,\n        observed_registry_paths=(\"farm.region.is_protected_area\",),\n        unsupported_wildcard_paths=(\"payload.oepul.shared.parcels[].project_confirmation_codes\", \"payload.land.parcels[].operations.cutting_dates\"),\n    ),\n    ConditionCatalogEntry(\n        measure_id=\"o6_24\","
+        }
+      ]
+    }
+  }
+}
