@@ -254,7 +254,7 @@ def outputs(data):
         '52 finalisierte historische Runs, je ein Luna- und Opus-Run. Spätere Überarbeitungen sind nicht enthalten.',
         'Statuskorrektur 08.10.2026: Dieses Paket ist ein automatisiertes Vorinventar mit einer Durchsicht der Modellnotizen.',
         'Es ersetzt nicht die detaillierte Einzelprüfung wie bei o6_1a in PR #102; die frühere Abschlussmeldung für die übrigen 25 war zu weitgehend.',
-        'Die nachgeholten [BIO-Einzelprüfung](../o6_1b-variable-review-20261008/README.md) und [NPA-/AFS-Einzelprüfung](../o6_1c-variable-review-20261008/README.md) sind separate Slices; die weiteren 23 bleiben einzeln ungeprüft.',
+        'Die nachgeholten [BIO-Einzelprüfung](../o6_1b-variable-review-20261008/README.md) und [NPA-/AFS-Einzelprüfung](../o6_1c-variable-review-20261008/README.md) sind separate Slices; weitere Einzelprüfungen und offene Maßnahmen stehen im [fortlaufenden Status](../sequential-variable-reviews-20261008/README.md).',
         '129 Fragegruppen sind vorläufige Prüfkandidaten; ihre Zahl belegt keine Vollständigkeit oder Quellenrichtigkeit.',
         'Regeln und Variablen werden damit nicht in die App übernommen.', '',
         '| Maßnahme | Luna Vorschläge / neue / geänderte Blattpfade | Opus Vorschläge / neue / geänderte Blattpfade | offene Fragegruppen | Dossier |',
@@ -263,7 +263,7 @@ def outputs(data):
         cols = [f'{r["proposal_count"]} / {r["counts"]["added"]} / {r["counts"]["changed"]}' for r in item['runs'].values()]
         lines.append(f'| {m} | {cols[0]} | {cols[1]} | {len(item["questions"])} | [Diff]({m}/diff.md), [Pfade]({m}/path-review.md), [Fragen]({m}/questions.md), [alle Notizen]({m}/model-notes.md) |')
     lines += ['', '## Offene gemeinsame Entscheidungen', '', '[Quellenstände, Snapshot-Zeitbezug, gemeinsame IDs/Codes/RGVE, fehlende Daten und Behördenentscheidungen](cross-measure-questions.md).', '',
-        '## Nächster Schritt', '', 'Nach UBB, BIO und NPA/AFS folgt o6_2; die weiteren Maßnahmen jeweils einzeln bearbeiten.',
+        '## Nächster Schritt', '', 'Die verbleibenden Maßnahmen gemäß fortlaufendem Status jeweils einzeln bearbeiten.',
         'Pro Einzelprüfung: semantische Datengruppen, Entität/Einheit/Zeitbezug, tatsächliche Zugriffe und belegte Unsicherheiten dokumentieren.',
         'Vorläufige Fragen dabei bestätigen, präzisieren oder begründet verwerfen; Antworten und unklare Zuordnungen niemals vorwegnehmen.',
         'Expert:innen beantworten die einzeln geprüften Frage-IDs im Sammelissue mit Quelle, Geltungsjahr, Datenstand und Nachweis.',
