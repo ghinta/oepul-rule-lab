@@ -89,4 +89,3 @@ Original `sources/oepul/originals/o6_4_bewirtschaftung_von_bergmaehdern_2025_10.
 Original `sources/oepul/originals/o6_4_bewirtschaftung_von_bergmaehdern_2025_10.pdf`, PDF-Seite 4: „Wenn keine Mahd erfolgt, kann“.
 
 Original `sources/oepul/originals/o6_4_bewirtschaftung_von_bergmaehdern_2025_10.pdf`, PDF-Seite 4: „auch keine Prämie gewährt werden.“.
-
