@@ -14,6 +14,15 @@ Berechnungen. Die offene Browseranbindung und der eigene Auto-Snapshot sind
 konkrete technische Vorbereitungen. Aktuelle Hinweise ergänzen die historische
 Quellenbasis; bestehende Frage-IDs bleiben vollständig offen.
 
+Die [Vertiefung zu Mitteln, Futter und Bewirtschaftung](../material-operations-review-20261008/README.md)
+prüft gemeinsame Produkte/Chargen, Stoffflüsse, tatsächliche Anwendungen,
+Rationen, Mistmieten, Saatgut und Betriebs-/Schlagereignisse. Die Norm-/
+Zulassungsquelle bleibt vom bestätigten Experten-/Betreiber-/Auto-Fakt getrennt.
+13 Themen bündeln die vorhandenen Restfragen; unterschiedliche N-Basen,
+88-%-TM-Rationen, Volljahr-GVO/Herkunft und Feld-/Saatgutanteile werden nicht
+über gleiche Namen aliasiert. Der tatsächliche Regelzugriff folgt der
+bestätigten Eingabebedeutung, nicht bloß einer registrierten Mengen-/Boolzahl.
+
 | Gemeinsame Grundlage | Betroffene offene Entscheidungen | Unterschied, der erhalten bleiben muss |
 | --- | --- | --- |
 | RGVE-Kohorten mit stabiler ID und datiertem Bestands-/Alters-/Rassenbeleg; vorhandener App-Backend-Vertrag aus #137 | BIO `RGVE_STOCK_BASIS`, o6_2 `RGVE_FODDER_BASIS`, o6_3 `RGVE_COHORTS_AND_FIRST_YEAR`; bestehende `COUNT_BASIS/GROUP_IDENTITY` | GVE ist kein RGVE. o6_2 klassifiziert jährlich, o6_3 braucht zusätzlich historische Erstjahresnachweise. BIO hat eigene Kategorien-/Ausnahme-/Zuschlagsfragen. Opus-Kuh-Kategorie heißt bei o6_2 `cattle_ge_2y`, bei o6_3 `cattle_2y_plus`; keine automatische String-Gleichsetzung. |

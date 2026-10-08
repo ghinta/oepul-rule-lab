@@ -65,3 +65,22 @@ Die Restfragen stehen im Sammelissue #140; sie schließen keine bestehende ID.
 Die nächsten fachlich unabhängigen App-Vorbereitungen betreffen Identität,
 Datumsrollen/Herkunft, typisierte Belege und den Editor. Danach werden bestätigte
 Maßnahmenscopes einzeln angebunden und unabhängig bewertet.
+
+## Vertiefung Block 4: Mittel, Futter und Bewirtschaftung
+
+Der [Material-/Ereignisabgleich](../material-operations-review-20261008/README.md)
+verbindet 24 betroffene Maßnahmen in 13 gemeinsamen Themen mit Originalbelegen
+und vorhandenen App-Pfaden. Produkt-/BIO-/Indikationsscope, Tierhaltungs-N,
+jahreswirksame Ausbringung, Rations-Protein/TM, GVO-/Herkunftsnachweis,
+Saatgutanteile und tatsächlich bewirtschaftete Fläche bleiben getrennt.
+Dass ein Inputpfad existiert, bestätigt weder dessen vollständige Erfassung
+noch eine fachliche Maßnahmensprüfung. Die generische App bleibt aktuell
+konservativ missing_data; neue strukturierte Inputs brauchen passende Adapter,
+Oberfläche und bestätigte konkrete Regelzugriffe.
+
+Experten-/Betreiberaggregate und Auto-Werte im eigenen dokumentierten Snapshot
+gehen AMA vor. Keine zusätzliche Herkunftssperre wird eingeführt. Die Restfragen
+im Sammelissue #140 betreffen Einheiten, Scope, Quellen, Methoden und echte
+Belegketten; alle bisherigen Frage-IDs bleiben offen. Aktuelle Hinweise sind
+gezielt geprüft, vollständige aktuelle Zulassungs-/Faktor-/Katalogfassungen
+und reale Integrations-Snapshots bleiben erforderlich.
