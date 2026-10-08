@@ -16,9 +16,11 @@ Geprüfter Stand: dieser Branch gegen Lab main 7a296d2 und App main 5296108.
 Die Prüfungen validieren Inventar, Herkunft, Reproduzierbarkeit und offene Zustände.
 Statuskorrektur 08.10.2026: Eine Modellnotizen-Durchsicht und dieses Vorinventar
 entsprechen nicht der Prüftiefe des einzelnen o6_1a-Dossiers. Die früher als
-erledigt gemeldeten 25 Einzelprüfungen waren damit nicht erfolgt. Ausschließlich
-o6_1b wurde danach im [eigenen Slice](../o6_1b-variable-review-20261008/README.md)
-vertieft; die weiteren 24 bleiben ausstehend.
+erledigt gemeldeten 25 Einzelprüfungen waren damit nicht erfolgt.
+o6_1b wurde danach im [BIO-Slice](../o6_1b-variable-review-20261008/README.md)
+und anschließend o6_1c im [NPA-/AFS-Slice](../o6_1c-variable-review-20261008/README.md)
+vertieft; die weiteren 23 bleiben ausstehend. Die obigen Testzahlen beschreiben
+den ursprünglichen Inventarstand; neue Slice-Prüfungen sind in deren Verification dokumentiert.
 Sie bestätigen keine fachliche Modellqualität, vollständigen Rego-/Adapter-Konsum,
 aktuelle gesetzliche Anwendbarkeit oder produktive Empfehlungen aller Maßnahmen.
 Kein neuer Modelllauf, keine App-Implementierung, keine Golden-/Hidden-Testbewertung.
