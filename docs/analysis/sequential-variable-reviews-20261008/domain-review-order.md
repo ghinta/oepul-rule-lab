@@ -36,6 +36,13 @@ keine vollständige normative Regelabdeckung und keine produktive App-E2E-
 Funktion. Die fehlende vollständige WRRL-Verordnung, die o6_3-Fachblocker und
 die Flächen-/KG-Entscheidung aus App #133 bleiben sichtbar.
 
-Nächster Halt ist die gemeinsame Fachklärung mit dem Nutzer und den
-Domainexperten. Drafts #102/#103 bleiben offen. Ein Merge und jede fachliche
-Aufnahme erfolgen erst nach gesonderter Freigabe; die Thesis bleibt unverändert.
+Die verbliebenen Fachfragen gehen an die Domainexperten im Sammelissue #140.
+Der Nutzer kann diese Auslegungen derzeit nicht beantworten. Der
+[Recherche-Subtask #141](https://github.com/ghinta/oepul-recommender/issues/141)
+und der [ergänzende Quellenabgleich](../area-credit-source-review-20261008/README.md)
+grenzen deshalb zuerst belegte Rechenbasen, technische Grundlagen und offene
+Entscheidungen ein. Der aktuelle WRRL-Verordnungstext ist online gefunden;
+das historische Quellenpaket und die gepinnten Einzelprüfungen bleiben unverändert.
+
+Drafts #102/#103 bleiben offen. Ein Merge und jede fachliche Aufnahme erfolgen
+erst nach gesonderter Freigabe; die Thesis bleibt unverändert.
