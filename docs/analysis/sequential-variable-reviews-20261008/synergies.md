@@ -88,3 +88,7 @@ ergänzt.
 ## Ergänzung aus o6_21
 
 `o6_21-CURRENT_YEAR_REGISTER_SOURCE_SNAPSHOT_AND_ASOF` / `o6_21-FOUR_CATEGORY_ENUMS_REAL_SEX_AGE_AND_UNIQUE_TIERS` verbinden sich mit Weide20/Behirtung15/Rassen5 über echte Tieridentität und Ereignisse, aber nicht über gleiche Zeitnenner: 21 Kalenderjahr, 20 214-Tage-Weidefenster. `o6_21-ACTUAL_PER_TIER_REDUCED_RATE_OVERLAP_AND_SOURCE21` verbindet 14/20/21 erst nach geklärtem tatsächlichem Prämienantrag; `alm_driven` allein ist kein Alias. Stall-/Box- und Kompostgrundlagen werden anschließend mit Schweine22 verglichen, Ausnahme-/Gewichtstabellen bleiben maßnahmenspezifisch.
+
+## Ergänzung aus o6_22
+
+`o6_22-ACTUAL_PEN_ALL_OCCUPANTS_WEIGHT_SPACE_AND_BEDDING` mit `o6_21-ACTUAL_WEIGHT_SPACE_ALL_OCCUPANTS_AND500_BOUNDARY`: reale Box-/Besatz-/Baubelege gemeinsam, Gewichtstabellen/500-vs85-Grenze/Sauenausnahmen verschieden. `o6_22-ALL_SPECIES_REAL_COMPOST_NAPV_PROOFS_AND_DUPLICATE21` mit `o6_21-ALL_SPECIES_MANURE_ACTUAL_WINDROW_METHODS_AND_DATES`: tatsächliche ganze Mistbasis/Datums-/Dokumente gemeinsam; doppelte Zuschlagszahlung bleibt offen. `o6_22-GVO_PROTEIN_ALL_SPECIES_STOCKS_EUROPE_AND_REAL_RECIPES` mit o6_9/o6_16 Fütterungsfragen: Chargen-/Rations-/Herkunftsbelege gemeinsam, GVO-Alltierarten-Volljahr ist kein 88%-TM- oder N/P-Rationsscope. Tierliste April1/gegebenenfalls Jahresdurchschnitt ist weder Rinder21-Tages-RGVE noch Weide20-214-Tage-Nenner.
