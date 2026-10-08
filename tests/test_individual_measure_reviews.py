@@ -5,6 +5,7 @@ from pathlib import Path
 import unittest
 
 from tools import review_individual_measure as review
+from rulelab.grounding import normalize_evidence
 
 
 class IndividualMeasureReviewTests(unittest.TestCase):
@@ -56,10 +57,14 @@ class IndividualMeasureReviewTests(unittest.TestCase):
         for measure in review.CONFIG_HASHES:
             with self.subTest(measure=measure):
                 audit = review.read(review.dossier_path(measure) / 'citation-audit.json')
-                citation = copy.deepcopy(next(c for c in audit if c['page'] and c['page'] > 1))
-                citation['evidence_text'] = 'invented literal evidence that is absent from the original'
+                sources = review.OriginalSources()
+                original = next(c for c in audit if c['page'] and c['page'] > 1
+                                and normalize_evidence(c['evidence_text']) not in normalize_evidence(
+                                    sources.text(c['source_path'], 1)))
+                citation = copy.deepcopy(original)
+                citation['page'] = 1
                 with self.assertRaisesRegex(ValueError, 'original quote/page mismatch'):
-                    review.OriginalSources().check_quote(citation, 'evidence_text')
+                    sources.check_quote(citation, 'evidence_text')
 
     def test_unreviewed_measure_is_not_silently_reported_complete(self):
         with self.assertRaisesRegex(ValueError, 'no completed individual review'):

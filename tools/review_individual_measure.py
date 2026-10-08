@@ -22,6 +22,7 @@ APP_COMMIT = '5296108f5756ef1463c25a49d93d4a346e9b5e9c'
 MANIFEST_HASH = '6a173a9a5c8929d981cfc7ae19d2104a325732a7c6e8577ca6c16afb3a6f08bb'
 CONFIG_HASHES = {
     'o6_2': 'b87139b4ad476b007f333ea7eed999ef5bab6d763be6d4c7823ec5c791a9e51c',
+    'o6_3': 'e598624204755f1e40cbc8fd01f247905ae23469a7f605410e52d16e5296332a',
 }  # Each completed slice is registered after its manual review.
 INDEX = ROOT / 'docs/analysis/sequential-variable-reviews-20261008/README.md'
 SEQUENCE = tuple(f'o6_{number}' for number in range(2, 25))
@@ -48,6 +49,7 @@ def render_index():
               'Originalfundstellenprüfung bestätigt wörtliche Auffindbarkeit; historische OPA-Ausgaben sind Beobachtungen.',
               'Mögliche Wiederverwendung wird mit betroffenen Frage-IDs und unterschiedlichen Scopes dokumentiert;',
               'gemeinsame Namen oder gleiche technische Datentypen begründen keine fachlichen Aliase.', '']
+    lines += ['[Laufende, belegte Synergiekandidaten](synergies.md) für die spätere gemeinsame Durchsicht.', '']
     return '\n'.join(lines)
 
 
@@ -123,6 +125,8 @@ def validate(measure, app_root=None, opa_bin=None):
             and config['normative_entailment'] == 'not_asserted', 'unproven completion/promotion')
     for name, sha in config['inputs'].items():
         require(digest(dossier / name) == sha, f'pinned review evidence changed: {name}')
+    for path, sha in config.get('related_artifacts', {}).items():
+        require(digest(ROOT / path) == sha, f'related adaptation evidence changed: {path}')
     require(digest(INVENTORY / 'source-manifest.json') == MANIFEST_HASH, 'historical manifest drift')
     manifest = read(INVENTORY / 'source-manifest.json')['files']
     diff_path = INVENTORY / measure / 'variable-diff.json'
