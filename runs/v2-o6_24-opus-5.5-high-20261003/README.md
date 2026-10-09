@@ -58,7 +58,7 @@ Die Kennzahl „verwendete Eingabepfade“ erfasst nur direkte `input.`-Zugriffe
 | Coverage-Einträge / offen | 179 / 3 | 189 / 1 |
 | Profil-Blattpfade | 46 | 119 |
 | Generierte OPA-Tests | 62 | 67 |
-| Kosten (Listenpreis-Äquivalent) | 23,03 USD | 15,70 USD |
+| Kosten (Listenpreis-Äquivalent, laut `run.json`) | 13,35 USD | 15,70 USD |
 
 - Geschlossen: Zwei der drei offenen Punkte des alten Runs hingen an der
   fehlenden GSP-AV; Aufbewahrungsfrist (§ 16 Z 1) und Flächenabweichungen
@@ -73,6 +73,8 @@ Die Kennzahl „verwendete Eingabepfade“ erfasst nur direkte `input.`-Zugriffe
   2B-1 bis 2B-58) liegt nur als Plan vor; die Klassenzuordnung eines Schlags
   muss als Eingabe aus INVEKOS-GIS bzw. GIS Steiermark kommen.
 - Ein Einzelvergleich der Regeln steht in `artifacts/compare-previous.json`.
+
+Kosten und Tokens meldet Claude Code bei Fortsetzungen derselben Sitzung kumulativ; maßgeblich ist daher der Wert des letzten Versuchs in `run.json` (`generator_result`). Das README des Vorgänger-Runs addiert diese kumulativen Werte je Versuch und nennt deshalb zu hohe Kosten und Tokens.
 
 ## Offene fachliche Punkte
 

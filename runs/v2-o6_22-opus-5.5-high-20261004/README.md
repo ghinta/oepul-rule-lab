@@ -59,7 +59,7 @@ Die Kennzahl „verwendete Eingabepfade“ erfasst nur direkte `input.`-Zugriffe
 | Coverage-Einträge / offen | 167 / 3 | 139 / 0 |
 | Profil-Blattpfade | 90 | 118 |
 | Generierte OPA-Tests | 84 | 73 |
-| Kosten (Listenpreis-Äquivalent) | 35,57 USD | 22,61 USD |
+| Kosten (Listenpreis-Äquivalent, laut `run.json`) | 14,26 USD | 22,61 USD |
 
 - Geschlossen:
   - Tierabweichungen (§§ 42–47 GSP-AV) fehlten im alten Run, weil die GSP-AV
@@ -74,6 +74,8 @@ Die Kennzahl „verwendete Eingabepfade“ erfasst nur direkte `input.`-Zugriffe
 - Weniger Coverage-Einträge und Tests bei mehr Belegen: Der neue Run gliedert
   die Quellen gröber; ein Einzelvergleich steht in
   `artifacts/compare-previous.json`.
+
+Kosten und Tokens meldet Claude Code bei Fortsetzungen derselben Sitzung kumulativ; maßgeblich ist daher der Wert des letzten Versuchs in `run.json` (`generator_result`). Das README des Vorgänger-Runs addiert diese kumulativen Werte je Versuch und nennt deshalb zu hohe Kosten und Tokens.
 
 ## Offene fachliche Punkte
 

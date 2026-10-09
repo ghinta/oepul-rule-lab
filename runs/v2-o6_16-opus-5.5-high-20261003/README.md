@@ -59,7 +59,7 @@ Die Kennzahl „verwendete Eingabepfade“ erfasst nur direkte `input.`-Zugriffe
 | Coverage-Einträge / offen | 138 / 2 | 144 / 3 |
 | Profil-Blattpfade | 110 | 142 |
 | Generierte OPA-Tests | 140 | 140 |
-| Kosten (Listenpreis-Äquivalent) | 44,20 USD | 18,47 USD |
+| Kosten (Listenpreis-Äquivalent, laut `run.json`) | 16,67 USD | 18,47 USD |
 
 - Geschlossen: Die Meldung vom 25.08.2026 zu den Aufzeichnungspflichten war im
   alten Run ein offener Punkt („liegt nicht als Quelle vor“); sie ist jetzt mit
@@ -76,6 +76,8 @@ Die Kennzahl „verwendete Eingabepfade“ erfasst nur direkte `input.`-Zugriffe
   Ackerfutter) sind nicht mehr als offen geführt.
 - Weniger Regeln bei mehr Belegen: Der neue Run fasst Regeln stärker zusammen;
   ein Einzelvergleich steht in `artifacts/compare-previous.json`.
+
+Kosten und Tokens meldet Claude Code bei Fortsetzungen derselben Sitzung kumulativ; maßgeblich ist daher der Wert des letzten Versuchs in `run.json` (`generator_result`). Das README des Vorgänger-Runs addiert diese kumulativen Werte je Versuch und nennt deshalb zu hohe Kosten und Tokens.
 
 ## Offene fachliche Punkte
 

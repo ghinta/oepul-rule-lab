@@ -58,7 +58,7 @@ Die Kennzahl „verwendete Eingabepfade“ erfasst nur direkte `input.`-Zugriffe
 | Coverage-Einträge / offen | 137 / 4 | 174 / 2 |
 | Profil-Blattpfade | 115 | 128 |
 | Generierte OPA-Tests | 75 | 110 |
-| Kosten (Listenpreis-Äquivalent) | 22,24 USD | 17,43 USD |
+| Kosten (Listenpreis-Äquivalent, laut `run.json`) | 12,84 USD | 17,43 USD |
 
 - Geschlossen: Alle vier offenen Punkte des alten Runs betrafen die Meldung
   „Meldeverpflichtungen zu tierbezogenen ÖPUL-Maßnahmen“ (02.09.2026), die nur
@@ -72,6 +72,8 @@ Die Kennzahl „verwendete Eingabepfade“ erfasst nur direkte `input.`-Zugriffe
 - Weniger Regeln bei mehr Belegen und mehr Coverage-Einträgen: Der neue Run
   fasst Regeln stärker zusammen; ein Einzelvergleich steht in
   `artifacts/compare-previous.json`.
+
+Kosten und Tokens meldet Claude Code bei Fortsetzungen derselben Sitzung kumulativ; maßgeblich ist daher der Wert des letzten Versuchs in `run.json` (`generator_result`). Das README des Vorgänger-Runs addiert diese kumulativen Werte je Versuch und nennt deshalb zu hohe Kosten und Tokens.
 
 ## Offene fachliche Punkte
 

@@ -4,6 +4,13 @@ Stand: 2. Oktober 2026 · Auswertung von `origin/main` bei `b6e8917` · Zahlen
 reproduzierbar mit `python3 -m rulelab site` (siehe
 [Run Explorer](https://ghinta.github.io/oepul-rule-lab/))
 
+Nachtrag 9. Oktober 2026: Fünf Opus-Runs wurden mit dem erweiterten
+Quellenpack wiederholt (Abschnitt
+[Reruns mit aktualisiertem Quellenpack](#reruns-mit-aktualisiertem-quellenpack)).
+Die Seite zählt seither je Maßnahme und Modell nur den neuesten Run; ihre
+Summen weichen deshalb leicht von den übrigen Zahlen dieses Berichts ab, die
+den Stand `b6e8917` beschreiben.
+
 ## Kurzfazit
 
 - **Opus deckt Terra inhaltlich ab und geht deutlich tiefer.** Opus zitiert
@@ -237,7 +244,53 @@ Biodiversitätsflächen-Typen).
 
 Opus dokumentiert deutlich mehr Grenzen des Quellenpakets. Daraus folgen
 konkrete Ergänzungen für das Paket: die GSP-AV und die zwei fehlenden
-AMA-News.
+AMA-News. Beides ist inzwischen umgesetzt (siehe nächster Abschnitt).
+
+## Reruns mit aktualisiertem Quellenpack
+
+Der Quellenpack (Provenance `20261003T110742003580Z`) enthält zusätzlich die
+GSP-AV (Fassung 28.01.2026), die NAPV (Fassung 28.10.2024), das
+Grundwasserschutzprogramm Graz bis Bad Radkersburg 2018 (Fassung 01.07.2026)
+samt Anlage 3 sowie drei weitere AMA-Meldungen (22.07., 25.08. und
+02.09.2026). Jede Quelle ist nur den Maßnahmen zugeordnet, für die sie gilt
+(`applies_to_measures`). Wiederholt wurden die fünf Maßnahmen mit den meisten
+offenen Punkten aus fehlenden Quellen, alle mit Opus 5.5, Effort `high`,
+unverändertem Prompt und Quality Gate v1:
+
+| Maßnahme | Quellen | Regeln | Belege | davon neue Quellen | offen | Tests | Versuche | Kosten (USD) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `o6_9` | 8 → 10 | 96 → 89 | 222 → 165 | 27 | 0 → 2 | 82 | 2 | 11,05 → 15,24 |
+| `o6_16` | 8 → 11 | 131 → 98 | 338 → 359 | 58 | 2 → 3 | 140 | 3 | 16,67 → 18,47 |
+| `o6_24` | 8 → 11 | 62 → 95 | 140 → 225 | 95 | 3 → 1 | 67 | 3 | 13,35 → 15,70 |
+| `o6_21` | 8 → 11 | 124 → 95 | 241 → 269 | 50 | 4 → 2 | 110 | 3 | 12,84 → 17,43 |
+| `o6_22` | 8 → 11 | 126 → 125 | 272 → 293 | 40 | 3 → 0 | 73 | 4 | 14,26 → 22,61 |
+
+„Neue Quellen“ zählt Belege aus GSP-AV, NAPV, Grundwasserschutzprogramm und
+den Meldungen vom 25.08. und 02.09.2026. Kosten sind Listenpreis-Äquivalente
+laut `run.json`; Claude Code meldet sie bei Fortsetzungen kumulativ.
+
+- **Geschlossen:** Alle sechs offenen Punkte zu den fehlenden Meldungen
+  (25.08. und 02.09.) und die drei GSP-AV-Punkte dieser fünf Maßnahmen sind
+  belegt. Bei `o6_24` liefert das Grundwasserschutzprogramm Düngeklassen,
+  N-Obergrenzen sowie Nmin-, Bewässerungs- und Aufzeichnungspflichten
+  (25 neue Regeln).
+- **Noch offen in nicht wiederholten Maßnahmen:** Acht der elf GSP-AV-Punkte
+  betreffen `o6_1c` (4), `o6_4` (2), `o6_12` und `o6_17`. Diese Runs liefen
+  noch mit dem alten Quellenpack; ein Rerun würde sie voraussichtlich
+  schließen.
+- **Neu offen (8 statt 12):** Widersprüche zwischen NAPV und
+  Informationsblatt bei Leguminosen (`o6_9`), die Anlage-5-Gebiete der NAPV
+  (`o6_16`, `o6_21`), maschinenlesbare Gebietskulissen (Karten zu Anhang G
+  bei `o6_16`, Düngeklassen-Karten bei `o6_24`), nicht als Daten übernommene
+  NAPV-Tabellen (`o6_16`) und die Anwendbarkeit flächenbezogener SRL-Regeln
+  auf tierbezogene Maßnahmen (`o6_21`).
+- **Weniger Regeln bei gleicher oder höherer Abdeckung:** Bei `o6_16` und
+  `o6_21` fassen die Reruns Regeln stärker zusammen. Regelzahlen sind auch
+  zwischen Läufen desselben Modells kein Qualitätsmaß; die Einzelvergleiche
+  stehen je Run in `artifacts/compare-previous.json`.
+
+Die ersetzten Runs bleiben veröffentlicht und erscheinen auf der Seite unter
+„Ersetzte Runs“, zählen aber in keiner Kennzahl mehr mit.
 
 ## Aufwand
 
