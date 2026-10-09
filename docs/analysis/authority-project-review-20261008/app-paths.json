@@ -1,0 +1,1417 @@
+{
+  "schema_version": "block5_app_paths_review.v1",
+  "repo": "ghinta/oepul-recommender",
+  "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+  "read_only": true,
+  "agent_constraints": "Keine Repo/GitHub/Thesis/Runs/Canonical writes; keine Modellläufe; technische aktuelle App-Beobachtungen, kein fachlicher Freigabeersatz. TMP enthält isolierte synthetische Policybeobachtungen, keine echten Betriebsdaten.",
+  "search_scope": [
+    "backend/app/ama_raw/models.py",
+    "backend/app/api/canonical_builder.py",
+    "backend/app/api/recommender.py",
+    "backend/app/api/reference/{scalar,parcel,collection,current} registries/dependencies",
+    "backend/app/api/{current_facts,current_fact_views,check_engine,heuwirtschaft*}.py",
+    "backend/policy/{farm_profile_schema_blueprint.json,oepul_measures.rego,heuwirtschaft/heuwirtschaft.rego}",
+    "frontend generic collection editor/client"
+  ],
+  "paths": [
+    {
+      "path": "oepul.shared.parcels[].project_confirmation_codes",
+      "definition": "Dokumentiert editierbare Liste freier Strings. Registrierung und stabile Parent-ID sind vorhanden; Dokumentreferenz, Projektidentität, Regelversion, Aussteller, Gebiet, Parameter und Datum fehlen.",
+      "entity": "Schlag parcel_id + server event_id",
+      "time": "Zugehörigkeit zum Snapshot-Jahr; String hat keine eigenen Datumsfelder",
+      "unit": "string",
+      "provenance": "Registrierte Einträge erlauben farmer_statement/expert_estimate mit Quellen-/Nachweisnotiz; current_fact bindet den Eintrag an den ausgewählten aktuellen Snapshot-Digest. Das Herkunftsetikett ist getrennt vom im Dokument genannten Aussteller.",
+      "refs": [
+        "project_code_collection",
+        "project_code_o6_18_dependency",
+        "project_code_o6_23_dependency",
+        "project_code_flatten",
+        "legacy_conservative_result"
+      ],
+      "needed_addition": "Projekt-/Bestätigungsobjekt mit Dokumentreferenz, geeigneten stabilen Beziehungen zu Flächen/Betrieb/Projekt, zeitlicher Gültigkeit und separaten maßnahmenspezifischen Parametern; freie Eingabe durch Experte/Betreiber bleibt möglich.",
+      "policy_effect": "Nur Anwesenheitsprüfung nach Verlust der Parent-Verknüpfung im flattened Presence-Wert; o6_18/o6_23 bleiben auch bei gefüllter Liste missing_data."
+    },
+    {
+      "path": "farm.region.is_protected_area",
+      "definition": "Ein registrierter dokumentierter Betriebs-Bool erreicht den Legacy-Adapter und o6_23. Keine Teilfläche, Schutzgebietskategorie, Rechtsakt, gültige Geometrie oder verpflichtungsbezogene Bewirtschaftungseinschränkung.",
+      "entity": "Betrieb",
+      "time": "Snapshot-Jahr, keine Schutzgebietsfassung",
+      "unit": "boolean",
+      "provenance": "Registrierte Einträge erlauben farmer_statement/expert_estimate mit Quellen-/Nachweisnotiz; current_fact bindet den Eintrag an den ausgewählten aktuellen Snapshot-Digest. Das Herkunftsetikett ist getrennt vom im Dokument genannten Aussteller.",
+      "refs": [
+        "protected_area_registry",
+        "adapter_region_projection",
+        "conservative_project_water_pairs"
+      ],
+      "needed_addition": "Teilflächen-/Gebiets-/Rechtsaktrelation und Maßnahmenbezug für Natura 2000, andere Schutzgebiete oder gegebenenfalls Wasserrecht getrennt erfassen; bestätigtes Aggregat oder Klassifikationswert bleibt zulässig.",
+      "policy_effect": "o6_23 bleibt konservativ missing_data auch bei true/false und übrigen vorhandenen Inputs."
+    },
+    {
+      "path": "farm.region.{federal_state,district,municipality,water_protection_zone}",
+      "definition": "Blueprint enthält Standortfelder und water_protection_zone; generischer Maßnahmenadapter übernimmt davon allein is_protected_area. Kein registrierter water_protection_zone-Editor oder WRRL-Gebietsnachweis.",
+      "entity": "Betrieb",
+      "time": "Snapshot-Jahr",
+      "unit": "strings / boolean",
+      "provenance": "Registrierte Einträge erlauben farmer_statement/expert_estimate mit Quellen-/Nachweisnotiz; current_fact bindet den Eintrag an den ausgewählten aktuellen Snapshot-Digest. Das Herkunftsetikett ist getrennt vom im Dokument genannten Aussteller.",
+      "refs": [
+        "blueprint_region_flags",
+        "adapter_region_projection",
+        "builder_topic_appliers"
+      ],
+      "needed_addition": "Passend zum Quellenvertrag verifizierbare Gebietsauswahl, Gebietsversion/Gültigkeit und betroffene Schlaganteile; NUTS/Land/Ort allein nicht als normative WRRL-/Natura-Zulässigkeit verwenden.",
+      "search_scope": "Blueprint, canonical_builder TOPIC_APPLIERS, recommender generic adapter, parcel/supplemental/collection registries und oepul_measures.rego."
+    },
+    {
+      "path": "land.parcels[].constraints.is_contract_nature_area",
+      "definition": "Blueprint-Bool vorhanden, aber _normalize_canonical_parcel kopiert ihn nicht ins generische Policy-Payload; aktuelle parcel registry enthält ihn nicht.",
+      "entity": "Schlag",
+      "time": "Snapshot-Jahr",
+      "unit": "boolean",
+      "provenance": "Registrierte Einträge erlauben farmer_statement/expert_estimate mit Quellen-/Nachweisnotiz; current_fact bindet den Eintrag an den ausgewählten aktuellen Snapshot-Digest. Das Herkunftsetikett ist getrennt vom im Dokument genannten Aussteller.",
+      "refs": [
+        "blueprint_contract_nature",
+        "adapter_canonical_parcel_projection"
+      ],
+      "needed_addition": "Wert kann Teil einer dokumentierten Projektzuordnung sein; für NAT/EBW/N2/NATA müssen passende Flächen-/Projektparameter und Gültigkeit konsumiert werden.",
+      "search_scope": "Blueprint, canonical normalizer, parcel registry, current/native dependency lists, generic policy."
+    },
+    {
+      "path": "ama_raw_d619_23_st_mfa_angaben.bewaesserung_behoerdliche_bewilligung",
+      "definition": "Raw-AMA-Modell besitzt Textspalte zur behördlichen Bewässerungsbewilligung. Builder MFA .values selektiert diese Spalte nicht; kein Bewilligungsobjekt wird daraus in die vorhandene Canonical-Projektion erstellt.",
+      "entity": "Rohzeile Betrieb/MFA-Jahr",
+      "time": "MFA-Jahr; Rohfeld selbst ohne separate Bescheiddaten",
+      "unit": "raw Text",
+      "provenance": "Registrierte Einträge erlauben farmer_statement/expert_estimate mit Quellen-/Nachweisnotiz; current_fact bindet den Eintrag an den ausgewählten aktuellen Snapshot-Digest. Das Herkunftsetikett ist getrennt vom im Dokument genannten Aussteller.",
+      "refs": [
+        "raw_mfa_authority",
+        "builder_mfa_selected",
+        "builder_topic_appliers"
+      ],
+      "needed_addition": "Fachlich benötigte Bewilligung/Ausnahme mit Referenz, Aussteller, zulässigem Scope, Gültigkeit und Quellennotiz erfassen. Das RAW-Flag ist kein Text des Bescheids und ein ergänzender Experten-/Betreiberwert bleibt erlaubt.",
+      "policy_effect": "o6_16 generisch prüft derzeit nur N-Wert/Bilanzbool und bleibt missing_data."
+    },
+    {
+      "path": "ama_additional.farm.oepul_mana[].oepul_massnahmen_bezeichnung_naturschutz",
+      "definition": "Builder leitet ein dedupliziertes Anzeige-/Maßnahmenlabel ab. Classifier akzeptiert NAT-Substring, Naturschutzname, DIV-Substring oder Biodiversitätsname. Der generische Adapter kopiert oepul_mana nicht in die Policy-Sicht.",
+      "entity": "Betrieb + Antragsmaßnahme",
+      "time": "MFA-Jahr/Verpflichtungsbeginn bestehender MANA-Eintrag",
+      "unit": "string",
+      "provenance": "Registrierte Einträge erlauben farmer_statement/expert_estimate mit Quellen-/Nachweisnotiz; current_fact bindet den Eintrag an den ausgewählten aktuellen Snapshot-Digest. Das Herkunftsetikett ist getrennt vom im Dokument genannten Aussteller.",
+      "refs": [
+        "builder_nat_label_classifier",
+        "builder_nat_label_projection",
+        "adapter_region_projection",
+        "adapter_shared_passthrough"
+      ],
+      "needed_addition": "Antragsteilnahme und Projekt-/Flächen-/Bewirtschaftungsanforderung getrennt halten. Dieses Label weder als naturschutzfachliche Projektbestätigung noch als NATA-/N2-Geometrienachweis verwenden.",
+      "policy_effect": "Anzeige-/Antragssignal, keine normative Zulassungsprüfung."
+    },
+    {
+      "path": "ama_additional.land.fsl.parcels[].code / parcel_ref / max_schlag_katastralgemeinde_nummer",
+      "definition": "Raw-FSL besitzt code und Katastralgemeinde; Builder selektiert code und stabile Feldstück-/Schlagidentitäten, projiziert den Code jedoch nur als verschiedene Proxy-Ableitungen, nicht als erhaltene Code-Liste in fsl_parcels. Katastralgemeinde wird nicht selektiert.",
+      "entity": "Rohschlag + bestehende Feldstück-/Schlagidentitäten",
+      "time": "MFA-Jahr ohne Codekatalogfassung",
+      "unit": "codes / strings",
+      "provenance": "Registrierte Einträge erlauben farmer_statement/expert_estimate mit Quellen-/Nachweisnotiz; current_fact bindet den Eintrag an den ausgewählten aktuellen Snapshot-Digest. Das Herkunftsetikett ist getrennt vom im Dokument genannten Aussteller.",
+      "refs": [
+        "raw_fsl_inputs",
+        "builder_fsl_selected",
+        "builder_fsl_projection",
+        "builder_fsl_proxy_apply"
+      ],
+      "needed_addition": "Antragscode, Codekatalogversion und Dokument-/Projektparameter getrennt bewahren. Geografische Zuordnung und echte Fachidentität nicht aus NAT/DIV/N2/NATA-ähnlichem Freitext oder Lageflag ableiten.",
+      "search_scope": "Raw FSL, selected builder fields, fsl projection; keine Aussage über externe AMA/GIS-Systeme."
+    },
+    {
+      "path": "exceptions.recognitions[]",
+      "definition": "Bestehendes natives o6_3 Anerkennungsobjekt: reference, authority=AMA, recognised, year, obligation_id, parcel_ids, valid_from/to. Host erweitert issued_on, optionale incident_from/to und document_reference.",
+      "entity": "Betriebspflicht oder MINIMUM_MANAGEMENT auf expliziten parcel_ids",
+      "time": "Legal-validity innerhalb year; issued_on<=as_of, Vorfallsende<=as_of; Gültigkeitsende darf künftig liegen",
+      "unit": "typed evidence object",
+      "provenance": "Registrierte Einträge erlauben farmer_statement/expert_estimate mit Quellen-/Nachweisnotiz; current_fact bindet den Eintrag an den ausgewählten aktuellen Snapshot-Digest. Das Herkunftsetikett ist getrennt vom im Dokument genannten Aussteller.",
+      "refs": [
+        "native_recognition_shape",
+        "host_recognition_shape_dates",
+        "host_recognition_date_dispatch",
+        "recognition_collection_input_permissions"
+      ],
+      "needed_addition": "Basis als typisierten dokumentierten Nachweis erhalten, für andere Maßnahmen jeweils deren Aussteller-/Rechtsgrund-/Pflicht-/Scopevertrag ergänzen. Nicht jede Behörde ist AMA; Rechtsfolgen und Dokumentaussteller von Eingabequelle Experte/Betreiber/Auto trennen.",
+      "mutability": "farmer_statement und expert_estimate ausdrücklich erlaubt. Vorhandener Literal-Aussteller AMA gehört zum engen o6_3-Vertrag und ist kein allgemeines Verbot für Experten-/Betreibereingaben."
+    },
+    {
+      "path": "exceptions.recognitions[].{incident_from,incident_to,issued_on,valid_from,valid_to}",
+      "definition": "Host prüft Beobachtungsdaten und zeigt Vorfallsüberlappung plus requires_legal_effect_review=True. Native Feldselektion lässt issued_on und incident_* außerhalb des OPA Input; Rego matching bindet an current as_of innerhalb legalvalidity, noch nicht die genaue Vorfallspflicht-Rechtsfolge.",
+      "entity": "Anerkennungsreferenz + benannte Pflicht + Flächen",
+      "time": "Vier getrennte Zeitrollen: Ausstellungsdatum, Vorfallszeitraum, rechtlicher Gültigkeitszeitraum, Auswertungsstand",
+      "unit": "dates / bool",
+      "provenance": "Registrierte Einträge erlauben farmer_statement/expert_estimate mit Quellen-/Nachweisnotiz; current_fact bindet den Eintrag an den ausgewählten aktuellen Snapshot-Digest. Das Herkunftsetikett ist getrennt vom im Dokument genannten Aussteller.",
+      "refs": [
+        "host_recognition_incident_review",
+        "native_recognition_field_selection",
+        "native_recognition_matching"
+      ],
+      "needed_addition": "Vorfall und betroffene Pflicht/Teilfläche mit der belegten Ausnahmerechtsfolge verknüpfen; kein von einem später ausgestellten, aber rückwirkenden Dokument automatisch geratener Erlass.",
+      "policy_effect": "Matching Anerkennung entfernt den raw violation aus direkter violation-Ausgabe, erzeugt aber exceptions.review missing_data. Keine blanket waiver oder fachlich finale Förderentscheidung."
+    },
+    {
+      "path": "exceptions.recognitions_complete",
+      "definition": "Registrierter dokumentierter Bestand-Vollständigkeits-Bool. Neue/revidierte/deaktivierte Sammlung invalidiert vorhandene Bestätigung; native Auswertung fordert neue explizite Reaffirmation.",
+      "entity": "Betrieb + betrachtetes Anerkennungsinventar",
+      "time": "Aktueller Snapshot + Datenjahr",
+      "unit": "boolean",
+      "provenance": "Registrierte Einträge erlauben farmer_statement/expert_estimate mit Quellen-/Nachweisnotiz; current_fact bindet den Eintrag an den ausgewählten aktuellen Snapshot-Digest. Das Herkunftsetikett ist getrennt vom im Dokument genannten Aussteller.",
+      "refs": [
+        "recognition_completeness_current_invalidation",
+        "recognition_completeness_reaffirm",
+        "native_recognition_matching"
+      ],
+      "needed_addition": "Bestandsvollständigkeit und einzelne Anerkennungswirkung getrennt halten. unknown/confirmed_empty/has_entries nicht als bestätigte Abwesenheit aller möglichen Ausnahmen verwechseln.",
+      "policy_effect": "Bei raw violations und unbekanntem Bestand missing_data; vorhandene matching Anerkennung weiterhin reviewpflichtig."
+    },
+    {
+      "path": "current evaluation o6_14 / o6_17 / o6_19",
+      "definition": "Aktueller HTTP-Endpoint ist verdrahtet. Nach Snapshot-/Faktenkontrolle erhalten diese drei Maßnahmen dieselbe _evaluate_scenario_measure-Assembly im Namespace current_fact; generische Rego-Phase1zweige können eligible ausgeben.",
+      "entity": "Maßnahme + aktueller Betrieb/Snapshot",
+      "time": "Aktuelles Jahr aus Serverzeit und aktueller Snapshot-Digest",
+      "unit": "status enum",
+      "provenance": "Registrierte Einträge erlauben farmer_statement/expert_estimate mit Quellen-/Nachweisnotiz; current_fact bindet den Eintrag an den ausgewählten aktuellen Snapshot-Digest. Das Herkunftsetikett ist getrennt vom im Dokument genannten Aussteller.",
+      "refs": [
+        "http_current_route",
+        "http_current_view",
+        "current_evaluation_dispatch",
+        "measure_policy_opa_call",
+        "measure_policy_dispatch_14_17_19",
+        "phase1_o6_14_positive",
+        "phase1_o6_17_positive",
+        "phase1_o6_19_positive",
+        "phase1_o6_17_basis",
+        "phase1_o6_19_basis",
+        "phase1_o6_19_catalog_scope_test"
+      ],
+      "needed_addition": "Vor einer vollständigen Empfehlung die Projekterfordernisse/NATA-Zuschläge/Kommissionsanforderungen als eigene Fachscopes aus Quellen ableiten und passend konsumieren. Der aktuelle phase1_baseline_check_passed ist nicht die zusätzliche Projekt-/Behördenprüfung.",
+      "policy_effect": "Reproduziert ohne Projekt/Bescheid/Kommission:14 mit3ha,3GVE,60Weidetagen;17 mit5ha/2haGrünland/20%Slope/2026;19 mit1haAcker jeweils eligible. Isolierte Original-App-Policy, kein HTTP/DB E2E oder Golden."
+    },
+    {
+      "path": "current evaluation o6_2 / o6_12 / o6_16 / o6_18 / o6_23 / o6_24",
+      "definition": "Aktuelle allgemeine Policy ist konservativ Category C. Auch mit gefüllten konsumierten Inputs liefert sie missing_data; sie besitzt noch keine Auswertung der Dürre/Behörden-/Projekt-/WRRL-Fachregeln.",
+      "entity": "Maßnahme + Betrieb/Schlaginputs",
+      "time": "Aktueller Snapshot + als current_fact konsumierte Inputs",
+      "unit": "status enum",
+      "provenance": "Registrierte Einträge erlauben farmer_statement/expert_estimate mit Quellen-/Nachweisnotiz; current_fact bindet den Eintrag an den ausgewählten aktuellen Snapshot-Digest. Das Herkunftsetikett ist getrennt vom im Dokument genannten Aussteller.",
+      "refs": [
+        "current_evaluation_dispatch",
+        "conservative_project_water_pairs",
+        "legacy_conservative_result"
+      ],
+      "needed_addition": "Neue Verträge allein reichen nicht; anschließende quellengebundene Regelimplementierung und unabhängige Fälle erforderlich. Historische Lab-Policy-Failopens nicht als Verhalten dieser aktuellen App-Zweige behaupten.",
+      "policy_effect": "18/23/24 mit vollständigen bestehenden Presence-Inputs nochmals isoliert bestätigt category_c_conservative_missing_data."
+    },
+    {
+      "path": "current evaluation o6_3.heuwirtschaft",
+      "definition": "Eigener nativer clause-slice plus typed host evidence; acht exakte offene Promotionblocker erzwungen. Voller normalisierter Status weiterhin missing_data/heuwirtschaft_promotion_review_required, Slice separat.",
+      "entity": "o6_3 Pflicht-/Flächenslices",
+      "time": "Aktuelles Jahr/current Snapshot; historical first_year separat",
+      "unit": "slice/full result statuses",
+      "provenance": "Registrierte Einträge erlauben farmer_statement/expert_estimate mit Quellen-/Nachweisnotiz; current_fact bindet den Eintrag an den ausgewählten aktuellen Snapshot-Digest. Das Herkunftsetikett ist getrennt vom im Dokument genannten Aussteller.",
+      "refs": [
+        "native_promotion_blockers_exact",
+        "native_full_result_gate",
+        "native_trace_incident_provenance",
+        "current_evaluation_dispatch"
+      ],
+      "needed_addition": "Vorhandene Gateintegrität und getrennte Anerkennungsreview erhalten; Rechtsfolge nicht durch Übernahme eines allgemeinen drought-Bool freischalten."
+    },
+    {
+      "path": "evaluation basis / normative_source_sha256 / external_config_fingerprints",
+      "definition": "Bestehende Auswertungsbasis erfasst Snapshot-/Input-/Evidence-/Modul-/Normquellenhash, Dependency-/Registryhash und App-Gitrevision. Native Artefaktlineage wird validiert.",
+      "entity": "Unveränderbarer EvaluationRun / spezifische Maßnahme",
+      "time": "Hash-/Revisionenbasis der konkreten Evaluation",
+      "unit": "SHA256 / revisions",
+      "provenance": "Registrierte Einträge erlauben farmer_statement/expert_estimate mit Quellen-/Nachweisnotiz; current_fact bindet den Eintrag an den ausgewählten aktuellen Snapshot-Digest. Das Herkunftsetikett ist getrennt vom im Dokument genannten Aussteller.",
+      "refs": [
+        "evaluation_basis_capture",
+        "versioned_basis_fingerprints",
+        "native_promotion_blockers_exact"
+      ],
+      "needed_addition": "Bestehende Replay-/Hashbasis um fachlich benötigte Gültigkeits-/Dokument-/Katalogfassungen erweitern; Hashintegrität allein verifiziert keine zum aktuellen Rechtsjahr passende externe Norm-, Projekt- oder GIS-Fassung.",
+      "policy_effect": "Es ist nicht korrekt, die App als vollständig unversioniert zu beschreiben."
+    },
+    {
+      "path": "documented expert/operator overlays",
+      "definition": "Explizite konsumierte scalar/parcel/collection Inputs ersetzen nach Adaptation die betreffende Maßnahmensicht mit sichtbarer Quellen-/Differenzledger. Anerkennungseingaben ebenfalls farmer/expert erlaubt.",
+      "entity": "Genau registrierter Scope + stabile Parentidentität",
+      "time": "current_fact an Snapshot-Digest; anderer Snapshot zeigt stale",
+      "unit": "typed registered values",
+      "provenance": "Registrierte Einträge erlauben farmer_statement/expert_estimate mit Quellen-/Nachweisnotiz; current_fact bindet den Eintrag an den ausgewählten aktuellen Snapshot-Digest. Das Herkunftsetikett ist getrennt vom im Dokument genannten Aussteller.",
+      "refs": [
+        "scalar_measure_override",
+        "collection_replace_on_projection",
+        "recognition_collection_input_permissions",
+        "current_snapshot_year_digest",
+        "current_factual_meta"
+      ],
+      "needed_addition": "AMA→Experte/Betreiber und zulässige dokumentierte Fakten/Aggregate erhalten. Dokumentaussteller/Rechtsgrund getrennt typisieren; daraus keine zusätzliche amtlich-only Eingabeschnittstelle oder AMA-Konfliktsperre erzeugen."
+    },
+    {
+      "path": "frontend collection editor / current_fact API",
+      "definition": "Generischer Editor nutzt item_fields und review/scenario-Endpunkte; complex Pydantic item_schema hat in dem DTO kein item_schema und leere item_fields, sodass der bestehende Builder{} erstellt.",
+      "entity": "Collection Registry + Editor + Parent",
+      "time": "Review year im generischen Editor; current API separat vorhanden",
+      "unit": "API/GUI contract",
+      "provenance": "Registrierte Einträge erlauben farmer_statement/expert_estimate mit Quellen-/Nachweisnotiz; current_fact bindet den Eintrag an den ausgewählten aktuellen Snapshot-Digest. Das Herkunftsetikett ist getrennt vom im Dokument genannten Aussteller.",
+      "refs": [
+        "ui_object_builder",
+        "ui_old_save",
+        "current_api_routes"
+      ],
+      "needed_addition": "Eigene Darstellung/Eingabe der komplexen Projekt-/Anerkennungsobjekte mit Quellen-/Zeit-/Scopefeldern und current_fact Anschluss; no invented inference of document date from event creation timestamp."
+    },
+    {
+      "path": "auto generated values / own FarmProfileSnapshot",
+      "definition": "Bestehender Generator kopiert effektives Policy-Payload, erzeugt Vorschläge und EvaluationRun mit Generatorattribution; separate FarmProfileSnapshot hat derzeit Unique(farm_id,year), keine Auto-Snapshotidentität. Quelle auto fehlt im ReviewInput-Modell.",
+      "entity": "Generator-run vs aktueller FarmProfileSnapshot",
+      "time": "Zieljahr des Generators; noch kein eigener dokumentierter Auto-Snapshot",
+      "unit": "snapshot / EvaluationRun",
+      "provenance": "Registrierte Einträge erlauben farmer_statement/expert_estimate mit Quellen-/Nachweisnotiz; current_fact bindet den Eintrag an den ausgewählten aktuellen Snapshot-Digest. Das Herkunftsetikett ist getrennt vom im Dokument genannten Aussteller.",
+      "refs": [
+        "auto_generates_run",
+        "auto_snapshot_contract",
+        "farm_snapshot_shape",
+        "collection_provenance"
+      ],
+      "needed_addition": "Bereits entschiedenen eigenen Auto-Snapshot mit auto/dokumentiert umsetzen. Automatisch erzeugte Fakten gleichrangig dokumentieren; rechtliche Wirksamkeit einer Ausnahme/Projektvorgabe bleibt ein separat begründeter Fachvertrag und wird nicht aus satisfied bool erraten.",
+      "mutability": "Auto-Werte weiterhin als zulässige dokumentierte Eingaben vorgesehen; keine neue Produktentscheidung."
+    }
+  ],
+  "references": {
+    "http_current_route": {
+      "repo_rel_path": "backend/app/core/urls.py",
+      "line_start": 49,
+      "line_end": 53,
+      "anchor": "path(\"api/check\", check_eligibility),",
+      "end_anchor": "path(\"api/current/v1/fact/deactivate\", current_fact_deactivate, name=\"current_fact_deactivate_v1\"),",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "http_current_view": {
+      "repo_rel_path": "backend/app/api/current_fact_views.py",
+      "line_start": 87,
+      "line_end": 94,
+      "anchor": "@csrf_exempt",
+      "end_anchor": "return _execute(evaluate_current_measure, **body)",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "current_snapshot_year_digest": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 67,
+      "line_end": 95,
+      "anchor": "def _current_snapshot(farm_id: str) -> tuple[FarmProfileSnapshot, CurrentContext]:",
+      "end_anchor": ")",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "current_evaluation_dispatch": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 328,
+      "line_end": 365,
+      "anchor": "def evaluate_current_measure(*, farm_id: str, measure_id: str) -> dict:",
+      "end_anchor": ")",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "current_factual_meta": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 375,
+      "line_end": 403,
+      "anchor": "for item in meta.pop(\"scenario_inputs\", [])",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "current_conservative_dependencies": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 313,
+      "line_end": 324,
+      "anchor": "def _consumed_paths(measure_id: str) -> dict[str, frozenset]:",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "measure_policy_opa_call": {
+      "repo_rel_path": "backend/app/api/check_engine.py",
+      "line_start": 870,
+      "line_end": 880,
+      "anchor": "OPA_MEASURE_URL,",
+      "end_anchor": "normalized = normalize_measure_result(",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "measure_policy_dispatch_14_17_19": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 104,
+      "line_end": 131,
+      "anchor": "measure_decision := result if {",
+      "end_anchor": "result := o6_19_result",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "phase1_o6_14_positive": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1324,
+      "line_end": 1351,
+      "anchor": "o6_14_result := {",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "phase1_o6_17_positive": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1505,
+      "line_end": 1536,
+      "anchor": "o6_17_result := {",
+      "end_anchor": "# decision-trace-condition: pre_2025_grassland_below_18_percent_slope_met",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "phase1_o6_19_positive": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1639,
+      "line_end": 1654,
+      "anchor": "o6_19_result := {",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "phase1_o6_19_catalog_scope_test": {
+      "repo_rel_path": "backend/app/review/adapters/oepul/tests/test_catalog_and_rule_extraction.py",
+      "line_start": 435,
+      "line_end": 444,
+      "anchor": "def test_o6_19_never_cites_the_projektbestaetigung_section(self):",
+      "end_anchor": "self.assertNotIn(\"3.3 PROJEKTBESTÄTIGUNG\", sections)",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "phase1_o6_17_basis": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1956,
+      "line_end": 1962,
+      "anchor": "o6_17_baseline_thresholds_met if {",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "phase1_o6_19_basis": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1948,
+      "line_end": 1954,
+      "anchor": "eligible_o6_19_land_use(land_use) if {",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "raw_mfa_authority": {
+      "repo_rel_path": "backend/app/ama_raw/models.py",
+      "line_start": 242,
+      "line_end": 244,
+      "anchor": "biobetrieb_gemaess_verordnung_eu_2018_848 = models.TextField(db_column='Biobetrieb gemäß Verordnung (EU) 2018/848', null=True, blank=True)",
+      "end_anchor": "bewaesserung_behoerdliche_bewilligung = models.TextField(db_column='Bewässerung Behördliche Bewilligung', null=True, blank=True)",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "raw_fsl_inputs": {
+      "repo_rel_path": "backend/app/ama_raw/models.py",
+      "line_start": 167,
+      "line_end": 207,
+      "anchor": "class AmaRawD619_23_ST_FSL(RawAmaRow):",
+      "end_anchor": "class AmaRawD619_23_ST_GN(RawAmaRow):",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "builder_fsl_selected": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 949,
+      "line_end": 967,
+      "anchor": "fsl_rows = AmaRawD619_23_ST_FSL.objects.filter(import_run_id=import_run_id).values(",
+      "end_anchor": "for row in fsl_rows.iterator(chunk_size=5000):",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "builder_fsl_projection": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 1022,
+      "line_end": 1055,
+      "anchor": "context[\"fsl_parcels\"].append(",
+      "end_anchor": "mfa_rows = AmaRawD619_23_ST_MFA_Angaben.objects.filter(import_run_id=import_run_id).values(",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "builder_fsl_proxy_apply": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 1007,
+      "line_end": 1019,
+      "anchor": "if has_mulchsaat_proxy_token(code_tokens):",
+      "end_anchor": "if area_is_valid_non_negative and classify_special_crop_label(schlagnutzungsart_bezeichnung) == \"include\":",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "builder_mfa_selected": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 1055,
+      "line_end": 1066,
+      "anchor": "mfa_rows = AmaRawD619_23_ST_MFA_Angaben.objects.filter(import_run_id=import_run_id).values(",
+      "end_anchor": "for row in mfa_rows.iterator(chunk_size=5000):",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "builder_topic_appliers": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 870,
+      "line_end": 902,
+      "anchor": "TOPIC_APPLIERS = {",
+      "end_anchor": "def build_contexts(import_run_id: int) -> dict[tuple[str, int], dict]:",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "builder_nat_label_classifier": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 635,
+      "line_end": 646,
+      "anchor": "def is_naturschutz_oepul_measure(entry: dict) -> bool:",
+      "end_anchor": "return False",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "builder_nat_label_projection": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 840,
+      "line_end": 860,
+      "anchor": "def apply_oepul_naturschutz(payload: dict, context: dict) -> None:",
+      "end_anchor": "entry[\"oepul_massnahmen_bezeichnung_naturschutz\"] = label",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "blueprint_region_flags": {
+      "repo_rel_path": "backend/policy/farm_profile_schema_blueprint.json",
+      "line_start": 6,
+      "line_end": 14,
+      "anchor": "\"region\": {",
+      "end_anchor": "},",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "blueprint_contract_nature": {
+      "repo_rel_path": "backend/policy/farm_profile_schema_blueprint.json",
+      "line_start": 60,
+      "line_end": 67,
+      "anchor": "\"type\": \"enum(annual|multi_year|null)\",",
+      "end_anchor": "\"livestock\": {",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "adapter_canonical_parcel_projection": {
+      "repo_rel_path": "backend/app/api/recommender.py",
+      "line_start": 366,
+      "line_end": 403,
+      "anchor": "operations = parcel.get(\"operations\") or {}",
+      "end_anchor": "identity (Issue #96). Single source of truth for \"what are this farm/",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "adapter_region_projection": {
+      "repo_rel_path": "backend/app/api/recommender.py",
+      "line_start": 538,
+      "line_end": 548,
+      "anchor": "return {",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "adapter_shared_passthrough": {
+      "repo_rel_path": "backend/app/api/recommender.py",
+      "line_start": 573,
+      "line_end": 592,
+      "anchor": "\"documentation\": {",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "protected_area_registry": {
+      "repo_rel_path": "backend/app/api/reference/supplemental_field_registry_v1.csv",
+      "line_start": 3,
+      "line_end": 3,
+      "anchor": "farm.region.is_protected_area,boolean,Lage im Schutzgebiet,true,true,backend/policy/oepul_measures.rego missing_keys payload.farm.region.is_protected_area (o6_23); backend/policy/farm_profile_schema_blueprint.json farm.region.is_protected_area:boolean",
+      "end_anchor": "farm.region.is_protected_area,boolean,Lage im Schutzgebiet,true,true,backend/policy/oepul_measures.rego missing_keys payload.farm.region.is_protected_area (o6_23); backend/policy/farm_profile_schema_blueprint.json farm.region.is_protected_area:boolean",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "project_code_collection": {
+      "repo_rel_path": "backend/app/api/collection_inputs.py",
+      "line_start": 211,
+      "line_end": 227,
+      "anchor": "\"oepul.shared.parcels[].project_confirmation_codes\": CollectionFieldDefinition(",
+      "end_anchor": "\"oepul.shared.livestock_events\": CollectionFieldDefinition(",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "project_code_o6_18_dependency": {
+      "repo_rel_path": "backend/app/api/reference/measure_collection_dependency_v1.csv",
+      "line_start": 11,
+      "line_end": 11,
+      "anchor": "o6_18,oepul.shared.parcels[].project_confirmation_codes,\"backend/policy/oepul_measures.rego o6_18_result (c_measure_result pair): payload.oepul.shared.parcels[].project_confirmation_codes\"",
+      "end_anchor": "o6_18,oepul.shared.parcels[].project_confirmation_codes,\"backend/policy/oepul_measures.rego o6_18_result (c_measure_result pair): payload.oepul.shared.parcels[].project_confirmation_codes\"",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "project_code_o6_23_dependency": {
+      "repo_rel_path": "backend/app/api/reference/measure_collection_dependency_v1.csv",
+      "line_start": 14,
+      "line_end": 14,
+      "anchor": "o6_23,oepul.shared.parcels[].project_confirmation_codes,\"backend/policy/oepul_measures.rego o6_23_result (c_measure_result pair): payload.oepul.shared.parcels[].project_confirmation_codes\"",
+      "end_anchor": "o6_23,oepul.shared.parcels[].project_confirmation_codes,\"backend/policy/oepul_measures.rego o6_23_result (c_measure_result pair): payload.oepul.shared.parcels[].project_confirmation_codes\"",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "project_code_flatten": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1864,
+      "line_end": 1868,
+      "anchor": "shared_parcel_project_confirmation_values := [code |",
+      "end_anchor": "]",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "conservative_project_water_pairs": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1697,
+      "line_end": 1737,
+      "anchor": "o6_16_result := c_measure_result(\"o6_16\", [",
+      "end_anchor": "])",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "legacy_conservative_result": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1805,
+      "line_end": 1823,
+      "anchor": "# decision-trace-condition: category_c_conservative_missing_data",
+      "end_anchor": "required_value_missing(value) if {",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "scalar_measure_override": {
+      "repo_rel_path": "backend/app/api/check_engine.py",
+      "line_start": 839,
+      "line_end": 869,
+      "anchor": "consumed_scalar_paths = load_measure_supplemental_dependencies().get(measure_id, frozenset())",
+      "end_anchor": "result = post_opa(",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "collection_replace_on_projection": {
+      "repo_rel_path": "backend/app/api/check_engine.py",
+      "line_start": 659,
+      "line_end": 676,
+      "anchor": "if definition.payload_root == \"land.parcels\":",
+      "end_anchor": "ledger.sort(key=lambda item: (item[\"collection_path\"], item[\"parent_id\"]))",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "collection_empty_state": {
+      "repo_rel_path": "backend/app/api/collection_inputs.py",
+      "line_start": 681,
+      "line_end": 700,
+      "anchor": "def collection_state_for(",
+      "end_anchor": "return COLLECTION_STATE_CONFIRMED_EMPTY if confirmed else COLLECTION_STATE_UNKNOWN",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_recognition_shape": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft_contract.py",
+      "line_start": 102,
+      "line_end": 128,
+      "anchor": "class Recognition(Facts):",
+      "end_anchor": "return self",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "host_recognition_shape_dates": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft_evidence.py",
+      "line_start": 80,
+      "line_end": 105,
+      "anchor": "class RecognitionEvidence(Recognition):",
+      "end_anchor": ")",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "host_recognition_date_dispatch": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 216,
+      "line_end": 241,
+      "anchor": "def _event_dates_valid(record, context: CurrentContext) -> bool:",
+      "end_anchor": "return False",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "host_recognition_incident_review": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 350,
+      "line_end": 378,
+      "anchor": "incidents = []",
+      "end_anchor": "return unverified, seasons is not None, incidents",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_recognition_field_selection": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 289,
+      "line_end": 293,
+      "anchor": "if native.get(\"exceptions\", {}).get(\"recognitions\") is not None:",
+      "end_anchor": "return native",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_recognition_matching": {
+      "repo_rel_path": "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+      "line_start": 383,
+      "line_end": 435,
+      "anchor": "# Recognition is bounded evidence for review, never a blanket waiver.",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "recognition_collection_input_permissions": {
+      "repo_rel_path": "backend/app/api/collection_inputs.py",
+      "line_start": 298,
+      "line_end": 308,
+      "anchor": "for _path, _model in EVIDENCE_MODELS.items():",
+      "end_anchor": "item_schema=_model,",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "recognition_completeness_current_invalidation": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 202,
+      "line_end": 213,
+      "anchor": "def _invalidate_inventory_confirmation(kind, path, farm_id, year):",
+      "end_anchor": ")",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "recognition_completeness_reaffirm": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 433,
+      "line_end": 452,
+      "anchor": "# Recorded collection entries replace their snapshot collection using the",
+      "end_anchor": "host_context = context.as_dict()",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_promotion_blockers_exact": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 130,
+      "line_end": 141,
+      "anchor": "review = _load(\"source-review.json\")",
+      "end_anchor": "if len(source_ids) != len(citations):",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_full_result_gate": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 491,
+      "line_end": 506,
+      "anchor": "]",
+      "end_anchor": "\"failed_conditions\": [],",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_trace_incident_provenance": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 548,
+      "line_end": 572,
+      "anchor": "\"slice_decision\": decision.model_dump(mode=\"json\"),",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "versioned_basis_fingerprints": {
+      "repo_rel_path": "backend/app/api/evaluation_provenance.py",
+      "line_start": 138,
+      "line_end": 153,
+      "anchor": "\"\"\"sha256 of every external mapping/dependency-registry file that gates",
+      "end_anchor": "return fingerprints",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "evaluation_basis_capture": {
+      "repo_rel_path": "backend/app/api/evaluation_provenance.py",
+      "line_start": 279,
+      "line_end": 296,
+      "anchor": "domain_id=domain_id,",
+      "end_anchor": "basis_digest = sha256_digest(basis_dict)",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "farm_snapshot_shape": {
+      "repo_rel_path": "backend/app/api/models.py",
+      "line_start": 323,
+      "line_end": 340,
+      "anchor": "class FarmProfileSnapshot(models.Model):",
+      "end_anchor": "]",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "auto_generates_run": {
+      "repo_rel_path": "backend/app/api/scenario_generation.py",
+      "line_start": 131,
+      "line_end": 142,
+      "anchor": "def apply_proposals(measure_payload: dict, proposals: list[GeneratedProposal]) -> dict:",
+      "end_anchor": "def build_generated_scenario(",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "auto_snapshot_contract": {
+      "repo_rel_path": "backend/app/api/scenario_generation.py",
+      "line_start": 163,
+      "line_end": 167,
+      "anchor": "persist the outcome as a new immutable, generator-attributed",
+      "end_anchor": "`baseline_result`/`effective_measure_payload` must be exactly what the",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "collection_provenance": {
+      "repo_rel_path": "backend/app/api/models.py",
+      "line_start": 194,
+      "line_end": 262,
+      "anchor": "class FarmCollectionEventReviewInput(ReviewEvidenceModel):",
+      "end_anchor": "class FarmCollectionConfirmationReviewInput(ReviewEvidenceModel):",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "ui_object_builder": {
+      "repo_rel_path": "frontend/src/components/decision-trace/event-collection-panel.tsx",
+      "line_start": 215,
+      "line_end": 226,
+      "anchor": "function buildItemValue(): { ok: true; value: unknown } | { ok: false } {",
+      "end_anchor": "const itemValid = action === \"confirm_empty\" || buildItemValue().ok",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "ui_old_save": {
+      "repo_rel_path": "frontend/src/lib/decision-trace/collection-client.ts",
+      "line_start": 15,
+      "line_end": 16,
+      "anchor": "const EVENT_ENDPOINT_PATH = \"/api/review/v1/collection-event\"",
+      "end_anchor": "const EVENT_DEACTIVATE_ENDPOINT_PATH = \"/api/review/v1/collection-event/deactivate\"",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "current_api_routes": {
+      "repo_rel_path": "backend/app/core/urls.py",
+      "line_start": 51,
+      "line_end": 53,
+      "anchor": "path(\"api/current/v1/evaluation\", current_evaluation, name=\"current_evaluation_v1\"),",
+      "end_anchor": "path(\"api/current/v1/fact/deactivate\", current_fact_deactivate, name=\"current_fact_deactivate_v1\"),",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    }
+  },
+  "file_pin_checks": {
+    "backend/app/ama_raw/models.py": {
+      "sha256": "ee291b4372fc78eca55c4508b19bfa995552976c1922f10257a7d74ff715a8a6",
+      "line_count": 427,
+      "git_blob": "66a1644bc9d1164659f5d4ff916b1de9578a367b",
+      "worktree_matches_pin": true
+    },
+    "backend/app/api/canonical_builder.py": {
+      "sha256": "74128e300c65c37d586b431cc3c718e87075afdd565bc0e53f2bef1dbe744342",
+      "line_count": 1297,
+      "git_blob": "6615ee3e2cbcd16e1342d836b1486a239d9df2bf",
+      "worktree_matches_pin": true
+    },
+    "backend/app/api/check_engine.py": {
+      "sha256": "54b8142437a8b564afc27ada8b036b3f1eaa7c81d8e6ae1ae78ae9a30964b49d",
+      "line_count": 1145,
+      "git_blob": "5be5952941fcae27ff3fb94a04c39d6caf956e35",
+      "worktree_matches_pin": true
+    },
+    "backend/app/api/collection_inputs.py": {
+      "sha256": "02edddd08475981147f42d5681abc2d6900ef5606cbfba9492e07ec76dd67430",
+      "line_count": 700,
+      "git_blob": "15f45f378522b4dc76956683ca5c8ac4fada4eee",
+      "worktree_matches_pin": true
+    },
+    "backend/app/api/current_fact_views.py": {
+      "sha256": "8f9e7175e92e76342679cc490ae1ea08767ec39f3eddefcb5142cea2fb8ca918",
+      "line_count": 134,
+      "git_blob": "c28ccb37da785857493151db53af348a7dee447e",
+      "worktree_matches_pin": true
+    },
+    "backend/app/api/current_facts.py": {
+      "sha256": "cfda559a480dc97d6d6006105fae94dad4aa8d368f37711e7595a6dbb6d63a01",
+      "line_count": 403,
+      "git_blob": "01a92db146cc8826ef4fb623617cf0dfabff33ea",
+      "worktree_matches_pin": true
+    },
+    "backend/app/api/evaluation_provenance.py": {
+      "sha256": "f77dfb3a250fa59435e08f9131ae151c004010ab1b9dbc715488a019c485f5c3",
+      "line_count": 417,
+      "git_blob": "be380d48b46421da5c87517a9fedb99d4d9ab4da",
+      "worktree_matches_pin": true
+    },
+    "backend/app/api/heuwirtschaft.py": {
+      "sha256": "fc6394ed9a2115ec5ec6739180f5a34ebc99716f3e7f61ab765de09b703b101d",
+      "line_count": 591,
+      "git_blob": "c3d7af8e82a6f52dedd9a2162555015c9831f740",
+      "worktree_matches_pin": true
+    },
+    "backend/app/api/heuwirtschaft_contract.py": {
+      "sha256": "470d6650d8a6d1763e0daeb7e57f5994d5b6373af3caf51e332a977c4ea06b86",
+      "line_count": 158,
+      "git_blob": "f7a377544eeb6ed8b61aace1f0c759067355b77b",
+      "worktree_matches_pin": true
+    },
+    "backend/app/api/heuwirtschaft_evidence.py": {
+      "sha256": "91e3dae6a41a8eb96405b5addd520bf1f2882f0666325a816f526417a550f4c6",
+      "line_count": 157,
+      "git_blob": "b9d07c36b526fc959a712623f4ecf1c364df89d5",
+      "worktree_matches_pin": true
+    },
+    "backend/app/api/models.py": {
+      "sha256": "ebb13822235d5b36b520a1a7bec74e9cbf90dd0be809b72c5921a31ee2518dba",
+      "line_count": 452,
+      "git_blob": "ef24fbfec77b23240bb14f945aa08eb20fd8d202",
+      "worktree_matches_pin": true
+    },
+    "backend/app/api/recommender.py": {
+      "sha256": "7d86e7f94f2cbcd273a21e44f83531fd72ba24bafe947f42ffb98d3a97c8e9a1",
+      "line_count": 1046,
+      "git_blob": "a8b75e856ca463032d5cdeef694f242552575056",
+      "worktree_matches_pin": true
+    },
+    "backend/app/api/reference/measure_collection_dependency_v1.csv": {
+      "sha256": "7e1b910cd0b7a6900bb3fe6bd1189ab1350d524dab68cb7a434b3852f8eeed5c",
+      "line_count": 14,
+      "git_blob": "4a2daba9f0bb29e258f354498549519ec1768f8f",
+      "worktree_matches_pin": true
+    },
+    "backend/app/api/reference/supplemental_field_registry_v1.csv": {
+      "sha256": "cd25acb132a53d7a89ddd97f0c9ab4f6b5dec12563a624c49c4c3edd295ce6ae",
+      "line_count": 33,
+      "git_blob": "06bac1617a7afbb7183e596376f86e22a6908865",
+      "worktree_matches_pin": true
+    },
+    "backend/app/api/scenario_generation.py": {
+      "sha256": "dd3f292690a9682e9ecb9fabfb5f8e38af8f25a7cba05e7dd5293dc1e56fb1d0",
+      "line_count": 227,
+      "git_blob": "fd0d33382e0c74d5a05053d025bcaf4f9df1ab4b",
+      "worktree_matches_pin": true
+    },
+    "backend/app/core/urls.py": {
+      "sha256": "30098f6c98dbcdfd788342b29404be13aa1d3aba08545f02879f0fccdd455382",
+      "line_count": 97,
+      "git_blob": "44f4ffecbec8535dec1e3d857a34902915db2a02",
+      "worktree_matches_pin": true
+    },
+    "backend/app/review/adapters/oepul/tests/test_catalog_and_rule_extraction.py": {
+      "sha256": "62071fdd63477ad12537bcd5e413055dd5b69e8687ad5048925de06eb2530840",
+      "line_count": 772,
+      "git_blob": "86bf830dadec1f94e65ec622c5445d43a4c26e9f",
+      "worktree_matches_pin": true
+    },
+    "backend/policy/farm_profile_schema_blueprint.json": {
+      "sha256": "768688efd4ef3fd21bf7007d40532dfde77f0699401373371f2dfae75f848792",
+      "line_count": 121,
+      "git_blob": "7e64fefbdc4960675ecfa972dd26a388c237c7ca",
+      "worktree_matches_pin": true
+    },
+    "backend/policy/heuwirtschaft/heuwirtschaft.rego": {
+      "sha256": "31ebd6c7462c84a4cccb5754f9953746905a7102078ed19bd09dcb031c282220",
+      "line_count": 557,
+      "git_blob": "674c4805ada288377333a1d372066bee77b60016",
+      "worktree_matches_pin": true
+    },
+    "backend/policy/oepul_measures.rego": {
+      "sha256": "c0900ece3b883e1362a6ab1d00518be7ad456f6d4e05dba97a01f4eee48bd35a",
+      "line_count": 2251,
+      "git_blob": "21e16de9532a678adbfff33c865dc28e96858d14",
+      "worktree_matches_pin": true
+    },
+    "frontend/src/components/decision-trace/event-collection-panel.tsx": {
+      "sha256": "f97390ab4ae8c5680addf896e082df875e344272e07b04c4d284a3be1bb84fa4",
+      "line_count": 781,
+      "git_blob": "49c3e48685192cd887b2b411bf11f7c3a1b2bb74",
+      "worktree_matches_pin": true
+    },
+    "frontend/src/lib/decision-trace/collection-client.ts": {
+      "sha256": "879f2a62de9364e1b2f385bfa9b613d36751c10fd9e211f125d628f1c22bd251",
+      "line_count": 221,
+      "git_blob": "29c7ab7185ae08900edb3beed6781bd05af671d3",
+      "worktree_matches_pin": true
+    }
+  },
+  "known_gaps": [
+    {
+      "id": "B5-APP-PROJECT-SEMANTICS",
+      "detail": "Freie Codes sind keine zeitlich gültige Projektbestätigung/Parameterliste; current18/23Presenceflatten verliert Zuordnung. Project/Version/Authority/Scope/Parameter fehlen.",
+      "refs": [
+        "project_code_collection",
+        "project_code_flatten",
+        "conservative_project_water_pairs"
+      ]
+    },
+    {
+      "id": "B5-APP-GEOGRAPHIC-LEGAL-SCOPE",
+      "detail": "Farmflag und Anzeige-Maßnahmenlabel ersetzen keine Schutzgebiets-/WRRL-Rechts-/Projekt-/Teilflächenzuordnung; region-water und contract-nature fields werden generic nicht übernommen.",
+      "refs": [
+        "blueprint_region_flags",
+        "adapter_region_projection",
+        "blueprint_contract_nature",
+        "adapter_canonical_parcel_projection"
+      ]
+    },
+    {
+      "id": "B5-APP-RAW-APPROVAL-GAP",
+      "detail": "Irrigation authority Rawspalte existiert, erreicht den aktuellen Builder/Adapter als Bescheidfakt jedoch nicht.",
+      "refs": [
+        "raw_mfa_authority",
+        "builder_mfa_selected",
+        "builder_topic_appliers"
+      ]
+    },
+    {
+      "id": "B5-APP-REQUEST-CODE-VERSION",
+      "detail": "FSL code wird nur in Proxyableitungen verwendet und nicht vollständig am projiziertenSchlagbewahrt; Codeversion/Gebietskennung/Projektversion fehlt im geprüften Pfad.",
+      "refs": [
+        "builder_fsl_selected",
+        "builder_fsl_projection",
+        "builder_fsl_proxy_apply"
+      ]
+    },
+    {
+      "id": "B5-APP-PHASE1-POSITIVE-PROXY",
+      "detail": "Aktueller Backendendpoint kann für14/17/19 eligible/phase1_baseline_check_passed ausgeben ohne zusätzliche NATA-/Kommissions-/EBW-Projektprüfung. Umfang der positiven Aussage vor Vollintegration begrenzen und fehlende Fachslices nach Quellen implementieren.",
+      "refs": [
+        "http_current_route",
+        "current_evaluation_dispatch",
+        "measure_policy_opa_call",
+        "phase1_o6_14_positive",
+        "phase1_o6_17_positive",
+        "phase1_o6_19_positive"
+      ]
+    },
+    {
+      "id": "B5-APP-CONSERVATIVE-OTHERS",
+      "detail": "Für2/12/16/18/23/24 ist die aktuelle App mangels Fachregel konservativmissing_data; es darf daraus kein schon implementiertes pauschales Ausnahmeregel-Failopen behauptet werden.",
+      "refs": [
+        "current_evaluation_dispatch",
+        "legacy_conservative_result",
+        "conservative_project_water_pairs"
+      ]
+    },
+    {
+      "id": "B5-APP-RECOGNITION-LEGAL-EFFECT",
+      "detail": "o6_3 kennt typed Anerkennungen und Vorfälle, gibt matching Fälle aber zur legal effect Review. Aussteller AMA gehört zu diesem engen Vertrag; keine pauschale Übertragung auf LandesNaturschutz-/Wasser-/PSMbehörden oder Kommission.",
+      "refs": [
+        "native_recognition_shape",
+        "host_recognition_incident_review",
+        "native_recognition_matching"
+      ]
+    },
+    {
+      "id": "B5-APP-SEPARATE-DATE-ROLES",
+      "detail": "issued_on und incident sind Hostobservations, validity ist rechtlicher Zeitraum. Für Projekte/Bescheide braucht es eigene rollenbezogene Datierung; generischer current-datecheck darf langgültige/rechtliche historische Daten nicht umdeuten.",
+      "refs": [
+        "host_recognition_shape_dates",
+        "host_recognition_date_dispatch",
+        "native_recognition_field_selection"
+      ]
+    },
+    {
+      "id": "B5-APP-DOCUMENT-INPUT-PROVENANCE",
+      "detail": "AMAImport/Expert/Operator/Auto als Erfassungsquelle trennen vom rechtlichen Dokumentaussteller. Dokumentierte Eingaben/Aggregate und AMAoverride bleiben erlaubt.",
+      "refs": [
+        "scalar_measure_override",
+        "collection_replace_on_projection",
+        "recognition_collection_input_permissions"
+      ]
+    },
+    {
+      "id": "B5-APP-INVENTORY-COMPLETENESS",
+      "detail": "Neue Sammel-/Projektbestandsvollständigkeit separat vom einzelnen gültigen Dokument behandeln; aktuelles Recognitioninventar zeigt bereits Erneuerungsmechanismus, kein automatischglobaler Bestandsbeweis.",
+      "refs": [
+        "recognition_completeness_current_invalidation",
+        "recognition_completeness_reaffirm",
+        "native_recognition_matching"
+      ]
+    },
+    {
+      "id": "B5-APP-LEGAL-VERSION-TIME",
+      "detail": "Bestehende Quelle-/Modul-/Snapshot-Fingerprints beweisen Replaybasis, aber nicht die fachlich richtige aktuellgültige Fassungswahl externer SRL/Merkblatt/WRRL/GIS/Projekt/Anordnung.",
+      "refs": [
+        "evaluation_basis_capture",
+        "versioned_basis_fingerprints"
+      ]
+    },
+    {
+      "id": "B5-APP-EDITOR-COMPLEX-CURRENT",
+      "detail": "Generic collection UI besitzt keinen verschachtelten schema editor und speichert scenario; aktuelle komplexe Fachobjekte benötigen expliziten Editor/current_fact Anschluss.",
+      "refs": [
+        "ui_object_builder",
+        "ui_old_save",
+        "current_api_routes"
+      ]
+    },
+    {
+      "id": "B5-APP-AUTO-OWN-SNAPSHOT",
+      "detail": "Generator EvaluationRun ist nicht der bereits beschlossene eigene dokumentierte Auto-FarmSnapshot. Dies bleibt Umsetzungsarbeit ohne neues Eingabeverbot.",
+      "refs": [
+        "auto_generates_run",
+        "auto_snapshot_contract",
+        "farm_snapshot_shape",
+        "collection_provenance"
+      ]
+    }
+  ],
+  "derivations": [
+    {
+      "id": "CURRENT_NON_NATIVE_LEGACY_ROUTE",
+      "input": "Current snapshot and exact consumed current_fact overlays",
+      "algorithm": "current API dispatches only o6_3 to native source-bound slice; others go through common adapted/overlaid assembly and generic OPA measure_decision",
+      "scope": "current HTTP endpoint",
+      "refs": [
+        "http_current_route",
+        "http_current_view",
+        "current_evaluation_dispatch",
+        "measure_policy_opa_call"
+      ]
+    },
+    {
+      "id": "PROJECT_CODE_PRESENCE_FLATTEN",
+      "input": "shared parcels project_confirmation_codes",
+      "algorithm": "flatten all code strings into one array; only required-value presence, not project validity/parameters",
+      "scope": "legacy conservative o6_18/o6_23",
+      "refs": [
+        "project_code_flatten",
+        "conservative_project_water_pairs",
+        "legacy_conservative_result"
+      ]
+    },
+    {
+      "id": "RECOGNITION_BOUNDED_REVIEW",
+      "input": "documented RecognitionEvidence",
+      "algorithm": "host validates issued/incident dates; native selects obligation/parcels/year/legal validity; matching recognised AMA record routes violation to missing_data review instead of unconditional waiver",
+      "scope": "native o6_3 only",
+      "refs": [
+        "host_recognition_shape_dates",
+        "host_recognition_incident_review",
+        "native_recognition_field_selection",
+        "native_recognition_matching"
+      ]
+    }
+  ],
+  "policy_observations": {
+    "schema_version": "block5_app_proxy_observations.v1",
+    "app_pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+    "policy_path": "backend/policy/oepul_measures.rego",
+    "cases": [
+      {
+        "measure_id": "o6_14",
+        "input": {
+          "measure_id": "o6_14",
+          "payload": {
+            "farm": {
+              "farm_id": "B5-SYNTHETIC",
+              "year": 2026
+            },
+            "land": {
+              "alpine_pasture_area_ha": 3.0,
+              "parcels": []
+            },
+            "livestock": {
+              "species_groups": [
+                {
+                  "species": "cattle",
+                  "gve": 3.0,
+                  "housing": {
+                    "pasture": {
+                      "weide_days_per_year": 60
+                    }
+                  }
+                }
+              ]
+            },
+            "oepul": {
+              "shared": {
+                "parcels": []
+              }
+            }
+          },
+          "evaluation_context": {
+            "current_year": 2026,
+            "snapshot_year": 2026,
+            "as_of": "2026-10-08"
+          }
+        },
+        "result": {
+          "failed_conditions": [],
+          "measure_id": "o6_14",
+          "missing_keys": [],
+          "reasons": [
+            "phase1_baseline_check_passed"
+          ],
+          "satisfied_conditions": [
+            {
+              "actual_values": {
+                "max_supported_grazing_days": 60,
+                "payload.land.alpine_pasture_area_ha": 3.0,
+                "total_supported_livestock_gve": 3
+              },
+              "code": "maximum_stocking_density_within_limit",
+              "paths": [
+                "payload.land.alpine_pasture_area_ha",
+                "payload.livestock.species_groups[].gve",
+                "payload.livestock.species_groups[].housing.pasture.weide_days_per_year"
+              ]
+            }
+          ],
+          "status": "eligible"
+        },
+        "execution_scope": "isolated current App Rego, not end-to-end HTTP/DB and not a normative oracle",
+        "missing_contracts": "Die Alm-Grundmaßnahme prüft Flächen/GVE/Weidetage. Ein optionaler NATA-Projekt-/Auflagennachweis wird nicht ausgewertet; daraus folgt keine allgemeine Projektpflicht für die Grundmaßnahme."
+      },
+      {
+        "measure_id": "o6_17",
+        "input": {
+          "measure_id": "o6_17",
+          "payload": {
+            "farm": {
+              "farm_id": "B5-SYNTHETIC",
+              "year": 2026
+            },
+            "land": {
+              "total_area_ha": 5.0,
+              "grassland_area_ha": 2.0,
+              "parcels": [
+                {
+                  "parcel_id": "p1",
+                  "area_ha": 2.0,
+                  "land_use": "grassland",
+                  "slope_percent": 20.0
+                }
+              ]
+            }
+          },
+          "evaluation_context": {
+            "current_year": 2026,
+            "snapshot_year": 2026,
+            "as_of": "2026-10-08"
+          }
+        },
+        "result": {
+          "failed_conditions": [],
+          "measure_id": "o6_17",
+          "missing_keys": [],
+          "reasons": [
+            "phase1_baseline_check_passed"
+          ],
+          "satisfied_conditions": [
+            {
+              "actual_values": {
+                "grassland_parcel_slopes": [
+                  {
+                    "parcel_id": "p1",
+                    "slope_percent": 20.0
+                  }
+                ],
+                "payload.farm.year": 2026,
+                "payload.land.grassland_area_ha": 2.0,
+                "payload.land.total_area_ha": 5.0
+              },
+              "code": "grassland_slope_baseline_met_2025_or_later",
+              "paths": [
+                "payload.farm.year",
+                "payload.land.total_area_ha",
+                "payload.land.grassland_area_ha",
+                "payload.land.parcels[].slope_percent"
+              ]
+            }
+          ],
+          "status": "eligible"
+        },
+        "execution_scope": "isolated current App Rego, not end-to-end HTTP/DB and not a normative oracle",
+        "missing_contracts": "Aggregat-/Hang-/Jahresbasis ohne vollständige Boden-/Ereignisprüfung. Eine Vorab-Landesbewilligung betrifft den bedingten Aufschüttungsfall; keine allgemeine Projektpflicht wie beim Wiener Zuschlag16."
+      },
+      {
+        "measure_id": "o6_19",
+        "input": {
+          "measure_id": "o6_19",
+          "payload": {
+            "farm": {
+              "farm_id": "B5-SYNTHETIC",
+              "year": 2026
+            },
+            "land": {
+              "parcels": [
+                {
+                  "parcel_id": "p1",
+                  "area_ha": 1.0,
+                  "land_use": "arable"
+                }
+              ]
+            }
+          },
+          "evaluation_context": {
+            "current_year": 2026,
+            "snapshot_year": 2026,
+            "as_of": "2026-10-08"
+          }
+        },
+        "result": {
+          "failed_conditions": [],
+          "measure_id": "o6_19",
+          "missing_keys": [],
+          "reasons": [
+            "phase1_baseline_check_passed"
+          ],
+          "satisfied_conditions": [
+            {
+              "actual_values": {
+                "eligible_parcel_area_sum_ha": 1
+              },
+              "code": "minimum_eligible_area_met",
+              "paths": [
+                "payload.land.parcels[].area_ha"
+              ]
+            }
+          ],
+          "status": "eligible"
+        },
+        "execution_scope": "isolated current App Rego, not end-to-end HTTP/DB and not a normative oracle",
+        "missing_contracts": "Keine EBW-Projektbestätigung, Lebensraum-/Indikatorinstanzen oder tatsächliche Beobachtungen im positiven 1-ha-Basisfall. Diese projektbezogenen Erfordernisse sind laut Quelle eigene Pflichtscopes."
+      },
+      {
+        "measure_id": "o6_18",
+        "input": {
+          "measure_id": "o6_18",
+          "payload": {
+            "farm": {
+              "farm_id": "B5-SYNTHETIC",
+              "year": 2026
+            },
+            "land": {
+              "aggregate": {
+                "nitrogen_input_kg_per_ha": 0.0
+              },
+              "parcels": [
+                {
+                  "parcel_id": "p1",
+                  "area_ha": 1.0,
+                  "land_use": "grassland",
+                  "operations": {
+                    "psm_used": false,
+                    "cutting_dates": [
+                      "2026-06-01"
+                    ]
+                  }
+                }
+              ]
+            },
+            "oepul": {
+              "shared": {
+                "parcels": [
+                  {
+                    "parcel_id": "p1",
+                    "project_confirmation_codes": [
+                      "DOCUMENTED-EXAMPLE"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "evaluation_context": {
+            "current_year": 2026,
+            "snapshot_year": 2026,
+            "as_of": "2026-10-08"
+          }
+        },
+        "result": {
+          "failed_conditions": [],
+          "measure_id": "o6_18",
+          "missing_keys": [],
+          "reasons": [
+            "category_c_conservative_missing_data"
+          ],
+          "satisfied_conditions": [],
+          "status": "missing_data"
+        },
+        "execution_scope": "isolated current App Rego, not end-to-end HTTP/DB and not a normative oracle",
+        "missing_contracts": "No project document, scheme/version/authority/geographic boundary or commission record in synthetic input"
+      },
+      {
+        "measure_id": "o6_23",
+        "input": {
+          "measure_id": "o6_23",
+          "payload": {
+            "farm": {
+              "farm_id": "B5-SYNTHETIC",
+              "year": 2026,
+              "region": {
+                "is_protected_area": true
+              }
+            },
+            "land": {
+              "parcels": [
+                {
+                  "parcel_id": "p1",
+                  "area_ha": 1.0,
+                  "land_use": "grassland",
+                  "operations": {
+                    "cutting_dates": [
+                      "2026-06-01"
+                    ]
+                  }
+                }
+              ]
+            },
+            "oepul": {
+              "shared": {
+                "parcels": [
+                  {
+                    "parcel_id": "p1",
+                    "project_confirmation_codes": [
+                      "DOCUMENTED-EXAMPLE"
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          "evaluation_context": {
+            "current_year": 2026,
+            "snapshot_year": 2026,
+            "as_of": "2026-10-08"
+          }
+        },
+        "result": {
+          "failed_conditions": [],
+          "measure_id": "o6_23",
+          "missing_keys": [],
+          "reasons": [
+            "category_c_conservative_missing_data"
+          ],
+          "satisfied_conditions": [],
+          "status": "missing_data"
+        },
+        "execution_scope": "isolated current App Rego, not end-to-end HTTP/DB and not a normative oracle",
+        "missing_contracts": "No project document, scheme/version/authority/geographic boundary or commission record in synthetic input"
+      },
+      {
+        "measure_id": "o6_24",
+        "input": {
+          "measure_id": "o6_24",
+          "payload": {
+            "farm": {
+              "farm_id": "B5-SYNTHETIC",
+              "year": 2026
+            },
+            "land": {
+              "aggregate": {
+                "nitrogen_input_kg_per_ha": 0.0
+              }
+            },
+            "documentation": {
+              "nutrient_balance_complete": true
+            }
+          },
+          "evaluation_context": {
+            "current_year": 2026,
+            "snapshot_year": 2026,
+            "as_of": "2026-10-08"
+          }
+        },
+        "result": {
+          "failed_conditions": [],
+          "measure_id": "o6_24",
+          "missing_keys": [],
+          "reasons": [
+            "category_c_conservative_missing_data"
+          ],
+          "satisfied_conditions": [],
+          "status": "missing_data"
+        },
+        "execution_scope": "isolated current App Rego, not end-to-end HTTP/DB and not a normative oracle",
+        "missing_contracts": "No project document, scheme/version/authority/geographic boundary or commission record in synthetic input"
+      }
+    ],
+    "binary_provenance": {
+      "initial_diagnostic_run": {
+        "version": "1.18.2",
+        "sha256": "16118120a6a662c25c678b02b411d8cb22e32460f5d47d2ff9466ff2ed5104cc",
+        "official_release_checksum_verified": false,
+        "build_marker": "dirty"
+      },
+      "independent_reproduction": {
+        "url": "https://github.com/open-policy-agent/opa/releases/download/v1.18.2/opa_linux_amd64_static",
+        "version": "1.18.2",
+        "asset": "opa_linux_amd64_static",
+        "sha256": "9903e5125ac281104f2c4b7371d10cc3b74a98933743fcbfc174f9bf0ab20de8",
+        "release_checksum_verified": true
+      }
+    }
+  },
+  "verification": {
+    "all_inspected_blobs_match_pin": true,
+    "paths": 17,
+    "references": 59,
+    "pinned_files": 22,
+    "known_gaps": 13,
+    "isolated_policy_observation_cases": 6,
+    "no_app_agents_found": "rg --files -g AGENTS.md in inspected App worktree returned no matches; root Lab AGENTS read for immutable-source/ambiguity context.",
+    "machine_absolute_worktree_paths_in_artifact": false,
+    "http_db_end_to_end_test_performed": false,
+    "new_normative_admission": false
+  }
+}

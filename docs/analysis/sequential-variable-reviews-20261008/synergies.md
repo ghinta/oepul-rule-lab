@@ -1,0 +1,165 @@
+# Belegte Wiederverwendungskandidaten nach den Einzelprüfungen
+
+Aktuelle Bündelung nach Block 1–7: [Expertenagenda mit zehn Entscheidungsfamilien](../domain-expert-agenda-20261009/README.md) · [Antwortvorlage](../domain-expert-agenda-20261009/answer-template.md). Die folgenden Blocknotizen bleiben als historische Prüfschritte erhalten.
+
+Arbeitsnotizen für die gemeinsame Durchsicht nach den Einzelprüfungen.
+Alle 26 Maßnahmen sind einzeln dokumentiert; diese Kandidaten sind keine fachliche Aufnahmefreigabe.
+Die jeweiligen Fragen im Sammelissue #140 bleiben offen. Zusammengefasst wird
+die Erfassung von Evidenz; ihre fachliche Auswertung bleibt maßnahmenbezogen.
+
+Die [Vertiefung zu Tierbeständen und Ereignissen](../animal-identity-review-20261008/README.md)
+prüft diese Gemeinsamkeiten gegen die aktuellen App-Pfade. Dokumentierte
+Betreiber-/Expertenaggregate gehen AMA vor und bleiben zulässig; individuelle
+Identität ist nur im erforderlichen Tier-/Maßnahmenscope nötig. Jahresmittel,
+Stichtagsbestand, Aufenthaltsunion und gleichzeitiger Besatz erhalten eigene
+Berechnungen. Die offene Browseranbindung und der eigene Auto-Snapshot sind
+konkrete technische Vorbereitungen. Aktuelle Hinweise ergänzen die historische
+Quellenbasis; bestehende Frage-IDs bleiben vollständig offen.
+
+Die [Vertiefung zu Mitteln, Futter und Bewirtschaftung](../material-operations-review-20261008/README.md)
+prüft gemeinsame Produkte/Chargen, Stoffflüsse, tatsächliche Anwendungen,
+Rationen, Mistmieten, Saatgut und Betriebs-/Schlagereignisse. Die Norm-/
+Zulassungsquelle bleibt vom bestätigten Experten-/Betreiber-/Auto-Fakt getrennt.
+13 Themen bündeln die vorhandenen Restfragen; unterschiedliche N-Basen,
+88-%-TM-Rationen, Volljahr-GVO/Herkunft und Feld-/Saatgutanteile werden nicht
+über gleiche Namen aliasiert. Der tatsächliche Regelzugriff folgt der
+bestätigten Eingabebedeutung, nicht bloß einer registrierten Mengen-/Boolzahl.
+
+Die [Vertiefung zu Projekt-/Rechts-/Ausnahmebelegen](../authority-project-review-20261008/README.md)
+prüft gemeinsame Identität, Ausstellerrolle, Version, Wirksamkeitsdatum und
+konkrete Pflicht-/Flächenzuordnung. NAT-Auflagen, EBW verbindliche Indikatoren,
+NATA-Pläne und N2-Landesrecht behalten eigene Parameter- und Ausnahmescopes.
+WRRL-Bewilligung und bewilligungsfreie Erhöhung sind getrennte Rechtswege.
+Öffentliche automatische Ausnahmen erfordern keine erfundene individuelle
+Anerkennung; explizit nötige Bewilligungen bleiben belegt. Positive App-Basis-
+Proxies sind keine vollständige Projektprüfung. Bestehende Fachfragen bleiben
+offen; Kurs-/Zahlungsanteile führen als Querverweise zu Block6/7.
+
+| Gemeinsame Grundlage | Betroffene offene Entscheidungen | Unterschied, der erhalten bleiben muss |
+| --- | --- | --- |
+| RGVE-Kohorten mit stabiler ID und datiertem Bestands-/Alters-/Rassenbeleg; vorhandener App-Backend-Vertrag aus #137 | BIO `RGVE_STOCK_BASIS`, o6_2 `RGVE_FODDER_BASIS`, o6_3 `RGVE_COHORTS_AND_FIRST_YEAR`; bestehende `COUNT_BASIS/GROUP_IDENTITY` | GVE ist kein RGVE. o6_2 klassifiziert jährlich, o6_3 braucht zusätzlich historische Erstjahresnachweise. BIO hat eigene Kategorien-/Ausnahme-/Zuschlagsfragen. Opus-Kuh-Kategorie heißt bei o6_2 `cattle_ge_2y`, bei o6_3 `cattle_2y_plus`; keine automatische String-Gleichsetzung. |
+| Datiertes Schlag-/Hauptkultur-/Teilflächeninventar | UBB `FIELD_PIECE_IDENTITY`, BIO `FIELD_DIV_IDENTITY`, NPA/AFS `AFS_ENTITY_IDENTITY/NPA_QUOTA_PART_AREA`, o6_2 `RGVE_FODDER_BASIS/N_CURRENT_CALENDAR_YEAR`, o6_3 `FORAGE_MINIMUM_PREMIUM_SEPARATION` | Schlag ist kein Feldstück oder AFS-Element. Prämienfläche, Quote, Futter-Nenner und österreichische LN sind verschiedene Mengen. o6_2-Zweitkultur erhält Ackerprämie; o6_3-Zweitkultur keine Heuwirtschaftsprämie. |
+| Kurs-/Personen-/Betriebsbelege und Anrechnungshistorie | BIO `TRAINING_EVIDENCE`, o6_2 `TRAINING_PERSON_AND_CUTOFF`; UBB-Biodiversitätsverpflichtung | Derselbe Kursdatensatz kann technisch erfasst werden; erlaubte Themen, Fristen, Anbieter, Ausscheiden und Doppelanrechnung sind gesonderte Entscheidungen. o6_2 verlangt zusätzlich zur UBB-Schulung eigene anrechenbare Stunden. |
+| Produkt-/Wirkstoff-/Herkunfts-/Anwendungsereignisse mit datierter Zulassungsquelle | NPA/AFS `NPA_BIO_PSM_AND_FERT`, o6_2 `INPUT_ORIGIN_AND_SLURRY_RETURN/PSM_APPLICATION_AND_CODE_YEAR`, o6_4 `MANURE_FORM_NEED_AND_ACTIVE_INGREDIENTS` | NPA verbietet jegliche Düngung; o6_2 unterscheidet betriebsfremdes N und ausdrücklich erlaubte Mittel. AFS-Verbissschutz, NPA-BIO-Wirkstoffe, Kultur-/Beizungsfrage und PSM-Codierungsjahr bleiben getrennt. Bergmähder erlauben ursprünglichen bedarfsgerechten Festmist und eigene häusliche Abwässer, keine sonstigen Düngemittel. |
+| Vertrauenswürdiger aktueller Jahres-/Snapshot-/Prüfstichtagskontext samt Vollständigkeitsnachweisen | Gemeinsame `SOURCE_VERSION/CURRENT_SNAPSHOT`, BIO `DIVNFZ_COMPLETION/HISTORY_AND_OTHER_OPTIONS`, NPA `NPA_EVENTS_AND_YEAR_END`, o6_2 `N_CURRENT_CALENDAR_YEAR/TRAINING_PERSON_AND_CUTOFF`, o6_3 `GREEN_FEEDING_METHOD_AND_HISTORY` und `ANNUAL_EVIDENCE` | Heutige Beobachtung ist kein Jahresabschluss und heutiger Nullbestand keine Saisonhistorie. Fehlend ist nicht false/0/confirmed-empty. Zukunftsoption nur getrennte begründete Notiz; laufende Förderentscheidung aus aktuellem Jahr und aktuellem Datenstand. |
+| Behörden-Anerkennung mit Dokument, Pflicht, Fläche und Vorfallszeitraum | o6_2 `DROUGHT_PROOF_AND_SCOPE`, o6_3 `RECOGNITION_INCIDENT_SCOPE/RECOGNITION_TIME` | Allgemeine Ernteausnahme, anderer Maßnahmen-Dürrecode und individuelle Rechtsfolge nicht gleichsetzen. Ein recognised-Boolean entfernt keine beliebigen Verstöße. Früherer Vorfall bleibt bei späterem as_of nachvollziehbar. |
+| Datierte Mahd-/Pflege-/Abtransport-/Weideereignisse pro Schlag mit Flächendeckung | NPA `NPA_EVENTS_AND_YEAR_END`, o6_3 `FORAGE_MINIMUM_PREMIUM_SEPARATION`, o6_4 `TWO_YEAR_FULL_MOWING/AFTERMATH_YEAR_AND_INTERVALS/METHOD_AND_ANNUAL_BM_CODE` | NPA-Pflege benötigt keinen Mähgutabtransport, Bergmähder vollflächige Mahd mit Abtransport mindestens alle zwei Jahre. BM0 ist ein zulässiges Nichtmahdjahr mit weiteren Pflichten; Heuwirtschaft und Bergmähder haben unterschiedliche Prämienflächen. NAT-Dürre-Nachweide ab 12.8. gilt nicht automatisch für Bergmähder ab 16.8. |
+| Versionierte amtliche GIS-Layer und Schlaggeometrien | o6_4 `GIS_AREA_AND_ALPINE_SCOPE`, UBB/BIO/NPA Entitätsfragen | Bei Bergmähdern zählt der Anteil über 1.200 m, nicht ein Höhenpunkt. Anteil, lokale Dauersiedlungsgrenze und Almbetriebs-Ausnahme brauchen eigene Belege; keine automatische Umbenennung absoluter ha in Prozent. |
+| Einzeltier-ID, datierte Tierbewegungen, Nachbesetzungskanten und Register-/Verbandsbelege | o6_5 `INDIVIDUAL_IDENTITY_AND_CATEGORY/COMPLETE_REPLACEMENT_GRAPH/DATED_ORG_CONFIRMATION_AND_ACTUAL_REPORTS`, o6_2/o6_3 RGVE-Fragen | Einzeltiere und Förderplätze sind keine RGVE-Kohorten. Rinderdatenbank, UELN, VIS und Zuchtorganisation haben unterschiedliche Zuständigkeit/Fristen. Ein Ersatztier braucht tatsächlichen Zugang und darf nicht frei mehreren Förderplätzen zugerechnet werden. |
+| Jahresausnahmen mit dokumentierter Rechtsfolge pro Pflicht | o6_5 `DROUGHT_2026_HOLDING_AND_REPORT_SCOPE`, o6_3 Grünfütterung, o6_2 Dürre-Anerkennung, o6_4 Nachweide | o6_5-Haltung bis 31.8.2026 beendet nicht Bewegungsmeldungen bis Jahresende und ändert keine Heuwirtschafts-Grünfütterung bis 30.9. oder Bergmähder-Nachweide ab 16.8. |
+| Datierte Saatgut-/Mischungs-/Sorten-/Familien- und Bestandsanteilsbelege mit laufendem amtlichem Katalog | o6_6 `MIXTURE_SPECIES_SEED_AND_CURRENT_CATALOGUE`, UBB/BIO Biodiversitäts-/Kulturfragen | Mischungspartner ist nicht Sorte oder Synonym. Anteil 0–1 ist nicht Prozent 0–100; Mungo/Ramtillkraut/Schwarzsamen nicht als drei Partner zählen. Geschlossene V6-Kulturen von nicht abschließender historischer Sortenliste unterscheiden. |
+| Überjährige Schlagereignisse, Nachfolgerpflicht und Datumsberechnung aus echten Belegen | o6_6 `VARIANT_CALENDAR_AND_PERIOD_ENDPOINT/MECHANICAL_REMOVAL_AND_FUTURE_MAIN_CROP/CONTRACT_SWITCH_TRANSFER_AND_CONTINUATION`, o6_4 Mahdhistorie, NPA Jahresende | Begrünungsjahr bleibt Bezugsjahr auch bei Frühjahrspflichten im Folgejahr. V3 endet im selben Jahr, V2/4/5/6/7 überjährig; geplante Ereignisse beweisen keine heutige Erfüllung. Pflege, Nutzung und endgültige Beseitigung sowie jeweiligen Abtransport verschieden auswerten. |
+| Vollständiger täglicher Kultur-/Flächenverlauf mit Vorjahr und datierten Ereigniseffekten | o6_7 `COMPLETE_ALL_ARABLE_DAILY_DENOMINATOR/CHRONOLOGY_FULL_GAP_AND_AS_OF/SHORT_CATCH_CROP_AND_RECLASSIFICATION`, o6_6 `VARIANT_CALENDAR_AND_PERIOD_ENDPOINT` | Immergrün fordert 85 % zu jedem Zeitpunkt auf allen Ackerflächen, keine Variante-/Stichtagsquote. Ungültige 41-Tage-Zwischenfrucht oder bereits überschrittene offene Jahreslücke darf nicht durch günstige Defaults begrünt werden. Vorjahres-/Untersaat-/MFA-Historie und NAT-Wiederbegrünung gesondert. |
+| Verbindliche Verbotskalender und Wirkung datierter N-/PSM-/Pflegeereignisse | o6_7 `NAPV_AUTHORITY_END_AND_DATED_N/CARE_MECHANICAL_REMOVAL_AND_EVENT_EFFECT/PSM_POST_REMOVAL_AND_FOLLOWING_MAIN_CROP`, o6_6 Management-/Periodenfragen, o6_2/NPA Produktbelege | Immergrün-N-Verbot bis NAPV-Ende im Folgejahr, nicht bis Umbruch oder Zwischenfruchtanbau-Variantenende. Bodennaher Schnitt ohne Nachwuchs beendet den Abschnitt; das ist nicht bloß ein Verstoßflag. Unmittelbares Walzen und SRL/MB-Ausnahmen bleiben offene Fachauslegung. |
+| Verfahrensbezogener Hauptkultur-/Untersaat-/Vorbegrünungsvertrag und tatsächliche Bearbeitungsereignisse | o6_8 `PRECEDING_CATCH_CROP_AND_SWITCH_HISTORY/ACTUAL_TILLAGE_DATES_AND_METHODS/US_CALENDAR_WINTER_BEAN_AND_EVENT_EVIDENCE`, o6_6 Mischung/Variante, o6_7 Kulturverlauf | o6_8 fordert konkrete MS/DS/Strip-Till/AH/US-Anwendung; Geräteverfügbarkeit ist kein Ereignis. Untersaat-Anlage für o6_8 ist nicht ihr späterer o6_6/o6_7-Anlagezeitpunkt (Hauptfruchternte). Winterackerbohne benötigt eigenen Fristbezug. |
+| Aktuelle GIS-Geometrie, Teilflächenidentität und unterschiedliche Anrechnungs-/Prämienmengen | o6_8 `BAW_GIS_QUARTER_VERSUS_CAP_AND_KG/BAW_PART_AREAS_MINIMUM_DIV_AND_EXCLUSIONS`, NPA/AFS/UBB/BIO Flächenfragen, o6_4 Höhenlayer | Vollständige Anhang-F-KG-Liste belegt keinen individuellen Erosions-Eintragspfad. Der [Quellenabgleich](../area-credit-source-review-20261008/README.md) erklärt Viertelbedingung und 4×-Grenze über die beantragte BAW-Teilfläche; konkreter Geometriebezug und Folgen übergroßer Codierung bleiben offen. GLÖZ4/GLÖZ8/2020-Grünland, DIV-Anrechnung und LSE-only-Zahlung getrennt. Zweijahrespflege darf nicht vor Jahresende als endgültig fehlend gelten. |
+
+Belege stehen in den jeweiligen Originalfundstellen und Pfad-/Policy-Dossiers.
+Offene gemeinsame Benennung darf die differenzierten fachlichen Scopes nicht
+vorwegnehmen. Die maßnahmenspezifischen Ergänzungen folgen unten. Die [gemeinsame
+Durchsicht](domain-review-order.md) bündelt sie nach Evidenzarten, ohne IDs zu schließen.
+| Datierte Jahresereignisse/MFA/Vertrag | o6_6, o6_7, o6_8, o6_9 | o6_9-CONTRACT_CURRENT_YEAR_SNAPSHOT_AND_ROOT; o6_9-EVENT_YEAR_VOLUME_DECLARATION_AND_APPLICATION_DEADLINES; jeweilige Vertrags-/Zeitfragen | Ein gemeinsamer Snapshot-/Ereignisrahmen ist möglich; jährliche Mengen, mehrjährige Begrünung, Vertragsantrag und noch offene Jahresfristen bleiben verschiedene Prüfungen. |
+| Vollständige Fläche und GVE-Basis | o6_3, o6_4, o6_5, o6_9 | o6_9-ANNUAL_PIG_GVE_CATTLE_DATABASE_AND_CATEGORIES; o6_9-FERTILIZABLE_AREA_TOTAL_ARABLE_AND_COMBINATION | Identitäten/Vollständigkeit/Jahresnachweis gemeinsam prüfen; Schweine-GVE, Rinderbasis, gesamte Ackerfläche und prämienfähige Fläche sind keine Aliase. |
+| Nachweis gegenüber berechnetem Betrag | o6_4, o6_8, o6_9 | o6_9-THEORETICAL_AMOUNT_VERSUS_CONFIRMED_RECOMMENDATION; o6_9-RECIPE_SOURCE_ACTUAL_PHASE_TECHNOLOGY | Gemeinsam Status unbekannt/bestätigt/Verletzung und theoretischen Betrag kennzeichnen; behördliche Sanktionen nicht durch globale Nullprämie ersetzen. |
+| Echte ganzjährige Begrünung und Neuanlageereignisse | o6_6, o6_7, o6_8, o6_10 | o6_10-DATED_CLEARING_REPLANTING_RENEWAL_AND_AS_OF; o6_10-DROUGHT_2026_ACTUAL_SHORTFALL_VOLUNTEER_CEREAL_ONLY | Gemeinsame Ereignis-/Snapshot-/Nachweisstruktur möglich; 8-Wochen-/Rodungsfenster, tägliche85%-Basis, Untersaat und Dürre-Ausfallgetreide haben verschiedene Scopes. |
+| GIS-/Teilfläche gegenüber Förderklasse | o6_4, o6_8, o6_10 | o6_10-GIS_SLOPE_TERRACE_CLASSIFICATION_AND_APP_GATE; jeweilige Hang-/BAW-GIS-Fragen | Quellenstand und geometrischen Bezug gemeinsam speichern; 25%-Terrassenklasse ist kein allgemeiner Zugang und kein BAW-Teilflächenanteil. |
+| Anwendung/Nachweis gegenüber theoretischer Prämie | o6_9, o6_10 | o6_10-EOP_CODE_USE_AGES_EVIDENCE_AND_AREA_BASIS; o6_10-UNKNOWN_VIOLATIONS_THEORETICAL_AMOUNT_AND_PAYMENT; o6_9-RECIPE_SOURCE_ACTUAL_PHASE_TECHNOLOGY | Datierte Vorgänge, Produkt-/Rezept-/Registerbelege und Status gemeinsam strukturieren; mindestens ein EOP-Schlag unterscheidet sich von allen Schweinerationen. |
+| Produkt-/Registeridentität, Zeitpunkt und Scope | o6_2, o6_10, o6_11 | o6_11-AGES_EFFECT_TYPE_PRODUCT_ID_VERSION_AND_APP_PSM; o6_11-DATED_EVENTS_FULL_COMMITMENT_AS_OF_UNKNOWN; o6_10-EOP_CODE_USE_AGES_EVIDENCE_AND_AREA_BASIS | Gemeinsame Produkt-ID/Registerversion und tatsächliche Ereigniskette möglich; Verzicht auf Herbizide/alle PSM und ersetzter EOP-Einsatz sind verschiedene Scopes. |
+| Vollständige Dauerkultur-/MFA-/Prämienbasis | o6_10, o6_11 | o6_11-MFA_USAGE_TYPES_FULL_AREA_BAN_VERSUS_PREMIUM; o6_10-COMPLETE_MFA_CROPS_GRAFTING_AND_AREA_SCOPES | Kultur-/Pflanzgut-/Pflegenachweise gemeinsam; Walnüsse/Edelkastanien haben bei11 besonderen Prämienausschluss, Mindestfläche jährlich10 versus Erstjahr11. |
+| BIO-Teilbetrieb/Umstieg und Anhang-L-Nachweis | BIO, o6_10, o6_11 | o6_11-BIO_PART_FARM_CONVERSION_ACTUAL_TIMELINESS; o6_11-ANNEX_L_MATRIX_FOOTNOTE_AND_FARM_PARCEL_SCOPE; o6_10-PO_DOUBLE_FUNDING_BIO12_REDUCTION_AND_2026_EXIT | Vertrag/Kulturbereich/Wirkungsdatum und Quellenmatrix gemeinsam strukturieren; Ausschluss11, Zuschlagskürzung10 und LSE-Fußnote nicht zusammenlegen. |
+| Produkt-/Wirkungstyp und echte Ausnahme | o6_10, o6_11, o6_12 | o6_12-AGES_BIO_LIST_PRODUCT_ID_VALIDITY_AND_ACTUAL_EVENTS; o6_12-AUTHORITY_ORDER_PRODUCT_AREA_DATE_LINK_AND_PROOF; o6_11-AGES_EFFECT_TYPE_PRODUCT_ID_VERSION_AND_APP_PSM | Register-ID/Version/zeitlicher Ereignisjoin gemeinsam; Bio-Ausnahme gilt bei12, Herbizidverbot11 kennt sie nicht, EOP-Anwendung10 hat eigenen Ersetzungsscope. |
+| Genehmigung/Ausstieg und dauerhafte Historie | o6_5, o6_9, o6_10, o6_11, o6_12 | o6_12-APPROVED_LEAFHOPPER_EXIT_EVIDENCE_CURRENT_YEAR_AND_FUTURE; o6_12-CURRENT_CONTRACT_HISTORY_FIRST_YEAR_HOST_AND_ROOT | Bestätigung/Antragsdatum/Wirkungszeit/Snapshot gemeinsam; Rebzikaden12, jährliches Erlöschen9/10 und mehrjähriger11-Vertrag haben verschiedene Wirkungen. |
+| Zugehörige Kombinationen statt gleicher Kurzstrings | o6_10, o6_11, o6_12 | o6_12-ANNEX_L_12_AND_EOP_10_REDUCTION_SCOPES; o6_11-ANNEX_L_MATRIX_FOOTNOTE_AND_FARM_PARCEL_SCOPE | Gepinnte Originalmatrix/IDs gemeinsam, konkrete Zeilenprüfungen erforderlich; LSE1A, BIO-Ausnahme und EOP10-Abschlag nicht als gleiche Kombination behandeln. |
+| Reale Registeranwendung und Einsatznachweis | o6_10, o6_12, o6_13 | o6_13-AGES_RATE_PRODUCT_ID_REAL_APPLICATIONS_AND_QUANTITY; o6_13-ALL_PARCEL_RECORDS_PURCHASE_LINKS_AND_PAYMENT_STATE; o6_10-EOP_CODE_USE_AGES_EVIDENCE_AND_AREA_BASIS | Produkt-/Registerversion, Einsatzmenge/-fläche, Datum und Belegjoin gemeinsam; EOP-Dauerkultur, Insektizidausnahme und NUE-Gewächshaus haben eigene Anrechenbarkeitsbedingungen. |
+| Struktur-/Teilflächen-/MFA-Geometrie | o6_4, o6_8, o6_10, o6_13 | o6_13-STRUCTURE_IDS_GEOMETRY_PRODUCTION_AISLES_AND_SUBAREAS; o6_13-FULL_COVERAGE_PER_STRUCTURE_PARCEL_AND_MULTIPLE_USES | Schlag-/Struktur-/Teilflächenidentität und überlappungsfreie Flächenbasis gemeinsam; notwendige Gänge, BAW-Teilanteil und Begrünungsstreifen bleiben verschieden. |
+| Jahresvertrag und echte Vorjahresereignisse | o6_9, o6_10, o6_13 | o6_13-HOST_CURRENT_CONTRACT_RENEWAL_WITHDRAWAL_AND_TAKEOVER; o6_13-FIRST_OEPUL_YEAR_FULL_MFA_AREA_NOT_NUE_AREA | Host-Zeit, MFA/NUE-/Antrags-/Ausstiegsbelege gemeinsam; Erstjahr ÖPUL unabhängig von Maßnahmenjahr, NUE-Erlöschen und Zuschläge9/10 haben eigene Regeln. |
+| Tieridentität, tatsächliche Meldungen und Aufenthaltsunion | o6_3, o6_5, o6_14 | o6_14-ANIMAL_IDS_AGE_JULY1_RGVE_KEY_AND_COUNTS; o6_14-ACTUAL_STAYS_INTERRUPTION_UNION_YEAR_AND_AS_OF; o6_14-DATED_REPORTS_CREDIT_WINDOWS_PAYMENT_AND_WAIVER | Register-ID, datierte Ereignisse und Host-Snapshot gemeinsam; o6_5-Haltedauer/Ersatzkette, Heuwirtschaft-RGVE und Alm-Tier-/Almkalender/1.Juli/anteilige RGVE verschieden. |
+| Tatsächliche Eigen-/Fremdalm und Futterherkunft | o6_3, o6_9, o6_14 | o6_14-SILAGE_ORIGIN_OWN_FOREIGN_ALM_HAY_PARTICIPATION; o6_14-BIO_PRODUCTS_FERTILISER_ORIGIN_PSM_EVENT_CODE_YEAR | Futter-/Dünger-/Transport-/Maßnahmen-IDs gemeinsam; Heuwirtschaft-Eigenalmverbot, almeigene Silage ab2025, Heimbetriebsmist und separierte Feststoffe haben verschiedene Zulässigkeit. |
+| Projekt-/Kurs-/Teilflächen- und Modulationsscope | o6_4, o6_8, o6_13, o6_14 | o6_14-NATA_FULL_CONFIRMATION_HABITATS_ANNEX_E_CODES_SCOPE; o6_14-COURSE_PERSON_PROVIDER_DATES_DOUBLE_CREDIT_REPLACEMENT; o6_14-PREMIUM_PER_ALM_VERSUS_GLOBAL_MODULATION_AND_OTHER_MEASURES | Version/Identität/geometrische Bindung gemeinsam; NATA/AWP, alpine Modulation getrennt vom Heimgebiet und amtliche Auflagen nicht generisch aliasieren. |
+
+| Tatsächliche Alm-/Tier-/Meldeereignisse | o6_14/o6_15 `ACTUAL_STAYS_INTERRUPTION_UNION_YEAR_AND_AS_OF` / `ACTUAL_DATED_TIER_STAYS_ALM_CALENDAR_UNION_AND_AS_OF`; o6_15 `ACTUAL_REPORT_DATES_CREDIT_MILK_FLAG_AND_CORRECTIONS` | Identitäten und Ereignisse wiederverwenden; 14 Erstjahresminimum, 15 jährliches Minimum, nur beantragte vollständig behirtete Kategorien und Milchkennzeichen getrennt. |
+| Almgeometrie/Modulation und zusätzliche Belege | o6_14 `PREMIUM_PER_ALM_VERSUS_GLOBAL_MODULATION_AND_OTHER_MEASURES`; o6_15 `MODULATION_SHARED_ALM14_BASIS_AND_OTHER_FUNDING`, `HERDER_IDS_SINGLE_ALM_BLOCKS_CAPACITY_MILK_ALLOCATION`, `DOG_IDS_CERTIFICATE_INSURANCE_WHOLE_PERIOD_ONE_ALM` | Gesamter aufgetriebener Besatz gegenüber behirteten Tieren; Hirtenkapazität/Milchblöcke/Hundezertifikat sind zusätzliche Verträge. Originalbeispielwidersprüche vor Golden-Oracle fachlich klären. |
+
+| Vollständige Schweinerationen/Jahresbestände | o6_9 `RECIPE_SOURCE_ACTUAL_PHASE_TECHNOLOGY` und o6_16 `ANNUAL_ALL_PIG_RATIONS_PHASE_COVERAGE_AND_O6_9_EXCLUSION` / `FIRST_MEASURE_YEAR_MINIMUM_PIG_ONLY_ROUTE_APP133` | Rezept-/Labor-/Technikbelege gemeinsam; o6_16 jährliche1GVE/ha Gesamtacker, Fütterungsvertrag und Ausschluss derselben o6_9-Kategorie getrennt; planned ersetzt keinen heutigen Nachweis. |
+| Kultur-/GIS-/Projekt-/Probenereignisse | o6_6/o6_7 Kulturfragen, o6_8 BAW/Wienfragen, o6_16 `N_ZONE_ACTUAL_MULTI_CROP_CHAIN_CAP_REDUCTION_AND_NMIN`, `AG_ID_GIS_HISTORY_TRANSFER_DATED_BAN_CARE_AND_PAYMENT`, `MFA2026_SOIL_BASE_SAMPLE_IDS_CHRONOLOGY_PARAMETERS_PROJECT` | Stabile Schläge/Kulturketten und datierte Belege gemeinsam; N-Übertrag, AG-20%-Teilflächen, feste MFA2026-Probenbasis und räumliche Wiener Vorgaben bleiben eigene Scopes. Größte-KG/Teilfläche in App#133 offen. |
+
+## Ergänzung aus o6_17
+
+| Gemeinsame Erfassung | Offene Frage-IDs | Unterschied, der erhalten bleiben muss |
+| --- | --- | --- |
+| Einzigartige Proben-/Labor-/GIS-/MFA-Belege | o6_16 `MFA2026_SOIL_BASE_SAMPLE_IDS_CHRONOLOGY_PARAMETERS_PROJECT`; o6_17 `FIXED_MFA2025_SOIL_BASIS_GLOEZ_AND_UNKNOWN`, `UNIQUE_SOIL_DATES_LAB_PARAMETERS_GIS_MFA_ASSIGNMENT` | o6_17 feste MFA2025-Basis unter 18 % ohne GLÖZ, pH/P/K/Humus, Frist Ende2025; o6_16 MFA2026-Kulisse, auch N, Ende2026 und Wiener Zusatzanforderungen. Kein automatischer Proben-/Flächenalias. |
+| Kurs-/Personen-/Anbieter- und Kennart-/Abschnittsbelege | BIO `TRAINING_EVIDENCE`; o6_16 `TRAINING_REAL_PERSON_IDS_DEADLINE_CONCEPT_SCOPE`; o6_17 `TRAINING_SUBJECT_PERSON_DATED_PROVIDER_NO_DOUBLE_CREDIT`, `AGL_ANNUAL_SECTION_GEOMETRY_ACTUAL_IDENTIFICATION`, `KENNART_GROUP_ID_ALIAS_AND_SOURCE_TAXONOMY` | Gemeinsame Identitäten/Versionen, aber Themen, Stunden, Fristen und Doppelanrechnung verschieden. Kennartgruppe ist weder Saatgut-Mischungspartner noch Biodiversitätsflächenquote; keine Namenssynonyme ohne Freigabe. |
+| Tier-/Flächen-/GIS- und Vertragsnachweise | o6_2/o6_3/o6_14 RGVE-/Erstjahrfragen; o6_17 `CURRENT_CONTRACT_HOST_YEAR_FIRST_YEAR_PROOF`, `ACTUAL_ANNUAL_RGVE_FORAGE_AND_LN_WITHOUT_ALM`, `ALL_GRASS_BREAK_HISTORY_SCOPE_AND_PRIOR_PERMIT` | o6_17 Erstjahr-Zugang, volle Futterbasis und Umbruchverbot aller Grünlandflächen; Grund-/AGL-/Probenflächen und jährliche Artennachweise sind andere Mengen. Alte oder zukünftige Belege erfüllen heute nicht automatisch. |
+
+## Ergänzung aus o6_18
+
+| Gemeinsame Erfassung | Offene Frage-IDs | Unterschied, der erhalten bleiben muss |
+| --- | --- | --- |
+| Projekt-/GIS-/Auflagenidentitäten | o6_14 `NATA_FULL_CONFIRMATION_HABITATS_ANNEX_E_CODES_SCOPE`; o6_18 `PROJECT_ID_VERSION_AUTHORITY_FULL_GEOMETRY_PARAMS_AND_AMENDMENT`, `ALL_PARCELS_FULL_CATALOG_ALIASES_DUPLICATES_AND_RULE_COVERAGE` | Amtliche Version, Fläche und einzelne Pflichten gemeinsam strukturieren; NATA/Anhang E und NAT/Anhang I bleiben verschiedene Auflagenkataloge. Vollständige Tabellen sind keine ausführbare Regelabdeckung. |
+| Tatsächliche Tier-/Weideereignisse | o6_14/o6_15 Aufenthaltsfragen; o6_18 `GRAZING_IDS_DATED_UNION_RGVE_VS_GVE_LIMITS_AND_DIARY`, `VISIBLE_GRAZING_UNIT_COMPLETE_ALL_PROJECT_SCOPES` | Tier-IDs und datierte Aufenthaltsunion gemeinsam; NAT unterscheidet Jahres-RGVE, Jahres-GVE und gleichzeitige GVE, benötigt tatsächliche tägliche Aufzeichnungen und individuelle Projektauflagen. |
+| Dauergrünland und Genehmigung | o6_17 `ALL_GRASS_BREAK_HISTORY_SCOPE_AND_PRIOR_PERMIT`; o6_18 `ACTUAL_RESEEDING_PRIOR_WRITTEN_APPROVAL_BAN_SCOPES`, `DROUGHT_2026_RELEASE_CURRENT_SOURCE_SCOPE_AND_HARVEST_PROOF` | Beleg-/Datum-/Behördenstruktur gemeinsam; 300-m²-/Mischungsausnahme und UBB/BIO-Mai-Ausnahme sind keine NAT-Ausnahmen. |
+
+## Ergänzung aus o6_19
+
+| Wiederverwendbare Erfassung | Betroffene offene IDs | Unterschied |
+| --- | --- | --- |
+| Projekt/GIS/Behördenversion und tatsächliche Nachweise | o6_18 `PROJECT_ID_VERSION_AUTHORITY_FULL_GEOMETRY_PARAMS_AND_AMENDMENT`; o6_19 `VERSIONED_PROJECT_GIS_INDICATOR_PARAMS_BINDING_AUTHORITY`, `ACTUAL_OBSERVATION_DATABASE_TIME_SPECIES_AND_FREE_TEXT` | NAT verlangt konkrete Bewirtschaftungsauflagen; EBW individuell bestätigte Ergebnisindikatoren, Zusatzindikatoren und laufende Datenbankbeobachtung. |
+| Habitat-/Region-/Zahlungsidentitäten | o6_18 `HABITAT_OFFICIAL_TYPE_SPECIES_LAYER_AND_SHARE_GEOMETRY`, `REGIONAL_PLAN_CONFIRMED_YEAR_REGION_RENEWAL_AND_SINGLE_PAYMENT`; o6_19 `HABITAT_GIS_OFFICIAL_TYPES_SPECIES_SHARE_GEOMETRY`, `REGIONAL_PLAN_ANNUAL_CONFIRMATION_REGION_ONCE_NAT` | Gemeinsamer Typ-/Art-/GIS-Beleg und NAT/EBW-Zuschlag einmal; Anhang-I-Code und EBHG-Indikator sind keine automatischen Aliase. |
+| Tatsächliche Pflege-/Kurs-/Stichtagsereignisse | o6_17 Kursfragen; o6_18 Nutzungsfragen; o6_19 `ACTUAL_BIENNIAL_CARE_AND_PRIOR_WRITTEN_AMENDMENT`, `TRAINING_REAL_PERSON_EVENT_PROVIDER_DATE_REPLACEMENT` | Datierte IDs gemeinsam; EBW-Vernetzung, allgemeine jährliche Pflege und projektbezogene Zweijahresregel fachlich getrennt. |
+
+## Ergänzung aus o6_20
+
+| Wiederverwendbare Erfassung | Offene IDs | Unterschied |
+| --- | --- | --- |
+| Tatsächliche Tierregister-/Aufenthalts-/Meldeereignisse | o6_14/o6_15 Aufenthaltsfragen; o6_18 `GRAZING_IDS_DATED_UNION_RGVE_VS_GVE_LIMITS_AND_DIARY`; o6_20 `FULL_CURRENT_REGISTER_STRUCTURE_CHANGE_AND_UNIQUE_TIERS`, `CATEGORY_PRESENCE_UNION_VERSUS_EACH_ANIMAL_ACTUAL_GRAZING`, `ACTUAL_RGVE214_FULL_ANIMALS_NO_FREE_OVERRIDE` | Tier-ID und Datumsunion gemeinsam; Alm60, Weide120/150, gleichzeitige GVE und Durchschnitt über214 Tage bleiben getrennte Scopes. |
+| Wirkliche Tages-/Futter-/Behördenbelege | o6_9/o6_16 Rationsfragen; o6_18 Weidetagebuch/Dürrefragen; o6_20 `DAILY_DIARY_REAL_GROUP_LOCATION_AND_FULL_CONTENT`, `ACTUAL_FEED_SUBSTANTIAL_DAY_WATER_SHELTER_NO_FIXED_HOURS`, `DROUGHT_ACTUAL_CURRENT_AUTHORITY_SCOPE_AND_PAYMENT` | Inhalt/Version/Datum gemeinsam; Weidegrundfutter ist keine 88%-TM-Schweineration und Kontrollerleichterung keine generelle Pflichtaufhebung. |
+| Tatsächliche gemeinsame Stützung pro Tier | o6_20 `RATES_BANDS_COUPLED_SUPPORT_AND_O6_21_SOURCE_CONFLICT` | Querverweis auf kommende Einzelprüfung21, keine vorweggenommene Zuschlags-/ID-Auslegung. |
+
+## Ergänzung aus o6_21
+
+`o6_21-CURRENT_YEAR_REGISTER_SOURCE_SNAPSHOT_AND_ASOF` / `o6_21-FOUR_CATEGORY_ENUMS_REAL_SEX_AGE_AND_UNIQUE_TIERS` verbinden sich mit Weide20/Behirtung15/Rassen5 über echte Tieridentität und Ereignisse, aber nicht über gleiche Zeitnenner: 21 Kalenderjahr, 20 214-Tage-Weidefenster. `o6_21-ACTUAL_PER_TIER_REDUCED_RATE_OVERLAP_AND_SOURCE21` verbindet 14/20/21 erst nach geklärtem tatsächlichem Prämienantrag; `alm_driven` allein ist kein Alias. Stall-/Box- und Kompostgrundlagen werden anschließend mit Schweine22 verglichen, Ausnahme-/Gewichtstabellen bleiben maßnahmenspezifisch.
+
+## Ergänzung aus o6_22
+
+`o6_22-ACTUAL_PEN_ALL_OCCUPANTS_WEIGHT_SPACE_AND_BEDDING` mit `o6_21-ACTUAL_WEIGHT_SPACE_ALL_OCCUPANTS_AND500_BOUNDARY`: reale Box-/Besatz-/Baubelege gemeinsam, Gewichtstabellen/500-vs85-Grenze/Sauenausnahmen verschieden. `o6_22-ALL_SPECIES_REAL_COMPOST_NAPV_PROOFS_AND_DUPLICATE21` mit `o6_21-ALL_SPECIES_MANURE_ACTUAL_WINDROW_METHODS_AND_DATES`: tatsächliche ganze Mistbasis/Datums-/Dokumente gemeinsam; doppelte Zuschlagszahlung bleibt offen. `o6_22-GVO_PROTEIN_ALL_SPECIES_STOCKS_EUROPE_AND_REAL_RECIPES` mit o6_9/o6_16 Fütterungsfragen: Chargen-/Rations-/Herkunftsbelege gemeinsam, GVO-Alltierarten-Volljahr ist kein 88%-TM- oder N/P-Rationsscope. Tierliste April1/gegebenenfalls Jahresdurchschnitt ist weder Rinder21-Tages-RGVE noch Weide20-214-Tage-Nenner.
+
+## Ergänzung aus o6_23
+
+`o6_23-CURRENT_FULL_PROJECT_LAND_LAW_GIS_SNAPSHOT_AND_HOST` verbindet sich mit NAT18/EBW19 über Behörden-/Projekt-/GIS-Versionen, aber N2-Auflagen stammen aus ordnungsrechtlichem Landesrecht und Dürrefreigabe erfordert angepasste Verordnung. `o6_23-DIVSZ_ACTUAL_ELIGIBLE_AREA_UNION_CREDIT_NO_DOUBLE_AND_DROUGHT` mit UBB/BIO-DIV-Identitäten: Flächenunion und Codejahr gemeinsam, N2-Pflichten bleiben eigenständig. `o6_23-ANNEX_J_WITHIN_G_UNKNOWN_T_ALIAS_AND_NAT_CODE_SCOPE` / `o6_23-ACTUAL_RATE_COMPONENT_CAP_ORDER_OTHER_PAYMENTS_AND_SANCTION` mit NAT18/EBW19: gleiche Quellenmatrix/Cap-Evidenz, keine pauschale Code- oder Sanktionseinstufung. Wasserrahmen24 wird anschließend mit tatsächlichem Bescheid-/Gebietsscope einzeln geprüft.
+
+## Ergänzung aus o6_24
+
+`o6_24-REAL_PARCEL_IDS_CLASS_GEOMETRY_UNION_AND_LN` und `o6_24-ACTUAL_EFFECTIVE_N_FULL_EVENTS_UNITS_FACTORS_AND_ROUNDING` mit Grundwasserschutz16: reale Schlag-/GIS-/Kultur-/Düngeereignisse gemeinsam erfassen, jedoch eigene Gebietskulisse, Klassen und externe Rechtsfristen erhalten. `o6_24-FARM_BOOK_ALL_PARCELS_ZERO_N_CONTENT_STORAGE_AND_RETENTION` kann dieselben belegten Ereignisse nutzen, §5-Inhalte und Geltungsumfang sind eigenständig. `o6_24-CURRENT_ANNUAL_CONTRACT_MFA_PROGRAM_END_EXIT_AND_ASOF` mit Natura23: einjähriger Vertrag/aktuelle Jahrescodes/Stichtag, ohne allgemeine Projekt- oder Landesrechtsgleichsetzung. `o6_24-ANNEX_L_REAL_PARCEL_COMBINATIONS_CODES_AND_OVERLAP` bestätigt als Originalbefund16 erlaubt/23 ausgeschlossen; keine automatische Synergie sämtlicher Schutzmaßnahmen oder Code-Aliase.
+
+## Vertiefung Block 6: gemeinsam erfassen, getrennt anrechnen
+
+[Belegter Personen-/Kurs-/Antragsabgleich](../person-training-application-review-20261009/README.md):
+interne Personen-/Betriebs-/Veranstaltungs-/Antragsidentitäten und datierte
+Belegbeziehungen gemeinsam vorbereiten. Themen-/Anbieteranerkennung, Stunden
+gegenüber EBW-Treffen, fixe gegenüber ersten Teilnahmejahren, Meldung gegenüber
+AMA-Genehmigung und jährliche MFA-Ergänzung bleiben konkrete Pflichtscopes.
+Keine neue Kurspflicht für jede Maßnahme oder gemeinsamer freier Stundenpool.
+Vorhandene RAW-Antragsdaten sind nicht schon konsumierter Policy-Vertrag;
+die aktuelle generische Projektion verliert den MANA-Bezug.
+
+114 vorhandene fachliche Frageverweise (69 direkt, 45 begrenzte Querverweise) sind im Index verbunden;
+UBB-spezifische Kurs-/Antrags-ID-Lücke bleibt sichtbar. HUM-Quellenkonflikt,
+datierte vollständige Anbieter-Matrix, Tierantragsjahre und aktuelle Optionen
+bleiben im Sammelissue140 offen. Alle289 Fragen und acht o6_3-Blocker unverändert.
+Dokumentierte Experten-/Betreiberwerte und eigener Auto-Snapshot bleiben zulässig.
+Die Herkunft der Eingabe ersetzt keine tatsächliche Einreichung oder Anerkennung.
+Block7 vertieft konkrete Kombinationen, Sanktionen und Zahlung.
+
+## Vertiefung Block 7: gleiche Mengen, eigene Zahlungsfolgen
+
+[Block 7](../combination-sanction-payment-review-20261009/README.md) nutzt die
+Identitäten/Zeitrollen/Mengen/Belege aus Blöcken 1–6 für echte Anrechnungsjoins.
+Gemeinsame Erfassung ersetzt keine maßnahmenspezifische Auszahlung: LSE-only,
+DIV-Kredit gegenüber Zuschlagsfläche, Alm/Heimmodulation, Tierkategorie und
+m³-/Personen-/Betriebsbetrag bleiben eigene Einheiten und Scopes. Die geordnete
+Berechnung und Rechtsfassung braucht zentrale Versionierung; individuelle
+Kontroll-/Zahlungsentscheidungen sind getrennte Ereignisse. Experten-/Betreiber-
+und eigene Auto-Snapshotwerte sind zulässige Faktenquellen, keine neue Amtshandlung.
+EBW-Dublette und separate UBB-Grenzpräzision sind technische Folgearbeiten;
+Rundung/Quellenkonflikte bleiben fachlich offen. Restfragen stehen im Sammelissue 140,
+alle bisherigen IDs und acht o6_3-Blocker bleiben erhalten.

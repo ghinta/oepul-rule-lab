@@ -1,0 +1,51 @@
+{
+  "commit": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+  "runtime_values_included": false,
+  "files": {
+    "backend/app/api/recommender.py": {
+      "sha256": "7d86e7f94f2cbcd273a21e44f83531fd72ba24bafe947f42ffb98d3a97c8e9a1",
+      "excerpts": [
+        {
+          "start_line": 510,
+          "end_line": 519,
+          "text": "    farm_region = farm.get(\"region\") or {}\n    documentation = payload.get(\"documentation\") or {}\n    oepul = payload.get(\"oepul\") or {}\n    oepul_shared = oepul.get(\"shared\") or {}\n    oepul_measures = oepul.get(\"measures\") or {}\n    o6_13 = oepul_measures.get(\"o6_13\") or {}\n    o6_15 = oepul_measures.get(\"o6_15\") or {}\n    ama_additional = payload.get(\"ama_additional\") or {}\n    additional_land = ama_additional.get(\"land\") or {}\n    fsl = additional_land.get(\"fsl\") or {}"
+        },
+        {
+          "start_line": 579,
+          "end_line": 587,
+          "text": "                \"livestock_events\": oepul_shared.get(\"livestock_events\") or [],\n            },\n            \"measures\": {\n                \"o6_13\": {\n                    \"protected_cultivation_area_ha\": o6_13.get(\"protected_cultivation_area_ha\"),\n                    \"parcels\": o6_13.get(\"parcels\") or [],\n                    \"beneficials\": o6_13.get(\"beneficials\") or [],\n                },\n                \"o6_15\": {"
+        }
+      ]
+    },
+    "backend/policy/oepul_measures.rego": {
+      "sha256": "c0900ece3b883e1362a6ab1d00518be7ad456f6d4e05dba97a01f4eee48bd35a",
+      "excerpts": [
+        {
+          "start_line": 1687,
+          "end_line": 1691,
+          "text": "o6_13_result := c_measure_result(\"o6_13\", [\n  [\"payload.oepul.measures.o6_13.parcels[].is_protected_cultivation\", o6_13_protected_cultivation_values],\n  [\"payload.oepul.measures.o6_13.beneficials\", o6_13_beneficial_values],\n])\n"
+        },
+        {
+          "start_line": 1786,
+          "end_line": 1818,
+          "text": "# shared helper backs all fifteen Category C conservative measures\n# (o6_2/o6_3/o6_4/o6_9/o6_11/o6_12/o6_13/o6_15/o6_16/o6_18/o6_20/o6_21/\n# o6_22/o6_23/o6_24) alike -- never a per-measure branch -- so one marker\n# here anchors every one of those measures' own \"required_inputs_missing\"\n# catalog entry via the shared rule_name \"c_measure_result\". Do not\n# remove/rename without updating\n# backend/app/review/adapters/oepul/rego_rules.py/catalog.py.\nc_measure_result(measure_id, pairs) := {\n  \"measure_id\": measure_id,\n  \"status\": \"missing_data\",\n  \"missing_keys\": missing_keys,\n  \"reasons\": [\"required_inputs_missing\"],\n  \"failed_conditions\": [],\n  \"satisfied_conditions\": [],\n} if {\n  missing_keys := missing_required_keys_from_pairs(pairs)\n  count(missing_keys) > 0\n}\n\n# decision-trace-condition: category_c_conservative_missing_data\n# Stable, non-semantic anchor comment (Issue #100 DecisionTrace v1); see note\n# above. This branch is a technical coverage limitation of the checked-in\n# policy (no formalised eligibility rule yet for any of the fifteen measures\n# this helper backs), not a normative rule: the DecisionTrace adapter must\n# never attach a normative source reference to it.\nc_measure_result(measure_id, pairs) := {\n  \"measure_id\": measure_id,\n  \"status\": \"missing_data\",\n  \"missing_keys\": [],\n  \"reasons\": [\"category_c_conservative_missing_data\"],\n  \"failed_conditions\": [],\n  \"satisfied_conditions\": [],\n} if {"
+        },
+        {
+          "start_line": 1870,
+          "end_line": 1883,
+          "text": "o6_13_protected_cultivation_values := [flag |\n  o6_13_measure := object.get(oepul_measures, \"o6_13\", {})\n  protected_parcels := object.get(o6_13_measure, \"parcels\", [])\n  some parcel in protected_parcels\n  flag := object.get(parcel, \"is_protected_cultivation\", null)\n  flag != null\n]\n\no6_13_beneficial_values := [beneficial |\n  o6_13_measure := object.get(oepul_measures, \"o6_13\", {})\n  beneficials := object.get(o6_13_measure, \"beneficials\", [])\n  some beneficial in beneficials\n]\n"
+        }
+      ]
+    },
+    "backend/app/review/adapters/oepul/catalog.py": {
+      "sha256": "d0cb92261815faee4fb3a99133afb2922e3b40eb657d04d79103b2c402604528",
+      "excerpts": [
+        {
+          "start_line": 2650,
+          "end_line": 2688,
+          "text": "    ConditionCatalogEntry(\n        measure_id=\"o6_13\",\n        condition_code=\"required_inputs_missing\",\n        label=\"Erforderliche Eingabedaten fehlen\",\n        rule_module=\"oepul\",\n        rule_package=\"oepul\",\n        rule_name=\"c_measure_result\",\n        is_technical_limitation=False,\n        document_id=O6_13_NUETZLINGE_GESCHUETZTER_ANBAU_2025_10.document_id,\n        printed_page=\"1\",\n        section=\"1 ÜBERSICHT\",\n        excerpt=_O6_13_UEBERSICHT_EXCERPT,\n        comparator=None,\n        required_value_kind=None,\n        required_value=None,\n        unit=None,\n        observed_registry_paths=(),\n        unsupported_wildcard_paths=(\"payload.oepul.measures.o6_13.parcels[].is_protected_cultivation\", \"payload.oepul.measures.o6_13.beneficials\"),\n    ),\n    ConditionCatalogEntry(\n        measure_id=\"o6_13\",\n        condition_code=\"category_c_conservative_missing_data\",\n        label=\"Regelprüfung für die Maßnahme noch unvollständig\",\n        rule_module=\"oepul\",\n        rule_package=\"oepul\",\n        rule_name=\"c_measure_result\",\n        is_technical_limitation=True,\n        document_id=None,\n        printed_page=None,\n        section=None,\n        excerpt=None,\n        comparator=None,\n        required_value_kind=None,\n        required_value=None,\n        unit=None,\n        observed_registry_paths=(),\n        unsupported_wildcard_paths=(\"payload.oepul.measures.o6_13.parcels[].is_protected_cultivation\", \"payload.oepul.measures.o6_13.beneficials\"),\n    ),\n    ConditionCatalogEntry("
+        }
+      ]
+    }
+  }
+}

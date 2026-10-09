@@ -1,0 +1,2136 @@
+{
+  "schema_version": "block3_app_animal_audit.v1",
+  "app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+  "policy_scope_de": "Statischer read-only Audit; keine Live-Betriebs-/Registerdaten, keine Modellcalls, keine ausgeführten Tests/OPA-Auswertung. Cited files were byte-compared against the exact App pin.",
+  "AGENTS": "No App AGENTS.md found in the inspected checkout/ancestors.",
+  "authorization_boundary_de": "Nur /tmp-Artefakt geschrieben; keine Repo-/GitHubänderung und keine fachlichen Frage-IDs geschlossen.",
+  "critical_distinction_de": "Legacy species identity, eigenständige source-backed/internal RGVE-Kohorten und individuelle Tieridentität sind getrennt. Mutable asserted inputs/metadata stehen in paths; neu berechnete Werte in derivations.",
+  "paths": [
+    {
+      "path": "livestock.species_groups[].species",
+      "definition_de": "Grobe Tierart und zugleich Identität des Legacy-Overlays; keine Tier-ID. sheep/goats zusammen in sheep_goats, Wild/Kameliden häufig other.",
+      "unit": "Code",
+      "scope_de": "Betrieb + Snapshot-Jahr + eindeutige Speciesgruppe; Legacy group_id = species, keine Einzeltier-/Box-/Aufenthalts-ID.",
+      "missing_de": "Leer/null = missing_identity, Duplikat = duplicate_identity; nicht schreibbar. Fehlende Gruppen werden durch diese API nicht angelegt.",
+      "source_de": "Tierart-Bezeichnung aus AMA-Tierliste; kanonische Klassifizierung.",
+      "mutability": "structural_identity",
+      "refs": [
+        "legacy_identity",
+        "legacy_identity_resolution",
+        "source_species_factors",
+        "generic_projection"
+      ]
+    },
+    {
+      "path": "FarmLivestockGroupReviewInput.group_id",
+      "definition_de": "Persistente Overlay-Ziel-ID ist exakt der kanonische species-String, auch wenn ein Snapshot zusätzlich anderslautende group_id enthalten sollte.",
+      "unit": "ID",
+      "scope_de": "Betrieb + Snapshot-Jahr + eindeutige Speciesgruppe; Legacy group_id = species, keine Einzeltier-/Box-/Aufenthalts-ID.",
+      "missing_de": "Ziel muss aktuell vorhanden und eindeutig sein; stale/duplicate wird nicht angewendet.",
+      "source_de": "Aus species abgeleitet; keine externe amtliche Tier-/Kohortenkennung.",
+      "mutability": "immutable_target_on_upsert",
+      "refs": [
+        "legacy_writes",
+        "legacy_overlay",
+        "livestock_persistence"
+      ]
+    },
+    {
+      "path": "livestock.species_groups[].animal_count",
+      "definition_de": "Legacy-Anzahl Tiere; Builder summiert Stichtag-bevorzugte/ersatzweise Durchschnittszahlen je grober Tierart und rundet int(round(sum)).",
+      "unit": "Tiere (integer)",
+      "scope_de": "Betrieb + Snapshot-Jahr + eindeutige Speciesgruppe; Legacy group_id = species, keine Einzeltier-/Box-/Aufenthalts-ID.",
+      "missing_de": "Fehlender/Null-Leaf erscheint als baseline_state=null; null ist keine speicherbare Ergänzung; gültige 0/false bleiben bekannte Werte. Anwendung nur bei eindeutiger Species-ID und maßnahmenspezifischer Dependency. Import ohne verwertbaren positiven gerundeten Count kann die Gruppe vollständig auslassen.",
+      "source_de": "AMA TIERLISTE Anzahl Stichtag/Anzahl Durchschnitt; manueller Overlaywert erlaubt.",
+      "mutability": "import_derived_then_mutable_asserted_input",
+      "refs": [
+        "legacy_registry",
+        "source_counts",
+        "source_count_selection",
+        "source_group_build",
+        "legacy_overlay"
+      ],
+      "consumed_by": [
+        "o6_5"
+      ],
+      "gap": "Kein mitgeführter Stichtag/Count-Basis/Durchschnittszeitraum; keine Alters-/Rassen-/Einzeltierbestätigung.",
+      "validation_de": "Generische Registry-typvalidierung; fehlende spezielle Semantik-/MinMax-Grenzen siehe legacy_numeric_semantic_bounds_not_enforced."
+    },
+    {
+      "path": "livestock.species_groups[].gve",
+      "definition_de": "Legacy-GVE aus groben Label-Faktoren; review-editierbare Zahl. Ist kein heutiger, altersklassenspezifischer RGVE-Bestand.",
+      "unit": "GVE",
+      "scope_de": "Betrieb + Snapshot-Jahr + eindeutige Speciesgruppe; Legacy group_id = species, keine Einzeltier-/Box-/Aufenthalts-ID.",
+      "missing_de": "Fehlender/Null-Leaf erscheint als baseline_state=null; null ist keine speicherbare Ergänzung; gültige 0/false bleiben bekannte Werte. Anwendung nur bei eindeutiger Species-ID und maßnahmenspezifischer Dependency. In Rego wird nur vorhandene GVE summiert; fehlen einzelne Gruppenwerte, kann dennoch eine partielle Summe entstehen.",
+      "source_de": "AMA-abgeleitete Snapshot-Baseline bzw. expliziter farmer_statement/expert_estimate mit Pflichtnotiz; Werte nur auf der effektiven Kopie angewendet.",
+      "mutability": "import_derived_then_mutable_asserted_input",
+      "refs": [
+        "legacy_registry",
+        "source_species_factors",
+        "source_counts",
+        "legacy_gve_derivation"
+      ],
+      "consumed_by": [
+        "o6_14"
+      ],
+      "validation_de": "Generische Registry-typvalidierung; fehlende spezielle Semantik-/MinMax-Grenzen siehe legacy_numeric_semantic_bounds_not_enforced."
+    },
+    {
+      "path": "livestock.species_groups[].housing.pasture.weide_days_per_year",
+      "definition_de": "Übernommene Anzahl Weidetage, nicht aus Tagesereignissen berechnete Tierpflicht. Builder verwendet maximale AMA-Alptage und schreibt auf erste Speciesgruppe oder other.",
+      "unit": "Tage/Jahr",
+      "scope_de": "Betrieb + Snapshot-Jahr + eindeutige Speciesgruppe; Legacy group_id = species, keine Einzeltier-/Box-/Aufenthalts-ID.",
+      "missing_de": "Fehlender/Null-Leaf erscheint als baseline_state=null; null ist keine speicherbare Ergänzung; gültige 0/false bleiben bekannte Werte. Anwendung nur bei eindeutiger Species-ID und maßnahmenspezifischer Dependency.",
+      "source_de": "AMA-abgeleitete Snapshot-Baseline bzw. expliziter farmer_statement/expert_estimate mit Pflichtnotiz; Werte nur auf der effektiven Kopie angewendet.",
+      "mutability": "import_derived_then_mutable_asserted_input",
+      "refs": [
+        "legacy_registry",
+        "generic_projection",
+        "legacy_dependencies",
+        "source_alp_days",
+        "source_alp_application",
+        "legacy_days_derivation"
+      ],
+      "consumed_by": [
+        "o6_14"
+      ],
+      "validation_de": "Generische Registry-typvalidierung; fehlende spezielle Semantik-/MinMax-Grenzen siehe legacy_numeric_semantic_bounds_not_enforced."
+    },
+    {
+      "path": "livestock.species_groups[].housing.pasture.weide_hours_per_day",
+      "definition_de": "Eingegebene Stunden/Tag je Speciesgruppe; keine Einzeltiertagebuch-/Ortshistorie.",
+      "unit": "Stunden/Tag",
+      "scope_de": "Betrieb + Snapshot-Jahr + eindeutige Speciesgruppe; Legacy group_id = species, keine Einzeltier-/Box-/Aufenthalts-ID.",
+      "missing_de": "Fehlender/Null-Leaf erscheint als baseline_state=null; null ist keine speicherbare Ergänzung; gültige 0/false bleiben bekannte Werte. Anwendung nur bei eindeutiger Species-ID und maßnahmenspezifischer Dependency.",
+      "source_de": "AMA-abgeleitete Snapshot-Baseline bzw. expliziter farmer_statement/expert_estimate mit Pflichtnotiz; Werte nur auf der effektiven Kopie angewendet.",
+      "mutability": "mutable_asserted_fact",
+      "refs": [
+        "legacy_registry",
+        "generic_projection",
+        "legacy_dependencies"
+      ],
+      "consumed_by": [
+        "o6_20"
+      ],
+      "validation_de": "Generische Registry-typvalidierung; fehlende spezielle Semantik-/MinMax-Grenzen siehe legacy_numeric_semantic_bounds_not_enforced."
+    },
+    {
+      "path": "livestock.species_groups[].housing.pasture.water_availability",
+      "definition_de": "Versorgung auf der Weide als Speciesgruppen-Boolean.",
+      "unit": "Boolean",
+      "scope_de": "Betrieb + Snapshot-Jahr + eindeutige Speciesgruppe; Legacy group_id = species, keine Einzeltier-/Box-/Aufenthalts-ID.",
+      "missing_de": "Fehlender/Null-Leaf erscheint als baseline_state=null; null ist keine speicherbare Ergänzung; gültige 0/false bleiben bekannte Werte. Anwendung nur bei eindeutiger Species-ID und maßnahmenspezifischer Dependency.",
+      "source_de": "AMA-abgeleitete Snapshot-Baseline bzw. expliziter farmer_statement/expert_estimate mit Pflichtnotiz; Werte nur auf der effektiven Kopie angewendet.",
+      "mutability": "mutable_asserted_fact",
+      "refs": [
+        "legacy_registry",
+        "generic_projection",
+        "legacy_dependencies"
+      ],
+      "consumed_by": [
+        "o6_20"
+      ],
+      "validation_de": "Generische Registry-typvalidierung; fehlende spezielle Semantik-/MinMax-Grenzen siehe legacy_numeric_semantic_bounds_not_enforced."
+    },
+    {
+      "path": "livestock.species_groups[].housing.stall.stall_area_m2",
+      "definition_de": "Speciesgruppen-Stallfläche; kein überprüfter Stall-/Box-/Gewichts-/Besatzjoin.",
+      "unit": "m²",
+      "scope_de": "Betrieb + Snapshot-Jahr + eindeutige Speciesgruppe; Legacy group_id = species, keine Einzeltier-/Box-/Aufenthalts-ID.",
+      "missing_de": "Fehlender/Null-Leaf erscheint als baseline_state=null; null ist keine speicherbare Ergänzung; gültige 0/false bleiben bekannte Werte. Anwendung nur bei eindeutiger Species-ID und maßnahmenspezifischer Dependency.",
+      "source_de": "AMA-abgeleitete Snapshot-Baseline bzw. expliziter farmer_statement/expert_estimate mit Pflichtnotiz; Werte nur auf der effektiven Kopie angewendet.",
+      "mutability": "mutable_asserted_fact",
+      "refs": [
+        "legacy_registry",
+        "generic_projection",
+        "legacy_dependencies"
+      ],
+      "consumed_by": [
+        "o6_21",
+        "o6_22"
+      ],
+      "validation_de": "Generische Registry-typvalidierung; fehlende spezielle Semantik-/MinMax-Grenzen siehe legacy_numeric_semantic_bounds_not_enforced."
+    },
+    {
+      "path": "livestock.species_groups[].housing.stall.floor_type",
+      "definition_de": "Speciesgruppen-Bodenausführung; Registry erzwingt keinen geschlossenen Wortschatz.",
+      "unit": "Textcode",
+      "scope_de": "Betrieb + Snapshot-Jahr + eindeutige Speciesgruppe; Legacy group_id = species, keine Einzeltier-/Box-/Aufenthalts-ID.",
+      "missing_de": "Fehlender/Null-Leaf erscheint als baseline_state=null; null ist keine speicherbare Ergänzung; gültige 0/false bleiben bekannte Werte. Anwendung nur bei eindeutiger Species-ID und maßnahmenspezifischer Dependency.",
+      "source_de": "AMA-abgeleitete Snapshot-Baseline bzw. expliziter farmer_statement/expert_estimate mit Pflichtnotiz; Werte nur auf der effektiven Kopie angewendet.",
+      "mutability": "mutable_asserted_fact",
+      "refs": [
+        "legacy_registry",
+        "generic_projection",
+        "legacy_dependencies"
+      ],
+      "consumed_by": [
+        "o6_21",
+        "o6_22"
+      ],
+      "validation_de": "Generische Registry-typvalidierung; fehlende spezielle Semantik-/MinMax-Grenzen siehe legacy_numeric_semantic_bounds_not_enforced."
+    },
+    {
+      "path": "livestock.species_groups[].housing.stall.bedding_type",
+      "definition_de": "Speciesgruppen-Einstreuart; Registry erzwingt keinen geschlossenen Wortschatz.",
+      "unit": "Textcode",
+      "scope_de": "Betrieb + Snapshot-Jahr + eindeutige Speciesgruppe; Legacy group_id = species, keine Einzeltier-/Box-/Aufenthalts-ID.",
+      "missing_de": "Fehlender/Null-Leaf erscheint als baseline_state=null; null ist keine speicherbare Ergänzung; gültige 0/false bleiben bekannte Werte. Anwendung nur bei eindeutiger Species-ID und maßnahmenspezifischer Dependency.",
+      "source_de": "AMA-abgeleitete Snapshot-Baseline bzw. expliziter farmer_statement/expert_estimate mit Pflichtnotiz; Werte nur auf der effektiven Kopie angewendet.",
+      "mutability": "mutable_asserted_fact",
+      "refs": [
+        "legacy_registry",
+        "generic_projection",
+        "legacy_dependencies"
+      ],
+      "consumed_by": [
+        "o6_21",
+        "o6_22"
+      ],
+      "validation_de": "Generische Registry-typvalidierung; fehlende spezielle Semantik-/MinMax-Grenzen siehe legacy_numeric_semantic_bounds_not_enforced."
+    },
+    {
+      "path": "livestock.species_groups[].housing.stall.daylight_percentage",
+      "definition_de": "Speciesgruppen-Tageslichtanteil.",
+      "unit": "%",
+      "scope_de": "Betrieb + Snapshot-Jahr + eindeutige Speciesgruppe; Legacy group_id = species, keine Einzeltier-/Box-/Aufenthalts-ID.",
+      "missing_de": "Fehlender/Null-Leaf erscheint als baseline_state=null; null ist keine speicherbare Ergänzung; gültige 0/false bleiben bekannte Werte. Anwendung nur bei eindeutiger Species-ID und maßnahmenspezifischer Dependency.",
+      "source_de": "AMA-abgeleitete Snapshot-Baseline bzw. expliziter farmer_statement/expert_estimate mit Pflichtnotiz; Werte nur auf der effektiven Kopie angewendet.",
+      "mutability": "mutable_asserted_fact",
+      "refs": [
+        "legacy_registry",
+        "generic_projection",
+        "legacy_dependencies"
+      ],
+      "consumed_by": [
+        "o6_21"
+      ],
+      "validation_de": "Generische Registry-typvalidierung; fehlende spezielle Semantik-/MinMax-Grenzen siehe legacy_numeric_semantic_bounds_not_enforced."
+    },
+    {
+      "path": "livestock.species_groups[].manure.incorporation_time_hours",
+      "definition_de": "Speciesgruppen-Einarbeitungszeit; Block4, kein individuelles Tierereignis.",
+      "unit": "Stunden",
+      "scope_de": "Betrieb + Snapshot-Jahr + eindeutige Speciesgruppe; Legacy group_id = species, keine Einzeltier-/Box-/Aufenthalts-ID.",
+      "missing_de": "Fehlender/Null-Leaf erscheint als baseline_state=null; null ist keine speicherbare Ergänzung; gültige 0/false bleiben bekannte Werte. Anwendung nur bei eindeutiger Species-ID und maßnahmenspezifischer Dependency.",
+      "source_de": "AMA-abgeleitete Snapshot-Baseline bzw. expliziter farmer_statement/expert_estimate mit Pflichtnotiz; Werte nur auf der effektiven Kopie angewendet.",
+      "mutability": "mutable_asserted_fact",
+      "refs": [
+        "legacy_registry",
+        "generic_projection",
+        "legacy_dependencies"
+      ],
+      "consumed_by": [
+        "o6_9"
+      ],
+      "validation_de": "Generische Registry-typvalidierung; fehlende spezielle Semantik-/MinMax-Grenzen siehe legacy_numeric_semantic_bounds_not_enforced."
+    },
+    {
+      "path": "livestock.species_groups[].nh3_reduction.ammonia_reduction_percent",
+      "definition_de": "Speciesgruppen-Ammoniakminderung; Block4.",
+      "unit": "%",
+      "scope_de": "Betrieb + Snapshot-Jahr + eindeutige Speciesgruppe; Legacy group_id = species, keine Einzeltier-/Box-/Aufenthalts-ID.",
+      "missing_de": "Fehlender/Null-Leaf erscheint als baseline_state=null; null ist keine speicherbare Ergänzung; gültige 0/false bleiben bekannte Werte. Anwendung nur bei eindeutiger Species-ID und maßnahmenspezifischer Dependency.",
+      "source_de": "AMA-abgeleitete Snapshot-Baseline bzw. expliziter farmer_statement/expert_estimate mit Pflichtnotiz; Werte nur auf der effektiven Kopie angewendet.",
+      "mutability": "mutable_asserted_fact",
+      "refs": [
+        "legacy_registry",
+        "generic_projection",
+        "legacy_dependencies"
+      ],
+      "consumed_by": [
+        "o6_9"
+      ],
+      "validation_de": "Generische Registry-typvalidierung; fehlende spezielle Semantik-/MinMax-Grenzen siehe legacy_numeric_semantic_bounds_not_enforced."
+    },
+    {
+      "path": "livestock.rgve_cohorts",
+      "definition_de": "Eigenständige hostseitige Collection kategorisierter RGVE-Bestandsbelege; natives o6_3 livestock.species_groups wird ausschließlich daraus projiziert.",
+      "unit": "Liste<CohortEvidence>",
+      "scope_de": "Betrieb + aktuelles Jahr + purpose=current_fact/scenario + stabile eigene Kohorten-group_id; farm-scoped Collection mit parent_id leer und eigener serverseitiger event_id.",
+      "missing_de": "null/fehlend wird natives species_groups=null; confirmed_empty wird []; zusätzlich muss species_groups_complete=true sein. Legacy-Speciesgruppen sind kein Ersatz. ",
+      "source_de": "Expliziter farmer_statement/expert_estimate + Pflichtnotiz + Snapshot-Digest; belegte Roh-Metadaten aus CohortEvidence, kein automatischer AMA-Kohortenimport.",
+      "mutability": "mutable_collection_evidence",
+      "refs": [
+        "host_collection_registry",
+        "collection_projection",
+        "native_projection",
+        "native_completeness"
+      ],
+      "native_target": "livestock.species_groups",
+      "consumed_by": [
+        "o6_3 current"
+      ],
+      "operations": [
+        "create event",
+        "revise existing event",
+        "deactivate",
+        "confirm empty"
+      ]
+    },
+    {
+      "path": "livestock.rgve_cohorts[].group_id",
+      "definition_de": "Pflicht-ID der Kohorte; unabhängig vom Legacy species-String, eindeutig je aktiver Collection. Bei Eventrevision nicht umbenennbar.",
+      "unit": "ID",
+      "scope_de": "Betrieb + aktuelles Jahr + purpose=current_fact/scenario + stabile eigene Kohorten-group_id; farm-scoped Collection mit parent_id leer und eigener serverseitiger event_id.",
+      "missing_de": "Pflicht; Leerwert/duplizierte native group_id wird verworfen.",
+      "source_de": "Expliziter farmer_statement/expert_estimate + Pflichtnotiz + Snapshot-Digest; belegte Roh-Metadaten aus CohortEvidence, kein automatischer AMA-Kohortenimport.",
+      "mutability": "structural_identity",
+      "refs": [
+        "cohort_model",
+        "count_verification",
+        "collection_writes",
+        "native_group"
+      ],
+      "native_target": "livestock.species_groups[].group_id"
+    },
+    {
+      "path": "livestock.rgve_cohorts[].source_group_id",
+      "definition_de": "Optionale Herkunftsbeziehung zur alten Speciesgruppe, z.B. cattle. Erlaubt Aufteilung einer Species in mehrere Kohorten.",
+      "unit": "ID",
+      "scope_de": "Betrieb + aktuelles Jahr + purpose=current_fact/scenario + stabile eigene Kohorten-group_id; farm-scoped Collection mit parent_id leer und eigener serverseitiger event_id.",
+      "missing_de": "Optional; wenn gesetzt, muss genau eine Legacygruppe diesen species-String besitzen.",
+      "source_de": "Expliziter farmer_statement/expert_estimate + Pflichtnotiz + Snapshot-Digest; belegte Roh-Metadaten aus CohortEvidence, kein automatischer AMA-Kohortenimport.",
+      "mutability": "structural_source_reference",
+      "refs": [
+        "cohort_model",
+        "count_verification",
+        "collection_writes",
+        "native_group"
+      ],
+      "native_target": null
+    },
+    {
+      "path": "livestock.rgve_cohorts[].species",
+      "definition_de": "Pflichttierart aus den sieben nativen Specieswerten; Kategorien müssen zum Tabellen-Species passen.",
+      "unit": "Code",
+      "scope_de": "Betrieb + aktuelles Jahr + purpose=current_fact/scenario + stabile eigene Kohorten-group_id; farm-scoped Collection mit parent_id leer und eigener serverseitiger event_id.",
+      "missing_de": "Pflicht; ungültiger Enum ist technischer Validierungsfehler.",
+      "source_de": "Expliziter farmer_statement/expert_estimate + Pflichtnotiz + Snapshot-Digest; belegte Roh-Metadaten aus CohortEvidence, kein automatischer AMA-Kohortenimport.",
+      "mutability": "mutable_asserted_fact",
+      "refs": [
+        "cohort_model",
+        "count_verification",
+        "collection_writes",
+        "native_group"
+      ],
+      "native_target": "livestock.species_groups[].species"
+    },
+    {
+      "path": "livestock.rgve_cohorts[].rgve_category",
+      "definition_de": "Eingegebener Kategoriecode; Rego löst nur exakte category_id+species-Kombination aus gepinnter RGVE-Tabelle.",
+      "unit": "Kategoriecode",
+      "scope_de": "Betrieb + aktuelles Jahr + purpose=current_fact/scenario + stabile eigene Kohorten-group_id; farm-scoped Collection mit parent_id leer und eigener serverseitiger event_id.",
+      "missing_de": "Optional im Modell; für RGVE-Arten im österreichischen Scope ohne gültigen Tabellenjoin missing_data.",
+      "source_de": "Expliziter farmer_statement/expert_estimate + Pflichtnotiz + Snapshot-Digest; belegte Roh-Metadaten aus CohortEvidence, kein automatischer AMA-Kohortenimport.",
+      "mutability": "mutable_asserted_classification",
+      "refs": [
+        "cohort_model",
+        "count_verification",
+        "collection_writes",
+        "native_group"
+      ],
+      "native_target": "livestock.species_groups[].rgve_category"
+    },
+    {
+      "path": "livestock.rgve_cohorts[].animal_count",
+      "definition_de": "Nichtnegative ganzzahlige Stichtags-Anzahl, im Modell float mit zusätzlicher is_integer-Prüfung.",
+      "unit": "Tiere (ganze Anzahl)",
+      "scope_de": "Betrieb + aktuelles Jahr + purpose=current_fact/scenario + stabile eigene Kohorten-group_id; farm-scoped Collection mit parent_id leer und eigener serverseitiger event_id.",
+      "missing_de": "Optionales Feld kann null sein; fehlende Count-Basis/Zeitraum/Dokumente machen gezählte Kohorte unverified und setzen beide Counts vor OPA auf null; betroffene RGVE bleiben unbekannt.",
+      "source_de": "Expliziter farmer_statement/expert_estimate + Pflichtnotiz + Snapshot-Digest; belegte Roh-Metadaten aus CohortEvidence, kein automatischer AMA-Kohortenimport.",
+      "mutability": "mutable_asserted_fact",
+      "refs": [
+        "cohort_model",
+        "count_verification",
+        "collection_writes",
+        "native_group"
+      ],
+      "native_target": "livestock.species_groups[].animal_count"
+    },
+    {
+      "path": "livestock.rgve_cohorts[].average_count",
+      "definition_de": "Nichtnegative ggf. gebrochene durchschnittliche Tieranzahl; wird nicht aus Einzeltierbewegungen berechnet.",
+      "unit": "Tiere (Durchschnitt)",
+      "scope_de": "Betrieb + aktuelles Jahr + purpose=current_fact/scenario + stabile eigene Kohorten-group_id; farm-scoped Collection mit parent_id leer und eigener serverseitiger event_id.",
+      "missing_de": "Optionales Feld kann null sein; fehlende Count-Basis/Zeitraum/Dokumente machen gezählte Kohorte unverified und setzen beide Counts vor OPA auf null; betroffene RGVE bleiben unbekannt. Für Rinder ist ein Durchschnitt zwingend; kein Stichtagsfallback.",
+      "source_de": "Expliziter farmer_statement/expert_estimate + Pflichtnotiz + Snapshot-Digest; belegte Roh-Metadaten aus CohortEvidence, kein automatischer AMA-Kohortenimport.",
+      "mutability": "mutable_asserted_derived_quantity",
+      "refs": [
+        "cohort_model",
+        "count_verification",
+        "collection_writes",
+        "native_group"
+      ],
+      "native_target": "livestock.species_groups[].average_count"
+    },
+    {
+      "path": "livestock.rgve_cohorts[].kept_in_austria",
+      "definition_de": "Eingegebener Haltungsort-Boolean; nur true trägt zur nativen RGVE-Summe bei.",
+      "unit": "Boolean",
+      "scope_de": "Betrieb + aktuelles Jahr + purpose=current_fact/scenario + stabile eigene Kohorten-group_id; farm-scoped Collection mit parent_id leer und eigener serverseitiger event_id.",
+      "missing_de": "null => Datenbedarf für RGVE-Arten; false => ausdrücklich außerhalb des Scopes, Count-Verifikation übersprungen.",
+      "source_de": "Expliziter farmer_statement/expert_estimate + Pflichtnotiz + Snapshot-Digest; belegte Roh-Metadaten aus CohortEvidence, kein automatischer AMA-Kohortenimport.",
+      "mutability": "mutable_asserted_fact",
+      "refs": [
+        "cohort_model",
+        "count_verification",
+        "collection_writes",
+        "native_group"
+      ],
+      "native_target": "livestock.species_groups[].kept_in_austria"
+    },
+    {
+      "path": "livestock.rgve_cohorts[].reference_year",
+      "definition_de": "Bezugsjahr des Bestandsbelegs, für Count-Verifikation gleich serverseitigem aktuellem Jahr.",
+      "unit": "Kalenderjahr",
+      "scope_de": "Betrieb + aktuelles Jahr + purpose=current_fact/scenario + stabile eigene Kohorten-group_id; farm-scoped Collection mit parent_id leer und eigener serverseitiger event_id.",
+      "missing_de": "Optionales Feld kann null sein; fehlende Count-Basis/Zeitraum/Dokumente machen gezählte Kohorte unverified und setzen beide Counts vor OPA auf null; betroffene RGVE bleiben unbekannt.",
+      "source_de": "Expliziter farmer_statement/expert_estimate + Pflichtnotiz + Snapshot-Digest; belegte Roh-Metadaten aus CohortEvidence, kein automatischer AMA-Kohortenimport.",
+      "mutability": "mutable_evidence_metadata",
+      "refs": [
+        "cohort_model",
+        "count_verification",
+        "collection_writes",
+        "native_group"
+      ],
+      "native_target": null
+    },
+    {
+      "path": "livestock.rgve_cohorts[].count_basis",
+      "definition_de": "Drei erlaubte Belegbasen: animal_list_april_1, cattle_database_average, submitted_average_list.",
+      "unit": "Enum",
+      "scope_de": "Betrieb + aktuelles Jahr + purpose=current_fact/scenario + stabile eigene Kohorten-group_id; farm-scoped Collection mit parent_id leer und eigener serverseitiger event_id.",
+      "missing_de": "Optionales Feld kann null sein; fehlende Count-Basis/Zeitraum/Dokumente machen gezählte Kohorte unverified und setzen beide Counts vor OPA auf null; betroffene RGVE bleiben unbekannt.",
+      "source_de": "Expliziter farmer_statement/expert_estimate + Pflichtnotiz + Snapshot-Digest; belegte Roh-Metadaten aus CohortEvidence, kein automatischer AMA-Kohortenimport.",
+      "mutability": "mutable_evidence_metadata",
+      "refs": [
+        "cohort_model",
+        "count_verification",
+        "collection_writes",
+        "native_group"
+      ],
+      "native_target": null
+    },
+    {
+      "path": "livestock.rgve_cohorts[].reference_date",
+      "definition_de": "Stichtagsdatum; Nicht-Rinder ohne Durchschnitt verlangen exakt 01.04. des aktuellen Jahres.",
+      "unit": "ISO-Datum",
+      "scope_de": "Betrieb + aktuelles Jahr + purpose=current_fact/scenario + stabile eigene Kohorten-group_id; farm-scoped Collection mit parent_id leer und eigener serverseitiger event_id.",
+      "missing_de": "Optionales Feld kann null sein; fehlende Count-Basis/Zeitraum/Dokumente machen gezählte Kohorte unverified und setzen beide Counts vor OPA auf null; betroffene RGVE bleiben unbekannt. Vor 01.04. kann dieser künftige Stichtag nicht als aktuelle Beobachtung gespeichert werden.",
+      "source_de": "Expliziter farmer_statement/expert_estimate + Pflichtnotiz + Snapshot-Digest; belegte Roh-Metadaten aus CohortEvidence, kein automatischer AMA-Kohortenimport.",
+      "mutability": "mutable_evidence_metadata",
+      "refs": [
+        "cohort_model",
+        "count_verification",
+        "collection_writes",
+        "native_group"
+      ],
+      "native_target": null
+    },
+    {
+      "path": "livestock.rgve_cohorts[].period_start",
+      "definition_de": "Beginn des Durchschnittszeitraums; Count-Verifikation verlangt exakt 01.01. des aktuellen Jahres.",
+      "unit": "ISO-Datum",
+      "scope_de": "Betrieb + aktuelles Jahr + purpose=current_fact/scenario + stabile eigene Kohorten-group_id; farm-scoped Collection mit parent_id leer und eigener serverseitiger event_id.",
+      "missing_de": "Optionales Feld kann null sein; fehlende Count-Basis/Zeitraum/Dokumente machen gezählte Kohorte unverified und setzen beide Counts vor OPA auf null; betroffene RGVE bleiben unbekannt.",
+      "source_de": "Expliziter farmer_statement/expert_estimate + Pflichtnotiz + Snapshot-Digest; belegte Roh-Metadaten aus CohortEvidence, kein automatischer AMA-Kohortenimport.",
+      "mutability": "mutable_evidence_metadata",
+      "refs": [
+        "cohort_model",
+        "count_verification",
+        "collection_writes",
+        "native_group"
+      ],
+      "native_target": null
+    },
+    {
+      "path": "livestock.rgve_cohorts[].period_end",
+      "definition_de": "Ende des Durchschnittszeitraums; Count-Verifikation verlangt exakt den aktuellen serverseitigen as_of, kein pauschales 31.12. in der Zukunft.",
+      "unit": "ISO-Datum",
+      "scope_de": "Betrieb + aktuelles Jahr + purpose=current_fact/scenario + stabile eigene Kohorten-group_id; farm-scoped Collection mit parent_id leer und eigener serverseitiger event_id.",
+      "missing_de": "Optionales Feld kann null sein; fehlende Count-Basis/Zeitraum/Dokumente machen gezählte Kohorte unverified und setzen beide Counts vor OPA auf null; betroffene RGVE bleiben unbekannt.",
+      "source_de": "Expliziter farmer_statement/expert_estimate + Pflichtnotiz + Snapshot-Digest; belegte Roh-Metadaten aus CohortEvidence, kein automatischer AMA-Kohortenimport.",
+      "mutability": "mutable_evidence_metadata",
+      "refs": [
+        "cohort_model",
+        "count_verification",
+        "collection_writes",
+        "native_group"
+      ],
+      "native_target": null
+    },
+    {
+      "path": "livestock.rgve_cohorts[].average_list_submitted",
+      "definition_de": "Bei Nicht-Rinder-Durchschnitt ausdrücklicher Nachweis einer eingereichten Durchschnittsliste; Rinder verwenden cattle_database_average.",
+      "unit": "Boolean",
+      "scope_de": "Betrieb + aktuelles Jahr + purpose=current_fact/scenario + stabile eigene Kohorten-group_id; farm-scoped Collection mit parent_id leer und eigener serverseitiger event_id.",
+      "missing_de": "Optionales Feld kann null sein; fehlende Count-Basis/Zeitraum/Dokumente machen gezählte Kohorte unverified und setzen beide Counts vor OPA auf null; betroffene RGVE bleiben unbekannt. Nicht-Rinder-Durchschnitt ohne true bleibt unverified.",
+      "source_de": "Expliziter farmer_statement/expert_estimate + Pflichtnotiz + Snapshot-Digest; belegte Roh-Metadaten aus CohortEvidence, kein automatischer AMA-Kohortenimport.",
+      "mutability": "mutable_evidence_metadata",
+      "refs": [
+        "cohort_model",
+        "count_verification",
+        "collection_writes",
+        "native_group"
+      ],
+      "native_target": null
+    },
+    {
+      "path": "livestock.rgve_cohorts[].document_reference",
+      "definition_de": "Nichtleere Dokumentreferenz des Count-Belegs; kein hochgeladenes/verifiziertes Registerdokument durch diese Eigenschaft.",
+      "unit": "Dokument-ID",
+      "scope_de": "Betrieb + aktuelles Jahr + purpose=current_fact/scenario + stabile eigene Kohorten-group_id; farm-scoped Collection mit parent_id leer und eigener serverseitiger event_id.",
+      "missing_de": "Optionales Feld kann null sein; fehlende Count-Basis/Zeitraum/Dokumente machen gezählte Kohorte unverified und setzen beide Counts vor OPA auf null; betroffene RGVE bleiben unbekannt.",
+      "source_de": "Expliziter farmer_statement/expert_estimate + Pflichtnotiz + Snapshot-Digest; belegte Roh-Metadaten aus CohortEvidence, kein automatischer AMA-Kohortenimport.",
+      "mutability": "mutable_evidence_metadata",
+      "refs": [
+        "cohort_model",
+        "count_verification",
+        "collection_writes",
+        "native_group"
+      ],
+      "native_target": null
+    },
+    {
+      "path": "livestock.species_groups_complete",
+      "definition_de": "Aktuelle explizite Vollständigkeitsbestätigung des für RGVE verwendeten Kohorteninventars, keine aus bloßer Listengröße abgeleitete Tatsache.",
+      "unit": "Boolean",
+      "scope_de": "Betrieb + aktuelles Jahr + purpose=current_fact",
+      "missing_de": "Fehlend/null/false => collection_missing. Jede Kohortenänderung/Leerbestätigung deaktiviert bestehende manuelle Bestätigung; beim Collection-Overlay muss true erneut gespeichert werden.",
+      "source_de": "Farmer/expert bestätigter Inventarstand mit Pflichtnotiz und Snapshot-Digest.",
+      "mutability": "mutable_inventory_attestation",
+      "refs": [
+        "current_scalar_registry",
+        "completeness_invalidation",
+        "completeness_reaffirmation",
+        "native_completeness"
+      ]
+    },
+    {
+      "path": "farm.heuwirtschaft.seasonal_presence",
+      "definition_de": "Host-Evidenz für saisonale Tieranwesenheit/Grünfütterung; Liste wird nicht als Input an native Lab-Policy übergeben.",
+      "unit": "Liste<SeasonalPresence>",
+      "scope_de": "Betrieb + aktuelles Jahr + farm-scoped Collection; eigener Event-ID. group_id liegt im Item, nicht im parent_id.",
+      "missing_de": "null/fehlend => seasonal_presence_known=false; [] => true ohne Aussage über vollständige Abwesenheit. Keine Berechnung von Tagesunion oder GREEN_FEEDING aus dieser Liste.",
+      "source_de": "Explizite Betreiber-/Expertenbelege; Snapshot-Digest, Pflichtnotiz.",
+      "mutability": "mutable_collection_evidence",
+      "refs": [
+        "host_collection_registry",
+        "seasonal_model",
+        "seasonal_assessment",
+        "seasonal_known",
+        "result_metadata"
+      ]
+    },
+    {
+      "path": "farm.heuwirtschaft.seasonal_presence[].group_id",
+      "definition_de": "Nichtleere ID des bezeichneten Bestands; es gibt hier keine Prüfung gegen bestehende Kohorten-/Einzeltier-IDs.",
+      "unit": "ID",
+      "scope_de": "Betrieb + aktuelles Jahr + farm-scoped Collection; eigener Event-ID. group_id liegt im Item, nicht im parent_id.",
+      "missing_de": "Pflichtfelder; unbekannt/fehlerhaft ist keine günstige Annahme. Intervall kann nicht jahresübergreifend oder zukunftsdatiert sein.",
+      "source_de": "Farmer/expert assertion with note and snapshot digest.",
+      "mutability": "mutable_evidence_metadata",
+      "refs": [
+        "seasonal_model",
+        "seasonal_assessment"
+      ]
+    },
+    {
+      "path": "farm.heuwirtschaft.seasonal_presence[].species",
+      "definition_de": "Tierart aus sieben Werten; keine Prüfung der Konsistenz mit der referenzierten Kohorte.",
+      "unit": "Code",
+      "scope_de": "Betrieb + aktuelles Jahr + farm-scoped Collection; eigener Event-ID. group_id liegt im Item, nicht im parent_id.",
+      "missing_de": "Pflichtfelder; unbekannt/fehlerhaft ist keine günstige Annahme. Intervall kann nicht jahresübergreifend oder zukunftsdatiert sein.",
+      "source_de": "Farmer/expert assertion with note and snapshot digest.",
+      "mutability": "mutable_asserted_fact",
+      "refs": [
+        "seasonal_model",
+        "seasonal_assessment"
+      ]
+    },
+    {
+      "path": "farm.heuwirtschaft.seasonal_presence[].present_from",
+      "definition_de": "Beginn tatsächlicher Anwesenheit, im aktuellen Jahr.",
+      "unit": "ISO-Datum",
+      "scope_de": "Betrieb + aktuelles Jahr + farm-scoped Collection; eigener Event-ID. group_id liegt im Item, nicht im parent_id.",
+      "missing_de": "Pflichtfelder; unbekannt/fehlerhaft ist keine günstige Annahme. Intervall kann nicht jahresübergreifend oder zukunftsdatiert sein.",
+      "source_de": "Farmer/expert assertion with note and snapshot digest.",
+      "mutability": "mutable_asserted_fact",
+      "refs": [
+        "seasonal_model",
+        "seasonal_assessment"
+      ]
+    },
+    {
+      "path": "farm.heuwirtschaft.seasonal_presence[].present_to",
+      "definition_de": "Ende tatsächlicher Anwesenheit, im aktuellen Jahr und nicht nach as_of; muss >= Beginn sein.",
+      "unit": "ISO-Datum",
+      "scope_de": "Betrieb + aktuelles Jahr + farm-scoped Collection; eigener Event-ID. group_id liegt im Item, nicht im parent_id.",
+      "missing_de": "Pflichtfelder; unbekannt/fehlerhaft ist keine günstige Annahme. Intervall kann nicht jahresübergreifend oder zukunftsdatiert sein.",
+      "source_de": "Farmer/expert assertion with note and snapshot digest.",
+      "mutability": "mutable_asserted_fact",
+      "refs": [
+        "seasonal_model",
+        "seasonal_assessment"
+      ]
+    },
+    {
+      "path": "farm.heuwirtschaft.seasonal_presence[].document_reference",
+      "definition_de": "Nichtleerer Anwesenheitsnachweis.",
+      "unit": "Dokument-ID",
+      "scope_de": "Betrieb + aktuelles Jahr + farm-scoped Collection; eigener Event-ID. group_id liegt im Item, nicht im parent_id.",
+      "missing_de": "Pflichtfelder; unbekannt/fehlerhaft ist keine günstige Annahme. Intervall kann nicht jahresübergreifend oder zukunftsdatiert sein.",
+      "source_de": "Farmer/expert assertion with note and snapshot digest.",
+      "mutability": "mutable_evidence_metadata",
+      "refs": [
+        "seasonal_model",
+        "seasonal_assessment"
+      ]
+    },
+    {
+      "path": "farm.heuwirtschaft.seasonal_presence[].assessment_method",
+      "definition_de": "Nichtleere Beschreibung/Referenz der Methode; freier Text, keine bestätigte fachliche Auswertungsmethode.",
+      "unit": "Methoden-ID/Text",
+      "scope_de": "Betrieb + aktuelles Jahr + farm-scoped Collection; eigener Event-ID. group_id liegt im Item, nicht im parent_id.",
+      "missing_de": "Pflichtfelder; unbekannt/fehlerhaft ist keine günstige Annahme. Intervall kann nicht jahresübergreifend oder zukunftsdatiert sein.",
+      "source_de": "Farmer/expert assertion with note and snapshot digest.",
+      "mutability": "mutable_evidence_metadata",
+      "refs": [
+        "seasonal_model",
+        "seasonal_assessment"
+      ]
+    },
+    {
+      "path": "oepul.shared.livestock_events",
+      "definition_de": "Allgemeine Legacy-Tierereignisse am gesamten Betrieb; nur event_type und event_date, ohne individual animal_id/group_id/location/quantity.",
+      "unit": "Liste<Event>",
+      "scope_de": "Betrieb + Snapshot-Jahr + purpose; parent_id leer. Keine Untergruppenreferenz.",
+      "missing_de": "Unknown bleibt Snapshot-Baseline; recorded ersetzt ganze Collection; confirmed_empty -> []. o6_20 bleibt Category-C missing_data selbst wenn sämtliche verlangten Eingaben vorhanden sind, keine positive Teilnahmefreigabe.",
+      "source_de": "Snapshot-Wert falls vorhanden; explizite farmer_statement/expert_estimate Collection-Ereignisse mit Pflichtnotiz.",
+      "mutability": "mutable_collection_evidence",
+      "refs": [
+        "collection_registry",
+        "collection_projection",
+        "legacy_o6_20",
+        "legacy_c_policy"
+      ],
+      "consumed_by": [
+        "o6_20 legacy/current generic"
+      ]
+    },
+    {
+      "path": "oepul.shared.livestock_events[].event_type",
+      "definition_de": "Pflichtereignisart als String; keine geschlossene Tierbewegungs-/Weidetyp-Taxonomie.",
+      "unit": "Textcode",
+      "scope_de": "Betrieb + Jahr + Collection-Event-ID, kein Tier-/Gruppenjoin",
+      "missing_de": "Pflicht im generischen Objektschema; fehlende/unbekannte Itemfelder abgelehnt.",
+      "source_de": "Farmer/expert declaration with mandatory note.",
+      "mutability": "mutable_asserted_fact",
+      "refs": [
+        "collection_registry",
+        "collection_coercion",
+        "current_date_validation"
+      ]
+    },
+    {
+      "path": "oepul.shared.livestock_events[].event_date",
+      "definition_de": "Pflichtdatum eines Ereignisses. Bei current_fact aktuelles Jahr und <=as_of; bei alten Review-APIs bleibt Szenario-Zeitvertrag.",
+      "unit": "ISO-Datum",
+      "scope_de": "Betrieb + Jahr + Collection-Event-ID, kein Tier-/Gruppenjoin",
+      "missing_de": "Pflicht im generischen Objektschema; fehlende/unbekannte Itemfelder abgelehnt.",
+      "source_de": "Farmer/expert declaration with mandatory note.",
+      "mutability": "mutable_asserted_fact",
+      "refs": [
+        "collection_registry",
+        "collection_coercion",
+        "current_date_validation"
+      ]
+    },
+    {
+      "path": "FarmCollectionEventReviewInput.event_id",
+      "definition_de": "Serverseitige UUID beim Anlegen; bei Revision muss bestehendes aktives Event im selben Scope vorhanden sein. Die ID ersetzt keine Tier-/Kohortenidentität.",
+      "unit": "ID",
+      "scope_de": "purpose + Betrieb + Jahr + collection_path + parent_id + event_id",
+      "missing_de": "Revision unbekannter/anderer Event-ID abgelehnt. Native Listen erhalten Event-Felder, nicht automatisch diese serverseitige Event-ID.",
+      "source_de": "Server generated.",
+      "mutability": "structural_identity",
+      "refs": [
+        "collection_writes",
+        "event_persistence",
+        "collection_projection"
+      ]
+    },
+    {
+      "path": "farm.heuwirtschaft.first_year.rgve_total",
+      "definition_de": "Explizit erfasster historischer RGVE-Gesamtwert des Vertrags-Erstjahres; keine automatische Ableitung aus aktuellem Tierbestand.",
+      "unit": "RGVE",
+      "scope_de": "Aktuelles fact storage scope; fachliche Zeitrolle historical_first_year + first_year.year == contract_start_year.",
+      "missing_de": "Im Folgejahr fehlender Wert => missing_data; nichtnegative Zahl. Für historischen Quotienten auch fodder_area_ha >0 erforderlich.",
+      "source_de": "Snapshot oder farmer/expert historische belegte Aussage; aktuelle Speicherung mit Digest/Notiz.",
+      "mutability": "mutable_asserted_historical_derived_quantity",
+      "refs": [
+        "historical_model",
+        "current_scalar_registry",
+        "fact_time_role",
+        "native_history"
+      ]
+    },
+    {
+      "path": "farm.heuwirtschaft.first_year.year",
+      "definition_de": "Bezugsjahr historischer Erstjahresnachweise; unabhängig vom aktuellen Auswertungsjahr.",
+      "unit": "Kalenderjahr",
+      "scope_de": "Betrieb + aktueller Speicherzweck; historischer Bezug muss gleich Vertragsstart sein.",
+      "missing_de": "Fehlend im Folgejahr => missing_data; abweichender Start => year_alignment data need.",
+      "source_de": "Snapshot/explicit farmer/expert scalar; no historical snapshot lookup.",
+      "mutability": "mutable_evidence_metadata",
+      "refs": [
+        "historical_model",
+        "native_history",
+        "current_scalar_registry"
+      ]
+    },
+    {
+      "path": "context.current_year",
+      "definition_de": "Vertrauenswürdiges Serverjahr Europe/Vienna.",
+      "unit": "Kalenderjahr",
+      "scope_de": "Auswertungsaufruf, kein editierbarer Tierfakt.",
+      "missing_de": "Kein aktueller Snapshot => 404; Payload-farm.year widersprüchlich => technischer Fehler, kein automatischer Jahresfallback.",
+      "source_de": "Server clock and bound FarmProfileSnapshot.",
+      "mutability": "trusted_context",
+      "refs": [
+        "current_context",
+        "native_completeness",
+        "current_stale"
+      ]
+    },
+    {
+      "path": "context.snapshot_year",
+      "definition_de": "Jahr des genau aktuellen FarmProfileSnapshot.",
+      "unit": "Kalenderjahr",
+      "scope_de": "Auswertungsaufruf, kein editierbarer Tierfakt.",
+      "missing_de": "Kein aktueller Snapshot => 404; Payload-farm.year widersprüchlich => technischer Fehler, kein automatischer Jahresfallback.",
+      "source_de": "Server clock and bound FarmProfileSnapshot.",
+      "mutability": "trusted_context",
+      "refs": [
+        "current_context",
+        "native_completeness",
+        "current_stale"
+      ]
+    },
+    {
+      "path": "context.as_of",
+      "definition_de": "Vertrauenswürdiger heutiger serverseitiger Prüf-/Beobachtungsstichtag.",
+      "unit": "ISO-Datum",
+      "scope_de": "Auswertungsaufruf, kein editierbarer Tierfakt.",
+      "missing_de": "Kein aktueller Snapshot => 404; Payload-farm.year widersprüchlich => technischer Fehler, kein automatischer Jahresfallback.",
+      "source_de": "Server clock and bound FarmProfileSnapshot.",
+      "mutability": "trusted_context",
+      "refs": [
+        "current_context",
+        "native_completeness",
+        "current_stale"
+      ]
+    },
+    {
+      "path": "raw.AmaRawD619_23_ST_RINDER.rinderdurchschnitt",
+      "definition_de": "Roher AMA-Rinderdurchschnitt mit Tierkategorienummer/-bezeichnung und Haupt-/Teilbetrieb, im aktuellen Builder nicht gelesen.",
+      "unit": "TextField mit Durchschnitts-Tieranzahl",
+      "scope_de": "ImportRun + Haupt-/Teilbetrieb + MFA-Jahr + Kategorie, tatsächliche Datumsbasis nicht in diesem Modell.",
+      "missing_de": "null/blank möglich; Native-Kohorte/Average nicht automatisch daraus erzeugt.",
+      "source_de": "AMA-Raw-D619_23_ST_RINDER; Schemafähigkeit ist kein Nachweis aktuell vorhandener tatsächlicher Daten.",
+      "mutability": "raw_import_input",
+      "refs": [
+        "raw_cattle_average",
+        "source_counts"
+      ]
+    },
+    {
+      "path": "farm.heuwirtschaft.contract_start_year",
+      "definition_de": "Eingegebenes Startjahr des konkreten Vertrags; steuert aktuellen Erstjahres- vs historischen Folgejahreszugang.",
+      "unit": "Kalenderjahr",
+      "scope_de": "Betrieb + aktuelle fact storage; Vertragsbeginn historisch.",
+      "missing_de": "null=>missing; aktuell gepinnte Policy erlaubt nur Start2023/2024/2025, sonst CONTRACT_START.",
+      "source_de": "Snapshot oder expliziter dokumentierter Farmer-/Expertenskalar.",
+      "mutability": "mutable_asserted_fact",
+      "refs": [
+        "historical_model",
+        "current_scalar_registry",
+        "native_history"
+      ]
+    },
+    {
+      "path": "farm.heuwirtschaft.first_year.fodder_area_ha",
+      "definition_de": "Belegter historischer Futterflächen-Nenner des Erstjahres-RGVE-Quotienten.",
+      "unit": "ha",
+      "scope_de": "Historische Erstjahresbasis, aktuell gespeicherte explizite Ergänzung.",
+      "missing_de": "null=>missing; <=0=>historical_rgve basis failure; kein heutiger Futterflächenfallback.",
+      "source_de": "Snapshot oder dokumentierter Betreiber-/Expertenwert.",
+      "mutability": "mutable_asserted_historical_quantity",
+      "refs": [
+        "historical_model",
+        "native_history",
+        "fact_time_role"
+      ]
+    },
+    {
+      "path": "farm.heuwirtschaft.green_feeding_majority_april_to_september",
+      "definition_de": "Expliziter Boolean für überwiegende Grünfütterung April–September; keine automatische Tagesanteilsberechnung aus seasonal_presence.",
+      "unit": "Boolean",
+      "scope_de": "Konkreter Betrieb + aktuelles Jahr; GREEN_FEEDING-Prüfung ab30.09. bei total_rgve>0.",
+      "missing_de": "Unbekannt vor Fälligkeit belegt keine Nichterfüllung; Saisonhistorie/auswertungsmethode bleibt eigener Promotionsblocker.",
+      "source_de": "Snapshot oder belegter Betreiber-/Expertenwert; SeasonalPresence als separate Hostevidenz.",
+      "mutability": "mutable_asserted_fact",
+      "refs": [
+        "native_feeding_due",
+        "current_scalar_registry",
+        "seasonal_assessment",
+        "result_metadata"
+      ]
+    }
+  ],
+  "derivations": [
+    {
+      "path": "legacy total_supported_livestock_gve",
+      "definition_de": "Summe der vorhandenen gve von Species !=other; ignoriert null-Werte solange mindestens einer vorhanden ist.",
+      "unit": "GVE",
+      "scope_de": "Maßnahmen-Auswertung o6_14; keine bestätigte Jahres-/Alm-/Tierklassenberechnung.",
+      "mutability": "derived_policy_output",
+      "missing_de": "null nur wenn keine gruppenweise GVE vorhanden. Keine Vollständigkeitsgarantie für alle Gruppen.",
+      "refs": [
+        "legacy_gve_derivation"
+      ]
+    },
+    {
+      "path": "legacy max_supported_grazing_days",
+      "definition_de": "Maximum der vorhandenen weide_days_per_year für unterstützte Species.",
+      "unit": "Tage",
+      "scope_de": "o6_14 Legacy-Gate; keine Tagesunion und kein Pflichtnachweis je Tier.",
+      "mutability": "derived_policy_output",
+      "missing_de": "null wenn kein Wert vorhanden.",
+      "refs": [
+        "legacy_days_derivation"
+      ]
+    },
+    {
+      "path": "native group_count(g)",
+      "definition_de": "Bevorzugt verifizierten average_count. Ohne Durchschnitt Stichtags-count nur wenn Tabellenkategorie keinen Durchschnitt verlangt.",
+      "unit": "Tiere / Durchschnittstiere",
+      "scope_de": "Aktuelle o6_3-Kohorte; Kategorien aus gepinnter Tabelle.",
+      "mutability": "derived_policy_value",
+      "missing_de": "Ungültige/unbelegte Count-Basis wird vorher auf null gesetzt; Rinder ohne Durchschnitt bleiben missing.",
+      "refs": [
+        "count_verification",
+        "native_rgve_policy"
+      ]
+    },
+    {
+      "path": "native total_rgve / meta.heuwirtschaft.slice_decision.current_rgve",
+      "definition_de": "Summe group_count * tabellegebundenem RGVE-Faktor für domestisch gehaltene RGVE-Tierarten; pigs/poultry/rabbits ausgeschlossen.",
+      "unit": "RGVE",
+      "scope_de": "Aktueller o6_3-Clause-Slice; jährliche/as_of-Belegbasis, keine 214-Tage-Weide-RGVE oder GVE.",
+      "mutability": "derived_policy_output",
+      "missing_de": "reported_rgve=null solange Collection-Fakten/Vollständigkeit nicht bekannt; keine editierbare Review-Variable current_rgve.",
+      "refs": [
+        "native_rgve_policy",
+        "native_report",
+        "current_dependencies"
+      ]
+    },
+    {
+      "path": "native tierholding",
+      "definition_de": "collections_known und forage_area_ha>0 und total_rgve/forage_area_ha>=0.3.",
+      "unit": "Boolean (Basis RGVE/ha)",
+      "scope_de": "Aktueller o6_3-Futterflächenvertrag; unterschiedliche lokale Zugangs-/Prämienflächen bleiben erhalten.",
+      "mutability": "derived_policy_output",
+      "missing_de": "fehlende Inventarbasis => Datenbedarf, kein direkt gesetztes livestock_holding Flag.",
+      "refs": [
+        "native_tierholding"
+      ]
+    },
+    {
+      "path": "meta.heuwirtschaft.seasonal_presence_known",
+      "definition_de": "Wahr genau wenn Host-Collection seasonal_presence nicht None ist; keine Aussage zur fachlichen Vollständigkeit.",
+      "unit": "Boolean",
+      "scope_de": "Host-Metadaten der aktuellen o6_3-Auswertung.",
+      "mutability": "derived_technical_metadata",
+      "missing_de": "None=>false; []=>true; Seasonaldaten gehen nicht an native policy.",
+      "refs": [
+        "seasonal_known",
+        "native_projection",
+        "result_metadata"
+      ]
+    }
+  ],
+  "current_count_basis_matrix": [
+    {
+      "cohort": "cattle",
+      "count": "average_count",
+      "evidence": "reference_year=current_year; document_reference; count_basis=cattle_database_average; period_start=01.01.; period_end=as_of",
+      "forbidden_assumption": "kein fallback auf animal_count",
+      "refs": [
+        "count_verification",
+        "native_rgve_policy"
+      ]
+    },
+    {
+      "cohort": "non-cattle with average_count",
+      "count": "fractional average_count allowed",
+      "evidence": "reference_year=current_year; document_reference; count_basis=submitted_average_list; average_list_submitted=true; period_start=01.01.; period_end=as_of",
+      "refs": [
+        "count_verification",
+        "cohort_model"
+      ]
+    },
+    {
+      "cohort": "non-cattle without average_count",
+      "count": "integer animal_count",
+      "evidence": "reference_year=current_year; document_reference; count_basis=animal_list_april_1; reference_date=01.04.; observed dates <=as_of",
+      "refs": [
+        "count_verification",
+        "cohort_model"
+      ]
+    }
+  ],
+  "rgve_rates": {
+    "source_ref": "rgve_table",
+    "unit": "RGVE pro Tier / Durchschnittstier",
+    "row_count": 20,
+    "rows": [
+      {
+        "category_id": "rinder:unter_0_5_jahr",
+        "species": "cattle",
+        "factor": 0.4,
+        "average_required": true
+      },
+      {
+        "category_id": "rinder:0_5_bis_unter_2_jahre",
+        "species": "cattle",
+        "factor": 0.6,
+        "average_required": true
+      },
+      {
+        "category_id": "rinder:ab_2_jahre",
+        "species": "cattle",
+        "factor": 1.0,
+        "average_required": true
+      },
+      {
+        "category_id": "zwergrinder:unter_0_5_jahr",
+        "species": "cattle",
+        "factor": 0.2,
+        "average_required": true
+      },
+      {
+        "category_id": "zwergrinder:0_5_bis_unter_2_jahre",
+        "species": "cattle",
+        "factor": 0.3,
+        "average_required": true
+      },
+      {
+        "category_id": "zwergrinder:ab_2_jahre",
+        "species": "cattle",
+        "factor": 0.5,
+        "average_required": true
+      },
+      {
+        "category_id": "schafe:ab_1_jahr",
+        "species": "sheep_goats",
+        "factor": 0.15,
+        "average_required": false
+      },
+      {
+        "category_id": "schafe:unter_1_jahr",
+        "species": "sheep_goats",
+        "factor": 0.07,
+        "average_required": false
+      },
+      {
+        "category_id": "ziegen:ab_1_jahr",
+        "species": "sheep_goats",
+        "factor": 0.15,
+        "average_required": false
+      },
+      {
+        "category_id": "ziegen:unter_1_jahr",
+        "species": "sheep_goats",
+        "factor": 0.07,
+        "average_required": false
+      },
+      {
+        "category_id": "kleine_equiden:fohlen_unter_0_5_jahr",
+        "species": "horses",
+        "factor": 0.2,
+        "average_required": false
+      },
+      {
+        "category_id": "kleine_equiden:jungtiere_0_5_bis_unter_3_jahre",
+        "species": "horses",
+        "factor": 0.3,
+        "average_required": false
+      },
+      {
+        "category_id": "kleine_equiden:adulte_ab_3_jahre",
+        "species": "horses",
+        "factor": 0.5,
+        "average_required": false
+      },
+      {
+        "category_id": "grosse_equiden:fohlen_unter_0_5_jahr",
+        "species": "horses",
+        "factor": 0.4,
+        "average_required": false
+      },
+      {
+        "category_id": "grosse_equiden:jungtiere_0_5_bis_unter_3_jahre",
+        "species": "horses",
+        "factor": 0.6,
+        "average_required": false
+      },
+      {
+        "category_id": "grosse_equiden:adulte_ab_3_jahre",
+        "species": "horses",
+        "factor": 1.0,
+        "average_required": false
+      },
+      {
+        "category_id": "rotwild:ab_1_jahr",
+        "species": "other",
+        "factor": 0.25,
+        "average_required": false
+      },
+      {
+        "category_id": "damwild_anderes_zuchtwild:ab_1_jahr",
+        "species": "other",
+        "factor": 0.15,
+        "average_required": false
+      },
+      {
+        "category_id": "neuweltkamele:ab_1_jahr",
+        "species": "other",
+        "factor": 0.15,
+        "average_required": false
+      },
+      {
+        "category_id": "rotwild_damwild_anderes_zuchtwild_neuweltkamele:unter_1_jahr",
+        "species": "other",
+        "factor": 0.07,
+        "average_required": false
+      }
+    ]
+  },
+  "known_gaps": [
+    {
+      "id": "no_native_individual_animal_inventory",
+      "category": "technical_foundation",
+      "description_de": "Raw-AMA hat individuelle Identifikatoren, DOB, Geschlecht und Bewegungsdaten; canonical/native builder und Reviewmodell erzeugen keinen Einzeltierbestand, Förderplatz oder Nachbesetzungsgraph. Das ist eine Struktur-/Trace-Lücke für die jeweils betroffenen Maßnahmen und keine Aussage, dass jede Tierart zwingend amtliche Einzelkennzeichnung braucht oder bestätigte Aggregate unzulässig wären.",
+      "refs": [
+        "raw_individual_nrd",
+        "raw_individual_sheep",
+        "raw_individual_cattle",
+        "raw_individual_tw",
+        "source_counts",
+        "generic_projection"
+      ]
+    },
+    {
+      "id": "legacy_species_is_not_durable_subgroup_identity",
+      "category": "technical_foundation",
+      "description_de": "Species-Overlay-ID kann keine mehreren Alters-/Rassen-/Gewichtsgruppen derselben Tierart oder stabile Boxen/Weideorte unterscheiden. Blueprint stall_id/category sind kein umgesetzter Overlay-/Native-Identitätsvertrag; generische Projektion kopiert diese nicht.",
+      "refs": [
+        "legacy_identity",
+        "legacy_identity_resolution",
+        "legacy_blueprint",
+        "generic_projection"
+      ]
+    },
+    {
+      "id": "count_basis_lost_in_ama_pipeline",
+      "category": "source_lineage",
+      "description_de": "Legacy Tierliste kann Stichtag und Durchschnitt in groben Summen mischen, rundet Durchschnittszahlen und verliert Kategorie/Teilbetrieb/Stichtag/Zeitraum; GVE nur grobe Faktoren ohne pro Wert sichtbare Vollständigkeit.",
+      "refs": [
+        "raw_tierliste",
+        "source_counts",
+        "source_count_selection",
+        "source_group_build",
+        "source_species_factors"
+      ]
+    },
+    {
+      "id": "empty_legacy_inventory_not_confirmed_absence",
+      "category": "missing_semantics",
+      "description_de": "Builder lässt ungültige/gerundete nichtpositive Counts weg; leere Gruppenliste und has_livestock=false unterscheiden fehlende Evidenz nicht sicher vom bestätigten Nullbestand. Neue Kohorten-Collection hat bestätigtes Leer+Vollständigkeitsflag, welches die alte Pipeline nicht automatisch liefert.",
+      "refs": [
+        "source_group_build",
+        "generic_livestock_projection",
+        "native_completeness",
+        "completeness_reaffirmation"
+      ]
+    },
+    {
+      "id": "cohort_count_is_not_recomputed_from_animal_movements",
+      "category": "derived_vs_asserted",
+      "description_de": "Aktuelle Count-Verifikation prüft Dokumentreferenz, Count-Basis und angegebenen Zeitraum. Sie berechnet den eingegebenen average_count nicht aus Registerbewegungen und belegt Kategorie/Rasse/Alter nicht aus DOB/Einzeltierdaten. Dokumentierte eingegebene Aggregate bleiben nach Nutzerentscheidung zulässig; ihre Eigenschaft als bestätigter Input muss von nachgerechneten Beständen getrennt ausgewiesen werden.",
+      "refs": [
+        "cohort_model",
+        "count_verification",
+        "native_rgve_policy"
+      ]
+    },
+    {
+      "id": "cohort_underlying_animals_not_proven_disjoint",
+      "category": "identity_and_completeness",
+      "description_de": "group_id/event_id-Duplikate werden verhindert; unterschiedliche Kohorten-ID können dennoch denselben unbelegten Tierbestand enthalten. Keine Member-IDs/Doppelzählungskontrolle, source_group_id prüft nur Existenz genau einer Legacy-Speciesgruppe. Ein disjunkter/kompletter Kohortenvertrag kann nach Tierart auch durch belegte Gruppenzuordnung/Vollständigkeit statt durch amtliche Einzel-ID-Liste erreicht werden; dies ist keine pauschale Forderung nach Ohrmarken.",
+      "refs": [
+        "collection_writes",
+        "count_verification",
+        "native_duplicate_ids"
+      ]
+    },
+    {
+      "id": "dated_average_stales_on_asof_advance",
+      "category": "temporal_dependency",
+      "description_de": "Verifikationsregel verlangt period_end exakt aktuelles as_of. Ein gestern eingegebener Durchschnitt verliert deshalb heute die Count-Verifikation auch ohne Änderung des Snapshot-Digests; zusätzliche tägliche Aktualisierungs-/Darstellungsfrage vor breiter Wiederverwendung.",
+      "refs": [
+        "count_verification",
+        "current_context",
+        "current_stale"
+      ]
+    },
+    {
+      "id": "seasonal_presence_has_no_join_or_union_method",
+      "category": "technical_foundation",
+      "description_de": "SeasonalPresence verlangt ID/Species/Intervall/Dokument/Methode, prüft aber keinen ID-/Speciesjoin zu einer Kohorte, keine überlappenden Intervalle/Vollständigkeit und keine Präsenzunion. Nur valid+known Metadaten; GREEN_FEEDING_HISTORY bleibt Promotionblocker.",
+      "refs": [
+        "seasonal_model",
+        "seasonal_assessment",
+        "seasonal_known",
+        "result_metadata"
+      ]
+    },
+    {
+      "id": "livestock_events_are_farm_wide_unlinked",
+      "category": "technical_foundation",
+      "description_de": "Allgemeine Tierereignisse erlauben nur event_type+event_date. Tier-/Kohorten-/Box-/Weide-/Heimbetriebsjoin, Mengen, Zu-/Abgangsart und Aufenthaltsende fehlen; sie können kein konkretes Tier-Weidetagebuch bilden.",
+      "refs": [
+        "collection_registry",
+        "event_persistence",
+        "legacy_o6_20"
+      ]
+    },
+    {
+      "id": "no_measure_specific_214_calendar_or_concurrent_engine",
+      "category": "domain_contract_and_implementation",
+      "description_de": "App-Pin hat keine allgemeine Einzeltier-Tagesunion, 214-Tage-RGVE-Nenner, je-Tier 120/150-Weideprüfung, Rinder-Kalenderjahr-Registerberechnung oder gleichzeitige Box-/GVE-Besatzberechnung. As_of-o6_3-Kohorten, Legacy-GVE, Max-Alptage und Erstjahresaggregat sind keine austauschbaren Basen.",
+      "refs": [
+        "legacy_o6_20",
+        "legacy_gve_derivation",
+        "legacy_days_derivation",
+        "count_verification",
+        "native_history"
+      ]
+    },
+    {
+      "id": "native_cohorts_consumed_only_current_o6_3",
+      "category": "adapter_and_dependency",
+      "description_de": "RGVE-Kohorten werden nur vom current-o6_3-Vertrag konsumiert und als native Speciesgruppen projiziert. Generic livestock dependencies können sie nicht via Legacy animal_count/gve-Overlay ersetzen; keine automatische Wiederverwendung in BIO/o6_2/20/21.",
+      "refs": [
+        "current_dependencies",
+        "legacy_dependencies",
+        "native_projection"
+      ]
+    },
+    {
+      "id": "host_schema_not_browser_editor_fields",
+      "category": "ui_contract",
+      "description_de": "Host-Kohorten-/Seasonal-Collection hat item_schema, aber item_fields=(). Reviewcatalog serialisiert nur item_fields; generischer Browser baut daraus leeres Objekt und ruft weiterhin Szenario-Reviewendpoint auf. Neue aktuelle Kohorten sind daher Backend-Funktion, keine vollständig verdrahtete Browsererfassung.",
+      "refs": [
+        "host_collection_registry",
+        "browser_schema_projection",
+        "browser_object_builder",
+        "browser_object_fields",
+        "browser_legacy_endpoints",
+        "api_routes"
+      ]
+    },
+    {
+      "id": "current_facts_snapshot_bound_not_auto_source",
+      "category": "implementation_gap",
+      "description_de": "Backend-Pin unterstützt getrennt scenario/current_fact und nur Quellenarten farmer_statement/expert_estimate. Bestätigte Produktentscheidung Auto-eigener dokumentierter Snapshot ist im hier geprüften Tiermodell noch keine implementierte Quellenart/Funktion; dies fordert keine erneute Quellenpräzedenzentscheidung.",
+      "refs": [
+        "evidence_models",
+        "current_scope",
+        "current_write",
+        "event_persistence"
+      ]
+    },
+    {
+      "id": "current_o6_3_full_promotion_not_ready",
+      "category": "domain_admission",
+      "description_de": "Aktueller Clause-Slice weist RGVE/Basisverletzungen aus; äußerer o6_3-Status bleibt missing_data, promotion_ready=false. Jahresnachweis und rechtliche/andere Scopeblocker sind offen; technische Inventar-/Ereignisgrundlagen müssen nicht auf alle fachlichen Fragen warten.",
+      "refs": [
+        "result_not_promoted",
+        "result_metadata"
+      ]
+    },
+    {
+      "id": "raw_category_cattle_average_not_projected",
+      "category": "source_mapping",
+      "description_de": "Separate AMA-RINDER-Rawtabelle enthält kategorisierten rinderdurchschnitt; canonical Builder verwendet nur TIERLISTE-Counts und liest diese RINDER-Tabelle nicht. Eine Nutzung als current Kohorte braucht bestätigte Kategorie-/Zeitraum-/Einheitszuordnung, keine freie Umbenennung.",
+      "refs": [
+        "raw_cattle_average",
+        "source_counts",
+        "native_projection",
+        "count_verification"
+      ]
+    },
+    {
+      "id": "legacy_numeric_semantic_bounds_not_enforced",
+      "category": "validation_implementation",
+      "description_de": "Generische Livestock-Overlays prüfen int/finite number, nicht für alle registrierten Tierwerte die fachlichen Grenzen. Negative animal_count/gve/days und Prozent-/24h-/Jahrestagobergrenzen haben keinen speziellen Validator; _NON_NEGATIVE_SUFFIXES betrifft nur Flächen/kg-ha. Source-bound CohortEvidence ist dagegen strikt nonnegative.",
+      "refs": [
+        "legacy_numeric_bounds",
+        "legacy_coercion_bounds",
+        "quantity_validation",
+        "cohort_model"
+      ]
+    }
+  ],
+  "references": {
+    "legacy_identity": {
+      "repo_rel_path": "backend/app/api/livestock_inputs.py",
+      "line_start": 7,
+      "line_end": 28,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "deliberate differences: `group_id` is derived from the canonical `species`"
+    },
+    "legacy_identity_resolution": {
+      "repo_rel_path": "backend/app/api/livestock_inputs.py",
+      "line_start": 270,
+      "line_end": 332,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "def build_livestock_groups_with_identity(payload: dict) -> list[tuple[dict, bool]]:"
+    },
+    "legacy_missing": {
+      "repo_rel_path": "backend/app/api/livestock_inputs.py",
+      "line_start": 265,
+      "line_end": 267,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "def _leaf_baseline(group: dict, variable_path: str) -> tuple[str, object]:"
+    },
+    "legacy_registry": {
+      "repo_rel_path": "backend/app/api/reference/livestock_field_registry_v1.csv",
+      "line_start": 1,
+      "line_end": 12,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "variable_path,value_type,display_label,allow_farmer_statement,allow_expert_estimate,source_note"
+    },
+    "legacy_writes": {
+      "repo_rel_path": "backend/app/api/livestock_inputs.py",
+      "line_start": 348,
+      "line_end": 391,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "*,"
+    },
+    "legacy_overlay": {
+      "repo_rel_path": "backend/app/api/check_engine.py",
+      "line_start": 459,
+      "line_end": 535,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "def _apply_livestock_overlays("
+    },
+    "legacy_dependencies": {
+      "repo_rel_path": "backend/app/api/reference/measure_livestock_dependency_v1.csv",
+      "line_start": 1,
+      "line_end": 15,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "measure_id,variable_path,source_note"
+    },
+    "source_counts": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 1114,
+      "line_end": 1139,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "tier_rows = AmaRawD619_23_ST_TIERLISTE.objects.filter(import_run_id=import_run_id).values(",
+      "excerpt": [
+        "    tier_rows = AmaRawD619_23_ST_TIERLISTE.objects.filter(import_run_id=import_run_id).values(",
+        "        \"hauptbetriebsnummer\",",
+        "        \"mfa_jahr\",",
+        "        \"tierart_bezeichnung\",",
+        "        \"anzahl_stichtag\",",
+        "        \"anzahl_durchschnitt\",",
+        "    )",
+        "    for row in tier_rows.iterator(chunk_size=5000):",
+        "        key = resolve_key(row[\"hauptbetriebsnummer\"], row[\"mfa_jahr\"])",
+        "        if key is None:",
+        "            continue",
+        "        context = contexts[key]",
+        "        raw_label = clean_nullable_text(row[\"tierart_bezeichnung\"])",
+        "        if raw_label is not None:",
+        "            context[\"tierliste_labels\"].append(raw_label)",
+        "        species = map_species(row[\"tierart_bezeichnung\"])",
+        "        row_has_animals = derive_tierliste_has_animals_row(row)",
+        "        context[\"tierliste_has_animals\"] = merge_optional_bool(context[\"tierliste_has_animals\"], row_has_animals)",
+        "        value = select_tier_count(row)",
+        "        if value is None:",
+        "            continue",
+        "        context[\"species_counts\"][species] += value",
+        "        gve_factor = lookup_gve_factor(row[\"tierart_bezeichnung\"])",
+        "        if gve_factor is not None:",
+        "            context[\"species_gve\"][species] += value * gve_factor",
+        "            context[\"species_gve_present\"].add(species)"
+      ]
+    },
+    "source_count_selection": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 384,
+      "line_end": 390,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "def select_tier_count(row: dict) -> float | None:",
+      "excerpt": [
+        "def select_tier_count(row: dict) -> float | None:",
+        "    value = parse_decimal(row[\"anzahl_stichtag\"])",
+        "    if value is None:",
+        "        value = parse_decimal(row[\"anzahl_durchschnitt\"])",
+        "    if value is None or value < 0:",
+        "        return None",
+        "    return value"
+      ]
+    },
+    "source_species_factors": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 350,
+      "line_end": 381,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "def map_species(raw_value: str | None) -> str:",
+      "excerpt": [
+        "def map_species(raw_value: str | None) -> str:",
+        "    text = normalize_text(raw_value)",
+        "    if \"rind\" in text:",
+        "        return \"cattle\"",
+        "    if \"schwein\" in text:",
+        "        return \"pigs\"",
+        "    if \"schaf\" in text or \"zieg\" in text:",
+        "        return \"sheep_goats\"",
+        "    if \"pferd\" in text or \"pony\" in text or \"esel\" in text or \"equid\" in text:",
+        "        return \"horses\"",
+        "    if \"gefl\" in text or \"huhn\" in text or \"pute\" in text or \"ente\" in text or \"gans\" in text:",
+        "        return \"poultry\"",
+        "    if \"kanin\" in text:",
+        "        return \"rabbits\"",
+        "    return \"other\"",
+        "",
+        "",
+        "def lookup_gve_factor(raw_value: str | None) -> float | None:",
+        "    text = normalize_text(raw_value)",
+        "    if \"rind\" in text:",
+        "        return 1.0",
+        "    if \"schaf\" in text or \"zieg\" in text:",
+        "        return 0.15",
+        "    if \"schwein\" in text:",
+        "        return 0.30",
+        "    if \"pferd\" in text or \"pony\" in text or \"esel\" in text or \"equid\" in text:",
+        "        return 1.0",
+        "    if \"neuweltkamel\" in text:",
+        "        return 0.15",
+        "    if \"zuchtwild\" in text:",
+        "        return 0.15",
+        "    return None"
+      ]
+    },
+    "source_group_build": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 451,
+      "line_end": 497,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "for species in sorted(species_counts.keys()):",
+      "excerpt": [
+        "    for species in sorted(species_counts.keys()):",
+        "        count = int(round(species_counts[species]))",
+        "        if count <= 0:",
+        "            continue",
+        "        gve = round(species_gve[species], 4) if species in species_gve_present else None",
+        "        groups.append(",
+        "            {",
+        "                \"species\": species,",
+        "                \"category\": None,",
+        "                \"animal_count\": count,",
+        "                \"gve\": gve,",
+        "                \"housing\": {",
+        "                    \"housing_type\": None,",
+        "                    \"stall\": {",
+        "                        \"stall_id\": None,",
+        "                        \"stall_area_m2\": None,",
+        "                        \"lying_area_m2\": None,",
+        "                        \"floor_type\": None,",
+        "                        \"bedding_type\": None,",
+        "                        \"daylight_percentage\": None,",
+        "                        \"has_outdoor_area\": None,",
+        "                        \"ventilation_type\": \"unknown\",",
+        "                    },",
+        "                    \"pasture\": {",
+        "                        \"pasture_area_ha\": None,",
+        "                        \"weide_days_per_year\": None,",
+        "                        \"weide_hours_per_day\": None,",
+        "                        \"distance_to_farm_km\": None,",
+        "                        \"water_availability\": None,",
+        "                        \"fencing\": \"unknown\",",
+        "                    },",
+        "                },",
+        "                \"manure\": {",
+        "                    \"manure_type\": \"unknown\",",
+        "                    \"application_technology\": \"unknown\",",
+        "                    \"incorporation_time_hours\": None,",
+        "                    \"application_log_complete\": False,",
+        "                },",
+        "                \"nh3_reduction\": {",
+        "                    \"ammonia_reduction_technology\": None,",
+        "                    \"ammonia_reduction_percent\": None,",
+        "                },",
+        "            }",
+        "        )",
+        "",
+        "    payload[\"livestock\"][\"species_groups\"] = groups",
+        "    payload[\"livestock\"][\"has_livestock\"] = bool(groups)"
+      ]
+    },
+    "source_alp_days": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 1166,
+      "line_end": 1206,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "aal_nrd_rows = AmaRawD619_23_ST_AAL_NRD.objects.filter(import_run_id=import_run_id).values("
+    },
+    "source_alp_application": {
+      "repo_rel_path": "backend/app/api/canonical_builder.py",
+      "line_start": 736,
+      "line_end": 742,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "def apply_alpungstage(payload: dict, context: dict) -> None:"
+    },
+    "generic_projection": {
+      "repo_rel_path": "backend/app/api/recommender.py",
+      "line_start": 323,
+      "line_end": 361,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "def _copy_species_groups(payload: dict) -> list[dict]:"
+    },
+    "generic_livestock_projection": {
+      "repo_rel_path": "backend/app/api/recommender.py",
+      "line_start": 570,
+      "line_end": 580,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "\"livestock\": {"
+    },
+    "raw_individual_nrd": {
+      "repo_rel_path": "backend/app/ama_raw/models.py",
+      "line_start": 111,
+      "line_end": 121,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "ohrmarken_landtext = models.TextField(db_column='Ohrmarken Landtext', null=True, blank=True)",
+      "excerpt": [
+        "    ohrmarken_landtext = models.TextField(db_column='Ohrmarken Landtext', null=True, blank=True)",
+        "    ohrmarken_nummer = models.TextField(db_column='Ohrmarken Nummer', null=True, blank=True)",
+        "    auftriebsdatum = models.TextField(db_column='Auftriebsdatum', null=True, blank=True)",
+        "    abtriebsdatum = models.TextField(db_column='Abtriebsdatum', null=True, blank=True)",
+        "    hoehere_gewalt_abtrieb = models.TextField(db_column='Höhere Gewalt Abtrieb', null=True, blank=True)",
+        "    tierkategorienummer = models.TextField(db_column='Tierkategorienummer', null=True, blank=True)",
+        "    tierkategoriebezeichnung_details = models.TextField(db_column='Tierkategoriebezeichnung Details', null=True, blank=True)",
+        "    geschlecht_tier = models.TextField(db_column='Geschlecht Tier', null=True, blank=True)",
+        "    almtage_oepul = models.TextField(db_column='Almtage (ÖPUL)', null=True, blank=True)",
+        "    geburtsdatum_tier = models.TextField(db_column='Geburtsdatum Tier', null=True, blank=True)",
+        "    datum_der_erstabkalbung = models.TextField(db_column='Datum der Erstabkalbung', null=True, blank=True)"
+      ]
+    },
+    "raw_individual_sheep": {
+      "repo_rel_path": "backend/app/ama_raw/models.py",
+      "line_start": 141,
+      "line_end": 149,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "tierart_bezeichnung = models.TextField(db_column='Tierart Bezeichnung', null=True, blank=True)",
+      "excerpt": [
+        "    tierart_bezeichnung = models.TextField(db_column='Tierart Bezeichnung', null=True, blank=True)",
+        "    tierkategoriebezeichnung_details = models.TextField(db_column='Tierkategoriebezeichnung Details', null=True, blank=True)",
+        "    ohrmarke = models.TextField(db_column='Ohrmarke', null=True, blank=True)",
+        "    geschlecht_tier = models.TextField(db_column='Geschlecht Tier', null=True, blank=True)",
+        "    geburtsdatum_tier = models.TextField(db_column='Geburtsdatum Tier', null=True, blank=True)",
+        "    gemolken = models.TextField(db_column='Gemolken', null=True, blank=True)",
+        "    auftriebsdatum = models.TextField(db_column='Auftriebsdatum', null=True, blank=True)",
+        "    abtriebsdatum = models.TextField(db_column='Abtriebsdatum', null=True, blank=True)",
+        "    alpungstage = models.TextField(db_column='Alpungstage', null=True, blank=True)"
+      ]
+    },
+    "raw_individual_cattle": {
+      "repo_rel_path": "backend/app/ama_raw/models.py",
+      "line_start": 211,
+      "line_end": 222,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "rassencode = models.TextField(db_column='Rassencode', null=True, blank=True)",
+      "excerpt": [
+        "    rassencode = models.TextField(db_column='Rassencode', null=True, blank=True)",
+        "    rassenbezeichnung = models.TextField(db_column='Rassenbezeichnung', null=True, blank=True)",
+        "    kennzeichnung = models.TextField(db_column='Kennzeichnung', null=True, blank=True)",
+        "    geschlecht_tier = models.TextField(db_column='Geschlecht Tier', null=True, blank=True)",
+        "    geburtsdatum_tier = models.TextField(db_column='Geburtsdatum Tier', null=True, blank=True)",
+        "    name_des_tieres = models.TextField(db_column='Name des Tieres', null=True, blank=True)",
+        "    abgangsdatum = models.TextField(db_column='Abgangsdatum', null=True, blank=True)",
+        "    freigabe = models.TextField(db_column='Freigabe', null=True, blank=True)",
+        "    ablehnung = models.TextField(db_column='Ablehnung', null=True, blank=True)",
+        "    ersatztier = models.TextField(db_column='Ersatztier', null=True, blank=True)",
+        "    ersatztierdatum = models.TextField(db_column='Ersatztierdatum', null=True, blank=True)",
+        "    ersatztier_von = models.TextField(db_column='Ersatztier von', null=True, blank=True)"
+      ]
+    },
+    "raw_tierliste": {
+      "repo_rel_path": "backend/app/ama_raw/models.py",
+      "line_start": 327,
+      "line_end": 337,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "class AmaRawD619_23_ST_TIERLISTE(RawAmaRow):",
+      "excerpt": [
+        "class AmaRawD619_23_ST_TIERLISTE(RawAmaRow):",
+        "    bezirksbauernkammer_nummer = models.TextField(db_column='Bezirksbauernkammer Nummer', null=True, blank=True)",
+        "    bezirksbauernkammer_bezeichnung = models.TextField(db_column='Bezirksbauernkammer Bezeichnung ', null=True, blank=True)",
+        "    hauptbetriebsnummer = models.TextField(db_column='Hauptbetriebsnummer', null=True, blank=True)",
+        "    teilbetriebsnummer = models.TextField(db_column='Teilbetriebsnummer', null=True, blank=True)",
+        "    tierkategorienummer = models.TextField(db_column='Tierkategorienummer', null=True, blank=True)",
+        "    tierart_bezeichnung = models.TextField(db_column='Tierart Bezeichnung', null=True, blank=True)",
+        "    tierkategoriebezeichnung_details = models.TextField(db_column='Tierkategoriebezeichnung Details', null=True, blank=True)",
+        "    anzahl_stichtag = models.TextField(db_column='Anzahl Stichtag', null=True, blank=True)",
+        "    anzahl_durchschnitt = models.TextField(db_column='Anzahl Durchschnitt', null=True, blank=True)",
+        "    mfa_jahr = models.TextField(db_column='MFA_Jahr', null=True, blank=True)"
+      ]
+    },
+    "raw_individual_tw": {
+      "repo_rel_path": "backend/app/ama_raw/models.py",
+      "line_start": 353,
+      "line_end": 359,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "anzahl_ohrmarken_stallhaltung_bei_rindern = models.TextField(db_column='Anzahl Ohrmarken Stallhaltung bei Rindern', null=True, blank=True)",
+      "excerpt": [
+        "    anzahl_ohrmarken_stallhaltung_bei_rindern = models.TextField(db_column='Anzahl Ohrmarken Stallhaltung bei Rindern', null=True, blank=True)",
+        "    ohrmarken_stallhaltung_bei_rindern = models.TextField(db_column='Ohrmarken Stallhaltung bei Rindern', null=True, blank=True)",
+        "    anzahl_teilnahmebedingung_schweinehaltung_bei_ferkeln_ab_8_bis_32kg_lebendgewicht_nicht_einhaltbar = models.TextField(db_column='Anzahl Teilnahmebedingung Schweinehaltung bei Ferkeln ab 8 bis 32kg Lebendgewicht nicht einhaltbar', null=True, blank=True)",
+        "    anzahl_teilnahmebedingung_schweinehaltung_bei_jung_und_mastschweinen_ab_32kg_lebendgewicht_nicht_einhaltbar = models.TextField(db_column='Anzahl Teilnahmebedingung Schweinehaltung bei Jung- und Mastschweinen ab 32kg Lebendgewicht nicht einhaltbar', null=True, blank=True)",
+        "    anzahl_teilnahmebedingung_schweinehaltung_bei_zucht_und_gedeckten_jungsauen_ab_50kg_lebendgewicht_nicht_einhaltbar = models.TextField(db_column='Anzahl Teilnahmebedingung Schweinehaltung bei Zucht- und gedeckten Jungsauen ab 50kg Lebendgewicht nicht einhaltbar', null=True, blank=True)",
+        "    anzahl_ohrmarken_weide_bei_rindern = models.TextField(db_column='Anzahl Ohrmarken Weide bei Rindern', null=True, blank=True)",
+        "    ohrmarken_weide_bei_rindern = models.TextField(db_column='Ohrmarken Weide bei Rindern', null=True, blank=True)"
+      ]
+    },
+    "raw_lineage": {
+      "repo_rel_path": "backend/app/ama_raw/models.py",
+      "line_start": 15,
+      "line_end": 29,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "source_path = models.TextField()"
+    },
+    "snapshot": {
+      "repo_rel_path": "backend/app/api/models.py",
+      "line_start": 323,
+      "line_end": 339,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "class FarmProfileSnapshot(models.Model):"
+    },
+    "snapshot_upsert": {
+      "repo_rel_path": "backend/app/api/management/commands/build_canonical_profiles.py",
+      "line_start": 52,
+      "line_end": 63,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "for (farm_id, year), payload in sorted(payloads.items()):"
+    },
+    "evidence_models": {
+      "repo_rel_path": "backend/app/api/models.py",
+      "line_start": 7,
+      "line_end": 14,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "class EvidencePurpose(models.TextChoices):"
+    },
+    "livestock_persistence": {
+      "repo_rel_path": "backend/app/api/models.py",
+      "line_start": 129,
+      "line_end": 183,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "class FarmLivestockGroupReviewInput(ReviewEvidenceModel):"
+    },
+    "event_persistence": {
+      "repo_rel_path": "backend/app/api/models.py",
+      "line_start": 193,
+      "line_end": 243,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "class FarmCollectionEventReviewInput(ReviewEvidenceModel):"
+    },
+    "collection_registry": {
+      "repo_rel_path": "backend/app/api/collection_inputs.py",
+      "line_start": 227,
+      "line_end": 244,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "\"oepul.shared.livestock_events\": CollectionFieldDefinition("
+    },
+    "host_collection_registry": {
+      "repo_rel_path": "backend/app/api/collection_inputs.py",
+      "line_start": 295,
+      "line_end": 309,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "# Farm-scoped evidence collections supplement, rather than overwrite, species"
+    },
+    "collection_coercion": {
+      "repo_rel_path": "backend/app/api/collection_inputs.py",
+      "line_start": 351,
+      "line_end": 389,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "def coerce_collection_item(definition: CollectionFieldDefinition, value: object) -> dict:"
+    },
+    "collection_writes": {
+      "repo_rel_path": "backend/app/api/collection_inputs.py",
+      "line_start": 428,
+      "line_end": 499,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "collection_path: str,"
+    },
+    "collection_states": {
+      "repo_rel_path": "backend/app/api/collection_inputs.py",
+      "line_start": 681,
+      "line_end": 700,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "def collection_state_for("
+    },
+    "collection_projection": {
+      "repo_rel_path": "backend/app/api/check_engine.py",
+      "line_start": 539,
+      "line_end": 611,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "def _apply_collection_evidence("
+    },
+    "cohort_model": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft_evidence.py",
+      "line_start": 20,
+      "line_end": 53,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "class CohortEvidence(Group):"
+    },
+    "seasonal_model": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft_evidence.py",
+      "line_start": 56,
+      "line_end": 77,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "class SeasonalPresence(Facts):"
+    },
+    "native_group": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft_contract.py",
+      "line_start": 86,
+      "line_end": 99,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "class Group(Facts):"
+    },
+    "native_duplicate_ids": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft_contract.py",
+      "line_start": 143,
+      "line_end": 151,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "@model_validator(mode=\"after\")"
+    },
+    "historical_model": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft_contract.py",
+      "line_start": 29,
+      "line_end": 42,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "class HistoricalAccess(Facts):"
+    },
+    "native_projection": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 273,
+      "line_end": 293,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "from .heuwirtschaft_contract import Parcel, Group"
+    },
+    "count_verification": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 296,
+      "line_end": 340,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "def _count_verified(cohort: CohortEvidence, context: dict) -> bool:"
+    },
+    "seasonal_assessment": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 341,
+      "line_end": 349,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "seasons = payload.get(\"farm\", {}).get(\"heuwirtschaft\", {}).get(\"seasonal_presence\")"
+    },
+    "seasonal_known": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 378,
+      "line_end": 378,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "return unverified, seasons is not None, incidents"
+    },
+    "completeness_invalidation": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 202,
+      "line_end": 213,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "def _invalidate_inventory_confirmation(kind, path, farm_id, year):"
+    },
+    "completeness_reaffirmation": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 433,
+      "line_end": 451,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "# Recorded collection entries replace their snapshot collection using the"
+    },
+    "current_context": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 67,
+      "line_end": 94,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "def _current_snapshot(farm_id: str) -> tuple[FarmProfileSnapshot, CurrentContext]:"
+    },
+    "current_date_validation": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 216,
+      "line_end": 242,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "def _event_dates_valid(record, context: CurrentContext) -> bool:"
+    },
+    "current_scope": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 99,
+      "line_end": 121,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "farm_id: str, year: int, kind: str, path: str, entity_id: str, event_id: str | None"
+    },
+    "current_write": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 131,
+      "line_end": 166,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "def save_current_fact("
+    },
+    "current_stale": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 328,
+      "line_end": 352,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "def evaluate_current_measure(*, farm_id: str, measure_id: str) -> dict:"
+    },
+    "current_dependencies": {
+      "repo_rel_path": "backend/app/api/reference/heuwirtschaft/current-dependencies.json",
+      "line_start": 4,
+      "line_end": 40,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "\"scalar\": ["
+    },
+    "current_scalar_registry": {
+      "repo_rel_path": "backend/app/api/reference/supplemental_field_registry_v1.csv",
+      "line_start": 17,
+      "line_end": 33,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "farm.heuwirtschaft.contract_start_year,integer,Beginn des Heuwirtschaftsvertrags,true,true,Lab PR #100; backend/policy/heuwirtschaft/heuwirtschaft.rego; current-mode contract only"
+    },
+    "fact_time_role": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 413,
+      "line_end": 418,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "\"source\": record.source,"
+    },
+    "result_not_promoted": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 492,
+      "line_end": 507,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "# Current full eligibility remains gated; the actual clause-slice verdict is"
+    },
+    "result_metadata": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 545,
+      "line_end": 570,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "\"heuwirtschaft\": {"
+    },
+    "native_rgve_policy": {
+      "repo_rel_path": "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+      "line_start": 90,
+      "line_end": 135,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "# MB pp. 2, 5-6; SRL 1.5.5: all RGVE categories, with average cattle counts."
+    },
+    "native_completeness": {
+      "repo_rel_path": "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+      "line_start": 33,
+      "line_end": 48,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "# Current-year context comes from the trusted host, not an editable farm fact."
+    },
+    "native_tierholding": {
+      "repo_rel_path": "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+      "line_start": 191,
+      "line_end": 211,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "collections_known if {"
+    },
+    "native_history": {
+      "repo_rel_path": "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+      "line_start": 238,
+      "line_end": 273,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "history := object.get(hay, \"first_year\", {})"
+    },
+    "native_feeding_due": {
+      "repo_rel_path": "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+      "line_start": 291,
+      "line_end": 318,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "fact_due(id) if id != \"GREEN_FEEDING\""
+    },
+    "native_report": {
+      "repo_rel_path": "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+      "line_start": 525,
+      "line_end": 555,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "reported_rgve := total_rgve if collections_known"
+    },
+    "rgve_table": {
+      "repo_rel_path": "backend/policy/heuwirtschaft_tables.json",
+      "line_start": 31,
+      "line_end": 191,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "\"rgve_rates\": ["
+    },
+    "legacy_gve_derivation": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 2051,
+      "line_end": 2069,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "total_supported_livestock_gve := sum([gve |"
+    },
+    "legacy_days_derivation": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 2071,
+      "line_end": 2092,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "max_supported_grazing_days := max([days |"
+    },
+    "legacy_o6_5": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 621,
+      "line_end": 689,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "o6_5_result := {"
+    },
+    "legacy_o6_20": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1709,
+      "line_end": 1713,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "o6_20_result := c_measure_result(\"o6_20\", ["
+    },
+    "api_routes": {
+      "repo_rel_path": "backend/app/core/urls.py",
+      "line_start": 51,
+      "line_end": 95,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "path(\"api/current/v1/evaluation\", current_evaluation, name=\"current_evaluation_v1\"),"
+    },
+    "browser_legacy_endpoints": {
+      "repo_rel_path": "frontend/src/lib/decision-trace/collection-client.ts",
+      "line_start": 14,
+      "line_end": 17,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "const CATALOG_ENDPOINT_PATH = \"/api/review/v1/event-collection-catalog\""
+    },
+    "browser_schema_projection": {
+      "repo_rel_path": "backend/app/review/adapters/oepul/adapter.py",
+      "line_start": 2120,
+      "line_end": 2135,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "field_registry = tuple("
+    },
+    "browser_object_builder": {
+      "repo_rel_path": "frontend/src/components/decision-trace/event-collection-panel.tsx",
+      "line_start": 197,
+      "line_end": 227,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "const isObject = registryEntry.item_kind === \"object\""
+    },
+    "browser_object_fields": {
+      "repo_rel_path": "frontend/src/components/decision-trace/event-collection-panel.tsx",
+      "line_start": 274,
+      "line_end": 288,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "{action === \"event\" ? ("
+    },
+    "quantity_validation": {
+      "repo_rel_path": "backend/app/api/supplemental_inputs.py",
+      "line_start": 362,
+      "line_end": 424,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "def coerce_value(value, value_type: str, variable_path: str):"
+    },
+    "legacy_blueprint": {
+      "repo_rel_path": "backend/policy/farm_profile_schema_blueprint.json",
+      "line_start": 67,
+      "line_end": 105,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "\"livestock\": {"
+    },
+    "raw_cattle_average": {
+      "repo_rel_path": "backend/app/ama_raw/models.py",
+      "line_start": 307,
+      "line_end": 315,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "class AmaRawD619_23_ST_RINDER(RawAmaRow):"
+    },
+    "legacy_numeric_bounds": {
+      "repo_rel_path": "backend/app/api/supplemental_inputs.py",
+      "line_start": 76,
+      "line_end": 76,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "_NON_NEGATIVE_PATH_SUFFIXES = (\"_area_ha\", \"_flaeche_ha\", \"_kg_per_ha\")"
+    },
+    "legacy_coercion_bounds": {
+      "repo_rel_path": "backend/app/api/livestock_inputs.py",
+      "line_start": 216,
+      "line_end": 224,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "def coerce_livestock_value(value, value_type: str, variable_path: str):"
+    },
+    "legacy_c_policy": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1793,
+      "line_end": 1824,
+      "verified_at_app_hash": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "anchor": "c_measure_result(measure_id, pairs) := {"
+    }
+  },
+  "file_pin_checks": {
+    "backend/app/api/livestock_inputs.py": {
+      "sha256": "7e9dda58031610a078daec312fc180e3b24aae0f7b8e9178572666195cd647d5",
+      "worktree_equals_pin": true,
+      "line_count": 499
+    },
+    "backend/app/api/reference/livestock_field_registry_v1.csv": {
+      "sha256": "a9b6caadb682740ff3675fd6cc7c5b231c978df1b36d0b8860306d5b3ceb2813",
+      "worktree_equals_pin": true,
+      "line_count": 12
+    },
+    "backend/app/api/check_engine.py": {
+      "sha256": "54b8142437a8b564afc27ada8b036b3f1eaa7c81d8e6ae1ae78ae9a30964b49d",
+      "worktree_equals_pin": true,
+      "line_count": 1145
+    },
+    "backend/app/api/reference/measure_livestock_dependency_v1.csv": {
+      "sha256": "8e3a76df8649b9a2c479bf0a208ab1d7692b237ee317c2dcdb4561b59d4885cf",
+      "worktree_equals_pin": true,
+      "line_count": 15
+    },
+    "backend/app/api/canonical_builder.py": {
+      "sha256": "74128e300c65c37d586b431cc3c718e87075afdd565bc0e53f2bef1dbe744342",
+      "worktree_equals_pin": true,
+      "line_count": 1297
+    },
+    "backend/app/api/recommender.py": {
+      "sha256": "7d86e7f94f2cbcd273a21e44f83531fd72ba24bafe947f42ffb98d3a97c8e9a1",
+      "worktree_equals_pin": true,
+      "line_count": 1046
+    },
+    "backend/app/ama_raw/models.py": {
+      "sha256": "ee291b4372fc78eca55c4508b19bfa995552976c1922f10257a7d74ff715a8a6",
+      "worktree_equals_pin": true,
+      "line_count": 427
+    },
+    "backend/app/api/models.py": {
+      "sha256": "ebb13822235d5b36b520a1a7bec74e9cbf90dd0be809b72c5921a31ee2518dba",
+      "worktree_equals_pin": true,
+      "line_count": 452
+    },
+    "backend/app/api/management/commands/build_canonical_profiles.py": {
+      "sha256": "08a68a143d0186b2798559e9e6ac7f013ae54f7b43a002b0d3de313e2d5a2841",
+      "worktree_equals_pin": true,
+      "line_count": 102
+    },
+    "backend/app/api/collection_inputs.py": {
+      "sha256": "02edddd08475981147f42d5681abc2d6900ef5606cbfba9492e07ec76dd67430",
+      "worktree_equals_pin": true,
+      "line_count": 700
+    },
+    "backend/app/api/heuwirtschaft_evidence.py": {
+      "sha256": "91e3dae6a41a8eb96405b5addd520bf1f2882f0666325a816f526417a550f4c6",
+      "worktree_equals_pin": true,
+      "line_count": 157
+    },
+    "backend/app/api/heuwirtschaft_contract.py": {
+      "sha256": "470d6650d8a6d1763e0daeb7e57f5994d5b6373af3caf51e332a977c4ea06b86",
+      "worktree_equals_pin": true,
+      "line_count": 158
+    },
+    "backend/app/api/heuwirtschaft.py": {
+      "sha256": "fc6394ed9a2115ec5ec6739180f5a34ebc99716f3e7f61ab765de09b703b101d",
+      "worktree_equals_pin": true,
+      "line_count": 591
+    },
+    "backend/app/api/current_facts.py": {
+      "sha256": "cfda559a480dc97d6d6006105fae94dad4aa8d368f37711e7595a6dbb6d63a01",
+      "worktree_equals_pin": true,
+      "line_count": 403
+    },
+    "backend/app/api/reference/heuwirtschaft/current-dependencies.json": {
+      "sha256": "cea292928350336998f432e729ef0f6a775825bf0c34f6438a9699c81a6eb67b",
+      "worktree_equals_pin": true,
+      "line_count": 42
+    },
+    "backend/app/api/reference/supplemental_field_registry_v1.csv": {
+      "sha256": "cd25acb132a53d7a89ddd97f0c9ab4f6b5dec12563a624c49c4c3edd295ce6ae",
+      "worktree_equals_pin": true,
+      "line_count": 33
+    },
+    "backend/policy/heuwirtschaft/heuwirtschaft.rego": {
+      "sha256": "31ebd6c7462c84a4cccb5754f9953746905a7102078ed19bd09dcb031c282220",
+      "worktree_equals_pin": true,
+      "line_count": 557
+    },
+    "backend/policy/heuwirtschaft_tables.json": {
+      "sha256": "5906838af94016d276d53f77c0c60102b99327416274d3bf5271ba7115b2f7ef",
+      "worktree_equals_pin": true,
+      "line_count": 243
+    },
+    "backend/policy/oepul_measures.rego": {
+      "sha256": "c0900ece3b883e1362a6ab1d00518be7ad456f6d4e05dba97a01f4eee48bd35a",
+      "worktree_equals_pin": true,
+      "line_count": 2251
+    },
+    "backend/app/core/urls.py": {
+      "sha256": "30098f6c98dbcdfd788342b29404be13aa1d3aba08545f02879f0fccdd455382",
+      "worktree_equals_pin": true,
+      "line_count": 97
+    },
+    "frontend/src/lib/decision-trace/collection-client.ts": {
+      "sha256": "879f2a62de9364e1b2f385bfa9b613d36751c10fd9e211f125d628f1c22bd251",
+      "worktree_equals_pin": true,
+      "line_count": 221
+    },
+    "backend/app/review/adapters/oepul/adapter.py": {
+      "sha256": "e768311108fe420d60b5d569541f218d47d75430e948cc965227461f2b634fdb",
+      "worktree_equals_pin": true,
+      "line_count": 2483
+    },
+    "frontend/src/components/decision-trace/event-collection-panel.tsx": {
+      "sha256": "f97390ab4ae8c5680addf896e082df875e344272e07b04c4d284a3be1bb84fa4",
+      "worktree_equals_pin": true,
+      "line_count": 781
+    },
+    "backend/app/api/supplemental_inputs.py": {
+      "sha256": "8638d6dacfef87a0f7bc6cd43f3216f6946d6d0a32d58d112c78e3dcc0342dfd",
+      "worktree_equals_pin": true,
+      "line_count": 705
+    },
+    "backend/policy/farm_profile_schema_blueprint.json": {
+      "sha256": "768688efd4ef3fd21bf7007d40532dfde77f0699401373371f2dfae75f848792",
+      "worktree_equals_pin": true,
+      "line_count": 121
+    }
+  },
+  "confirmed_product_decisions": [
+    {
+      "decision_de": "Dokumentierte Bestands-/GVE-/RGVE-Aggregate als Betreiber-/Expertenwerte bleiben zulässig. Sie brauchen expliziten fachlichen Scope, Zeitraum/Stichtag, Einheit, Herkunft und Nachweis. Ein vorliegender AMA-Wert oder dessen Abweichung ist allein kein Ablehnungsgrund.",
+      "status": "user_confirmed",
+      "interpretation_de": "Ein freigegebener eingegebener Aggregatwert ist ein asserted input, keine aus Einzelereignissen nachgerechnete Größe. Beides muss sichtbar getrennt bleiben."
+    },
+    {
+      "decision_de": "Das Anlegen neuer Tiere bzw. eines Auto-Tierbestands ist durch die bisherige Flächen-/Auto-Snapshot-Entscheidung noch nicht freigegeben.",
+      "status": "product_question_open",
+      "distinction_de": "Die bestehende Backendoperation erzeugt RGVE-Kohorten-Evidenzereignisse. Sie ist keine automatische Entscheidung für die Anlage eines vollständigen individuellen Tierinventars."
+    },
+    {
+      "decision_de": "Keine allgemeine amtliche Einzeltier-ID-Pflicht für alle Tierarten ableiten. Maßnahme-/Tierart-/Belegabhängige Identität, Kohortenlisten oder bestätigte Aggregate bleiben getrennte mögliche Datenverträge.",
+      "status": "scope_constraint",
+      "example_de": "Schweine-Tierliste/Jahresdurchschnitt ist kein automatisch ohrmarkenbasierter Rinder-Registervertrag."
+    },
+    {
+      "decision_de": "BirthDate und historische Zugangs-/Abgangsdaten beschreiben Ereignisse in ihrem tatsächlichen Kalenderjahr; ObservedAt/RecordedAt bestimmt den Zeitpunkt des heutigen Belegs. Nicht alle Datumsfelder auf current_year beschränken.",
+      "status": "temporal_roles_required",
+      "existing_boundary_de": "CurrentFact-event date guard gilt heute generischen beobachteten Ereignissen und spezifischen Cohort-Perioden; historische first_year-Skalare sind getrennt. Ein neuer Geburt-/Lebenslaufvertrag benötigt eigene Datumsrollen."
+    }
+  ],
+  "main_pin_verification": {
+    "status": "root_verified_via_GitHub_fetch_commit",
+    "verified_app_main": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+    "note": "Aktueller GitHub-main-Commit am08.10.2026 abgefragt; alle referenzierten Datei-Bytes separat gegen diesen Commit geprüft."
+  },
+  "date_role_matrix": [
+    {
+      "role": "trusted_current_context",
+      "paths": [
+        "context.current_year",
+        "context.snapshot_year",
+        "context.as_of"
+      ],
+      "semantics_de": "Serverzeit Europe/Vienna + aktueller Snapshot, nicht user-editierbar.",
+      "refs": [
+        "current_context"
+      ]
+    },
+    {
+      "role": "count_reference_date_or_period",
+      "paths": [
+        "livestock.rgve_cohorts[].reference_date",
+        "livestock.rgve_cohorts[].period_start",
+        "livestock.rgve_cohorts[].period_end"
+      ],
+      "semantics_de": "Aktueller Bestandsbezug; spezifische April-/Jan1-as_of-Verifikation.",
+      "refs": [
+        "cohort_model",
+        "count_verification"
+      ]
+    },
+    {
+      "role": "observed_current_event",
+      "paths": [
+        "oepul.shared.livestock_events[].event_date",
+        "farm.heuwirtschaft.seasonal_presence[].present_from",
+        "farm.heuwirtschaft.seasonal_presence[].present_to"
+      ],
+      "semantics_de": "Current-event API verlangt aktuelles Jahr und <=as_of; generischer Guard darf nicht ungeprüft auf zukünftige BirthDate/Historieverträge erweitert werden.",
+      "refs": [
+        "current_date_validation",
+        "seasonal_model"
+      ]
+    },
+    {
+      "role": "historical_first_year",
+      "paths": [
+        "farm.heuwirtschaft.first_year.year",
+        "farm.heuwirtschaft.first_year.rgve_total"
+      ],
+      "semantics_de": "Historischer Vertragsbezugsstand, als aktueller Speicherfakt mit historical_first_year-Rolle erfasst.",
+      "refs": [
+        "historical_model",
+        "fact_time_role",
+        "native_history"
+      ]
+    },
+    {
+      "role": "birth_and_lifetime_history",
+      "paths": [
+        "raw AMA birth/arrival/departure fields (native path not implemented)"
+      ],
+      "semantics_de": "Raw-Modell enthält diese Daten. Neue Nativeverträge fehlen; BirthDate/Historie müssen vom heutigen ObservedAt getrennt sein.",
+      "refs": [
+        "raw_individual_nrd",
+        "raw_individual_sheep",
+        "raw_individual_cattle",
+        "raw_individual_tw"
+      ]
+    }
+  ],
+  "summary": {
+    "path_count": 49,
+    "derived_value_count": 6,
+    "gap_count": 16,
+    "verified_reference_count": 75,
+    "verified_file_count": 25,
+    "all_cited_files_byte_equal_pin": true,
+    "tests_executed": false,
+    "model_calls": 0
+  }
+}

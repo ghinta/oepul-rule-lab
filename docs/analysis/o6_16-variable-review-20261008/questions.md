@@ -1,0 +1,179 @@
+# o6_16: offene Fachentscheidungen
+
+Alle Fragen bleiben offen. Bestehende vorläufige IDs im Sammelissue werden weder entfernt noch geschlossen.
+
+## o6_16-CURRENT_CONFIRMED_CONTRACT_HOST_OPTION_YEAR_AND_EXIT
+
+Welche bestätigten heutigen Verträge, Personen-, MFA-, Antrags-, Zahlungs-, Ausstiegs- und Übernahmeereignisse gelten? Hauptmaßnahme/Wien: Beginn 2023/24/25 bis Ende 2028; AG/Cultan jährlich, Fütterung eigene Verlängerung. host.year/as_of binden; fehlende Teilnahme oder beliebiger Altstart bleiben unbekannt.
+
+**Anlass:** Luna kennt keinen echten Vertrag. Opus access gilt ohne eigene Teilnahme; fehlendes Antragsdatum, Altstart und Fütterungsabmeldung werden nicht vollständig mit dem Betrag verbunden.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 2: „läuft bis 31. Dezember 2028.“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 13: „Der letzte Einstieg in die Maßnahme“.
+
+## o6_16-ORIGINAL_ANNEX_G_GIS_PART_AREAS_KG_HISTORY_AND_APP133
+
+Welche amtliche aktuelle GIS-Geometrie mit Version und Teilflächenjoin bestätigt die Kulisse? Beide Runs haben alle 1.566 Originalzeilen/1.565 KG; das bestätigt keine individuelle Geometrie oder Gültigkeit der Karten bis 2024/ab 2025. Integer, führende Nullen und KG-Grenzen verbindlich definieren. App #133 Frage 2 zur größten KG bleibt offen.
+
+**Anlass:** Luna vertraut in_groundwater_area und freier Gesamtfläche. Opus zählt die ganze KG-Schlagfläche ohne Geometrie. App #131 verwendet unbestätigt die größte KG als Integer und ordnet ihr die gesamte Fläche zu.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 2: „INVEKOS-GIS“.
+
+Original `sources/oepul/legal/20241011_srl_oepul_2023_anhaenge.pdf`, PDF-Seite 38: „bis einschließlich Antragsjahr 2024“.
+
+Original `sources/oepul/legal/20241011_srl_oepul_2023_anhaenge.pdf`, PDF-Seite 39: „ab dem Antragsjahr 2025“.
+
+## o6_16-FIRST_MEASURE_YEAR_MINIMUM_PIG_ONLY_ROUTE_APP133
+
+Welche bestätigte Erstjahreshistorie erlaubt die spätere Teilnahme unter 2 ha? App #133 Fragen 3/4 bleiben offen: erster Mindestnachweis gegenüber heutiger Empfehlung und Fütterungsroute allein außerhalb der Kulisse ab 2025. Vollständigen Acker-Nenner und Jahresdurchschnitt von mindestens 1 GVE/ha belegen; geplant ist keine heutige Teilnahme.
+
+**Anlass:** Luna umgeht das Minimum bei fehlendem Erstjahr. Opus kann ohne bestätigten Hauptvertrag einen Fütterungsbetrag außerhalb berechnen. App #131 prüft 2 ha jedes Jahr; planned=true bleibt missing_data. Keine fachliche Auflösung.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 2: „Im ersten Teilnahmejahr“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 2: „In den Folgejahren kann weniger“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 1: „auch“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 11: „gesamte Ackerfläche ohne Abzüge“.
+
+## o6_16-COMPLETE_NAPV_RECORDS_EVENT_DELAYS_SMALL_CROP_SCOPE
+
+Welche datierten vollständigen Dünge-, Bewässerungs-, Anbau-, Ernte-, Wiege- und Bilanzbelege erfüllen NAPV? Alle bewirtschafteten Flächen für Planung bis 28. Februar und Bilanz bis 31. Jänner Folgejahr; elektronische Schlagereignisse im Gebiet binnen 14 Tagen. 0,30 ha je Kultur und Vergleichbarkeit der Zusammenfassung bestätigen; unbekannt bleibt unbekannt.
+
+**Anlass:** Luna prüft 0,30 ha je Schlag und fordert den zukünftigen Bilanzabschluss bereits heute. Opus summiert Kulturflächen, aber freie Verzögerungswerte, napv_compliant und beliebig alte Pläne bestätigen keine aktuellen Ereignisse. NAPV-Detailquelle fehlt.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 3: „Auf allen bewirtschafteten Flächen“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 3: „maximal 0,30 ha je Kultur“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 3: „innerhalb von 14 Tagen“.
+
+## o6_16-N_ZONE_ACTUAL_MULTI_CROP_CHAIN_CAP_REDUCTION_AND_NMIN
+
+Welche amtliche 80-/60%-Zone und tatsächlichen Kulturketten mit Bedarf, Entzug, Düngung, Bewässerung und Wiegedaten gelten je Schlag/Jahr? Ab 2025 Überschuss über 20 kg, höchstens 100 vor Faktor; davor über 10. Genutzte/ungenutzte Zwischenfrucht, Leguminosen, Vorfruchtwirkung und Mehrjährigkeit unterscheiden. Faktor zwischen Hauptkulturen nur einmal, zusätzliche N-Mengen vollständig übertragen. Nmin mindestens Saldo; fehlende NAPV-/Düngungsrichtlinien erfassen.
+
+**Anlass:** Luna setzt ganz Burgenland auf 80 % und nutzt freien Saldo. Opus simuliert keine Kulturkette; nmin/vegetable_n_deduction ist nicht an tatsächliche Düngung gebunden. Quellen-/Jahresbezug der Folgekultur bleibt offen.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 4: „maximal 100 kg/ha“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 5: „nur einmal“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 5: „auch wenn das Nmin-Analyseergebnis“.
+
+## o6_16-AUTUMN_REAL_DATES_CROP_BREAKUP_AND_GRENING_JOIN
+
+Welche tatsächlichen Ernte-, Umbruch-, Folgeanbau- und Begrünungsereignisse bestätigen die Herbstpflicht? Auslöser: Überschuss über 30 kg, über 0,30 ha Gemüse/Kürbis oder Umbruch vor 15. November. Späte Ernte nach 30. September nicht pauschal auf Ackerfutterumbruch übertragen. o6_6/o6_7 mit konkreter Variante/Schlagkonformität verbinden; alte oder zukünftige Saat bestätigt heute nichts.
+
+**Anlass:** Luna ignoriert Gemüse-/Umbruch- und Späterntescopes. Opus akzeptiert cover_crop.is_used plus Maßnahmenstring oder beliebig altes Folgesaatdatum als Erfüllung.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 4: „bis 15. November“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 4: „jedoch nicht die“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 4: „Feldgemüse oder Kürbis“.
+
+## o6_16-TRAINING_REAL_PERSON_IDS_DEADLINE_CONCEPT_SCOPE
+
+Welche Kurs-, Personen-, Anbieter- und Betriebsbelege mit echtem Datum, Themen, Stunden, Ersatz und Anrechnung gelten für zehn Stunden bis 31.12.2026 und einmaliges Gewässerschutzkonzept? Noch offene Pflicht nicht verletzt, zukünftiger Kurs nicht erfüllt. Doppelte Kurs-ID und maßgebliche Tätigkeit prüfen; Wiener drei Stunden zusätzlich.
+
+**Anlass:** Luna blockiert bereits im Oktober wegen fehlender Stunden. Opus unterscheidet offene Frist, zählt aber doppelte IDs, unbestätigte Rollen und zukünftige Dezemberkurse als erfüllt; prüft nur year.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 7: „Mindestausmaß von 10 Stunden“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 7: „an die geschulte Person gebunden“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 7: „Doppelanrechnungen“.
+
+## o6_16-MFA2026_SOIL_BASE_SAMPLE_IDS_CHRONOLOGY_PARAMETERS_PROJECT
+
+Welche vollständige MFA-2026-Gebietsfläche bildet unabhängig von Prämie/Nutzung die Probenzahl je angefangene fünf Hektar? Probe-ID, Ort, Entnahme, Laboreingang, Akkreditierung, N/P/K/pH/Humus, Methode, GIS-Zuordnung und Herkunft belegen. Keine fremde Flächenübertragungsprobe oder doppelte ID; nur tatsächliche Nachweise bis Hostdatum. Wiener räumliche/zeitliche Projektvorgaben und zweifache Proben getrennt bestätigen.
+
+**Anlass:** Luna zählt beliebige Probenobjekte und ignoriert submitted_date. Opus zählt doppelte IDs sowie zukünftige Entnahme mit altem Laboreingang; fallback aktuelle Fläche ersetzt MFA 2026. Wiener Projektgeometrie fehlt.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 8: „Mehrfachantrag 2026“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 8: „Die Weitergabe einer Bodenuntersuchung“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 11: „räumlicher und zeitlicher Projektvorgaben“.
+
+## o6_16-PSM_PRODUCT_REGISTER_REAUTHORIZATION_CROP_EVENTS_AND_CODE
+
+Welche datierte amtliche Bentazon-Wiederzulassung und Produkt-, Wirkstoff-, Beizungs- und Schlagereignisse gelten? Vier verbotene Wirkstoffe plus bedingtes Bentazon auf konkreten Kulturen im Gebiet; Sudangras im neuen Merkblattstand. MFA-Codes enden 2026, Verbote bleiben. Registerversion/Schlaggeschichte statt frei gesetztem false oder alleiniger Kulturklasse.
+
+**Anlass:** Luna prüft zu breite oilseed/root-Klassen und exakte Wirkstoffschreibweise ohne Zeit. Opus setzt unbekanntes Bentazon auf false und bewertet Ereignisse ohne Jahr/Stichtag; unbekannte Schutzgebietsflags erhöhen den Zuschlag.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 9: „im Falle der Wiederzulassung“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 9: „Sudangras“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 9: „Ab dem Antragsjahr 2026“.
+
+## o6_16-OOE_ACTUAL_N_WINDOW_SPLIT_IPM_AND_TOPUP_PROOF
+
+Welche tatsächlichen OÖ-Schlagereignisse und verfügbare N-Mengen nach Verlusten bestätigen Sperrfenster 15.10.–15.2., bei Mais bis 21.3., Teilung über 80 kg und verzögerte Freisetzung? Variante 3 ausgeschlossen; Kontrollgang/Warndienst vor PSM mit Beleg. Landeszuschlag braucht bestätigte rechtzeitige Mittel, unknown ist keine Zahlung.
+
+**Anlass:** Luna hat nur globale OÖ-Flags. Opus prüft Monat/Tag auch fremder Jahre und bezahlt bei unbekannten Landesmitteln; boolesche Vorabnachweise sind keine datierten Belege.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 9: „21. März“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 9: „mehr als 80 kg/ha“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 10: „im Vorfeld“.
+
+## o6_16-AG_ID_GIS_HISTORY_TRANSFER_DATED_BAN_CARE_AND_PAYMENT
+
+Welche lagegenaue AG-Erstdeklaration/Übernahme, Ackerzahl höchstens 40, winterharte Mischung ohne Leguminosen oder echter Altbestand und Fristen belegen Teilnahme? Inputsperre ab Erstjahr bis Umbruch/anderer Deklaration, zweijährliche Pflege mit Hostdatum, kein Weiden/Drusch. GLÖZ4, GLÖZ8 bis 2024, MFA2020-Grünland, 20 % Gesamtacker und LSE-only/DIV-Ausnahme als Teilflächen prüfen; keine negativen Abzüge/Überlappung.
+
+**Anlass:** Luna hat unzureichende Jahres-/Pflege-/Flächenflags. Opus akzeptiert altes Saatjahr/freies Erstjahr, beanstandet vor Jahresende fehlende Pflege und prüft keine Ereigniszeitgrenzen; negativer GLÖZ-Abzug erhöht die Prämienfläche.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 10: „lagegenau weitergeführt“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 10: „bis zum Umbruch“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 15: „auf dem betroffenen Flächenteil“.
+
+## o6_16-VIENNA_RECOGNIZED_PROJECT_FULL_TILLAGE_AND_O6_8_SCOPE
+
+Welche Projekt-ID/Version/Teilnahmebestätigung, wissenschaftliche Datenanforderung, Wiener Teilflächen und Bearbeitungsereignisse über den ganzen Vertrag bestätigen den Zuschlag? Ausnahme nach Mais ereignisbezogen; zusätzliche Kurse/Proben. o6_8-MS/DS/Strip-Till und Anhang-L-Fußnote 4 mit konkretem Flächen-/Zahlungsscope bestätigen.
+
+**Anlass:** Luna verlangt Farmregion Wien statt Wiener Flächen. Opus prüft nur aktuellen tillage_type und Projektboolean mit günstiger Datenbereitstellungsannahme; o6_8_premium_excluded ist kein gemeinsamer Zahlungsjoin.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 11: „sowohl für“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 11: „Teilnahmebestätigung“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 15: „auf der Einzelfläche“.
+
+## o6_16-ANNUAL_ALL_PIG_RATIONS_PHASE_COVERAGE_AND_O6_9_EXCLUSION
+
+Welche Jahresdurchschnittsbestände/GVE-Kategorien und vollständigen Schweinerationen mit 88 % TM sowie Rezept-, Hersteller-, Labor- und Technikbelegen gelten? Durchschnitt 157 über Mast/Jungsauen ab 32 kg bis Ende ODER Phasen 170/155/150; andere Klassen 166/125/155/170. Alle tatsächlichen Tiere/Gewichtsphasen, keine freie Kategorie. MB/SRL-Jungsaugrenze 32/50 kg offen bestätigen. Gleichlautende o6_9-Kategorie über echten Vertrag ausschließen.
+
+**Anlass:** Luna ordnet Durchschnitt 155/150 falsch zu und prüft nur die erste Phase alternativ. Opus akzeptiert eine Phase 32–900 kg, GVE-Overrides und unpassende Fütterungsklasse. Rezepte als Boolean, unbestätigter o6_9-String und unverbundene Abmeldung reichen nicht.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 12: „es müssen nicht beide Bedingungen erfüllt werden.“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 12: „tatsächlich durchgeführt“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 13: „gleichlautenden Maßnahmenkategorie“.
+
+## o6_16-CULTAN_ACTUAL_NAGELRAD_EVENT_AMMONIUM_RECORDS_CONTRACTOR
+
+Welche tatsächlichen CUL-Schlag-, Nagelrad-, Ammoniumdepot-, Produktmengen- und Datumsbelege, bei Fremdgeräten Rechnung oder gleichwertige Unterlagen, werden aufgenommen? Mindestens ein Schlag, ab 2025 im Gebiet, jährlicher CUL-Code. Methodenstring ersetzt keinen Nachweis; Jahr/Hostdatum begrenzen tatsächliche Anwendung.
+
+**Anlass:** Luna verbindet parcel_ids nicht vollständig mit Ereignissen. Opus bezahlt CUL mit Methodenstring/recorded-Boolean und sogar zukünftigem 2027-Datum ohne Menge, Ammonium- oder Nagelradbeleg.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 12: „Cultan-Nagelradverfahren“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 13: „gleichwertige geeignete Unterlagen“.
+
+## o6_16-THEORETICAL_AMOUNT_UNKNOWN_ACCESS_DROUGHT_SCOPE_AND_CAPS
+
+Wie werden unbekannte Pflichten, theoretische Prämie, aktuelle Empfehlung und behördliche Sanktion getrennt? Basis-/Trainings-/AG-/Wien-/PSM-/Fütterungs-/CUL-Flächen, 2025-Zugang, Obergrenze, Modulation und Anhang L4 bestätigen. Dürre-Ernteausnahme: tatsächlicher Schlagbezirk, Kulturzeit und Dürregrund; keine Befreiung von N-Kettenpflicht. Zukunftsoption nur begründete Notiz.
+
+**Anlass:** Opus access prüft eine Teilmenge, Prämie bleibt ungebunden; Zahlungs-/Exit-/Kontrollhelper nicht vollständig konsumiert. App Category C bleibt unvollständig; Pilot eligible bestätigt nur einen Zugangsproxy.
+
+Original `sources/oepul/notices/2026/2026-08-05__duerre-2026-erleichterungen-bei-oepul-und-bei-der-ausgleichszulage.html`, HTML-Artikel: „Betriebe mit Flächen in den nachstehend angeführten Bezirken“.
+
+Original `sources/oepul/originals/o6_16_vorbeugender_grundwasserschutz_acker_2026_04.pdf`, PDF-Seite 4: „Auch bei Schadereignissen“.

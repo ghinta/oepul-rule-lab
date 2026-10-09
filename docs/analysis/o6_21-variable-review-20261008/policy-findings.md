@@ -1,0 +1,13 @@
+# Reproduzierbare Original-/Policy-/App-Befunde
+
+Luna lässt ohne Tierliste und sogar ohne beantragte Kategorien 583,20 € bei `eligible=true` stehen. Fehlender Antrag und erloschener Vertrag ändern das nicht. Ein ungültiger Kompostzuschlag erhöht trotz Verstoß den Betrag auf 648 €. Gemischte Miete wird ohne Materialnachweis auch 2024 anerkannt, obwohl das Merkblatt 2025 nennt. Die eigenständige Kälberausnahme wird bei 20 Tagen wegen der allgemeinen 10-Tage-Grenze abgelehnt. `farm.o6_21.year` kann 2029 angeben, während der Betriebsdatenstand 2026 bleibt.
+
+Opus berechnet für drei echte synthetische Ganzjahres-Rinder 3 RGVE und 583,20 €. Ein fehlender Heimstall liefert den Verstoß, lässt denselben Betrag aber stehen. Ein leeres Gebäudeobjekt, fehlende Boxen, unbekannte Boxreferenz oder leere Belegungsgruppe mit null Fläche werden ohne entsprechenden Verstoß zahlbar. TGD-Verstoß bei 11 RGVE lässt 2.138,40 € stehen; fehlendes Qplus bei vier weiblichen Jungrindern lässt 466,56 € stehen. Das sind beobachtete historische Ausgaben, keine fachliche Sanktionseinstufung.
+
+Doppelte identische Ohrmarken erhöhen `category_rgve` von 3 auf 6, während identische Prämienzeilen wegen Set-Semantik beim Betrag 583,20 € bleiben. Die Datenbasis und Zahlungsbasis widersprechen sich; hier wird ausdrücklich keine Verdoppelung des Betrags behauptet. Zulässige fünf Tage kranke Einzelhaltung werden durch `group_housed=false` dennoch ganzjährig ausgeschlossen (388,80 € für übrige zwei Tiere). Die tatsächliche gemeldete Abmeldung eines Tieres zieht korrekt dessen Ganzjahres-RGVE ab.
+
+Der Originalbeispiel-Rechner für 12 Kühe und 12 Jungrinder bei 300 kg liefert 108/43,2 m². Beide Runs wählen genau 500 kg in der unteren 3,6/1,44-m²-Klasse; das ist keine genehmigte Auslegung. Opus nimmt schon aus `alm_driven` statt bestätigter tierbezogener Prämienbeantragung den reduzierten Satz 162 €/RGVE, hier 486 €.
+
+Auch am Stichtag 2. Januar wird das gesamte Jahr als 583,20 € ausgegeben; eine zukünftige Dezember-Abmeldung macht hingegen die heutige Maßnahme ungültig. 2029 bleiben Altvertrag und Satz zahlbar, obwohl der Programmendeparameter 2028 vorhanden ist. Zwei Wiederersuchens-Bools ersetzen Behördenanerkennung. Alle tatsächlichen Jahres-/Register-/Gebäude-/Programm-/Kompostnachweise bleiben offene Eingabeverträge.
+
+Die gepinnte App kennt vier summarische Stallfelder und bleibt sowohl ohne als auch mit diesen Feldern bei `missing_data`. Keine neue Variable, Aliasentscheidung oder ausführbare Regel wurde in die App aufgenommen. Literalprüfung der verwendeten Proposalbelege beweist Auffindbarkeit, keine vollständige normative Ableitung.

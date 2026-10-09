@@ -1,0 +1,11 @@
+# Reproduzierbare Original-/Policy-/App-Befunde
+
+Luna erklärt eine leere Projekt-Schlagliste und einen unbekannten Indikatorcode als zulässig. Für Frische Magerwiese B/schwer gibt es 1.198,80 statt 1.177,20 €/ha aus. 2029 nach Vertragsende bleibt eligible; 270 € Regionalzuschlag bleiben auch bei zwei behaupteten Vergaben. Im Oktober 2026 fordert es den Vernetzungstermin bereits, ab 2027 entfällt die Prüfung vollständig. Vogeltarife sind katalogisiert, aber nicht ausführbar abgefragt.
+
+Opus akzeptiert eine leere Indikatorliste oder das Umstellen eines unerfüllten Indikators auf binding=false. Zukunftspflege 2027 erfüllt den aktuellen Zeitraum, und ein Treffen im Dezember gilt bereits am 8. Oktober als besucht. Ohne requires_regular_care entfällt die Pflicht. Tatsächliche Messwerte, Beobachtungsdatum, Datenbankstruktur und bestätigte $-Parameter fehlen in beiden Eingabemodellen.
+
+Opus kann im Jahr 2024 trotz Vertragsbeginn 2025 1.177,20 € berechnen. Die unveränderte 2029-Probe ergibt dagegen 0 € wegen Pflege-/Zugangsfehlern; sie beweist keine Zahlung nach 2028. within_contract_period bleibt im Aufnahmepfad ungenutzt. Kontrollverweigerung erzeugt eligible=false bei weiterhin 1.177,20 €; Ausstieg und verpasster Zahlungsantrag lassen eligible=true und denselben Betrag. Eine negative GLÖZ-Fläche oder geometrisch gleiche Parzelle mit anderer ID verdoppelt den Betrag auf 2.354,40 €.
+
+Fehlende MFA2025-Basis erlaubt die Zahlung aller 50 ha ohne Zugangskürzung. Für 2023 ist base_rate_not_found sichtbar, der Gesamtbetrag jedoch 0 statt explizit unbekannt. EBBA-Entfernung wird ohne tatsächliche Entfernung bejaht. Zwei EBBA-Codes löschen die berechenbare Basisprämie vollständig. Habitatlisten sind vorhanden, werden aber nicht mit dem tatsächlichen Typ/Art verbunden. Regionale Bestätigung/Antrag/Abmeldung sind stärker geprüft als bei NAT18; reale Datenherkunft und einmalige Zahlungsidentität bleiben offen.
+
+Die App verwendet weiterhin den reinen 1-ha-Flächenproxy: ohne Projekt, Vertrag oder Indikator eligible, bei späterer Teilnahme mit 0,5 ha not_eligible, auch 2029 eligible. Die Quellenzitate sind bewusst als Proxy gekennzeichnet, liefern keine fachliche Aufnahmeentscheidung. Kombinationen, DIV-Quoten, schriftliche Änderungen und Kürzungsallokation bleiben eigene offene Fachfragen.

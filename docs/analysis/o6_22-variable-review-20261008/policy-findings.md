@@ -1,0 +1,15 @@
+# Reproduzierbare Original-/Policy-/App-Befunde
+
+Luna entscheidet Aufnahme allein aus `measure` und freiem `participation_gve >= 2`. Mit falschem eigenem Jahr 2029, fehlendem Antrag und ungeeigneter Haltung bleiben `eligible=true` und 210,60 € stehen. `eligible_gve` ist unabhängig von Stückzahl und Abmeldung. Der Kopfzahlhelper nimmt eine negative Abmeldung als Bestandserhöhung (6 statt 3 GVE). Der Stallhelper fordert 40 % der tatsächlichen vergrößerten Fläche statt nur der geforderten Mindestfläche. Für 220 ha gibt der Modulationshelper 0,9 aus; Opus liefert gewichtet 0,990909… . Die Helpers sind keine vollständige App-Aufnahme-/Prämienentscheidung.
+
+Opus rechnet zehn synthetische Masttiere zu 3 GVE und 210,60 €. Fehlende Person/Erstjahr, fehlende Boxflächen oder unbekannter Haltungstyp lassen denselben gültigen Status/Betrag stehen. `missing_inputs` für Fläche blockiert `measure_valid` nicht. Eine gewählte Durchschnittstierliste ohne Durchschnittszahl fällt still auf aktuellen Besatz zurück. Identische doppelte Gruppen oder negative Abmeldezahl erzeugen 6 GVE und 421,20 €.
+
+Nichtkonforme Ganzjahreshaltung bleibt trotz Gruppenbefund zahlbar. Bei 40 Tieren treten sowohl TGD- als auch Flächenverstöße auf, 842,40 € bleiben stehen. Kupierte Schwänze oder ausdrücklich nicht konformes GVO-Futter erzeugen Zuschlagsverstöße, lassen dennoch 405 € einschließlich Zuschlag stehen. Ohne Kompostmiete werden 275,40 € einschließlich Kompostzuschlag ausgegeben; der explizite Kompoststall dagegen entfernt den Zuschlag (210,60 €). Fachliche Sanktion oder Zahlung wird daraus nicht abgeleitet.
+
+Fünf Tage notwendige kranke Einzelhaltung mit Einstreu werden in Opus korrekt als Ausnahme erkannt. Die Sauen-Zeitfensterfunktion bleibt hingegen unverbunden: außerhalb behauptetem Pflichtfenster werden allgemeine Gruppen- und Flächenbefunde erzeugt. Tatsächliche Deck-/Abferkeltermine und bauliche Übergangsbeurteilung bis 2033 fehlen.
+
+Freiland mit fehlenden Einrichtungs-/Dokumentbools bleibt gültig; frei vergrößerte Rotationsfläche kann 30 GVE auf angeblich 100 ha als unauffällig ausgeben. Zwei Gruppen mit je 3 GVE auf derselben 1-ha-Fläche werden einzeln geprüft (3 GVE/ha), der gemeinsame tatsächliche Besatz wäre 6 GVE/ha. Das Replaysignal belegt die fehlende Aggregation, keine echte Gehegeidentität. Original bis 85/ab 85 überlappt: Luna hat unteren Band-Helper, Opus wählt exakt 85 kg höher. Die Auslegung bleibt offen.
+
+Opus akzeptiert Altvertrag 2029 und behandelt zukünftige Dezember-Abmeldung als heute beendet. Futterprüfung und Zuschlag verwenden freie Bools statt wirklicher Chargen-/Rezept-/Herkunfts-/Alltierartenhistorie. Insbesondere Einzelkomponenten in der Regel >20 % sind nicht dasselbe wie ein aktueller Messwert >20 %; die Helperfunktion ist nicht mit realen Futtermitteln verbunden.
+
+App kennt drei summarische Stallfelder und bleibt auch bei vollständig gelieferten Feldern `missing_data`. Kein App-Alias/-Input/-Regel aufgenommen. Literalquote-Prüfung bestätigt verwendete Proposalbelege, keine normative Vollständigkeit oder Goldqualität.
