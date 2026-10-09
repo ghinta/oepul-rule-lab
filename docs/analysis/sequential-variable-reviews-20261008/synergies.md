@@ -1,5 +1,7 @@
 # Belegte Wiederverwendungskandidaten nach den Einzelprüfungen
 
+Aktuelle Bündelung nach Block 1–7: [Expertenagenda mit zehn Entscheidungsfamilien](../domain-expert-agenda-20261009/README.md) · [Antwortvorlage](../domain-expert-agenda-20261009/answer-template.md). Die folgenden Blocknotizen bleiben als historische Prüfschritte erhalten.
+
 Arbeitsnotizen für die gemeinsame Durchsicht nach den Einzelprüfungen.
 Alle 26 Maßnahmen sind einzeln dokumentiert; diese Kandidaten sind keine fachliche Aufnahmefreigabe.
 Die jeweiligen Fragen im Sammelissue #140 bleiben offen. Zusammengefasst wird

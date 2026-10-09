@@ -1,5 +1,7 @@
 # Gemeinsame Fachklärung nach den Einzelprüfungen
 
+Aktuelle Bündelung nach Block 1–7: [Expertenagenda mit zehn Entscheidungsfamilien](../domain-expert-agenda-20261009/README.md) · [Antwortvorlage](../domain-expert-agenda-20261009/answer-template.md). Die folgenden Blocknotizen bleiben als historische Prüfschritte erhalten.
+
 Alle 26 Maßnahmen sind einzeln dokumentiert. UBB bleibt in Draft #102;
 die übrigen 25 Maßnahmen in Draft #103. Maßnahmenspezifische Vorher-/Nachherwerte,
 Originalbelege, historische Policybeobachtungen und kurze reasons stehen in den
