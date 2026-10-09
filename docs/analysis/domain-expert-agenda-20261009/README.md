@@ -53,6 +53,7 @@ eine gesonderte, noch offene Produktfrage.
 
 ## Arbeitsunterlagen
 
+- [Vorabrecherche mit Lösungsvorschlägen je Thema](../domain-expert-research-20261009/README.md)
 - [Entscheidungskarten mit verbleibenden Unterschieden](decisions.md)
 - [Kurze Antwortvorlage für die Experten](answer-template.md)
 - [Vollständiger Frageindex](question-index.md) und [maschinenlesbare Zuordnung](question-index.json)
