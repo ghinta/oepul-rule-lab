@@ -121,3 +121,22 @@ Alle289 Originalfragen offen, keine App-/Thesisänderung und kein Merge.
 Experten-/Betreiberwerte vor AMA und eigener dokumentierter Auto-Snapshot bleiben
 zugelassen. Restfragen gehen ins Sammelissue140; nächster Block: Kombination,
 Sanktion und Zahlung. Erst nach Fachbestätigung folgen konsumierte konkrete Regeln.
+
+## Vertiefung Block 7: Kombination, Sanktion und Zahlung
+
+Der [Kombinations-/Zahlungsabgleich](../combination-sanction-payment-review-20261009/README.md)
+verbindet alle 26 Maßnahmen mit 158 echten vorhandenen Frageverweisen. Betriebszulässigkeit,
+Pflichtkombination, Einzelflächenprämie, DIV-Kredit, Tier-/Almkategorie und tatsächliche
+Zahlung bleiben getrennt. Historische L 441/J 64 Zellen sowie 80 Nutztierrassen-Tarifpositionen
+sind vollständig erhalten; aktuelle gesamte Matrix, Tarife und individuelle
+Sanktions-/Zahlungsakte bleiben offen. Reihenfolge und gedruckte Rechenwidersprüche
+werden nicht zu Golden-Erwartungen umgedeutet.
+
+Aktuelle generische Einzelprüfung konsumiert keine Kombination/Prämienberechnung;
+Legacy-Paare ändern Einzelstatus nicht. Identische EBW-Schlagdublette verändert
+Basisstatus. Native o6_3 schützt Identität/Zahlen per Pydantic, hält Betrag indikativ
+und die acht Fachblocker offen. Alle 289 Fragen bytegleich. Experten-/Betreiberwerte
+vor AMA, eigener dokumentierter Auto-Snapshot und sichtbare Neuanlageherkunft bleiben
+erhalten. Blöcke 1–7 als Vorbereitung erfasst; gemeinsame Fachentscheidungen und
+Ausnahmen zusammenführen, danach konkrete reviewbare App-Verträge/Adapter/Regeln.
+Kein Merge, keine Thesis- oder Appänderung.

@@ -1,0 +1,2273 @@
+{
+  "schema_version": "block7_app_paths_review.v1",
+  "repo": "ghinta/oepul-recommender",
+  "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+  "review_date": "2026-10-09",
+  "timezone": "Europe/Vienna",
+  "read_only": true,
+  "search_scope": [
+    "backend/app/api/current_facts.py",
+    "backend/app/api/check_engine.py",
+    "backend/app/api/recommender.py",
+    "backend/app/api/combination_matrix.py",
+    "backend/app/api/heuwirtschaft.py",
+    "backend/app/api/heuwirtschaft_contract.py",
+    "backend/policy/oepul_measures.rego",
+    "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+    "backend/policy/heuwirtschaft_tables.json",
+    "backend/app/api/reference/*registry*",
+    "backend/app/review/dto.py",
+    "backend/app/review/adapters/oepul/adapter.py",
+    "frontend/src/components/decision-trace/decision-summary.tsx"
+  ],
+  "paths": [
+    {
+      "path": "data/oepul/kombinationstabelle_2023.csv → combination_checks[]",
+      "definition": "Die vorhandene Tabelle enthält schlagbezogene Paarrelationen mit Quelle/Seite. Der Helper verbindet zwei Einzelstatus auf Betriebsebene; active setzt ausschließlich beide eligible voraus und ändert keine Einzelentscheidung.",
+      "entity": "Maßnahmenpaar je Betriebsjahr; kein parcel_id/Teilflächen-/Tier-Join",
+      "time": "Gepinnte Tabelle 2024-10-11; technische Einzelstatus des abgefragten Szenariojahres",
+      "unit": "relation_symbol/relation_label",
+      "provenance": "Dokumentierte Experten-/Betreibereingaben bleiben zulässig und haben Vorrang vor AMA. Eingabeherkunft ist von rechtlicher Anerkennung, tatsächlich beantragtem Scope und bestätigter Zahlung zu trennen. Dokumentierter Auto-Eigen-Snapshot ist bereits bestätigter Zielvertrag; bestehender Generator setzt ihn noch nicht um.",
+      "refs": [
+        "combination_relation_model",
+        "combination_matrix_lookup",
+        "combination_loader",
+        "combination_post_check",
+        "combination_applicability",
+        "csv_incompatible_ubb_bio",
+        "scenario_all_measures_combination"
+      ],
+      "needed_addition": "Gültige Matrixversion, zulässige fachliche Kombination, tatsächlicher Vertrag/Option sowie räumlicher/zeitlicher Anrechnungs-Scope getrennt verbinden. Paare außerhalb dieser schlagbezogenen Tabelle nicht als verboten behandeln.",
+      "policy_effect": "Reproduziert: UBB+BIO beide eligible, separate relation_label=not_combinable und applicability=active; kein positiver Kombinationsnachweis."
+    },
+    {
+      "path": "/api/current/v1/evaluation → result (single measure)",
+      "definition": "Aktuelle hostgesteuerte Auswertung prüft Snapshot und dokumentierte Current-Fakten, ruft eine Maßnahme auf und gibt result/blockers zurück. Die Paarmatrix wird auf diesem Pfad nicht aufgerufen.",
+      "entity": "Eine ausgewählte Maßnahme eines Betriebs",
+      "time": "Aktuelles Europe/Vienna-Hostjahr, Snapshotdigest",
+      "unit": "status/reasons",
+      "provenance": "Dokumentierte Experten-/Betreibereingaben bleiben zulässig und haben Vorrang vor AMA. Eingabeherkunft ist von rechtlicher Anerkennung, tatsächlich beantragtem Scope und bestätigter Zahlung zu trennen. Dokumentierter Auto-Eigen-Snapshot ist bereits bestätigter Zielvertrag; bestehender Generator setzt ihn noch nicht um.",
+      "refs": [
+        "http_current_route",
+        "http_current_view",
+        "current_snapshot_year_digest",
+        "current_evaluation_dispatch",
+        "current_factual_meta",
+        "single_measure_no_combination"
+      ],
+      "needed_addition": "Vollständige tatsächliche Kombination/Flächen- oder Tierüberschneidung und aktuelle Zahlungsbedingungen benötigen ausdrücklich konsumierte Verträge; kein globaler Freigabe-Bool."
+    },
+    {
+      "path": "data.oepul.measure_decision / normalize_measure_result",
+      "definition": "Die generische Policy gibt ausschließlich Eligibility-, Gründe-, Missing- und Condition-Daten zurück. Der normalisierte Vertrag enthält keine Prämien-/Zahlungsposition, Modulation oder Sanktionsberechnung.",
+      "entity": "Maßnahme/Betriebsjahr, teilweise aggregierte Flächen/Tiergruppen",
+      "time": "Abgefragtes Jahr, im Current-Mode aktueller Snapshot",
+      "unit": "status, ha, GVE; kein EUR-Vertrag",
+      "provenance": "Dokumentierte Experten-/Betreibereingaben bleiben zulässig und haben Vorrang vor AMA. Eingabeherkunft ist von rechtlicher Anerkennung, tatsächlich beantragtem Scope und bestätigter Zahlung zu trennen. Dokumentierter Auto-Eigen-Snapshot ist bereits bestätigter Zielvertrag; bestehender Generator setzt ihn noch nicht um.",
+      "refs": [
+        "generic_policy_result_default",
+        "generic_result_normalization",
+        "measure_policy_opa_call",
+        "adapter_policy_projection"
+      ],
+      "needed_addition": "Vor Implementierung Bruttoindikator, beantragte/anerkannt anrechenbare Einheiten, allgemeine Kürzungen/Kappen sowie Zahlung/Erstattung getrennt fachlich definieren; Regelresultat eligible ist kein bestätigter Zahlungsanspruch.",
+      "policy_effect": "Die beiden heutigen Basis-eligible-Resultate enthalten keine finanziellen Ergebnisfelder; zusätzliche unregistrierte Finanzobjekte gehen bei der allowlist-Projektion verloren."
+    },
+    {
+      "path": "land.parcels[].{parcel_id,area_ha} → o6_19_eligible_area",
+      "definition": "Generischer Parceladapter behält jede Zeile einschließlich doppeltem parcel_id; EBW-Basisproxy summiert eligible land_use je Arrayzeile. Separate Overlay-Identitätskontrolle ersetzt keine Grundbestandsvalidierung.",
+      "entity": "Schlag-ID/Arrayzeile; doppelte Identität kann zweimal in Basisfläche eingehen",
+      "time": "Aktueller synthetischer 2026-Bestand",
+      "unit": "ha",
+      "provenance": "Dokumentierte Experten-/Betreibereingaben bleiben zulässig und haben Vorrang vor AMA. Eingabeherkunft ist von rechtlicher Anerkennung, tatsächlich beantragtem Scope und bestätigter Zahlung zu trennen. Dokumentierter Auto-Eigen-Snapshot ist bereits bestätigter Zielvertrag; bestehender Generator setzt ihn noch nicht um.",
+      "refs": [
+        "adapter_parcel_projection",
+        "adapter_policy_projection",
+        "generic_ebw_sum",
+        "generic_ebw_positive"
+      ],
+      "needed_addition": "Eindeutige Bestandsidentität, echte Teilflächen und Anrechnungsüberlappung vor Eligibility-/Betragsaggregation prüfen; dokumentiert neu angelegte Flächen sichtbar kennzeichnen und nicht mit doppelt importierter Fläche verwechseln.",
+      "policy_effect": "Reproduziert: eine 0,5-ha-Zeile not_eligible; dieselbe Zeile zweimal mit derselben ID ergibt 1,0 ha und eligible. Dies ist eine Basisproxy-/Identitätslücke, keine bereits ausgeführte falsche Zahlungsberechnung."
+    },
+    {
+      "path": "native o6_3 premium_area_ha / indicative_rate_eur_per_ha / indicative_premium_eur",
+      "definition": "Native Teilauswertung klassifiziert beantragte geschnittene Mähwiese/Mähweide bzw. zulässiges Feldfutter; Rate ist jahres-/Tierhaltungs-/Optionsabhängig. amount = round(area*rate*100)/100 nur bei Slice-eligible.",
+      "entity": "Native stabile parcel_id + RGVE-Kohorten; Maßnahmenslice",
+      "time": "2026 in synthetischen Beispielen; historische Basis separat",
+      "unit": "ha / EUR/ha / EUR",
+      "provenance": "Dokumentierte Experten-/Betreibereingaben bleiben zulässig und haben Vorrang vor AMA. Eingabeherkunft ist von rechtlicher Anerkennung, tatsächlich beantragtem Scope und bestätigter Zahlung zu trennen. Dokumentierter Auto-Eigen-Snapshot ist bereits bestätigter Zielvertrag; bestehender Generator setzt ihn noch nicht um.",
+      "refs": [
+        "native_hay_premium_area",
+        "native_hay_annual_rate",
+        "native_hay_indicative_rate",
+        "native_hay_indicative_amount_rounding",
+        "native_hay_rate_rows",
+        "native_hay_excluded_payment_scope",
+        "native_hay_current_gate",
+        "native_hay_full_result_missing_data",
+        "native_hay_meta_slice_and_gates"
+      ],
+      "needed_addition": "Indikativen Bruttobetrag ausdrücklich so anzeigen; nach fachlicher Freigabe weitere Förderfähigkeit, schlagbezogene Kombination, Flächenzugang, Kappen/Modulation/Sanktionen und reale Zahlungen ergänzen. Acht vorhandene Promotionblocker bleiben unverändert.",
+      "policy_effect": "Native OPA: 11 ha*145,8=1603,80 EUR, Option 11*167,4=1841,40 EUR, unbeantragtes 3-ha-Feldfutter ausgeschlossen →8*145,8=1166,40 EUR. Gesamt-App-o6_3 bleibt missing_data; keine Auszahlungsbehauptung."
+    },
+    {
+      "path": "heuwirtschaft_contract.Input → Pydantic validators",
+      "definition": "Vor OPA gilt das vorhandene strikte Pydanticmodell mit allow_inf_nan=False und Nonnegative/ge=0; doppelte parcel_id/group_id werden im Modellvalidator abgelehnt.",
+      "entity": "Native Eingabesammlung",
+      "time": "Aktuelles Faktenmodell",
+      "unit": "float>=0 / eindeutige IDs",
+      "provenance": "Dokumentierte Experten-/Betreibereingaben bleiben zulässig und haben Vorrang vor AMA. Eingabeherkunft ist von rechtlicher Anerkennung, tatsächlich beantragtem Scope und bestätigter Zahlung zu trennen. Dokumentierter Auto-Eigen-Snapshot ist bereits bestätigter Zielvertrag; bestehender Generator setzt ihn noch nicht um.",
+      "refs": [
+        "native_hay_contract_input",
+        "native_hay_finite_nonnegative",
+        "scalar_type_negative_finite",
+        "scalar_negative_quantity_guard"
+      ],
+      "needed_addition": "Vorhandene Typ-/Identitätskontrollen wiederverwenden, fachliche Einheit und Mehrfachanrechnung zusätzlich definieren; keine neue handgeschriebene NaN-Lösung erforderlich.",
+      "policy_effect": "Doppelte native Fläche, negative ha und NaN ha jeweils vor OPA als Pydantic ValidationError reproduziert. Aussage gilt für native o6_3, nicht automatisch für jeden generischen Baselinebestand."
+    },
+    {
+      "path": "DecisionTraceV1.decision / DecisionSummary",
+      "definition": "Reviewadapter konsumiert bisherigen einzelnen Szenariopfad; DTO und UI zeigen Entscheidungsstatus/Gründe/Bedingungen, keinen EUR-Betrag und keine Kombination_checks. eligible wird im Katalog als Teilnahmefähig bezeichnet.",
+      "entity": "Eine Maßnahme; Reviewtrace und Übersichtszelle",
+      "time": "Ausgewähltes gespeichertes Jahr im bisherigen Reviewpfad",
+      "unit": "Status-/Textanzeige",
+      "provenance": "Dokumentierte Experten-/Betreibereingaben bleiben zulässig und haben Vorrang vor AMA. Eingabeherkunft ist von rechtlicher Anerkennung, tatsächlich beantragtem Scope und bestätigter Zahlung zu trennen. Dokumentierter Auto-Eigen-Snapshot ist bereits bestätigter Zielvertrag; bestehender Generator setzt ihn noch nicht um.",
+      "refs": [
+        "actual_review_adapter",
+        "actual_review_endpoint",
+        "trace_decision_dto",
+        "trace_payload_dto",
+        "trace_decision_labels",
+        "frontend_decision_summary",
+        "overview_adapter_farm_all",
+        "overview_adapter_farm_one"
+      ],
+      "needed_addition": "Vollständigkeit des rechtlichen Prüfungsumfangs und Zahlungsvertrages sichtbar darstellen. Keine Behauptung, die heutige Oberfläche zeige fälschlich bereits einen Zahlbetrag oder den nativen o6_3-Indikator."
+    },
+    {
+      "path": "current_fact registry / documented input source / own Auto snapshot",
+      "definition": "Bestehende Eingabedienste registrieren und konsumieren nur freigegebene Pfade mit dokumentierter Herkunft. Prüfdatum und Snapshotdigest sind hostgesteuert. Neuer Zahlungs-/Sanktionsvertrag ist in den geprüften Registries nicht implementiert.",
+      "entity": "Fakt/Schlag/Kohorte/Ereignis, dokumentierte Betreiber-/Expertenquelle",
+      "time": "Snapshotdigest plus eigenständiges fachliches Ereignisdatum",
+      "unit": "vorhandene registrierte Datentypen",
+      "provenance": "Dokumentierte Experten-/Betreibereingaben bleiben zulässig und haben Vorrang vor AMA. Eingabeherkunft ist von rechtlicher Anerkennung, tatsächlich beantragtem Scope und bestätigter Zahlung zu trennen. Dokumentierter Auto-Eigen-Snapshot ist bereits bestätigter Zielvertrag; bestehender Generator setzt ihn noch nicht um.",
+      "refs": [
+        "current_save_fact_registry_controls",
+        "registry_scalar_loader",
+        "registry_collections",
+        "model_sources",
+        "model_snapshot",
+        "auto_scalar_only",
+        "auto_working_copy",
+        "auto_evaluation_run"
+      ],
+      "needed_addition": "Neue Anrechnungs-/Sanktions-/Zahlungstatsachen dokumentiert mit geeignetem Scope zulassen. Herkunft Experte/Betreiber/Auto ist kein automatischer amtlicher Bescheid; eigener dokumentierter Auto-Snapshot bleibt bestätigtes Implementierungsziel, keine erneute Produktfrage."
+    }
+  ],
+  "references": {
+    "http_current_route": {
+      "repo_rel_path": "backend/app/core/urls.py",
+      "line_start": 49,
+      "line_end": 53,
+      "anchor": "path(\"api/check\", check_eligibility),",
+      "end_anchor": "path(\"api/current/v1/fact/deactivate\", current_fact_deactivate, name=\"current_fact_deactivate_v1\"),",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "http_current_view": {
+      "repo_rel_path": "backend/app/api/current_fact_views.py",
+      "line_start": 87,
+      "line_end": 94,
+      "anchor": "@csrf_exempt",
+      "end_anchor": "return _execute(evaluate_current_measure, **body)",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "current_snapshot_year_digest": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 67,
+      "line_end": 95,
+      "anchor": "def _current_snapshot(farm_id: str) -> tuple[FarmProfileSnapshot, CurrentContext]:",
+      "end_anchor": ")",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "current_evaluation_dispatch": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 328,
+      "line_end": 365,
+      "anchor": "def evaluate_current_measure(*, farm_id: str, measure_id: str) -> dict:",
+      "end_anchor": ")",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "current_factual_meta": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 375,
+      "line_end": 403,
+      "anchor": "for item in meta.pop(\"scenario_inputs\", [])",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "measure_policy_opa_call": {
+      "repo_rel_path": "backend/app/api/check_engine.py",
+      "line_start": 870,
+      "line_end": 880,
+      "anchor": "OPA_MEASURE_URL,",
+      "end_anchor": "normalized = normalize_measure_result(",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "adapter_policy_projection": {
+      "repo_rel_path": "backend/app/api/recommender.py",
+      "line_start": 504,
+      "line_end": 592,
+      "anchor": "def adapt_payload_for_measures(payload: dict) -> dict:",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "adapter_parcel_projection": {
+      "repo_rel_path": "backend/app/api/recommender.py",
+      "line_start": 364,
+      "line_end": 397,
+      "anchor": "def _normalize_canonical_parcel(parcel: dict, index: int) -> tuple[dict, bool]:",
+      "end_anchor": "}, identity_is_stable",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "actual_review_adapter": {
+      "repo_rel_path": "backend/app/review/adapters/oepul/adapter.py",
+      "line_start": 1379,
+      "line_end": 1504,
+      "anchor": "def build_decision_trace(self, *, farm_id: str, year: int, measure_id: str) -> DecisionTraceV1:",
+      "end_anchor": ")",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "actual_review_endpoint": {
+      "repo_rel_path": "backend/app/review/views.py",
+      "line_start": 48,
+      "line_end": 85,
+      "anchor": "def decision_trace_v1(request):",
+      "end_anchor": "return JsonResponse(trace.as_dict())",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "registry_scalar_loader": {
+      "repo_rel_path": "backend/app/api/supplemental_inputs.py",
+      "line_start": 131,
+      "line_end": 186,
+      "anchor": "def load_supplemental_field_registry() -> dict[str, SupplementalFieldDefinition]:",
+      "end_anchor": "return registry",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "registry_collections": {
+      "repo_rel_path": "backend/app/api/collection_inputs.py",
+      "line_start": 139,
+      "line_end": 312,
+      "anchor": "_COLLECTION_FIELD_REGISTRY: dict[str, CollectionFieldDefinition] = {",
+      "end_anchor": "def load_collection_field_registry() -> dict[str, CollectionFieldDefinition]:",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "model_sources": {
+      "repo_rel_path": "backend/app/api/models.py",
+      "line_start": 20,
+      "line_end": 62,
+      "anchor": "class FarmReviewInput(ReviewEvidenceModel):",
+      "end_anchor": "return f\"{self.farm_id}:{self.year}:{self.variable_path}\"",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "model_snapshot": {
+      "repo_rel_path": "backend/app/api/models.py",
+      "line_start": 323,
+      "line_end": 346,
+      "anchor": "class FarmProfileSnapshot(models.Model):",
+      "end_anchor": "return f\"{self.farm_id}:{self.year}\"",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "auto_scalar_only": {
+      "repo_rel_path": "backend/app/review/adapters/oepul/scenario_generator.py",
+      "line_start": 60,
+      "line_end": 60,
+      "anchor": "_ALLOWED_VALUE_TYPES = (\"number\", \"integer\")",
+      "end_anchor": "_ALLOWED_VALUE_TYPES = (\"number\", \"integer\")",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "auto_working_copy": {
+      "repo_rel_path": "backend/app/api/scenario_generation.py",
+      "line_start": 131,
+      "line_end": 139,
+      "anchor": "def apply_proposals(measure_payload: dict, proposals: list[GeneratedProposal]) -> dict:",
+      "end_anchor": "return updated",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "auto_evaluation_run": {
+      "repo_rel_path": "backend/app/api/scenario_generation.py",
+      "line_start": 142,
+      "line_end": 227,
+      "anchor": "def build_generated_scenario(",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "combination_relation_model": {
+      "repo_rel_path": "backend/app/api/combination_matrix.py",
+      "line_start": 28,
+      "line_end": 60,
+      "anchor": "class CombinationRelation:",
+      "end_anchor": "return data",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "combination_matrix_lookup": {
+      "repo_rel_path": "backend/app/api/combination_matrix.py",
+      "line_start": 64,
+      "line_end": 99,
+      "anchor": "class CombinationMatrix:",
+      "end_anchor": "return missing_pair_relation(row_measure, col_measure)",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "combination_loader": {
+      "repo_rel_path": "backend/app/api/combination_matrix.py",
+      "line_start": 147,
+      "line_end": 178,
+      "anchor": "def _load_combination_matrix_from_path(path: str) -> CombinationMatrix:",
+      "end_anchor": "return CombinationMatrix(path=resolved_path, relations=tuple(relations))",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "combination_applicability": {
+      "repo_rel_path": "backend/app/api/check_engine.py",
+      "line_start": 906,
+      "line_end": 915,
+      "anchor": "def _combination_applicability(relation, measure_statuses: list[str]) -> str:",
+      "end_anchor": "return \"unknown\"",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "combination_post_check": {
+      "repo_rel_path": "backend/app/api/check_engine.py",
+      "line_start": 918,
+      "line_end": 945,
+      "anchor": "def _build_combination_checks(measure_results: list[dict]) -> list[dict]:",
+      "end_anchor": "return checks",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "scenario_all_measures_combination": {
+      "repo_rel_path": "backend/app/api/check_engine.py",
+      "line_start": 948,
+      "line_end": 974,
+      "anchor": "def evaluate_farm_all_measures(farm_id: str, year: int) -> dict:",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "single_measure_no_combination": {
+      "repo_rel_path": "backend/app/api/check_engine.py",
+      "line_start": 1013,
+      "line_end": 1046,
+      "anchor": "def evaluate_farm_measure_with_basis(",
+      "end_anchor": "return full_result, effective_input, baseline_measure_payload, snapshot",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "arbitrary_payload_combination": {
+      "repo_rel_path": "backend/app/api/check_engine.py",
+      "line_start": 1053,
+      "line_end": 1062,
+      "anchor": "def _measure_check_result(selected_groups: list[str], measure_results: list[dict]) -> dict:",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_hay_contract_input": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft_contract.py",
+      "line_start": 136,
+      "line_end": 158,
+      "anchor": "class Input(Facts):",
+      "end_anchor": "return self",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_hay_finite_nonnegative": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft_contract.py",
+      "line_start": 15,
+      "line_end": 20,
+      "anchor": "Nonnegative = Annotated[float, Field(ge=0)]",
+      "end_anchor": "model_config = ConfigDict(extra=\"forbid\", strict=True, allow_inf_nan=False)",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_projection": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 256,
+      "line_end": 293,
+      "anchor": "def _native_projection(payload: dict, context: dict) -> dict:",
+      "end_anchor": "return native",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_hay_current_gate": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 381,
+      "line_end": 591,
+      "anchor": "def evaluate_current_o6_3(snapshot, context, records, group):",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_hay_slice_result_model": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 60,
+      "line_end": 76,
+      "anchor": "class SliceDecision(Facts):",
+      "end_anchor": "indicative_premium_eur: Nonnegative | None",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_hay_full_result_missing_data": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 499,
+      "line_end": 505,
+      "anchor": "\"status\": \"missing_data\",",
+      "end_anchor": "\"reasons\": [\"heuwirtschaft_promotion_review_required\"],",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_hay_meta_slice_and_gates": {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "line_start": 545,
+      "line_end": 555,
+      "anchor": "\"heuwirtschaft\": {",
+      "end_anchor": "\"annual_evidence_status\": \"open\"",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_hay_premium_area": {
+      "repo_rel_path": "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+      "line_start": 456,
+      "line_end": 456,
+      "anchor": "premium_area_ha := sum([p.area_ha | some p in parcels; applied(p); premium_type(p); dates := object.get(p, [\"operations\", \"cutting_dates\"], null); is_array(dates); count(dates) > 0])",
+      "end_anchor": "premium_area_ha := sum([p.area_ha | some p in parcels; applied(p); premium_type(p); dates := object.get(p, [\"operations\", \"cutting_dates\"], null); is_array(dates); count(dates) > 0])",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_hay_annual_rate": {
+      "repo_rel_path": "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+      "line_start": 458,
+      "line_end": 466,
+      "anchor": "rate := row.rate if {",
+      "end_anchor": "row.no_mower_conditioner == option_requested_bool",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_hay_indicative_rate": {
+      "repo_rel_path": "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+      "line_start": 481,
+      "line_end": 494,
+      "anchor": "indicative_rate := 0 if {",
+      "end_anchor": "else := null",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_hay_indicative_amount_rounding": {
+      "repo_rel_path": "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+      "line_start": 518,
+      "line_end": 523,
+      "anchor": "indicative_premium := round((premium_area_ha * indicative_rate) * 100) / 100 if {",
+      "end_anchor": "else := null",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_hay_excluded_payment_scope": {
+      "repo_rel_path": "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+      "line_start": 549,
+      "line_end": 550,
+      "anchor": "\"scope\": \"measure-specific clause slice; indicative gross rate only\",",
+      "end_anchor": "\"excluded_scope\": [\"general applicant/area eligibility\", \"single-parcel combination matrix\", \"area-growth caps\", \"modulation/caps/sanctions\", \"two-year mountain-meadow management\", \"recognition legal effect\", \"App P1/P2 wiring\"],",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "native_hay_rate_rows": {
+      "repo_rel_path": "backend/policy/heuwirtschaft_tables.json",
+      "line_start": 193,
+      "line_end": 237,
+      "anchor": "\"premium_rates_eur_per_ha\": [",
+      "end_anchor": "\"eligible_combinations\": [",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "generic_policy_result_default": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 20,
+      "line_end": 27,
+      "anchor": "default measure_decision := {",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "generic_ebw_sum": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1964,
+      "line_end": 1969,
+      "anchor": "o6_19_eligible_area := sum([area |",
+      "end_anchor": "])",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "generic_ebw_positive": {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "line_start": 1639,
+      "line_end": 1653,
+      "anchor": "o6_19_result := {",
+      "end_anchor": "o6_19_eligible_area >= 1.0",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "generic_result_normalization": {
+      "repo_rel_path": "backend/app/api/recommender.py",
+      "line_start": 907,
+      "line_end": 1027,
+      "anchor": "def normalize_measure_result(",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "scalar_type_negative_finite": {
+      "repo_rel_path": "backend/app/api/supplemental_inputs.py",
+      "line_start": 362,
+      "line_end": 426,
+      "anchor": "def coerce_value(value, value_type: str, variable_path: str):",
+      "end_anchor": "raise SupplementalInputError(f\"Unsupported value_type '{value_type}' for '{variable_path}'\")",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "scalar_negative_quantity_guard": {
+      "repo_rel_path": "backend/app/api/supplemental_inputs.py",
+      "line_start": 355,
+      "line_end": 359,
+      "anchor": "def _reject_negative_quantity(value, variable_path: str) -> None:",
+      "end_anchor": ")",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "trace_decision_dto": {
+      "repo_rel_path": "backend/app/review/dto.py",
+      "line_start": 98,
+      "line_end": 114,
+      "anchor": "class Decision:",
+      "end_anchor": "reasons: tuple[str, ...]",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "trace_payload_dto": {
+      "repo_rel_path": "backend/app/review/dto.py",
+      "line_start": 480,
+      "line_end": 520,
+      "anchor": "class DecisionTraceV1:",
+      "end_anchor": "return _dataclass_as_dict(self)",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "trace_decision_labels": {
+      "repo_rel_path": "backend/app/review/adapters/oepul/catalog.py",
+      "line_start": 3116,
+      "line_end": 3120,
+      "anchor": "DECISION_STATUS_LABELS: dict[str, str] = {",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "frontend_decision_summary": {
+      "repo_rel_path": "frontend/src/components/decision-trace/decision-summary.tsx",
+      "line_start": 21,
+      "line_end": 74,
+      "anchor": "export function DecisionSummary({ trace }: { trace: DecisionTraceV1 }) {",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "overview_adapter_farm_all": {
+      "repo_rel_path": "backend/app/review/adapters/oepul/adapter.py",
+      "line_start": 1600,
+      "line_end": 1647,
+      "anchor": "def build_farm_all_overview(self, *, farm_id: str, year: int) -> FarmAllOverviewV1:",
+      "end_anchor": ")",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "overview_adapter_farm_one": {
+      "repo_rel_path": "backend/app/review/adapters/oepul/adapter.py",
+      "line_start": 1532,
+      "line_end": 1565,
+      "anchor": "def build_farm_overview(self, *, farm_id: str, year: int) -> FarmOverviewV1:",
+      "end_anchor": ")",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "current_save_fact_registry_controls": {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "line_start": 131,
+      "line_end": 170,
+      "anchor": "def save_current_fact(",
+      "end_anchor": "}",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "csv_incompatible_ubb_bio": {
+      "repo_rel_path": "data/oepul/kombinationstabelle_2023.csv",
+      "line_start": 3,
+      "line_end": 3,
+      "anchor": "o6_1a,1A,o6_1b,1B,,not_combinable,docs/öpul-originale/20241011_srl_oepul_2023_anhaenge.pdf,103,",
+      "end_anchor": "o6_1a,1A,o6_1b,1B,,not_combinable,docs/öpul-originale/20241011_srl_oepul_2023_anhaenge.pdf,103,",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    },
+    "csv_compatible_ubb_hay": {
+      "repo_rel_path": "data/oepul/kombinationstabelle_2023.csv",
+      "line_start": 6,
+      "line_end": 6,
+      "anchor": "o6_1a,1A,o6_3,3,x,compatible,docs/öpul-originale/20241011_srl_oepul_2023_anhaenge.pdf,103,",
+      "end_anchor": "o6_1a,1A,o6_3,3,x,compatible,docs/öpul-originale/20241011_srl_oepul_2023_anhaenge.pdf,103,",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c"
+    }
+  },
+  "file_pin_checks": [
+    {
+      "repo_rel_path": "backend/app/api/check_engine.py",
+      "sha256": "54b8142437a8b564afc27ada8b036b3f1eaa7c81d8e6ae1ae78ae9a30964b49d",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/collection_inputs.py",
+      "sha256": "02edddd08475981147f42d5681abc2d6900ef5606cbfba9492e07ec76dd67430",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/combination_matrix.py",
+      "sha256": "75c26dc818476be6df520a607d9e55ae6b610f57411ee311b3e9ce81bcb3f222",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/current_fact_views.py",
+      "sha256": "8f9e7175e92e76342679cc490ae1ea08767ec39f3eddefcb5142cea2fb8ca918",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/current_facts.py",
+      "sha256": "cfda559a480dc97d6d6006105fae94dad4aa8d368f37711e7595a6dbb6d63a01",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/heuwirtschaft.py",
+      "sha256": "fc6394ed9a2115ec5ec6739180f5a34ebc99716f3e7f61ab765de09b703b101d",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/heuwirtschaft_contract.py",
+      "sha256": "470d6650d8a6d1763e0daeb7e57f5994d5b6373af3caf51e332a977c4ea06b86",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/models.py",
+      "sha256": "ebb13822235d5b36b520a1a7bec74e9cbf90dd0be809b72c5921a31ee2518dba",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/recommender.py",
+      "sha256": "7d86e7f94f2cbcd273a21e44f83531fd72ba24bafe947f42ffb98d3a97c8e9a1",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/reference/heuwirtschaft/source-review.json",
+      "sha256": "6febf927903ca1c81a263856a8e35649be81f64a3835f03b62ab042856b7eb4a",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/reference/livestock_field_registry_v1.csv",
+      "sha256": "a9b6caadb682740ff3675fd6cc7c5b231c978df1b36d0b8860306d5b3ceb2813",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/reference/measure_collection_dependency_v1.csv",
+      "sha256": "7e1b910cd0b7a6900bb3fe6bd1189ab1350d524dab68cb7a434b3852f8eeed5c",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/reference/measure_supplemental_dependency_v1.csv",
+      "sha256": "c4b982fdb0f992aa0289e4bb32e88313465a608f464a3b90e1b984aa7b51fe2c",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/reference/parcel_field_registry_v1.csv",
+      "sha256": "8ecff54eabdf69b6095df2a1d65538e1bcfb4e350051915e3d7963266b1276b6",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/scenario_generation.py",
+      "sha256": "dd3f292690a9682e9ecb9fabfb5f8e38af8f25a7cba05e7dd5293dc1e56fb1d0",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/supplemental_inputs.py",
+      "sha256": "8638d6dacfef87a0f7bc6cd43f3216f6946d6d0a32d58d112c78e3dcc0342dfd",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/api/tests/fixtures/heuwirtschaft/current-example.json",
+      "sha256": "a03a1b9928c17ba2bbe950dbee3945d133e460375b8d54ac494877f0cdf4972f",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/core/urls.py",
+      "sha256": "30098f6c98dbcdfd788342b29404be13aa1d3aba08545f02879f0fccdd455382",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/review/adapters/oepul/adapter.py",
+      "sha256": "e768311108fe420d60b5d569541f218d47d75430e948cc965227461f2b634fdb",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/review/adapters/oepul/catalog.py",
+      "sha256": "d0cb92261815faee4fb3a99133afb2922e3b40eb657d04d79103b2c402604528",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/review/adapters/oepul/scenario_generator.py",
+      "sha256": "7ec1d6829bb88dc008d4063beeb13427888d6a73c1c695c0d99ffdbbcd0b24d5",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/review/dto.py",
+      "sha256": "1ceb4a4416f844f748c2484da7c4382d2e507299ab4fe515ffce333d736a06e3",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/app/review/views.py",
+      "sha256": "cbafebe1b8da1eb4a4eac2745cdad85c0ed102db7617e07caf674788c3ebc5af",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/policy/heuwirtschaft/heuwirtschaft.rego",
+      "sha256": "31ebd6c7462c84a4cccb5754f9953746905a7102078ed19bd09dcb031c282220",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/policy/heuwirtschaft_tables.json",
+      "sha256": "5906838af94016d276d53f77c0c60102b99327416274d3bf5271ba7115b2f7ef",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "backend/policy/oepul_measures.rego",
+      "sha256": "c0900ece3b883e1362a6ab1d00518be7ad456f6d4e05dba97a01f4eee48bd35a",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "data/oepul/kombinationstabelle_2023.csv",
+      "sha256": "4a862db58d9a3661b9ce26982ef163e3a3455f0a771b6006d63183aa97276a97",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    },
+    {
+      "repo_rel_path": "frontend/src/components/decision-trace/decision-summary.tsx",
+      "sha256": "616081417e7d2e595ca875cf30a3e25d99fcf5bcc52e96f431f33d72fe376e25",
+      "pin": "5296108f5756ef1463c25a49d93d4a346e9b5e9c",
+      "byte_equal_to_pin": true
+    }
+  ],
+  "known_gaps": [
+    "Keine allgemeine Prämien-/Zahlungs-/Sanktionsberechnung im geprüften tatsächlichen generischen Policy-/Resultvertrag. Native o6_3 bleibt ausdrücklich indikativer Bruttoslice mit offenen Promotiongates.",
+    "Die aktuelle Einzelmaßnahme/current-Auswertung konsumiert keine schlagbezogene Kombinationsmatrix; bestehende Szenario-All-Checks annotieren Paare ohne Anrechnungsjoin und ohne Einzelstatuskorrektur.",
+    "Keine tatsächlichen Zahlungsbescheide, Kürzungsentscheidungen, Farm-/DB-/Browser-E2E-Auswertung oder Domainfreigabe lagen vor. Beobachtungen sind technische synthetische Diagnosen, keine Golden-Tests.",
+    "Rundungsreihenfolge, Einzelposition-vs-Summenrundung, fachliche Grenzpräzision und Modulation sind nicht als rechtlich geklärt bewertet. Block6 technical-followup dokumentiert gesondert 0,21-vs-3*0,07-Grenzfall; hier wird nichts davon repariert.",
+    "Keine neuen Canonical-Pfade, fachlichen Defaultwerte oder Änderungen an App-/Policy-/Quellen-/Runartefakten. Eigener Auto-Snapshot ist bereits beschlossen; keine erneute Freigabefrage.",
+    "Die gepinnten nativen Rates/Regeln werden technisch reproduziert. SOURCE_CURRENTNESS bleibt offen; daraus folgt keine pauschale Bestätigung des heutigen Rechtsstands oder vollständiger aktueller Prämienkataloge."
+  ],
+  "projection_observations": [
+    {
+      "id": "B7_financial_objects_not_in_generic_projection",
+      "before": {
+        "farm": {
+          "farm_id": "synthetic-block7-farm",
+          "year": 2026,
+          "certifications": {
+            "organic": {
+              "is_certified": true
+            }
+          }
+        },
+        "land": {
+          "arable_area_ha": 3.0,
+          "grassland_area_ha": 0.0,
+          "special_crops_area_ha": 0.0,
+          "parcels": []
+        },
+        "livestock": {},
+        "documentation": {},
+        "ama_additional": {
+          "land": {
+            "fsl": {
+              "aggregate": {
+                "existing_biodiversity_area_ha": 0.3
+              }
+            }
+          }
+        }
+      },
+      "after": {
+        "farm": {
+          "farm_id": "synthetic-block7-farm",
+          "year": 2026,
+          "certifications": {
+            "organic": {
+              "is_certified": true
+            }
+          }
+        },
+        "land": {
+          "arable_area_ha": 3.0,
+          "grassland_area_ha": 0.0,
+          "special_crops_area_ha": 0.0,
+          "parcels": []
+        },
+        "livestock": {},
+        "documentation": {},
+        "ama_additional": {
+          "land": {
+            "fsl": {
+              "aggregate": {
+                "existing_biodiversity_area_ha": 0.3
+              }
+            }
+          }
+        },
+        "funding": {
+          "other_funding": [
+            {
+              "reference": "synthetic-other-funding",
+              "amount_eur": 250.0,
+              "year": 2026,
+              "area_ha": 3.0
+            }
+          ]
+        },
+        "sanctions": {
+          "reported_violation": true,
+          "reduction_percent": 100.0
+        },
+        "payments": {
+          "confirmed_payment_eur": 0.0
+        }
+      },
+      "effective_payload_unchanged": true,
+      "method": "Synthetische ausdrücklich noch nicht registrierte finanzielle Objektfelder zur Prüfung der allowlist-Projektion; keine Behauptung, diese seien vorhandene Canonical-Pfade oder neue fachliche Defaults."
+    }
+  ],
+  "policy_observations": [
+    {
+      "id": "B7_UBB_no_payment_contract",
+      "measure_id": "o6_1a",
+      "source_payload": {
+        "farm": {
+          "farm_id": "synthetic-block7-farm",
+          "year": 2026,
+          "certifications": {
+            "organic": {
+              "is_certified": true
+            }
+          }
+        },
+        "land": {
+          "arable_area_ha": 3.0,
+          "grassland_area_ha": 0.0,
+          "special_crops_area_ha": 0.0,
+          "parcels": []
+        },
+        "livestock": {},
+        "documentation": {},
+        "ama_additional": {
+          "land": {
+            "fsl": {
+              "aggregate": {
+                "existing_biodiversity_area_ha": 0.3
+              }
+            }
+          }
+        }
+      },
+      "input": {
+        "measure_id": "o6_1a",
+        "payload": {
+          "farm": {
+            "farm_id": "synthetic-block7-farm",
+            "year": 2026,
+            "region": {
+              "is_protected_area": null
+            },
+            "certifications": {
+              "organic": {
+                "is_certified": true
+              }
+            }
+          },
+          "land": {
+            "total_area_ha": null,
+            "arable_area_ha": 3.0,
+            "grassland_area_ha": 0.0,
+            "special_crops_area_ha": 0.0,
+            "alpine_pasture_area_ha": null,
+            "parcels": [],
+            "aggregate": {
+              "begruenungsflaeche_ha": null,
+              "existing_biodiversity_area_ha": 0.3,
+              "nitrogen_input_kg_per_ha": null,
+              "tillage_type": null,
+              "soil_cover": null,
+              "mulchsaat_technology_available": null
+            }
+          },
+          "livestock": {
+            "species_groups": []
+          },
+          "documentation": {
+            "nutrient_balance_complete": null
+          },
+          "oepul": {
+            "shared": {
+              "parcels": [],
+              "livestock_events": []
+            },
+            "measures": {
+              "o6_13": {
+                "protected_cultivation_area_ha": null,
+                "parcels": [],
+                "beneficials": []
+              },
+              "o6_15": {
+                "behirtung_days": null
+              }
+            }
+          }
+        },
+        "evaluation_context": {
+          "current_year": 2026,
+          "snapshot_year": 2026,
+          "as_of": "2026-10-09",
+          "snapshot_id": 1,
+          "snapshot_digest": "a4ccdb3713476c6fe73297221d30b6e342b595d6eec68fda986f5f82c824a12b"
+        }
+      },
+      "expected_technical_status": "eligible",
+      "result": {
+        "failed_conditions": [],
+        "measure_id": "o6_1a",
+        "missing_keys": [],
+        "reasons": [
+          "phase1_baseline_check_passed"
+        ],
+        "satisfied_conditions": [
+          {
+            "actual_values": {
+              "payload.land.aggregate.existing_biodiversity_area_ha": 0.3,
+              "payload.land.arable_area_ha": 3.0,
+              "payload.land.grassland_area_ha": 0.0
+            },
+            "code": "biodiversity_min_share_met",
+            "paths": [
+              "payload.land.arable_area_ha",
+              "payload.land.grassland_area_ha",
+              "payload.land.aggregate.existing_biodiversity_area_ha"
+            ]
+          }
+        ],
+        "status": "eligible"
+      },
+      "method": "Unveränderte Produktionsprojektion + offizielles OPA gegen tatsächlichen generischen Query. Synthetisch; kein HTTP-/DB-/Browser-End-to-End und keine Golden-Freigabe."
+    },
+    {
+      "id": "B7_BIO_no_payment_contract",
+      "measure_id": "o6_1b",
+      "source_payload": {
+        "farm": {
+          "farm_id": "synthetic-block7-farm",
+          "year": 2026,
+          "certifications": {
+            "organic": {
+              "is_certified": true
+            }
+          }
+        },
+        "land": {
+          "arable_area_ha": 3.0,
+          "grassland_area_ha": 0.0,
+          "special_crops_area_ha": 0.0,
+          "parcels": []
+        },
+        "livestock": {},
+        "documentation": {},
+        "ama_additional": {
+          "land": {
+            "fsl": {
+              "aggregate": {
+                "existing_biodiversity_area_ha": 0.3
+              }
+            }
+          }
+        }
+      },
+      "input": {
+        "measure_id": "o6_1b",
+        "payload": {
+          "farm": {
+            "farm_id": "synthetic-block7-farm",
+            "year": 2026,
+            "region": {
+              "is_protected_area": null
+            },
+            "certifications": {
+              "organic": {
+                "is_certified": true
+              }
+            }
+          },
+          "land": {
+            "total_area_ha": null,
+            "arable_area_ha": 3.0,
+            "grassland_area_ha": 0.0,
+            "special_crops_area_ha": 0.0,
+            "alpine_pasture_area_ha": null,
+            "parcels": [],
+            "aggregate": {
+              "begruenungsflaeche_ha": null,
+              "existing_biodiversity_area_ha": 0.3,
+              "nitrogen_input_kg_per_ha": null,
+              "tillage_type": null,
+              "soil_cover": null,
+              "mulchsaat_technology_available": null
+            }
+          },
+          "livestock": {
+            "species_groups": []
+          },
+          "documentation": {
+            "nutrient_balance_complete": null
+          },
+          "oepul": {
+            "shared": {
+              "parcels": [],
+              "livestock_events": []
+            },
+            "measures": {
+              "o6_13": {
+                "protected_cultivation_area_ha": null,
+                "parcels": [],
+                "beneficials": []
+              },
+              "o6_15": {
+                "behirtung_days": null
+              }
+            }
+          }
+        },
+        "evaluation_context": {
+          "current_year": 2026,
+          "snapshot_year": 2026,
+          "as_of": "2026-10-09",
+          "snapshot_id": 1,
+          "snapshot_digest": "a4ccdb3713476c6fe73297221d30b6e342b595d6eec68fda986f5f82c824a12b"
+        }
+      },
+      "expected_technical_status": "eligible",
+      "result": {
+        "failed_conditions": [],
+        "measure_id": "o6_1b",
+        "missing_keys": [],
+        "reasons": [
+          "phase1_baseline_check_passed"
+        ],
+        "satisfied_conditions": [
+          {
+            "actual_values": {
+              "payload.farm.certifications.organic.is_certified": true,
+              "payload.land.aggregate.existing_biodiversity_area_ha": 0.3,
+              "payload.land.arable_area_ha": 3.0,
+              "payload.land.grassland_area_ha": 0.0,
+              "payload.land.special_crops_area_ha": 0.0
+            },
+            "code": "biodiversity_min_share_met",
+            "paths": [
+              "payload.farm.certifications.organic.is_certified",
+              "payload.land.arable_area_ha",
+              "payload.land.grassland_area_ha",
+              "payload.land.special_crops_area_ha",
+              "payload.land.aggregate.existing_biodiversity_area_ha"
+            ]
+          }
+        ],
+        "status": "eligible"
+      },
+      "method": "Unveränderte Produktionsprojektion + offizielles OPA gegen tatsächlichen generischen Query. Synthetisch; kein HTTP-/DB-/Browser-End-to-End und keine Golden-Freigabe."
+    },
+    {
+      "id": "B7_EBW_single_half_hectare",
+      "measure_id": "o6_19",
+      "source_payload": {
+        "farm": {
+          "farm_id": "synthetic-block7-farm",
+          "year": 2026,
+          "certifications": {
+            "organic": {
+              "is_certified": true
+            }
+          }
+        },
+        "land": {
+          "arable_area_ha": 3.0,
+          "grassland_area_ha": 0.0,
+          "special_crops_area_ha": 0.0,
+          "parcels": [
+            {
+              "parcel_id": "synthetic-parcel-1",
+              "area_ha": 0.5,
+              "land_use": "arable"
+            }
+          ]
+        },
+        "livestock": {},
+        "documentation": {},
+        "ama_additional": {
+          "land": {
+            "fsl": {
+              "aggregate": {
+                "existing_biodiversity_area_ha": 0.3
+              }
+            }
+          }
+        }
+      },
+      "input": {
+        "measure_id": "o6_19",
+        "payload": {
+          "farm": {
+            "farm_id": "synthetic-block7-farm",
+            "year": 2026,
+            "region": {
+              "is_protected_area": null
+            },
+            "certifications": {
+              "organic": {
+                "is_certified": true
+              }
+            }
+          },
+          "land": {
+            "total_area_ha": null,
+            "arable_area_ha": 3.0,
+            "grassland_area_ha": 0.0,
+            "special_crops_area_ha": 0.0,
+            "alpine_pasture_area_ha": null,
+            "parcels": [
+              {
+                "parcel_id": "synthetic-parcel-1",
+                "area_ha": 0.5,
+                "land_use": "arable",
+                "slope_percent": null,
+                "raw_label": null,
+                "operations": {
+                  "psm_used": null,
+                  "cutting_dates": null,
+                  "fertilizer": {
+                    "mineral_n_kg_per_ha": null,
+                    "organic_n_kg_per_ha": null
+                  }
+                },
+                "is_biodiversity_area": null,
+                "is_nonproductive_area": null,
+                "is_agroforestry_strip": null
+              }
+            ],
+            "aggregate": {
+              "begruenungsflaeche_ha": null,
+              "existing_biodiversity_area_ha": 0.3,
+              "nitrogen_input_kg_per_ha": null,
+              "tillage_type": null,
+              "soil_cover": null,
+              "mulchsaat_technology_available": null
+            }
+          },
+          "livestock": {
+            "species_groups": []
+          },
+          "documentation": {
+            "nutrient_balance_complete": null
+          },
+          "oepul": {
+            "shared": {
+              "parcels": [],
+              "livestock_events": []
+            },
+            "measures": {
+              "o6_13": {
+                "protected_cultivation_area_ha": null,
+                "parcels": [],
+                "beneficials": []
+              },
+              "o6_15": {
+                "behirtung_days": null
+              }
+            }
+          }
+        },
+        "evaluation_context": {
+          "current_year": 2026,
+          "snapshot_year": 2026,
+          "as_of": "2026-10-09",
+          "snapshot_id": 1,
+          "snapshot_digest": "747131434b1aeb99b512b6e59bd249cd7f00bb9499f1aac2a1e72409820b755c"
+        }
+      },
+      "expected_technical_status": "not_eligible",
+      "result": {
+        "failed_conditions": [
+          {
+            "actual_values": {
+              "eligible_parcel_area_sum_ha": 0.5
+            },
+            "code": "minimum_eligible_area_not_met",
+            "paths": [
+              "payload.land.parcels[].area_ha"
+            ]
+          }
+        ],
+        "measure_id": "o6_19",
+        "missing_keys": [],
+        "reasons": [
+          "minimum_eligible_area_not_met"
+        ],
+        "satisfied_conditions": [],
+        "status": "not_eligible"
+      },
+      "method": "Unveränderte Produktionsprojektion + offizielles OPA gegen tatsächlichen generischen Query. Synthetisch; kein HTTP-/DB-/Browser-End-to-End und keine Golden-Freigabe."
+    },
+    {
+      "id": "B7_EBW_duplicate_half_hectare_same_identity",
+      "measure_id": "o6_19",
+      "source_payload": {
+        "farm": {
+          "farm_id": "synthetic-block7-farm",
+          "year": 2026,
+          "certifications": {
+            "organic": {
+              "is_certified": true
+            }
+          }
+        },
+        "land": {
+          "arable_area_ha": 3.0,
+          "grassland_area_ha": 0.0,
+          "special_crops_area_ha": 0.0,
+          "parcels": [
+            {
+              "parcel_id": "synthetic-parcel-1",
+              "area_ha": 0.5,
+              "land_use": "arable"
+            },
+            {
+              "parcel_id": "synthetic-parcel-1",
+              "area_ha": 0.5,
+              "land_use": "arable"
+            }
+          ]
+        },
+        "livestock": {},
+        "documentation": {},
+        "ama_additional": {
+          "land": {
+            "fsl": {
+              "aggregate": {
+                "existing_biodiversity_area_ha": 0.3
+              }
+            }
+          }
+        }
+      },
+      "input": {
+        "measure_id": "o6_19",
+        "payload": {
+          "farm": {
+            "farm_id": "synthetic-block7-farm",
+            "year": 2026,
+            "region": {
+              "is_protected_area": null
+            },
+            "certifications": {
+              "organic": {
+                "is_certified": true
+              }
+            }
+          },
+          "land": {
+            "total_area_ha": null,
+            "arable_area_ha": 3.0,
+            "grassland_area_ha": 0.0,
+            "special_crops_area_ha": 0.0,
+            "alpine_pasture_area_ha": null,
+            "parcels": [
+              {
+                "parcel_id": "synthetic-parcel-1",
+                "area_ha": 0.5,
+                "land_use": "arable",
+                "slope_percent": null,
+                "raw_label": null,
+                "operations": {
+                  "psm_used": null,
+                  "cutting_dates": null,
+                  "fertilizer": {
+                    "mineral_n_kg_per_ha": null,
+                    "organic_n_kg_per_ha": null
+                  }
+                },
+                "is_biodiversity_area": null,
+                "is_nonproductive_area": null,
+                "is_agroforestry_strip": null
+              },
+              {
+                "parcel_id": "synthetic-parcel-1",
+                "area_ha": 0.5,
+                "land_use": "arable",
+                "slope_percent": null,
+                "raw_label": null,
+                "operations": {
+                  "psm_used": null,
+                  "cutting_dates": null,
+                  "fertilizer": {
+                    "mineral_n_kg_per_ha": null,
+                    "organic_n_kg_per_ha": null
+                  }
+                },
+                "is_biodiversity_area": null,
+                "is_nonproductive_area": null,
+                "is_agroforestry_strip": null
+              }
+            ],
+            "aggregate": {
+              "begruenungsflaeche_ha": null,
+              "existing_biodiversity_area_ha": 0.3,
+              "nitrogen_input_kg_per_ha": null,
+              "tillage_type": null,
+              "soil_cover": null,
+              "mulchsaat_technology_available": null
+            }
+          },
+          "livestock": {
+            "species_groups": []
+          },
+          "documentation": {
+            "nutrient_balance_complete": null
+          },
+          "oepul": {
+            "shared": {
+              "parcels": [],
+              "livestock_events": []
+            },
+            "measures": {
+              "o6_13": {
+                "protected_cultivation_area_ha": null,
+                "parcels": [],
+                "beneficials": []
+              },
+              "o6_15": {
+                "behirtung_days": null
+              }
+            }
+          }
+        },
+        "evaluation_context": {
+          "current_year": 2026,
+          "snapshot_year": 2026,
+          "as_of": "2026-10-09",
+          "snapshot_id": 1,
+          "snapshot_digest": "c244c73cad69ac166764acdbb11d0f4f6a9dd19fdedb4321648f21b67cd62dfb"
+        }
+      },
+      "expected_technical_status": "eligible",
+      "result": {
+        "failed_conditions": [],
+        "measure_id": "o6_19",
+        "missing_keys": [],
+        "reasons": [
+          "phase1_baseline_check_passed"
+        ],
+        "satisfied_conditions": [
+          {
+            "actual_values": {
+              "eligible_parcel_area_sum_ha": 1
+            },
+            "code": "minimum_eligible_area_met",
+            "paths": [
+              "payload.land.parcels[].area_ha"
+            ]
+          }
+        ],
+        "status": "eligible"
+      },
+      "method": "Unveränderte Produktionsprojektion + offizielles OPA gegen tatsächlichen generischen Query. Synthetisch; kein HTTP-/DB-/Browser-End-to-End und keine Golden-Freigabe."
+    },
+    {
+      "id": "B7_UBB_extra_unregistered_financial_objects",
+      "measure_id": "o6_1a",
+      "source_payload": {
+        "farm": {
+          "farm_id": "synthetic-block7-farm",
+          "year": 2026,
+          "certifications": {
+            "organic": {
+              "is_certified": true
+            }
+          }
+        },
+        "land": {
+          "arable_area_ha": 3.0,
+          "grassland_area_ha": 0.0,
+          "special_crops_area_ha": 0.0,
+          "parcels": []
+        },
+        "livestock": {},
+        "documentation": {},
+        "ama_additional": {
+          "land": {
+            "fsl": {
+              "aggregate": {
+                "existing_biodiversity_area_ha": 0.3
+              }
+            }
+          }
+        },
+        "funding": {
+          "other_funding": [
+            {
+              "reference": "synthetic-other-funding",
+              "amount_eur": 250.0,
+              "year": 2026,
+              "area_ha": 3.0
+            }
+          ]
+        },
+        "sanctions": {
+          "reported_violation": true,
+          "reduction_percent": 100.0
+        },
+        "payments": {
+          "confirmed_payment_eur": 0.0
+        }
+      },
+      "input": {
+        "measure_id": "o6_1a",
+        "payload": {
+          "farm": {
+            "farm_id": "synthetic-block7-farm",
+            "year": 2026,
+            "region": {
+              "is_protected_area": null
+            },
+            "certifications": {
+              "organic": {
+                "is_certified": true
+              }
+            }
+          },
+          "land": {
+            "total_area_ha": null,
+            "arable_area_ha": 3.0,
+            "grassland_area_ha": 0.0,
+            "special_crops_area_ha": 0.0,
+            "alpine_pasture_area_ha": null,
+            "parcels": [],
+            "aggregate": {
+              "begruenungsflaeche_ha": null,
+              "existing_biodiversity_area_ha": 0.3,
+              "nitrogen_input_kg_per_ha": null,
+              "tillage_type": null,
+              "soil_cover": null,
+              "mulchsaat_technology_available": null
+            }
+          },
+          "livestock": {
+            "species_groups": []
+          },
+          "documentation": {
+            "nutrient_balance_complete": null
+          },
+          "oepul": {
+            "shared": {
+              "parcels": [],
+              "livestock_events": []
+            },
+            "measures": {
+              "o6_13": {
+                "protected_cultivation_area_ha": null,
+                "parcels": [],
+                "beneficials": []
+              },
+              "o6_15": {
+                "behirtung_days": null
+              }
+            }
+          }
+        },
+        "evaluation_context": {
+          "current_year": 2026,
+          "snapshot_year": 2026,
+          "as_of": "2026-10-09",
+          "snapshot_id": 1,
+          "snapshot_digest": "dbc116f221cc0de5fc9bddccbfcd8c918df2c41819e2e9a1be7226b7f215955b"
+        }
+      },
+      "expected_technical_status": "eligible",
+      "result": {
+        "failed_conditions": [],
+        "measure_id": "o6_1a",
+        "missing_keys": [],
+        "reasons": [
+          "phase1_baseline_check_passed"
+        ],
+        "satisfied_conditions": [
+          {
+            "actual_values": {
+              "payload.land.aggregate.existing_biodiversity_area_ha": 0.3,
+              "payload.land.arable_area_ha": 3.0,
+              "payload.land.grassland_area_ha": 0.0
+            },
+            "code": "biodiversity_min_share_met",
+            "paths": [
+              "payload.land.arable_area_ha",
+              "payload.land.grassland_area_ha",
+              "payload.land.aggregate.existing_biodiversity_area_ha"
+            ]
+          }
+        ],
+        "status": "eligible"
+      },
+      "method": "Unveränderte Produktionsprojektion + offizielles OPA gegen tatsächlichen generischen Query. Synthetisch; kein HTTP-/DB-/Browser-End-to-End und keine Golden-Freigabe."
+    }
+  ],
+  "combination_observations": [
+    {
+      "id": "B7_incompatible_pair_retains_individual_eligible",
+      "measure_inputs": [
+        {
+          "measure_id": "o6_1a",
+          "status": "eligible"
+        },
+        {
+          "measure_id": "o6_1b",
+          "status": "eligible"
+        }
+      ],
+      "result": [
+        {
+          "measure_ids": [
+            "o6_1a",
+            "o6_1b"
+          ],
+          "measure_statuses": [
+            "eligible",
+            "eligible"
+          ],
+          "applicability": "active",
+          "relation_label": "not_combinable",
+          "relation_symbol": "",
+          "reason": null,
+          "source": {
+            "path": "docs/öpul-originale/20241011_srl_oepul_2023_anhaenge.pdf",
+            "page": "103",
+            "row_number": 3,
+            "row_source_code": "1A",
+            "col_source_code": "1B",
+            "note": ""
+          }
+        }
+      ],
+      "interpretation": "active bedeutet nur beide Einzelstatus eligible. Unvereinbarkeit bleibt separates relation_label=not_combinable; dieser Helper ändert keinen Einzelstatus und berücksichtigt keine tatsächlichen Vertrags- oder Schlagüberschneidungen.",
+      "method": "Originaler CSV-Loader und beide unveränderten Produktions-Helper isoliert ausgeführt; keine aktuelle HTTP-Auswertung."
+    },
+    {
+      "id": "B7_non_matrix_animal_pair_unresolved",
+      "measure_inputs": [
+        {
+          "measure_id": "o6_1a",
+          "status": "eligible"
+        },
+        {
+          "measure_id": "o6_5",
+          "status": "eligible"
+        }
+      ],
+      "result": [
+        {
+          "measure_ids": [
+            "o6_1a",
+            "o6_5"
+          ],
+          "measure_statuses": [
+            "eligible",
+            "eligible"
+          ],
+          "applicability": "not_evaluated",
+          "relation_label": "not_evaluated",
+          "relation_symbol": "",
+          "reason": "measure_pair_not_in_source_matrix",
+          "source": {
+            "path": "",
+            "page": "",
+            "row_number": null,
+            "row_source_code": "",
+            "col_source_code": "",
+            "note": ""
+          }
+        }
+      ],
+      "interpretation": "Nicht in der schlagbezogenen Quelltabelle enthaltenes Tierpaar bleibt not_evaluated; daraus folgt keine fachliche Unvereinbarkeit oder Auszahlung.",
+      "method": "Originaler CSV-Loader und beide unveränderten Produktions-Helper isoliert ausgeführt; keine aktuelle HTTP-Auswertung."
+    }
+  ],
+  "native_policy_observations": [
+    {
+      "id": "B7_native_indicative_gross_2026",
+      "measure_id": "o6_3",
+      "input": {
+        "context": {
+          "current_year": 2026,
+          "snapshot_year": 2026,
+          "as_of": "2026-10-09"
+        },
+        "farm": {
+          "year": 2026,
+          "heuwirtschaft": {
+            "contract_start_year": 2024,
+            "first_year": {
+              "year": 2024,
+              "mown_meadow_meadow_pasture_ha": 8.0,
+              "rgve_total": 5.0,
+              "fodder_area_ha": 13.0
+            },
+            "participation": {
+              "combined_measure": "o6_1a"
+            },
+            "silage_preparation_and_feeding": false,
+            "feed_fermentation": false,
+            "silage_storage": false,
+            "green_feeding_majority_april_to_september": true,
+            "third_party_cuttings_only_dry_hay": true,
+            "no_mower_conditioner_option": false,
+            "mower_conditioner_used": null,
+            "mower_conditioner_present": null
+          }
+        },
+        "land": {
+          "parcels_complete": true,
+          "parcels": [
+            {
+              "parcel_id": "G1",
+              "area_ha": 8.0,
+              "land_use": "grassland",
+              "located_in_austria": true,
+              "is_applied": true,
+              "grassland_type": "mähwiese",
+              "crop": {
+                "forage_crop_type": null,
+                "is_second_crop": null
+              },
+              "operations": {
+                "cutting_dates": [
+                  "2026-06-01"
+                ],
+                "full_mowing_and_removal": true,
+                "full_grazing": false
+              }
+            },
+            {
+              "parcel_id": "G2",
+              "area_ha": 2.0,
+              "land_use": "grassland",
+              "located_in_austria": true,
+              "is_applied": true,
+              "grassland_type": "dauerweide",
+              "crop": {
+                "forage_crop_type": null,
+                "is_second_crop": null
+              },
+              "operations": {
+                "cutting_dates": [],
+                "full_mowing_and_removal": false,
+                "full_grazing": true
+              }
+            },
+            {
+              "parcel_id": "A1",
+              "area_ha": 3.0,
+              "land_use": "arable",
+              "located_in_austria": true,
+              "is_applied": true,
+              "grassland_type": null,
+              "crop": {
+                "forage_crop_type": "kleegras",
+                "is_second_crop": false
+              },
+              "operations": {
+                "cutting_dates": [
+                  "2026-06-01"
+                ],
+                "full_mowing_and_removal": true,
+                "full_grazing": false
+              }
+            }
+          ]
+        },
+        "livestock": {
+          "species_groups_complete": true,
+          "species_groups": [
+            {
+              "group_id": "C1",
+              "species": "cattle",
+              "rgve_category": "rinder:ab_2_jahre",
+              "animal_count": null,
+              "average_count": 5.0,
+              "kept_in_austria": true
+            }
+          ]
+        },
+        "exceptions": {
+          "recognitions_complete": true,
+          "recognitions": []
+        }
+      },
+      "result": {
+        "adaptation": "issue-97-v1",
+        "basis_failures": [],
+        "current_rgve": 5,
+        "excluded_scope": [
+          "general applicant/area eligibility",
+          "single-parcel combination matrix",
+          "area-growth caps",
+          "modulation/caps/sanctions",
+          "two-year mountain-meadow management",
+          "recognition legal effect",
+          "App P1/P2 wiring"
+        ],
+        "forage_area_ha": 13,
+        "indicative_premium_eur": 1603.8,
+        "indicative_rate_eur_per_ha": 145.8,
+        "measure": "o6_3",
+        "missing_data": [],
+        "notes": [],
+        "premium_area_ha": 11,
+        "raw_violations": [],
+        "rule_sources": {
+          "FERMENTATION": "fermentation-prohibition",
+          "GREEN_FEEDING": "green-feeding-obligation",
+          "HAY_TRANSFER": "hay-transfer-obligation",
+          "MINIMUM_MANAGEMENT": "forage-management",
+          "MOWER_CONDITIONER": "mower-conditioner",
+          "SILAGE": "silage-prohibition",
+          "STORAGE": "silage-storage-prohibition"
+        },
+        "scope": "measure-specific clause slice; indicative gross rate only",
+        "status": "eligible",
+        "violations": []
+      },
+      "interpretation": "Nur normgebundene native Teilauswertung mit indikativer Bruttorate; aktuelle App-Gesamtentscheidung bleibt per geprüftem Hostadapter missing_data, promotion_ready=false und acht offenen Blockern. Keine bestätigte Zahlung.",
+      "method": "Synthetische gepinnte Fixture, Datum angepasst, unveränderte native Produktionsfunktion (relative Importbindung auf identischen Produktionsmodell-Modul aufgelöst), Pydantic-Input und offizielles OPA. Host-DB/-HTTP-Durchlauf nicht ausgeführt."
+    },
+    {
+      "id": "B7_native_indicative_option_2026",
+      "measure_id": "o6_3",
+      "input": {
+        "context": {
+          "current_year": 2026,
+          "snapshot_year": 2026,
+          "as_of": "2026-10-09"
+        },
+        "farm": {
+          "year": 2026,
+          "heuwirtschaft": {
+            "contract_start_year": 2024,
+            "first_year": {
+              "year": 2024,
+              "mown_meadow_meadow_pasture_ha": 8.0,
+              "rgve_total": 5.0,
+              "fodder_area_ha": 13.0
+            },
+            "participation": {
+              "combined_measure": "o6_1a"
+            },
+            "silage_preparation_and_feeding": false,
+            "feed_fermentation": false,
+            "silage_storage": false,
+            "green_feeding_majority_april_to_september": true,
+            "third_party_cuttings_only_dry_hay": true,
+            "no_mower_conditioner_option": true,
+            "mower_conditioner_used": false,
+            "mower_conditioner_present": false
+          }
+        },
+        "land": {
+          "parcels_complete": true,
+          "parcels": [
+            {
+              "parcel_id": "G1",
+              "area_ha": 8.0,
+              "land_use": "grassland",
+              "located_in_austria": true,
+              "is_applied": true,
+              "grassland_type": "mähwiese",
+              "crop": {
+                "forage_crop_type": null,
+                "is_second_crop": null
+              },
+              "operations": {
+                "cutting_dates": [
+                  "2026-06-01"
+                ],
+                "full_mowing_and_removal": true,
+                "full_grazing": false
+              }
+            },
+            {
+              "parcel_id": "G2",
+              "area_ha": 2.0,
+              "land_use": "grassland",
+              "located_in_austria": true,
+              "is_applied": true,
+              "grassland_type": "dauerweide",
+              "crop": {
+                "forage_crop_type": null,
+                "is_second_crop": null
+              },
+              "operations": {
+                "cutting_dates": [],
+                "full_mowing_and_removal": false,
+                "full_grazing": true
+              }
+            },
+            {
+              "parcel_id": "A1",
+              "area_ha": 3.0,
+              "land_use": "arable",
+              "located_in_austria": true,
+              "is_applied": true,
+              "grassland_type": null,
+              "crop": {
+                "forage_crop_type": "kleegras",
+                "is_second_crop": false
+              },
+              "operations": {
+                "cutting_dates": [
+                  "2026-06-01"
+                ],
+                "full_mowing_and_removal": true,
+                "full_grazing": false
+              }
+            }
+          ]
+        },
+        "livestock": {
+          "species_groups_complete": true,
+          "species_groups": [
+            {
+              "group_id": "C1",
+              "species": "cattle",
+              "rgve_category": "rinder:ab_2_jahre",
+              "animal_count": null,
+              "average_count": 5.0,
+              "kept_in_austria": true
+            }
+          ]
+        },
+        "exceptions": {
+          "recognitions_complete": true,
+          "recognitions": []
+        }
+      },
+      "result": {
+        "adaptation": "issue-97-v1",
+        "basis_failures": [],
+        "current_rgve": 5,
+        "excluded_scope": [
+          "general applicant/area eligibility",
+          "single-parcel combination matrix",
+          "area-growth caps",
+          "modulation/caps/sanctions",
+          "two-year mountain-meadow management",
+          "recognition legal effect",
+          "App P1/P2 wiring"
+        ],
+        "forage_area_ha": 13,
+        "indicative_premium_eur": 1841.4,
+        "indicative_rate_eur_per_ha": 167.4,
+        "measure": "o6_3",
+        "missing_data": [],
+        "notes": [],
+        "premium_area_ha": 11,
+        "raw_violations": [],
+        "rule_sources": {
+          "FERMENTATION": "fermentation-prohibition",
+          "GREEN_FEEDING": "green-feeding-obligation",
+          "HAY_TRANSFER": "hay-transfer-obligation",
+          "MINIMUM_MANAGEMENT": "forage-management",
+          "MOWER_CONDITIONER": "mower-conditioner",
+          "SILAGE": "silage-prohibition",
+          "STORAGE": "silage-storage-prohibition"
+        },
+        "scope": "measure-specific clause slice; indicative gross rate only",
+        "status": "eligible",
+        "violations": []
+      },
+      "interpretation": "Nur normgebundene native Teilauswertung mit indikativer Bruttorate; aktuelle App-Gesamtentscheidung bleibt per geprüftem Hostadapter missing_data, promotion_ready=false und acht offenen Blockern. Keine bestätigte Zahlung.",
+      "method": "Synthetische gepinnte Fixture, Datum angepasst, unveränderte native Produktionsfunktion (relative Importbindung auf identischen Produktionsmodell-Modul aufgelöst), Pydantic-Input und offizielles OPA. Host-DB/-HTTP-Durchlauf nicht ausgeführt."
+    },
+    {
+      "id": "B7_native_unapplied_arable_area_excluded",
+      "measure_id": "o6_3",
+      "input": {
+        "context": {
+          "current_year": 2026,
+          "snapshot_year": 2026,
+          "as_of": "2026-10-09"
+        },
+        "farm": {
+          "year": 2026,
+          "heuwirtschaft": {
+            "contract_start_year": 2024,
+            "first_year": {
+              "year": 2024,
+              "mown_meadow_meadow_pasture_ha": 8.0,
+              "rgve_total": 5.0,
+              "fodder_area_ha": 13.0
+            },
+            "participation": {
+              "combined_measure": "o6_1a"
+            },
+            "silage_preparation_and_feeding": false,
+            "feed_fermentation": false,
+            "silage_storage": false,
+            "green_feeding_majority_april_to_september": true,
+            "third_party_cuttings_only_dry_hay": true,
+            "no_mower_conditioner_option": false,
+            "mower_conditioner_used": null,
+            "mower_conditioner_present": null
+          }
+        },
+        "land": {
+          "parcels_complete": true,
+          "parcels": [
+            {
+              "parcel_id": "G1",
+              "area_ha": 8.0,
+              "land_use": "grassland",
+              "located_in_austria": true,
+              "is_applied": true,
+              "grassland_type": "mähwiese",
+              "crop": {
+                "forage_crop_type": null,
+                "is_second_crop": null
+              },
+              "operations": {
+                "cutting_dates": [
+                  "2026-06-01"
+                ],
+                "full_mowing_and_removal": true,
+                "full_grazing": false
+              }
+            },
+            {
+              "parcel_id": "G2",
+              "area_ha": 2.0,
+              "land_use": "grassland",
+              "located_in_austria": true,
+              "is_applied": true,
+              "grassland_type": "dauerweide",
+              "crop": {
+                "forage_crop_type": null,
+                "is_second_crop": null
+              },
+              "operations": {
+                "cutting_dates": [],
+                "full_mowing_and_removal": false,
+                "full_grazing": true
+              }
+            },
+            {
+              "parcel_id": "A1",
+              "area_ha": 3.0,
+              "land_use": "arable",
+              "located_in_austria": true,
+              "is_applied": false,
+              "grassland_type": null,
+              "crop": {
+                "forage_crop_type": "kleegras",
+                "is_second_crop": false
+              },
+              "operations": {
+                "cutting_dates": [
+                  "2026-06-01"
+                ],
+                "full_mowing_and_removal": true,
+                "full_grazing": false
+              }
+            }
+          ]
+        },
+        "livestock": {
+          "species_groups_complete": true,
+          "species_groups": [
+            {
+              "group_id": "C1",
+              "species": "cattle",
+              "rgve_category": "rinder:ab_2_jahre",
+              "animal_count": null,
+              "average_count": 5.0,
+              "kept_in_austria": true
+            }
+          ]
+        },
+        "exceptions": {
+          "recognitions_complete": true,
+          "recognitions": []
+        }
+      },
+      "result": {
+        "adaptation": "issue-97-v1",
+        "basis_failures": [],
+        "current_rgve": 5,
+        "excluded_scope": [
+          "general applicant/area eligibility",
+          "single-parcel combination matrix",
+          "area-growth caps",
+          "modulation/caps/sanctions",
+          "two-year mountain-meadow management",
+          "recognition legal effect",
+          "App P1/P2 wiring"
+        ],
+        "forage_area_ha": 10,
+        "indicative_premium_eur": 1166.4,
+        "indicative_rate_eur_per_ha": 145.8,
+        "measure": "o6_3",
+        "missing_data": [],
+        "notes": [],
+        "premium_area_ha": 8,
+        "raw_violations": [],
+        "rule_sources": {
+          "FERMENTATION": "fermentation-prohibition",
+          "GREEN_FEEDING": "green-feeding-obligation",
+          "HAY_TRANSFER": "hay-transfer-obligation",
+          "MINIMUM_MANAGEMENT": "forage-management",
+          "MOWER_CONDITIONER": "mower-conditioner",
+          "SILAGE": "silage-prohibition",
+          "STORAGE": "silage-storage-prohibition"
+        },
+        "scope": "measure-specific clause slice; indicative gross rate only",
+        "status": "eligible",
+        "violations": []
+      },
+      "interpretation": "Nur normgebundene native Teilauswertung mit indikativer Bruttorate; aktuelle App-Gesamtentscheidung bleibt per geprüftem Hostadapter missing_data, promotion_ready=false und acht offenen Blockern. Keine bestätigte Zahlung.",
+      "method": "Synthetische gepinnte Fixture, Datum angepasst, unveränderte native Produktionsfunktion (relative Importbindung auf identischen Produktionsmodell-Modul aufgelöst), Pydantic-Input und offizielles OPA. Host-DB/-HTTP-Durchlauf nicht ausgeführt."
+    },
+    {
+      "id": "B7_native_aggregate_amount_rounding",
+      "measure_id": "o6_3",
+      "input": {
+        "context": {
+          "current_year": 2026,
+          "snapshot_year": 2026,
+          "as_of": "2026-10-09"
+        },
+        "farm": {
+          "year": 2026,
+          "heuwirtschaft": {
+            "contract_start_year": 2024,
+            "first_year": {
+              "year": 2024,
+              "mown_meadow_meadow_pasture_ha": 8.0,
+              "rgve_total": 5.0,
+              "fodder_area_ha": 13.0
+            },
+            "participation": {
+              "combined_measure": "o6_1a"
+            },
+            "silage_preparation_and_feeding": false,
+            "feed_fermentation": false,
+            "silage_storage": false,
+            "green_feeding_majority_april_to_september": true,
+            "third_party_cuttings_only_dry_hay": true,
+            "no_mower_conditioner_option": false,
+            "mower_conditioner_used": null,
+            "mower_conditioner_present": null
+          }
+        },
+        "land": {
+          "parcels_complete": true,
+          "parcels": [
+            {
+              "parcel_id": "G1",
+              "area_ha": 8.003,
+              "land_use": "grassland",
+              "located_in_austria": true,
+              "is_applied": true,
+              "grassland_type": "mähwiese",
+              "crop": {
+                "forage_crop_type": null,
+                "is_second_crop": null
+              },
+              "operations": {
+                "cutting_dates": [
+                  "2026-06-01"
+                ],
+                "full_mowing_and_removal": true,
+                "full_grazing": false
+              }
+            },
+            {
+              "parcel_id": "G2",
+              "area_ha": 2.0,
+              "land_use": "grassland",
+              "located_in_austria": true,
+              "is_applied": true,
+              "grassland_type": "dauerweide",
+              "crop": {
+                "forage_crop_type": null,
+                "is_second_crop": null
+              },
+              "operations": {
+                "cutting_dates": [],
+                "full_mowing_and_removal": false,
+                "full_grazing": true
+              }
+            },
+            {
+              "parcel_id": "A1",
+              "area_ha": 3.003,
+              "land_use": "arable",
+              "located_in_austria": true,
+              "is_applied": true,
+              "grassland_type": null,
+              "crop": {
+                "forage_crop_type": "kleegras",
+                "is_second_crop": false
+              },
+              "operations": {
+                "cutting_dates": [
+                  "2026-06-01"
+                ],
+                "full_mowing_and_removal": true,
+                "full_grazing": false
+              }
+            }
+          ]
+        },
+        "livestock": {
+          "species_groups_complete": true,
+          "species_groups": [
+            {
+              "group_id": "C1",
+              "species": "cattle",
+              "rgve_category": "rinder:ab_2_jahre",
+              "animal_count": null,
+              "average_count": 5.0,
+              "kept_in_austria": true
+            }
+          ]
+        },
+        "exceptions": {
+          "recognitions_complete": true,
+          "recognitions": []
+        }
+      },
+      "result": {
+        "adaptation": "issue-97-v1",
+        "basis_failures": [],
+        "current_rgve": 5,
+        "excluded_scope": [
+          "general applicant/area eligibility",
+          "single-parcel combination matrix",
+          "area-growth caps",
+          "modulation/caps/sanctions",
+          "two-year mountain-meadow management",
+          "recognition legal effect",
+          "App P1/P2 wiring"
+        ],
+        "forage_area_ha": 13.006,
+        "indicative_premium_eur": 1604.67,
+        "indicative_rate_eur_per_ha": 145.8,
+        "measure": "o6_3",
+        "missing_data": [],
+        "notes": [],
+        "premium_area_ha": 11.006,
+        "raw_violations": [],
+        "rule_sources": {
+          "FERMENTATION": "fermentation-prohibition",
+          "GREEN_FEEDING": "green-feeding-obligation",
+          "HAY_TRANSFER": "hay-transfer-obligation",
+          "MINIMUM_MANAGEMENT": "forage-management",
+          "MOWER_CONDITIONER": "mower-conditioner",
+          "SILAGE": "silage-prohibition",
+          "STORAGE": "silage-storage-prohibition"
+        },
+        "scope": "measure-specific clause slice; indicative gross rate only",
+        "status": "eligible",
+        "violations": []
+      },
+      "interpretation": "Nur normgebundene native Teilauswertung mit indikativer Bruttorate; aktuelle App-Gesamtentscheidung bleibt per geprüftem Hostadapter missing_data, promotion_ready=false und acht offenen Blockern. Keine bestätigte Zahlung.",
+      "method": "Synthetische gepinnte Fixture, Datum angepasst, unveränderte native Produktionsfunktion (relative Importbindung auf identischen Produktionsmodell-Modul aufgelöst), Pydantic-Input und offizielles OPA. Host-DB/-HTTP-Durchlauf nicht ausgeführt.",
+      "rounding_diagnostic": {
+        "current_aggregate_then_round_eur": 1604.67,
+        "illustrative_position_then_sum_eur": "1604.68",
+        "alternative_is_not_a_normative_expected_value": true,
+        "explanation": "Heutige native Policy rundet erst nach Flächensumme*Rate. Alternativer Centbetrag demonstriert nur, warum die rechtliche Rundungsreihenfolge eigens festgelegt werden muss."
+      }
+    }
+  ],
+  "native_validation_observations": [
+    {
+      "id": "B7_native_duplicate_parcel_rejected",
+      "rejected_before_opa": true,
+      "error_type": "ValidationError",
+      "method": "Tatsächliches natives Pydantic-Inputmodell, synthetische ungültige Variante; kein neues eigenes Prüfsystem."
+    },
+    {
+      "id": "B7_native_negative_area_rejected",
+      "rejected_before_opa": true,
+      "error_type": "ValidationError",
+      "method": "Tatsächliches natives Pydantic-Inputmodell, synthetische ungültige Variante; kein neues eigenes Prüfsystem."
+    },
+    {
+      "id": "B7_native_nan_area_rejected",
+      "rejected_before_opa": true,
+      "error_type": "ValidationError",
+      "method": "Tatsächliches natives Pydantic-Inputmodell, synthetische ungültige Variante; kein neues eigenes Prüfsystem."
+    }
+  ],
+  "verification": {
+    "file_pin_checks_passed": 28,
+    "exact_reference_anchor_checks_passed": 53,
+    "policy_cases_passed": 5,
+    "projection_pair_checks_passed": 1,
+    "combination_cases_passed": 2,
+    "native_policy_cases_passed": 4,
+    "native_validation_cases_passed": 3,
+    "opa": {
+      "version": "Version: 1.18.2",
+      "sha256": "9903e5125ac281104f2c4b7371d10cc3b74a98933743fcbfc174f9bf0ab20de8",
+      "official_release_url": "https://github.com/open-policy-agent/opa/releases/download/v1.18.2/opa_linux_amd64_static",
+      "query": "data.oepul.measure_decision",
+      "native_query": "data.adapted.o6_3.decision"
+    },
+    "production_projection_functions": [
+      "_copy_species_groups",
+      "_derive_biodiversity_proxy",
+      "_derive_text_proxy",
+      "_normalize_canonical_parcel",
+      "_resolve_parcel_identity",
+      "adapt_payload_for_measures",
+      "build_land_parcels_with_identity"
+    ],
+    "as_of": "2026-10-09 (simuliert, keine Live-Auswertung)",
+    "complete": true,
+    "native_required_open_blocker_set_verified": [
+      "ANNUAL_EVIDENCE",
+      "COUNT_BASIS",
+      "GENERAL_FUNDING",
+      "GREEN_FEEDING_HISTORY",
+      "GROUP_IDENTITY",
+      "OPUS_REVISION",
+      "RECOGNITION_TIME",
+      "SOURCE_CURRENTNESS"
+    ]
+  }
+}

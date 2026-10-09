@@ -147,3 +147,17 @@ bleiben im Sammelissue140 offen. Alle289 Fragen und acht o6_3-Blocker unverände
 Dokumentierte Experten-/Betreiberwerte und eigener Auto-Snapshot bleiben zulässig.
 Die Herkunft der Eingabe ersetzt keine tatsächliche Einreichung oder Anerkennung.
 Block7 vertieft konkrete Kombinationen, Sanktionen und Zahlung.
+
+## Vertiefung Block 7: gleiche Mengen, eigene Zahlungsfolgen
+
+[Block 7](../combination-sanction-payment-review-20261009/README.md) nutzt die
+Identitäten/Zeitrollen/Mengen/Belege aus Blöcken 1–6 für echte Anrechnungsjoins.
+Gemeinsame Erfassung ersetzt keine maßnahmenspezifische Auszahlung: LSE-only,
+DIV-Kredit gegenüber Zuschlagsfläche, Alm/Heimmodulation, Tierkategorie und
+m³-/Personen-/Betriebsbetrag bleiben eigene Einheiten und Scopes. Die geordnete
+Berechnung und Rechtsfassung braucht zentrale Versionierung; individuelle
+Kontroll-/Zahlungsentscheidungen sind getrennte Ereignisse. Experten-/Betreiber-
+und eigene Auto-Snapshotwerte sind zulässige Faktenquellen, keine neue Amtshandlung.
+EBW-Dublette und separate UBB-Grenzpräzision sind technische Folgearbeiten;
+Rundung/Quellenkonflikte bleiben fachlich offen. Restfragen stehen im Sammelissue 140,
+alle bisherigen IDs und acht o6_3-Blocker bleiben erhalten.
