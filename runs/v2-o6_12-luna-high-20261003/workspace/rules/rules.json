@@ -1,0 +1,462 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_12",
+  "rules": [
+    {
+      "id": "o612.scope",
+      "rule_type": "scope",
+      "statement": "Die Maßnahme gewährt eine Prämie für Wein-, Obst- und Hopfenflächen.",
+      "conditions": [
+        {
+          "expression": "parcel.crop.crop_category in {vineyard, orchard, hop}",
+          "description": "Die Fläche ist als Wein-, Obst- oder Hopfenfläche klassifiziert.",
+          "input_paths": ["land.parcels[].crop.crop_category"]
+        }
+      ],
+      "result": {
+        "outcome": "target_area",
+        "description": "Die Fläche kann grundsätzlich als Ziel-/Prämienfläche der Maßnahme berücksichtigt werden.",
+        "value": ["vineyard", "orchard", "hop"]
+      },
+      "source_reference_ids": ["src.measure.overview", "src.srl.measure", "src.general.obst_list"] ,
+      "rego_symbols": ["target_parcel", "target_parcels"]
+    },
+    {
+      "id": "o612.contract.period",
+      "rule_type": "contract_period",
+      "statement": "Der Verpflichtungs- und Vertragszeitraum läuft bis 31. Dezember 2028 und beträgt mindestens vier Jahre.",
+      "conditions": [
+        {
+          "expression": "participation in o6_12 is true",
+          "description": "Der Betrieb nimmt an o6_12 teil.",
+          "input_paths": ["farm.measures.o6_12.participating"]
+        }
+      ],
+      "result": {
+        "outcome": "contract_end",
+        "description": "Der Vertragszeitraum endet am 31.12.2028; die Dauer hängt vom Einstieg ab.",
+        "value": {"end_date": "2028-12-31", "minimum_years": 4}
+      },
+      "source_reference_ids": ["src.measure.period", "src.general.contract"] ,
+      "rego_symbols": ["contract_end_year", "contract_years"]
+    },
+    {
+      "id": "o612.minimum_area",
+      "rule_type": "eligibility_threshold",
+      "statement": "Im ersten Teilnahmejahr müssen in Summe mindestens 0,50 ha Wein-, Obst- oder Hopfenflächen bewirtschaftet werden.",
+      "conditions": [
+        {
+          "expression": "first_participation_year == farm.year and target_area_ha >= 0.50",
+          "description": "Die summierte relevante Fläche erreicht im ersten Teilnahmejahr die Mindestgröße.",
+          "input_paths": ["farm.measures.o6_12.first_participation_year", "farm.year", "land.parcels[].area_ha"]
+        }
+      ],
+      "result": {
+        "outcome": "eligible",
+        "description": "Die maßnahmenspezifische Mindestteilnahmefläche ist erfüllt.",
+        "value": 0.5
+      },
+      "source_reference_ids": ["src.measure.minimum_area", "src.srl.measure"] ,
+      "rego_symbols": ["target_area_ha", "minimum_participation_met"]
+    },
+    {
+      "id": "o612.cut_vineyard",
+      "rule_type": "definition",
+      "statement": "Schnittweingärten zählen zur Weinfläche und unterliegen daher dem Insektizidverzicht.",
+      "conditions": [
+        {
+          "expression": "crop_name == Schnittweingarten",
+          "description": "Die Fläche ist ein Schnittweingarten.",
+          "input_paths": ["land.parcels[].crop.crop_name"]
+        }
+      ],
+      "result": {
+        "outcome": "include",
+        "description": "Die Fläche wird als Weinfläche in die Maßnahme einbezogen.",
+        "value": true
+      },
+      "source_reference_ids": ["src.measure.cut_vineyard"] ,
+      "rego_symbols": ["target_parcel"]
+    },
+    {
+      "id": "o612.nursery_exclusion",
+      "rule_type": "exclusion",
+      "statement": "Rebschulen zählen nicht zur Weinfläche; Reb- und Baumschulflächen sind nicht förderfähig.",
+      "conditions": [
+        {
+          "expression": "crop_name == rebschule or land_use == nursery",
+          "description": "Die Fläche ist als Rebschule bzw. Baumschulfläche erfasst.",
+          "input_paths": ["land.parcels[].crop.crop_name", "land.parcels[].land_use"]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Für die ausgeschlossene Fläche wird keine o6_12-Prämie gewährt.",
+        "value": false
+      },
+      "source_reference_ids": ["src.measure.nursery", "src.general.noneligible"] ,
+      "rego_symbols": ["target_parcel"]
+    },
+    {
+      "id": "o612.total_insecticide_ban",
+      "rule_type": "substantive_obligation",
+      "statement": "Während des Vertragszeitraums ist auf der gesamten Wein-, Obst- und Hopfenfläche des Betriebs vollständig auf Insektizide zu verzichten.",
+      "conditions": [
+        {
+          "expression": "target parcel and insecticide_use == true and no exception applies",
+          "description": "Auf einer einbezogenen Zielparzelle wurde ein nicht ausnahmsweise zulässiger Insektizideinsatz erfasst.",
+          "input_paths": ["land.parcels[].operations.insecticide_use", "land.parcels[].crop.crop_category"]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Der Insektizideinsatz verletzt die Förderverpflichtung.",
+        "value": false
+      },
+      "source_reference_ids": ["src.measure.ban", "src.srl.measure"] ,
+      "rego_symbols": ["insecticide_violation"]
+    },
+    {
+      "id": "o612.bio_exception",
+      "rule_type": "exception",
+      "statement": "Insektizide, die gemäß der Bio-Verordnung (EU) 2018/848 zulässig sind, dürfen eingesetzt werden.",
+      "conditions": [
+        {
+          "expression": "insecticide_is_bio_permitted == true",
+          "description": "Das eingesetzte Mittel ist nach der Bio-Verordnung zulässig.",
+          "input_paths": ["land.parcels[].operations.insecticide_is_bio_permitted"]
+        }
+      ],
+      "result": {
+        "outcome": "permitted",
+        "description": "Der Einsatz gilt nicht als verbotener Insektizideinsatz.",
+        "value": true
+      },
+      "source_reference_ids": ["src.measure.bio_exception", "src.srl.measure"] ,
+      "rego_symbols": ["insecticide_violation"]
+    },
+    {
+      "id": "o612.authority_exception",
+      "rule_type": "exception",
+      "statement": "Bei einer behördlich angeordneten Schädlingsbekämpfung ist der behördlich zugelassene Wirkstoff zulässig; Anordnung und Einsatz sind zu dokumentieren.",
+      "conditions": [
+        {
+          "expression": "authority_order == true and authority_order_documented == true",
+          "description": "Eine behördliche Bekämpfungsmaßnahme liegt vor und ist dokumentiert.",
+          "input_paths": ["land.parcels[].operations.insecticide_authority_order", "land.parcels[].operations.insecticide_authority_documented"]
+        }
+      ],
+      "result": {
+        "outcome": "permitted",
+        "description": "Der entsprechend angeordnete und dokumentierte Wirkstoff ist ausnahmsweise zulässig.",
+        "value": true
+      },
+      "source_reference_ids": ["src.measure.authority_exception", "src.srl.authority_exception"] ,
+      "rego_symbols": ["authority_order_exception", "insecticide_violation"]
+    },
+    {
+      "id": "o612.purchase_storage_ban",
+      "rule_type": "substantive_obligation",
+      "statement": "Kauf und Lagerung von in der Maßnahme unzulässigen Insektiziden sind verboten; erlaubter Einsatz in anderen Kulturen ist ausgenommen, Mengen müssen plausibel und aufgezeichnet sein.",
+      "conditions": [
+        {
+          "expression": "purchase_or_storage == true and not other_culture_exception or other_culture_exception and not plausible",
+          "description": "Kauf/Lagerung erfolgt ohne Ausnahme oder die ausnahmsweise andere Verwendung ist nicht plausibel nachgewiesen.",
+          "input_paths": ["land.parcels[].operations.insecticide_purchase_or_storage", "land.parcels[].operations.insecticide_in_other_culture", "land.parcels[].operations.insecticide_purchase_storage_plausible"]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Die Kauf-/Lagerungsverpflichtung ist nicht erfüllt.",
+        "value": false
+      },
+      "source_reference_ids": ["src.measure.purchase_storage"] ,
+      "rego_symbols": ["purchase_storage_violation"]
+    },
+    {
+      "id": "o612.psm_reporting_until_2025",
+      "rule_type": "reporting",
+      "statement": "Bis einschließlich Antragsjahr 2025 sind flächige Pflanzenschutzmitteleinsätze im Mehrfachantrag mit den zutreffenden Codes zu erfassen; Änderungen sind umgehend nachzuführen.",
+      "conditions": [
+        {
+          "expression": "farm.year <= 2025 and area_wide_psm_application == true",
+          "description": "Ein flächiger Pflanzenschutzmitteleinsatz findet bis 2025 statt.",
+          "input_paths": ["farm.year", "farm.measures.o6_12.area_wide_psm_application"]
+        }
+      ],
+      "result": {
+        "outcome": "report_code_required",
+        "description": "Ein PSM-Code ist im INVEKOS-GIS zu erfassen; bei chemisch-synthetischem Insektizid ist PSMCSI erforderlich.",
+        "value": ["PSMBIO", "PSMCSI", "PSMCS"]
+      },
+      "source_reference_ids": ["src.measure.reporting_2025"] ,
+      "rego_symbols": ["reporting_code_required", "reporting_code"]
+    },
+    {
+      "id": "o612.psm_reporting_from_2026",
+      "rule_type": "transitional_rule",
+      "statement": "Ab Antragsjahr 2026 müssen Pflanzenschutzmitteleinsätze nicht mehr im Mehrfachantrag erfasst werden.",
+      "conditions": [
+        {
+          "expression": "farm.year >= 2026",
+          "description": "Das Antragsjahr liegt ab 2026.",
+          "input_paths": ["farm.year"]
+        }
+      ],
+      "result": {
+        "outcome": "reporting_not_required",
+        "description": "Die PSM-Codierungspflicht im Mehrfachantrag entfällt.",
+        "value": false
+      },
+      "source_reference_ids": ["src.measure.reporting_2026"] ,
+      "rego_symbols": ["reporting_not_required"]
+    },
+    {
+      "id": "o612.application_deadline",
+      "rule_type": "application_deadline",
+      "statement": "Die Maßnahme ist vor Vertragsbeginn bis spätestens 31. Dezember des Vorjahres im Maßnahmenantrag zu beantragen.",
+      "conditions": [
+        {
+          "expression": "request_date <= 31 December before contract start",
+          "description": "Der Maßnahmenantrag wird fristgerecht vor Vertragsbeginn gestellt.",
+          "input_paths": ["farm.measures.o6_12.request_date", "farm.measures.o6_12.contract_start_year"]
+        }
+      ],
+      "result": {
+        "outcome": "valid_contract_application",
+        "description": "Ein gültiger Vertrag ab dem Folgejahr kann begründet werden.",
+        "value": "31-12"
+      },
+      "source_reference_ids": ["src.measure.application"] ,
+      "rego_symbols": []
+    },
+    {
+      "id": "o612.last_entry",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg in die Maßnahme war mit Förderjahr 2025 möglich; die Beantragung musste bis 31. Dezember 2024 erfolgen.",
+      "conditions": [
+        {
+          "expression": "contract_start_year <= 2025",
+          "description": "Der Vertrag beginnt spätestens mit dem Förderjahr 2025.",
+          "input_paths": ["farm.measures.o6_12.contract_start_year"]
+        }
+      ],
+      "result": {
+        "outcome": "entry_permitted",
+        "description": "Ein Neueinstieg ist nur bis Förderjahr 2025 zulässig.",
+        "value": 2025
+      },
+      "source_reference_ids": ["src.measure.last_entry", "src.general.last_entry"] ,
+      "rego_symbols": []
+    },
+    {
+      "id": "o612.bio_combination",
+      "rule_type": "combination",
+      "statement": "Eine betriebliche Kombination mit Biologischer Wirtschaftsweise ist ausgeschlossen, außer bei Biologischer Wirtschaftsweise als Teilbetrieb für Acker und Grünland.",
+      "conditions": [
+        {
+          "expression": "biological_farming_participation == false or biological_farming_scope == part_farm_arable_grassland",
+          "description": "Die Ausnahme für einen Bio-Teilbetrieb mit Acker- und Grünlandbereich liegt vor oder BIO wird nicht gleichzeitig beantragt.",
+          "input_paths": ["farm.measures.o6_12.biological_farming_participation", "farm.measures.o6_12.biological_farming_scope"]
+        }
+      ],
+      "result": {
+        "outcome": "combination_allowed",
+        "description": "Die Kombination ist nur unter der genannten Teilbetriebs-Ausnahme zulässig.",
+        "value": true
+      },
+      "source_reference_ids": ["src.measure.bio_combination", "src.srl.combination", "src.annex.combination"] ,
+      "rego_symbols": ["combination_allowed"]
+    },
+    {
+      "id": "o612.bio_switch",
+      "rule_type": "measure_switch",
+      "statement": "Während der Laufzeit war ein Wechsel in Biologische Wirtschaftsweise bis spätestens 31. Dezember 2025 möglich.",
+      "conditions": [
+        {
+          "expression": "switch_request_date <= 2025-12-31",
+          "description": "Der Maßnahmenwechsel wird fristgerecht beantragt.",
+          "input_paths": ["farm.measures.o6_12.switch_request_date"]
+        }
+      ],
+      "result": {
+        "outcome": "switch_allowed",
+        "description": "Die Verpflichtungen der höherwertigen Maßnahme gelten für die Restlaufzeit.",
+        "value": "2025-12-31"
+      },
+      "source_reference_ids": ["src.measure.bio_switch", "src.general.switch"] ,
+      "rego_symbols": ["switch_to_biological_allowed"]
+    },
+    {
+      "id": "o612.quality_planting_material",
+      "rule_type": "eligibility_condition",
+      "statement": "Die Obstprämie wird nur für Anlagen mit qualitativ hochwertigem, grundsätzlich veredeltem Pflanzgut gewährt; unveredelte Bäume sind mit OP zu beantragen und nicht prämienfähig.",
+      "conditions": [
+        {
+          "expression": "quality_planting_material_ok == true",
+          "description": "Die Obstanlage verfügt über qualitativ hochwertiges Pflanzgut.",
+          "input_paths": ["farm.measures.o6_12.quality_planting_material_ok"]
+        }
+      ],
+      "result": {
+        "outcome": "premium_eligible",
+        "description": "Die Obstfläche kann bei Erfüllung der übrigen Bedingungen prämienfähig sein.",
+        "value": true
+      },
+      "source_reference_ids": ["src.measure.quality_planting", "src.general.op_obst"] ,
+      "rego_symbols": ["premium_eligible"]
+    },
+    {
+      "id": "o612.premium_rates",
+      "rule_type": "calculation",
+      "statement": "Die Prämie beträgt 250 Euro/ha im Jahr 2023 und 270 Euro/ha ab 2024 für Wein-, Obst- und Hopfenflächen.",
+      "conditions": [
+        {
+          "expression": "target_type in {vineyard, orchard, hop}",
+          "description": "Die Fläche gehört zu einer der drei prämienfähigen Kulturbereiche.",
+          "input_paths": ["farm.measures.o6_12.premium_target_type"]
+        }
+      ],
+      "result": {
+        "outcome": "premium_eur_per_ha",
+        "description": "Der kulturbereichsabhängige Prämiensatz wird aus der vollständigen Ratentabelle gelesen.",
+        "value": {"2023": 250.0, "from_2024": 270.0}
+      },
+      "source_reference_ids": ["src.measure.premium", "src.srl.premium"],
+      "rego_symbols": ["premium_rate_eur_per_ha"]
+    },
+    {
+      "id": "o612.other_land_use_exclusion",
+      "rule_type": "exclusion",
+      "statement": "Die Schlagnutzungsarten Sonstige Weinflächen und Sonstige Spezialkulturflächen erhalten keine Prämie in dieser Maßnahme.",
+      "conditions": [
+        {
+          "expression": "land_use in {other_wine, other_special_crop}",
+          "description": "Die Fläche hat eine ausdrücklich ausgeschlossene sonstige Nutzungsart.",
+          "input_paths": ["land.parcels[].land_use"]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Für die Fläche wird keine o6_12-Prämie gewährt.",
+        "value": false
+      },
+      "source_reference_ids": ["src.measure.other_land_use"] ,
+      "rego_symbols": ["target_parcel"]
+    },
+    {
+      "id": "o612.general_location",
+      "rule_type": "general_eligibility",
+      "statement": "Geförderte Flächen müssen in Österreich liegen.",
+      "conditions": [
+        {
+          "expression": "parcel country == Austria",
+          "description": "Die beantragte Fläche liegt in Österreich.",
+          "input_paths": ["farm.region.country"]
+        }
+      ],
+      "result": {
+        "outcome": "location_eligible",
+        "description": "Ausländische Flächen werden nicht gefördert und nicht berücksichtigt.",
+        "value": true
+      },
+      "source_reference_ids": ["src.general.location", "src.srl.location"] ,
+      "rego_symbols": []
+    },
+    {
+      "id": "o612.minimum_management",
+      "rule_type": "general_eligibility",
+      "statement": "Auf Dauer-/Spezialkultur- und Weinflächen sind ordnungsgemäße Auspflanzung, jährliche Pflege sowie Ernte und Verbringen des Erntegutes erforderlich.",
+      "conditions": [
+        {
+          "expression": "permanent_or_special_crop_or_vineyard and planting_maintenance_harvest_requirements_met",
+          "description": "Die allgemeinen Mindestbewirtschaftungskriterien sind erfüllt.",
+          "input_paths": ["land.parcels[].land_use", "land.parcels[].operations.cutting_dates"]
+        }
+      ],
+      "result": {
+        "outcome": "general_condition_met",
+        "description": "Die allgemeinen Mindestbewirtschaftungskriterien liegen vor.",
+        "value": true
+      },
+      "source_reference_ids": ["src.general.minimum_management", "src.srl.minimum_management"] ,
+      "rego_symbols": []
+    },
+    {
+      "id": "o612.area_change_tolerance",
+      "rule_type": "area_change",
+      "statement": "Bei Flächenabgängen während des mehrjährigen Vertrags sind jährlich bis zu 5 Prozent, höchstens 5 ha, jedenfalls aber 0,50 ha zulässig; darüber hinaus besteht Rückzahlungspflicht für die Differenzflächen.",
+      "conditions": [
+        {
+          "expression": "reduction <= max(5 percent of prior measure area, 0.50 ha) and reduction <= 5 ha",
+          "description": "Der Flächenabgang bleibt innerhalb der jährlichen Toleranzen.",
+          "input_paths": ["farm.measures.o6_12.prior_area_ha", "farm.measures.o6_12.current_area_ha"]
+        }
+      ],
+      "result": {
+        "outcome": "no_repayment_for_tolerated_reduction",
+        "description": "Bei Überschreitung sind die Förderbeträge der gesamten Differenzflächen zurückzuzahlen.",
+        "value": {"percent": 5, "max_ha": 5, "minimum_tolerance_ha": 0.5}
+      },
+      "source_reference_ids": ["src.srl.area_reduction", "src.general.area_reduction"] ,
+      "rego_symbols": []
+    },
+    {
+      "id": "o612.control_consequences",
+      "rule_type": "sanction",
+      "statement": "Verstöße können je nach Schwere, Ausmaß, Dauer und Häufigkeit zu Verwarnung, Kürzungen bis 100 Prozent oder bei zweimaliger 100-Prozent-Kürzung zum Ausschluss und zur Rückforderung führen.",
+      "conditions": [
+        {
+          "expression": "a substantive obligation or access condition is not met",
+          "description": "Eine Fördervoraussetzung oder inhaltliche Förderverpflichtung wird nicht eingehalten.",
+          "input_paths": ["farm.measures.o6_12.compliance_status"]
+        }
+      ],
+      "result": {
+        "outcome": "sanction_range",
+        "description": "Die Bewertungsstufen reichen von Verwarnung über 2, 5, 10, 25, 50 und 100 Prozent bis Ausschluss/Rückforderung; ab 2027 ersetzt 1 Prozent die Verwarnung.",
+        "value": ["warning", 0.02, 0.05, 0.1, 0.25, 0.5, 1.0, "exclusion_and_repayment"]
+      },
+      "source_reference_ids": ["src.general.sanctions"] ,
+      "rego_symbols": []
+    },
+    {
+      "id": "o612.rebzikade_early_exit_2026",
+      "rule_type": "temporary_exception",
+      "statement": "Ab Antragsjahr 2026 ist für Weinbaubetriebe wegen Bekämpfungsmaßnahmen gegen die Amerikanische Rebzikade ein genehmigter vorzeitiger und rückzahlungsfreier Ausstieg möglich.",
+      "conditions": [
+        {
+          "expression": "farm.year >= 2026 and approved early exit reason is american_rebzikade_control",
+          "description": "Der Ausstieg wird online als höherer Gewalt bzw. besonderer flächen- und bewirtschaftungsverändernder Umstand beantragt und genehmigt.",
+          "input_paths": ["farm.year", "farm.measures.o6_12.early_exit_reason", "farm.measures.o6_12.early_exit_approved"]
+        }
+      ],
+      "result": {
+        "outcome": "early_exit_without_repayment",
+        "description": "Der Vertrag endet mit Beginn der Meldung; für 2026 wird keine o6_12-Prämie gewährt und bereits ausgezahlte Prämien werden wegen der Mindestlaufzeit nicht zurückgefordert.",
+        "value": {"premium_2026": 0.0, "repayment_of_prior_paid_premiums": false}
+      },
+      "source_reference_ids": ["src.notice.early_exit", "src.notice.early_exit_application", "src.notice.early_exit_consequence"],
+      "rego_symbols": ["early_exit_2026_without_repayment", "early_exit_premium_2026"]
+    },
+    {
+      "id": "o612.rebzikade_authority_areas",
+      "rule_type": "temporary_exception",
+      "statement": "In festgelegten Gebieten in Steiermark, Burgenland und Niederösterreich verletzt ein behördlich angeordneter chemisch-synthetischer Wirkstoff die Auflage nicht, wenn Bio-Wirkstoffe nicht verfügbar sind oder der chemisch-synthetische Wirkstoff ausdrücklich angeordnet ist; Anordnung und Durchführung sind zu dokumentieren.",
+      "conditions": [
+        {
+          "expression": "federal_state in {Steiermark, Burgenland, Niederösterreich} and authority_ordered_area == true and authority_order_documented == true and bio_substance_unavailable_or_chemical_explicitly_ordered == true",
+          "description": "Die 2026 veröffentlichte Gebiets- und Anordnungs-Ausnahme ist erfüllt.",
+          "input_paths": ["farm.region.federal_state", "farm.measures.o6_12.authority_ordered_area", "farm.measures.o6_12.authority_order_documented", "farm.measures.o6_12.authority_ordered_substance_allowed"]
+        }
+      ],
+      "result": {
+        "outcome": "no_violation",
+        "description": "Ein Verbleib in der Maßnahme ist ohne Prämieneinbußen möglich; eine Übermittlung an die AMA ist nicht erforderlich.",
+        "value": true
+      },
+      "source_reference_ids": ["src.notice.authority_area"] ,
+      "rego_symbols": ["authority_order_exception"]
+    }
+  ]
+}

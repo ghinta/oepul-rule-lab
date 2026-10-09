@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 169,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_8-luna-high-20261002/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_8.rego",
+    "tests/o6_8_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_8-luna-high-20261002/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 21,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_8.rego",
+        "tests/o6_8_test.rego"
+      ],
+      "duration_ms": 29,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_8-luna-high-20261002/workspace/tools/opa",
+            "fmt",
+            "policy/o6_8.rego"
+          ],
+          "duration_ms": 18,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_8\n\nimport rego.v1\n\nfarm := object.get(input, \"farm\", {})\nland := object.get(input, \"land\", {})\nparcels := object.get(land, \"parcels\", [])\nregion := object.get(farm, \"region\", {})\nyear := object.get(farm, \"year\", 0)\nmeasure_applications := object.get(object.get(farm, \"oepul\", {}), \"measure_applications\", [])\n\ncontract_end := \"2028-12-31\"\n\nmeasure_active(measure_id) if {\n\tsome application in measure_applications\n\tobject.get(application, \"measure_id\", \"\") == measure_id\n\tobject.get(application, \"active\", false) == true\n}\n\nhas_code(parcel, code) if {\n\tcode in object.get(parcel, \"application_codes\", [])\n}\n\neligible_parcel[parcel.parcel_id] if {\n\tsome parcel in parcels\n\tobject.get(parcel, \"land_use\", \"\") == \"arable\"\n\tcount(object.get(parcel, \"application_codes\", [])) > 0\n}\n\nminimum_area_satisfied if {\n\tsum([object.get(parcel, \"area_ha\", 0) | some parcel in parcels; count(object.get(parcel, \"application_codes\", [])) > 0]) >= 0.10\n}\n\nvalid_code[code] if {\n\tsome code in {\"MS\", \"DS\", \"AH\", \"BAW\", \"US\"}\n}\n\ncrop_accepted[parcel.parcel_id] if {\n\tsome parcel in parcels\n\tsome code in object.get(parcel, \"application_codes\", [])\n\tcrop_name := object.get(object.get(parcel, \"crop\", {}), \"crop_name\", \"\")\n\tcode == \"BAW\"\n\tcrop_name in data.o6_8_cultures.codes.BAW\n}\n\ncrop_accepted[parcel.parcel_id] if {\n\tsome parcel in parcels\n\tsome code in object.get(parcel, \"application_codes\", [])\n\tcrop_name := object.get(object.get(parcel, \"crop\", {}), \"crop_name\", \"\")\n\tcode in {\"MS\", \"DS\"}\n\tcrop_name in data.o6_8_cultures.codes.MS_DS\n}\n\ncrop_accepted[parcel.parcel_id] if {\n\tsome parcel in parcels\n\tsome code in object.get(parcel, \"application_codes\", [])\n\tcrop_name := object.get(object.get(parcel, \"crop\", {}), \"crop_name\", \"\")\n\tcode == \"US\"\n\tcrop_name in data.o6_8_cultures.codes.US\n}\n\ncrop_accepted[parcel.parcel_id] if {\n\tsome parcel in parcels\n\tsome code in object.get(parcel, \"application_codes\", [])\n\tcrop_name := object.get(object.get(parcel, \"crop\", {}), \"crop_name\", \"\")\n\tcode == \"AH\"\n\tcrop_name in data.o6_8_cultures.codes.AH\n}\n\nmeasure_6_or_7_active if {\n\tmeasure_active(\"o6_6\")\n}\n\nmeasure_6_or_7_active if {\n\tmeasure_active(\"o6_7\")\n}\n\nbaw_entry_path_known(state, kg_number) if {\n\tstate in {\"Bgld\", \"Burgenland\"}\n\tsome entry in data.erosion_entry_paths_Bgld.entries\n\tentry.kg_number == kg_number\n}\n\nbaw_entry_path_known(state, kg_number) if {\n\tstate in {\"Nö\", \"Niederösterreich\"}\n\tsome entry in data.erosion_entry_paths_no_1.entries\n\tentry.kg_number == kg_number\n}\n\nbaw_entry_path_known(state, kg_number) if {\n\tstate in {\"Nö\", \"Niederösterreich\"}\n\tsome entry in data.erosion_entry_paths_no_2.entries\n\tentry.kg_number == kg_number\n}\n\nbaw_entry_path_known(state, kg_number) if {\n\tstate in {\"Nö\", \"Niederösterreich\"}\n\tsome entry in data.erosion_entry_paths_no_3.entries\n\tentry.kg_number == kg_number\n}\n\nbaw_entry_path_known(state, kg_number) if {\n\tstate in {\"Nö\", \"Niederösterreich\"}\n\tsome entry in data.erosion_entry_paths_no_4.entries\n\tentry.kg_number == kg_number\n}\n\nbaw_entry_path_known(state, kg_number) if {\n\tstate in {\"Oö\", \"Oberösterreich\"}\n\tsome entry in data.erosion_entry_paths_oo_1.entries\n\tentry.kg_number == kg_number\n}\n\nbaw_entry_path_known(state, kg_number) if {\n\tstate in {\"Oö\", \"Oberösterreich\"}\n\tsome entry in data.erosion_entry_paths_oo_2.entries\n\tentry.kg_number == kg_number\n}\n\nbaw_entry_path_known(state, kg_number) if {\n\tstate in {\"Oö\", \"Oberösterreich\"}\n\tsome entry in data.erosion_entry_paths_oo_3.entries\n\tentry.kg_number == kg_number\n}\n\nbaw_entry_path_known(state, kg_number) if {\n\tstate in {\"Oö\", \"Oberösterreich\"}\n\tsome entry in data.erosion_entry_paths_oo_4.entries\n\tentry.kg_number == kg_number\n}\n\nbaw_entry_path_known(state, kg_number) if {\n\tstate in {\"Stmk\", \"Steiermark\"}\n\tsome entry in data.erosion_entry_paths_stmk_1.entries\n\tentry.kg_number == kg_number\n}\n\nbaw_entry_path_known(state, kg_number) if {\n\tstate in {\"Stmk\", \"Steiermark\"}\n\tsome entry in data.erosion_entry_paths_stmk_2.entries\n\tentry.kg_number == kg_number\n}\n\nbaw_entry_path_known(state, kg_number) if {\n\tstate in {\"Stmk\", \"Steiermark\"}\n\tsome entry in data.erosion_entry_paths_stmk_3.entries\n\tentry.kg_number == kg_number\n}\n\nbaw_eligible[parcel.parcel_id] if {\n\tsome parcel in parcels\n\thas_code(parcel, \"BAW\")\n\terosion := object.get(parcel, \"erosion\", {})\n\tobject.get(erosion, \"erosion_entry_path_share\", 0) >= 0.25\n\tkg_number := object.get(erosion, \"erosion_entry_path_kg_number\", \"\")\n\tbaw_entry_path_known(object.get(region, \"federal_state\", \"\"), kg_number)\n}\n\nbaw_area_cap_satisfied[parcel.parcel_id] if {\n\tsome parcel in parcels\n\thas_code(parcel, \"BAW\")\n\terosion := object.get(parcel, \"erosion\", {})\n\tobject.get(erosion, \"erosion_entry_path_area_ha\", 0) > 0\n\tobject.get(parcel, \"area_ha\", 0) <= 4 * object.get(erosion, \"erosion_entry_path_area_ha\", 0)\n}\n\npremium_eur_per_ha[code] := amount if {\n\tyear == 2023\n\trates := {\"MS\": 50, \"DS\": 80, \"AH\": 150, \"BAW\": 550, \"US\": 75, \"US_BIO_SURCHARGE\": 15}\n\tamount := rates[code]\n}\n\npremium_eur_per_ha[code] := amount if {\n\tyear >= 2024\n\trates := {\"MS\": 54, \"DS\": 86.4, \"AH\": 162, \"BAW\": 594, \"US\": 81, \"US_BIO_SURCHARGE\": 16.2}\n\tamount := rates[code]\n}\n\ndrought_district_allowed if {\n\tyear == 2026\n\tstate := object.get(region, \"federal_state\", \"\")\n\tobject.get(data.drought_2026_exempt_districts.all_districts, state, false) == true\n}\n\ndrought_district_allowed if {\n\tyear == 2026\n\tstate := object.get(region, \"federal_state\", \"\")\n\tdistrict := object.get(region, \"district\", \"\")\n\tsome listed in object.get(data.drought_2026_exempt_districts.districts, state, [])\n\tlisted == district\n}\n\nharvest_exception_2026[parcel.parcel_id] if {\n\tsome parcel in parcels\n\tyear == 2026\n\tdrought_district_allowed\n\tobject.get(object.get(parcel, \"operations\", {}), \"harvestable_stand\", true) == false\n}\n\nus_coverage_exception_2026[parcel.parcel_id] if {\n\tsome parcel in parcels\n\tyear == 2026\n\thas_code(parcel, \"US\")\n\terosion := object.get(parcel, \"erosion\", {})\n\tobject.get(erosion, \"undersow_orderly_with_required_partners\", false) == true\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"rule_id\": \"O68-003\", \"reason\": \"MS/DS requires measure 6 or 7\"} if {\n\tsome parcel in parcels\n\tsome erosion_code in {\"MS\", \"DS\"}\n\thas_code(parcel, erosion_code)\n\tnot measure_6_or_7_active\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"rule_id\": \"O68-006\", \"reason\": \"culture is not accepted for MS/DS\"} if {\n\tsome parcel in parcels\n\tsome code in [\"MS\", \"DS\"]\n\thas_code(parcel, code)\n\tcrop_name := object.get(object.get(parcel, \"crop\", {}), \"crop_name\", \"\")\n\tnot crop_name in data.o6_8_cultures.codes.MS_DS\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"rule_id\": \"O68-020\", \"reason\": \"invalid O6_8 code\"} if {\n\tsome parcel in parcels\n\tsome code in object.get(parcel, \"application_codes\", [])\n\tnot valid_code[code]\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"rule_id\": \"O68-021\", \"reason\": \"BAW exceeds four times the entry path\"} if {\n\tsome parcel in parcels\n\thas_code(parcel, \"BAW\")\n\tnot baw_area_cap_satisfied[parcel.parcel_id]\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"rule_id\": \"O68-024\", \"reason\": \"MS/DS and AH cannot be combined\"} if {\n\tsome parcel in parcels\n\tsome erosion_code in {\"MS\", \"DS\"}\n\thas_code(parcel, erosion_code)\n\thas_code(parcel, \"AH\")\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"rule_id\": \"O68-026\", \"reason\": \"BAW cannot be combined with another measure\"} if {\n\tsome parcel in parcels\n\thas_code(parcel, \"BAW\")\n\tsome measure_code in object.get(parcel, \"measure_codes\", [])\n\tnot object.get(measure_code, \"measure_id\", \"\") in {\"o6_1a\", \"o6_1b\", \"\"}\n}\n\nviolations contains {\"parcel_id\": parcel.parcel_id, \"rule_id\": \"O68-034\", \"reason\": \"funded parcel is outside Austria\"} if {\n\tsome parcel in parcels\n\tobject.get(parcel, \"country\", \"AT\") != \"AT\"\n}\n\ncompliant if {\n\tminimum_area_satisfied\n\tcount(violations) == 0\n}\n\ndecision := {\n\t\"measure\": \"o6_8\",\n\t\"contract_end\": contract_end,\n\t\"minimum_area_satisfied\": minimum_area_satisfied,\n\t\"eligible_parcels\": eligible_parcel,\n\t\"baw_eligible\": baw_eligible,\n\t\"baw_area_cap_satisfied\": baw_area_cap_satisfied,\n\t\"harvest_exception_2026\": harvest_exception_2026,\n\t\"us_coverage_exception_2026\": us_coverage_exception_2026,\n\t\"violations\": violations,\n\t\"compliant\": compliant,\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_8-luna-high-20261002/workspace/tools/opa",
+            "fmt",
+            "tests/o6_8_test.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_8_test\n\nimport data.oepul.o6_8\nimport rego.v1\n\ntest_baw_is_eligible_and_capped if {\n\tresult := o6_8.baw_eligible with input as {\n\t\t\"farm\": {\"year\": 2026, \"region\": {\"federal_state\": \"Burgenland\", \"district\": \"Güssing\"}},\n\t\t\"land\": {\"parcels\": [{\n\t\t\t\"parcel_id\": \"p1\",\n\t\t\t\"area_ha\": 0.4,\n\t\t\t\"land_use\": \"arable\",\n\t\t\t\"country\": \"AT\",\n\t\t\t\"crop\": {\"crop_name\": \"Grünbrache\"},\n\t\t\t\"application_codes\": [\"BAW\"],\n\t\t\t\"erosion\": {\"erosion_entry_path_share\": 0.25, \"erosion_entry_path_area_ha\": 0.1, \"erosion_entry_path_kg_number\": \"31001\"},\n\t\t}]},\n\t}\n\tresult.p1 == true\n\tcap := o6_8.baw_area_cap_satisfied with input as {\n\t\t\"land\": {\"parcels\": [{\"parcel_id\": \"p1\", \"area_ha\": 0.4, \"application_codes\": [\"BAW\"], \"erosion\": {\"erosion_entry_path_area_ha\": 0.1}}]},\n\t}\n\tcap.p1 == true\n}\n\ntest_ms_requires_measure_six_or_seven if {\n\tviolations := o6_8.violations with input as {\n\t\t\"farm\": {\"year\": 2026, \"oepul\": {\"measure_applications\": []}},\n\t\t\"land\": {\"parcels\": [{\"parcel_id\": \"p1\", \"area_ha\": 0.2, \"land_use\": \"arable\", \"country\": \"AT\", \"crop\": {\"crop_name\": \"Körnermais\"}, \"application_codes\": [\"MS\"]}]},\n\t}\n\t{\"parcel_id\": \"p1\", \"rule_id\": \"O68-003\", \"reason\": \"MS/DS requires measure 6 or 7\"} in violations\n}\n\ntest_ms_and_ah_are_not_combinable if {\n\tviolations := o6_8.violations with input as {\n\t\t\"farm\": {\"year\": 2026, \"oepul\": {\"measure_applications\": [{\"measure_id\": \"o6_6\", \"active\": true}]}},\n\t\t\"land\": {\"parcels\": [{\"parcel_id\": \"p1\", \"area_ha\": 0.2, \"land_use\": \"arable\", \"country\": \"AT\", \"crop\": {\"crop_name\": \"Frühkartoffeln\"}, \"application_codes\": [\"MS\", \"AH\"]}]},\n\t}\n\t{\"parcel_id\": \"p1\", \"rule_id\": \"O68-024\", \"reason\": \"MS/DS and AH cannot be combined\"} in violations\n}\n\ntest_premium_rates_from_2024 if {\n\trates := o6_8.premium_eur_per_ha with input as {\"farm\": {\"year\": 2026}}\n\trates.MS == 54\n\trates.DS == 86.4\n\trates.AH == 162\n\trates.BAW == 594\n\trates.US == 81\n\trates.US_BIO_SURCHARGE == 16.2\n}\n\ntest_drought_2026_us_coverage_exception if {\n\texceptions := o6_8.us_coverage_exception_2026 with input as {\n\t\t\"farm\": {\"year\": 2026},\n\t\t\"land\": {\"parcels\": [{\"parcel_id\": \"p1\", \"application_codes\": [\"US\"], \"erosion\": {\"undersow_orderly_with_required_partners\": true}}]},\n\t}\n\texceptions.p1 == true\n}\n\ntest_drought_2026_harvest_exception_district if {\n\texceptions := o6_8.harvest_exception_2026 with input as {\n\t\t\"farm\": {\"year\": 2026, \"region\": {\"federal_state\": \"Steiermark\", \"district\": \"Weiz\"}},\n\t\t\"land\": {\"parcels\": [{\"parcel_id\": \"p1\", \"operations\": {\"harvestable_stand\": false}}]},\n\t}\n\texceptions.p1 == true\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_8-luna-high-20261002/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 31,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 6/6\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_8-luna-high-20261002/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 87,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_8-luna-high-20261002/workspace"
+}

@@ -1,0 +1,728 @@
+{
+  "schema_version": "o6_3_source_review.v1",
+  "rules": [
+    {
+      "id": "CURRENT_BASIS",
+      "source_ids": [],
+      "variables": [
+        "context.current_year",
+        "context.snapshot_year",
+        "context.as_of",
+        "farm.year"
+      ],
+      "rego_symbols": [
+        "basis_failures",
+        "invalid_current_basis"
+      ],
+      "assessment": "host_contract_required",
+      "depends_on": []
+    },
+    {
+      "id": "CONTRACT",
+      "source_ids": [
+        "contract",
+        "entry-deadline",
+        "option-annual"
+      ],
+      "variables": [
+        "farm.heuwirtschaft.contract_start_year",
+        "farm.year",
+        "farm.heuwirtschaft.no_mower_conditioner_option"
+      ],
+      "rego_symbols": [
+        "basis_failures",
+        "option_requested"
+      ],
+      "assessment": "source_supported_subject_to_valid_contract_evidence",
+      "depends_on": []
+    },
+    {
+      "id": "COMBINATION",
+      "source_ids": [
+        "combination"
+      ],
+      "variables": [
+        "farm.heuwirtschaft.participation.combined_measure"
+      ],
+      "rego_symbols": [
+        "basis_failures"
+      ],
+      "assessment": "source_supported_subject_to_active_participation_evidence",
+      "depends_on": []
+    },
+    {
+      "id": "FIRST_YEAR_AREA",
+      "source_ids": [
+        "entry-minimum",
+        "first-year-area"
+      ],
+      "variables": [
+        "farm.heuwirtschaft.contract_start_year",
+        "farm.year",
+        "farm.heuwirtschaft.first_year.year",
+        "farm.heuwirtschaft.first_year.mown_meadow_meadow_pasture_ha",
+        "land.parcels_complete",
+        "land.parcels[].parcel_id",
+        "land.parcels[].area_ha",
+        "land.parcels[].land_use",
+        "land.parcels[].located_in_austria",
+        "land.parcels[].is_applied",
+        "land.parcels[].grassland_type"
+      ],
+      "rego_symbols": [
+        "first_year",
+        "history_known",
+        "min_area_ha",
+        "basis_failures"
+      ],
+      "assessment": "source_supported_with_historical_evidence",
+      "depends_on": [
+        "CURRENT_BASIS",
+        "CONTRACT"
+      ]
+    },
+    {
+      "id": "FIRST_YEAR_RGVE",
+      "source_ids": [
+        "first-year-stock",
+        "stock-threshold"
+      ],
+      "variables": [
+        "farm.heuwirtschaft.contract_start_year",
+        "farm.year",
+        "farm.heuwirtschaft.first_year.year",
+        "farm.heuwirtschaft.first_year.rgve_total",
+        "farm.heuwirtschaft.first_year.fodder_area_ha"
+      ],
+      "rego_symbols": [
+        "history_known",
+        "basis_failures"
+      ],
+      "assessment": "source_supported_with_historical_evidence",
+      "depends_on": [
+        "CURRENT_BASIS",
+        "CONTRACT",
+        "CURRENT_RGVE",
+        "FORAGE_AREA"
+      ]
+    },
+    {
+      "id": "CURRENT_RGVE",
+      "source_ids": [
+        "rgve-cattle",
+        "rgve-sheep-goats",
+        "rgve-small-equids",
+        "rgve-large-equids",
+        "rgve-other",
+        "dwarf-breeds",
+        "wild-location",
+        "stock-count-basis",
+        "stock-cattle-annual",
+        "austrian-animals"
+      ],
+      "variables": [
+        "livestock.species_groups_complete",
+        "livestock.species_groups[].group_id",
+        "livestock.species_groups[].species",
+        "livestock.species_groups[].rgve_category",
+        "livestock.species_groups[].animal_count",
+        "livestock.species_groups[].average_count",
+        "livestock.species_groups[].kept_in_austria"
+      ],
+      "rego_symbols": [
+        "rgve_row",
+        "group_count",
+        "total_rgve"
+      ],
+      "assessment": "requires_category_cohort_and_count_basis_contract",
+      "depends_on": [
+        "CURRENT_BASIS"
+      ]
+    },
+    {
+      "id": "FORAGE_AREA",
+      "source_ids": [
+        "forage-denominator",
+        "arable-crop-classification",
+        "second-crop",
+        "austrian-land"
+      ],
+      "variables": [
+        "land.parcels_complete",
+        "land.parcels[].parcel_id",
+        "land.parcels[].area_ha",
+        "land.parcels[].land_use",
+        "land.parcels[].located_in_austria",
+        "land.parcels[].is_applied",
+        "land.parcels[].crop.forage_crop_type",
+        "land.parcels[].crop.is_second_crop"
+      ],
+      "rego_symbols": [
+        "is_forage",
+        "applied",
+        "forage_area_ha"
+      ],
+      "assessment": "source_supported_closed_classification_required",
+      "depends_on": [
+        "CURRENT_BASIS"
+      ]
+    },
+    {
+      "id": "PREMIUM_AREA",
+      "source_ids": [
+        "premium-mown",
+        "second-crop",
+        "general-area",
+        "general-combinations",
+        "general-area-growth"
+      ],
+      "variables": [
+        "land.parcels[].area_ha",
+        "land.parcels[].land_use",
+        "land.parcels[].located_in_austria",
+        "land.parcels[].is_applied",
+        "land.parcels[].grassland_type",
+        "land.parcels[].crop.forage_crop_type",
+        "land.parcels[].crop.is_second_crop",
+        "land.parcels[].operations.cutting_dates"
+      ],
+      "rego_symbols": [
+        "premium_type",
+        "premium_area_ha"
+      ],
+      "assessment": "slice_only_general_exclusions_not_implemented",
+      "depends_on": [
+        "CURRENT_BASIS",
+        "FORAGE_AREA"
+      ]
+    },
+    {
+      "id": "PREMIUM_RATE",
+      "source_ids": [
+        "rates-2023-2024",
+        "rates-srl-2024",
+        "zero-current-stock"
+      ],
+      "variables": [
+        "farm.year",
+        "farm.heuwirtschaft.contract_start_year",
+        "farm.heuwirtschaft.no_mower_conditioner_option"
+      ],
+      "rego_symbols": [
+        "tierholding",
+        "indicative_rate",
+        "indicative_premium"
+      ],
+      "assessment": "source_supported_gross_indication_only",
+      "depends_on": [
+        "CURRENT_RGVE",
+        "FORAGE_AREA",
+        "CONTRACT",
+        "MOWER_CONDITIONER"
+      ]
+    },
+    {
+      "id": "SILAGE",
+      "source_ids": [
+        "silage-prohibition",
+        "annual-obligation",
+        "zero-current-stock"
+      ],
+      "variables": [
+        "farm.heuwirtschaft.silage_preparation_and_feeding",
+        "farm.year",
+        "context.as_of"
+      ],
+      "rego_symbols": [
+        "fact_rules",
+        "fact_due",
+        "raw_violations"
+      ],
+      "assessment": "source_supported_farm_wide_annual_declaration",
+      "depends_on": []
+    },
+    {
+      "id": "FERMENTATION",
+      "source_ids": [
+        "fermentation-prohibition",
+        "annual-obligation",
+        "zero-current-stock"
+      ],
+      "variables": [
+        "farm.heuwirtschaft.feed_fermentation",
+        "farm.year",
+        "context.as_of"
+      ],
+      "rego_symbols": [
+        "fact_rules",
+        "fact_due",
+        "raw_violations"
+      ],
+      "assessment": "source_supported_farm_wide_annual_declaration",
+      "depends_on": []
+    },
+    {
+      "id": "STORAGE",
+      "source_ids": [
+        "silage-storage-prohibition",
+        "annual-obligation",
+        "zero-current-stock"
+      ],
+      "variables": [
+        "farm.heuwirtschaft.silage_storage",
+        "farm.year",
+        "context.as_of"
+      ],
+      "rego_symbols": [
+        "fact_rules",
+        "fact_due",
+        "raw_violations"
+      ],
+      "assessment": "source_supported_farm_wide_annual_declaration",
+      "depends_on": []
+    },
+    {
+      "id": "GREEN_FEEDING",
+      "source_ids": [
+        "green-feeding-obligation",
+        "annual-obligation",
+        "zero-current-stock"
+      ],
+      "variables": [
+        "farm.heuwirtschaft.green_feeding_majority_april_to_september",
+        "farm.year",
+        "context.as_of"
+      ],
+      "rego_symbols": [
+        "fact_rules",
+        "fact_due",
+        "raw_violations"
+      ],
+      "assessment": "requires_seasonal_presence_and_expert_method",
+      "depends_on": [
+        "CURRENT_BASIS",
+        "CURRENT_RGVE"
+      ]
+    },
+    {
+      "id": "HAY_TRANSFER",
+      "source_ids": [
+        "hay-transfer-obligation",
+        "annual-obligation",
+        "zero-current-stock"
+      ],
+      "variables": [
+        "farm.heuwirtschaft.third_party_cuttings_only_dry_hay",
+        "farm.year",
+        "context.as_of"
+      ],
+      "rego_symbols": [
+        "fact_rules",
+        "fact_due",
+        "raw_violations"
+      ],
+      "assessment": "source_supported_farm_wide_annual_declaration",
+      "depends_on": []
+    },
+    {
+      "id": "MOWER_CONDITIONER",
+      "source_ids": [
+        "mower-conditioner",
+        "option-annual"
+      ],
+      "variables": [
+        "farm.heuwirtschaft.no_mower_conditioner_option",
+        "farm.heuwirtschaft.mower_conditioner_used",
+        "farm.heuwirtschaft.mower_conditioner_present"
+      ],
+      "rego_symbols": [
+        "option_requested",
+        "raw_violations"
+      ],
+      "assessment": "source_supported_whole_farm_not_only_premium_parcels",
+      "depends_on": []
+    },
+    {
+      "id": "MINIMUM_MANAGEMENT",
+      "source_ids": [
+        "forage-management",
+        "arable-drought-scope",
+        "annual-obligation"
+      ],
+      "variables": [
+        "land.parcels[].parcel_id",
+        "land.parcels[].land_use",
+        "land.parcels[].grassland_type",
+        "land.parcels[].located_in_austria",
+        "land.parcels[].is_applied",
+        "land.parcels[].crop.forage_crop_type",
+        "land.parcels[].crop.is_second_crop",
+        "land.parcels[].operations.full_mowing_and_removal",
+        "land.parcels[].operations.full_grazing",
+        "farm.year",
+        "context.as_of"
+      ],
+      "rego_symbols": [
+        "management_due",
+        "management_met",
+        "raw_violations"
+      ],
+      "assessment": "slice_only_mountain_meadow_and_specific_exemptions_open",
+      "depends_on": [
+        "CURRENT_BASIS",
+        "FORAGE_AREA"
+      ]
+    },
+    {
+      "id": "RECOGNITION",
+      "source_ids": [
+        "force-majeure"
+      ],
+      "variables": [
+        "exceptions.recognitions_complete",
+        "exceptions.recognitions[].reference",
+        "exceptions.recognitions[].authority",
+        "exceptions.recognitions[].recognised",
+        "exceptions.recognitions[].year",
+        "exceptions.recognitions[].obligation_id",
+        "exceptions.recognitions[].parcel_ids",
+        "exceptions.recognitions[].valid_from",
+        "exceptions.recognitions[].valid_to",
+        "context.as_of",
+        "farm.year"
+      ],
+      "rego_symbols": [
+        "recognition_matches",
+        "has_recognition",
+        "exceptions_known"
+      ],
+      "assessment": "review_only_temporal_match_and_legal_effect_open",
+      "depends_on": [
+        "CURRENT_BASIS"
+      ]
+    }
+  ],
+  "normative_tables": {
+    "rgve": [
+      {
+        "category_id": "rinder:unter_0_5_jahr",
+        "species": "cattle",
+        "rgve": 0.4,
+        "source_ids": [
+          "rgve-cattle"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "rinder:0_5_bis_unter_2_jahre",
+        "species": "cattle",
+        "rgve": 0.6,
+        "source_ids": [
+          "rgve-cattle"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "rinder:ab_2_jahre",
+        "species": "cattle",
+        "rgve": 1.0,
+        "source_ids": [
+          "rgve-cattle"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "zwergrinder:unter_0_5_jahr",
+        "species": "cattle",
+        "rgve": 0.2,
+        "source_ids": [
+          "rgve-cattle"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "zwergrinder:0_5_bis_unter_2_jahre",
+        "species": "cattle",
+        "rgve": 0.3,
+        "source_ids": [
+          "rgve-cattle"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "zwergrinder:ab_2_jahre",
+        "species": "cattle",
+        "rgve": 0.5,
+        "source_ids": [
+          "rgve-cattle"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "schafe:ab_1_jahr",
+        "species": "sheep_goats",
+        "rgve": 0.15,
+        "source_ids": [
+          "rgve-sheep-goats"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "schafe:unter_1_jahr",
+        "species": "sheep_goats",
+        "rgve": 0.07,
+        "source_ids": [
+          "rgve-sheep-goats"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "ziegen:ab_1_jahr",
+        "species": "sheep_goats",
+        "rgve": 0.15,
+        "source_ids": [
+          "rgve-sheep-goats"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "ziegen:unter_1_jahr",
+        "species": "sheep_goats",
+        "rgve": 0.07,
+        "source_ids": [
+          "rgve-sheep-goats"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "kleine_equiden:fohlen_unter_0_5_jahr",
+        "species": "horses",
+        "rgve": 0.2,
+        "source_ids": [
+          "rgve-small-equids"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "kleine_equiden:jungtiere_0_5_bis_unter_3_jahre",
+        "species": "horses",
+        "rgve": 0.3,
+        "source_ids": [
+          "rgve-small-equids"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "kleine_equiden:adulte_ab_3_jahre",
+        "species": "horses",
+        "rgve": 0.5,
+        "source_ids": [
+          "rgve-small-equids"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "grosse_equiden:fohlen_unter_0_5_jahr",
+        "species": "horses",
+        "rgve": 0.4,
+        "source_ids": [
+          "rgve-large-equids"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "grosse_equiden:jungtiere_0_5_bis_unter_3_jahre",
+        "species": "horses",
+        "rgve": 0.6,
+        "source_ids": [
+          "rgve-large-equids"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "grosse_equiden:adulte_ab_3_jahre",
+        "species": "horses",
+        "rgve": 1.0,
+        "source_ids": [
+          "rgve-large-equids"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "rotwild:ab_1_jahr",
+        "species": "other",
+        "rgve": 0.25,
+        "source_ids": [
+          "rgve-other"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "damwild_anderes_zuchtwild:ab_1_jahr",
+        "species": "other",
+        "rgve": 0.15,
+        "source_ids": [
+          "rgve-other"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "neuweltkamele:ab_1_jahr",
+        "species": "other",
+        "rgve": 0.15,
+        "source_ids": [
+          "rgve-other"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      },
+      {
+        "category_id": "rotwild_damwild_anderes_zuchtwild_neuweltkamele:unter_1_jahr",
+        "species": "other",
+        "rgve": 0.07,
+        "source_ids": [
+          "rgve-other"
+        ],
+        "classification_note": "Age and breed/height/final-weight evidence required; closed category assignment, not rounded aggregate GVE."
+      }
+    ],
+    "premium_rates": [
+      {
+        "from_year": 2023,
+        "to_year": 2023,
+        "tierholding": false,
+        "no_mower_conditioner": false,
+        "rate": 0.0
+      },
+      {
+        "from_year": 2023,
+        "to_year": 2023,
+        "tierholding": true,
+        "no_mower_conditioner": false,
+        "rate": 135.0
+      },
+      {
+        "from_year": 2023,
+        "to_year": 2023,
+        "tierholding": true,
+        "no_mower_conditioner": true,
+        "rate": 155.0
+      },
+      {
+        "from_year": 2024,
+        "to_year": null,
+        "tierholding": true,
+        "no_mower_conditioner": false,
+        "rate": 145.8
+      },
+      {
+        "from_year": 2024,
+        "to_year": null,
+        "tierholding": true,
+        "no_mower_conditioner": true,
+        "rate": 167.4
+      },
+      {
+        "from_year": 2024,
+        "to_year": null,
+        "tierholding": false,
+        "no_mower_conditioner": false,
+        "rate": 0.0
+      }
+    ],
+    "premium_sources": [
+      "rates-2023-2024",
+      "rates-srl-2024"
+    ],
+    "eligible_grassland_types": [
+      "mähwiese",
+      "mähweide"
+    ],
+    "excluded_grassland_types": [
+      "streuwiese",
+      "bergmähder",
+      "dauerweide",
+      "hutweide"
+    ],
+    "eligible_arable_fodder_crops": [
+      "futtergräser",
+      "wechselwiese",
+      "kleegras",
+      "klee",
+      "luzerne",
+      "sonstiges_feldfutter"
+    ],
+    "arable_fodder_for_livestock_calculation": [
+      "futtergräser",
+      "wechselwiese",
+      "kleegras",
+      "klee",
+      "luzerne",
+      "sonstiges_feldfutter",
+      "ackerweide"
+    ],
+    "eligible_combinations": [
+      "o6_1a",
+      "o6_1b",
+      "o6_1b_teilbetrieb"
+    ]
+  },
+  "blockers": [
+    {
+      "id": "GROUP_IDENTITY",
+      "problem": "App aggregates one group per species, while the RGVE table needs age/breed/size cohorts. A number cannot reconstruct lost categories.",
+      "rule_id": "CURRENT_RGVE",
+      "required_resolution": "Add stable category cohorts and preserve old species identities/records; revalidate snapshots.",
+      "status": "open_before_full_recommendation"
+    },
+    {
+      "id": "COUNT_BASIS",
+      "problem": "Presence of average_count alone does not prove an authoritative average list, period or 1-April reference date. The Lab gives any average precedence.",
+      "rule_id": "CURRENT_RGVE",
+      "required_resolution": "Store count basis, date/period, authoritative list reference/status and category identity; prevent fallback from missing cattle average to current count.",
+      "status": "open_before_full_recommendation"
+    },
+    {
+      "id": "GREEN_FEEDING_HISTORY",
+      "problem": "Current zero stock is not proof that no roughage-eating animals were held during April–September. The candidate skips this duty when current total_rgve is zero.",
+      "rule_id": "GREEN_FEEDING",
+      "required_resolution": "Capture seasonal cohort presence and expert assessment method/evidence; unknown history requires review; no invented 92-day threshold.",
+      "status": "open_before_full_recommendation"
+    },
+    {
+      "id": "RECOGNITION_TIME",
+      "problem": "Candidate matches an AMA recognition only when current as_of lies within its period; an earlier affected period may be missed. Inputs contain no incident interval.",
+      "rule_id": "RECOGNITION",
+      "required_resolution": "Add affected incident/obligation period and authority-document interpretation; distinguish proof of recognition from legal effect; retain review blocker.",
+      "status": "open_before_full_recommendation"
+    },
+    {
+      "id": "GENERAL_FUNDING",
+      "problem": "Single-parcel combinations, OP codes, applicant eligibility, area access/growth, caps/modulation/sanctions and mountain-meadow management are excluded from slice.",
+      "rule_id": "PREMIUM_AREA",
+      "required_resolution": "Integrate source-bound general contract or return explicit blocked full recommendation; never rename slice eligible to complete funding eligibility.",
+      "status": "open_before_full_recommendation"
+    },
+    {
+      "id": "ANNUAL_EVIDENCE",
+      "problem": "Snapshot date is the observation cutoff, not proof of completed annual compliance or full-year livestock average. Before year-end obligations remain open.",
+      "rule_id": "CURRENT_RGVE",
+      "required_resolution": "Expose observed/partial/final period coverage and open duties; future completion only a reasoned note, never invent actual facts.",
+      "status": "open_before_full_recommendation"
+    },
+    {
+      "id": "SOURCE_CURRENTNESS",
+      "problem": "Repository SRL is October 2024 and information sheets October 2025/April 2026; bound hashes prove identity, not absence of later legal amendments.",
+      "rule_id": "CONTRACT",
+      "required_resolution": "Verify source inventory/version applicability before promotion; document unresolved rank/deltas and exact as-of.",
+      "status": "open_before_full_recommendation"
+    },
+    {
+      "id": "OPUS_REVISION",
+      "problem": "User-announced completed Opus revisions for 08.10.2026 are not yet available in this baseline.",
+      "rule_id": "CURRENT_BASIS",
+      "required_resolution": "Bind actual completed artifacts and rerun delta/source review before claiming comparison complete.",
+      "status": "open_before_full_recommendation"
+    }
+  ],
+  "promotion_ready": false
+}

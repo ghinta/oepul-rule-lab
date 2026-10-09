@@ -114,6 +114,13 @@ class OpaValidateTests(unittest.TestCase):
         workspace_opa.write_text(FAKE_OPA, encoding="utf-8")
         workspace_opa.chmod(0o755)
 
+        # Auto-selection is only meaningful without explicit host overrides.
+        environment = {
+            key: value
+            for key, value in os.environ.items()
+            if key not in {"OPA_BIN", "OPA_RUNTIME"}
+        }
+
         completed = subprocess.run(
             [
                 sys.executable,
@@ -126,6 +133,7 @@ class OpaValidateTests(unittest.TestCase):
             text=True,
             encoding="utf-8",
             check=False,
+            env=environment,
         )
         result = json.loads(completed.stdout)
 

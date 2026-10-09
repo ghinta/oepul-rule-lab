@@ -1,0 +1,815 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_13",
+  "rules": [
+    {
+      "id": "O613-001",
+      "rule_type": "scope",
+      "statement": "Die Maßnahme unterstützt den Einsatz von Organismen auf Flächen unter Folie oder Glas, unabhängig davon, ob auf gewachsenem Boden oder in Topf- bzw. Substratkultur produziert wird.",
+      "conditions": [],
+      "result": {
+        "outcome": "scope",
+        "description": "Die Fläche fällt in den sachlichen Förderzweck, wenn die weiteren Voraussetzungen erfüllt sind."
+      },
+      "source_reference_ids": [
+        "SRC-O613-OVERVIEW",
+        "SRC-LEGAL-O613"
+      ],
+      "rego_symbols": [
+        "parcel_is_eligible"
+      ]
+    },
+    {
+      "id": "O613-002",
+      "rule_type": "contract_duration",
+      "statement": "Der Verpflichtungs- und Vertragszeitraum beträgt grundsätzlich ein Kalenderjahr vom 1. Jänner bis 31. Dezember und verlängert sich automatisch um ein Förderjahr, wenn nicht abgemeldet wird; bei keinem Nützlingseinsatz im Förderjahr erlischt der Vertrag.",
+      "conditions": [
+        {
+          "expression": "contract_year is the current funding year",
+          "description": "Das Vertragsjahr wird bewertet.",
+          "input_paths": [
+            "farm.year",
+            "farm.measure_application.contract_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_active_or_expired",
+        "description": "Der Vertrag ist bei einem gültigen NUE-Einsatz im aktuellen Förderjahr aktiv; ohne Einsatz endet er.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRC-O613-CONTRACT",
+        "SRC-O613-APP",
+        "SRC-GEN-ANNUAL"
+      ],
+      "rego_symbols": [
+        "contract_active"
+      ]
+    },
+    {
+      "id": "O613-003",
+      "rule_type": "exclusion",
+      "statement": "Eine Teilnahme ist ausgeschlossen, wenn der Betrieb Mitglied einer Erzeugerorganisation mit einem operationellen Programm ist, in dem der Organismeneinsatz abgegolten wird; unerheblich ist, ob der Betrieb die Abgeltung tatsächlich erhält.",
+      "conditions": [
+        {
+          "expression": "operation_program.member == true and organism_use_compensated == true",
+          "description": "Operationelles Programm deckt Organismeneinsatz ab.",
+          "input_paths": [
+            "farm.operation_program"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "ineligible",
+        "description": "Die Doppelförderung ist ausgeschlossen."
+      },
+      "source_reference_ids": [
+        "SRC-O613-NODOUBLE",
+        "SRC-LEGAL-O613"
+      ],
+      "rego_symbols": [
+        "operation_program_exclusion"
+      ]
+    },
+    {
+      "id": "O613-004",
+      "rule_type": "minimum_participation",
+      "statement": "In jedem Teilnahmejahr muss zumindest ein Gewächshaus oder Folientunnel nach den Maßnahmevorgaben bewirtschaftet werden.",
+      "conditions": [
+        {
+          "expression": "count(selected parcels) > 0",
+          "description": "Mindestens eine beantragte Fläche ist ausgewählt.",
+          "input_paths": [
+            "land.parcels[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "minimum_met",
+        "description": "Mindestens eine zulässige geschützte Anbaufläche ist erforderlich."
+      },
+      "source_reference_ids": [
+        "SRC-O613-MIN",
+        "SRC-LEGAL-O613"
+      ],
+      "rego_symbols": [
+        "selected_parcels",
+        "contract_active"
+      ]
+    },
+    {
+      "id": "O613-005",
+      "rule_type": "eligible_area",
+      "statement": "Teilnahmefähig sind befestigte Gewächshäuser mit Folien-, Glas- oder Kunststoffeindeckung sowie unbefestigte Folientunnel.",
+      "conditions": [
+        {
+          "expression": "protected_cultivation.structure_type is an eligible structure type",
+          "description": "Die bauliche Form ist zulässig.",
+          "input_paths": [
+            "land.parcels[].protected_cultivation"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_area",
+        "description": "Die geschützte Anbaufläche ist strukturell förderfähig."
+      },
+      "source_reference_ids": [
+        "SRC-O613-AREA",
+        "SRC-GEN-PROTECTED-AREA"
+      ],
+      "rego_symbols": [
+        "parcel_is_eligible"
+      ]
+    },
+    {
+      "id": "O613-006",
+      "rule_type": "eligible_area",
+      "statement": "Sowohl Flächen auf gewachsenem Boden als auch Flächen mit Containern, Töpfen oder Substratkultur sind teilnahmefähig.",
+      "conditions": [
+        {
+          "expression": "cultivation_medium in grown_soil, pots, substrate",
+          "description": "Die Kulturform gehört zur geschützten Anbaufläche.",
+          "input_paths": [
+            "land.parcels[].protected_cultivation.cultivation_medium"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_area",
+        "description": "Die Kulturform ist zulässig."
+      },
+      "source_reference_ids": [
+        "SRC-O613-AREA",
+        "SRC-LEGAL-AREA"
+      ],
+      "rego_symbols": [
+        "parcel_is_eligible"
+      ]
+    },
+    {
+      "id": "O613-007",
+      "rule_type": "area_exclusion",
+      "statement": "Verkaufs-, Schau- und Lagerflächen sowie ungenutzte Flächen zwischen Folientunneln oder Glashäusern sind nicht förderfähig; notwendige Gangflächen sind nur im erforderlichen Ausmaß förderfähig.",
+      "conditions": [
+        {
+          "expression": "area_role is production or necessary_aisle, and necessary_aisle is actually necessary",
+          "description": "Die Funktion der Fläche wird geprüft.",
+          "input_paths": [
+            "land.parcels[].protected_cultivation"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_or_excluded",
+        "description": "Nur Produktionsflächen und notwendige Gangflächen bleiben förderfähig."
+      },
+      "source_reference_ids": [
+        "SRC-O613-AREA"
+      ],
+      "rego_symbols": [
+        "aisle_scope_valid",
+        "parcel_is_eligible"
+      ]
+    },
+    {
+      "id": "O613-008",
+      "rule_type": "operational_requirement",
+      "statement": "Der Nützlingseinsatz muss in zumindest einem Gewächshaus oder Folientunnel mit Organismen gemäß den Aufwandsmengen des AGES-Pflanzenschutzmittelregisters erfolgen.",
+      "conditions": [
+        {
+          "expression": "ages_register_entry == true and application_rate_compliant == true",
+          "description": "Registereintrag und Aufwandsmenge stimmen.",
+          "input_paths": [
+            "land.parcels[].organism_application"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "valid_use",
+        "description": "Ein registerkonformer Organismeneinsatz liegt vor."
+      },
+      "source_reference_ids": [
+        "SRC-O613-USE",
+        "SRC-LEGAL-O613"
+      ],
+      "rego_symbols": [
+        "record_complete"
+      ]
+    },
+    {
+      "id": "O613-009",
+      "rule_type": "operational_requirement",
+      "statement": "Anrechenbar sind nur Anwendungen, die einen Pflanzenschutzmitteleinsatz ersetzen; ein reiner Einsatz von Hummelvölkern zur Bestäubung ist nicht förderfähig.",
+      "conditions": [
+        {
+          "expression": "replaces_plant_protection_use == true and is_pollinator_only != true",
+          "description": "Die Anwendung ersetzt Pflanzenschutz und ist kein reiner Bestäubungseinsatz.",
+          "input_paths": [
+            "land.parcels[].organism_application"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "valid_or_invalid_use",
+        "description": "Nur ersetzende Pflanzenschutzanwendungen werden berücksichtigt."
+      },
+      "source_reference_ids": [
+        "SRC-O613-USE",
+        "SRC-O613-HUMMEL"
+      ],
+      "rego_symbols": [
+        "record_complete"
+      ]
+    },
+    {
+      "id": "O613-010",
+      "rule_type": "recordkeeping",
+      "statement": "Schlagbezogen sind Art und Menge der eingesetzten Organismen, Zukaufsbelege, Grund und Ziel sowie das Einsatzdatum aufzuzeichnen.",
+      "conditions": [
+        {
+          "expression": "record contains all required fields",
+          "description": "Die Aufzeichnung und Nachweise sind vollständig.",
+          "input_paths": [
+            "land.parcels[].organism_application"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "records_required",
+        "description": "Unvollständige Aufzeichnungen erfüllen die Förderverpflichtung nicht."
+      },
+      "source_reference_ids": [
+        "SRC-O613-RECORD",
+        "SRC-LEGAL-O613"
+      ],
+      "rego_symbols": [
+        "record_complete"
+      ]
+    },
+    {
+      "id": "O613-011",
+      "rule_type": "application_deadline",
+      "statement": "Die Maßnahme ist vor Vertragsbeginn im Maßnahmenantrag des Mehrfachantrags bis spätestens 31. Dezember zu beantragen.",
+      "conditions": [
+        {
+          "expression": "submitted_by <= 31 December of the preceding year",
+          "description": "Der Maßnahmenantrag liegt fristgerecht vor.",
+          "input_paths": [
+            "farm.measure_application.submitted_by",
+            "farm.measure_application.contract_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "valid_application",
+        "description": "Ein gültiger Vertrag kann ab dem Folgejahr begründet werden."
+      },
+      "source_reference_ids": [
+        "SRC-O613-APP",
+        "SRC-GEN-APPLICATION",
+        "SRC-LEGAL-APPLICATION"
+      ],
+      "rego_symbols": [
+        "application_deadline_met"
+      ]
+    },
+    {
+      "id": "O613-012",
+      "rule_type": "entry_deadline",
+      "statement": "Der letzte Einstieg in die Maßnahme ist mit dem Förderjahr 2027 möglich; dafür muss bis spätestens 31. Dezember 2026 beantragt werden.",
+      "conditions": [
+        {
+          "expression": "2023 <= contract_year <= 2027",
+          "description": "Das beantragte Förderjahr liegt im Einstiegszeitraum.",
+          "input_paths": [
+            "farm.measure_application.contract_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "entry_allowed_or_denied",
+        "description": "Spätere Neueinstiege sind ausgeschlossen."
+      },
+      "source_reference_ids": [
+        "SRC-O613-APP",
+        "SRC-GEN-ANNUAL"
+      ],
+      "rego_symbols": [
+        "entry_year_valid"
+      ]
+    },
+    {
+      "id": "O613-013",
+      "rule_type": "application_code",
+      "statement": "Ein Schlag muss in der Feldstücksliste des Mehrfachantrags mit dem Code NUE gekennzeichnet werden.",
+      "conditions": [
+        {
+          "expression": "measure_application.code == NUE",
+          "description": "Der Maßnahmencode ist gesetzt.",
+          "input_paths": [
+            "land.parcels[].measure_application.code"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_requested",
+        "description": "Nur mit NUE codierte beantragte Flächen werden für die Maßnahme berücksichtigt."
+      },
+      "source_reference_ids": [
+        "SRC-O613-APP"
+      ],
+      "rego_symbols": [
+        "parcel_is_eligible"
+      ]
+    },
+    {
+      "id": "O613-014",
+      "rule_type": "land_use_classification",
+      "statement": "Flächen auf gewachsenem Boden sind als Feldstücksnutzungsart A zu beantragen.",
+      "conditions": [
+        {
+          "expression": "cultivation_medium == grown_soil",
+          "description": "Die Pflanzen wachsen auf gewachsenem Boden.",
+          "input_paths": [
+            "land.parcels[].protected_cultivation.cultivation_medium",
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "land_use_A",
+        "description": "Die zulässige Nutzungsart ist A.",
+        "value": "A"
+      },
+      "source_reference_ids": [
+        "SRC-O613-CLASS"
+      ],
+      "rego_symbols": [
+        "land_use_matches"
+      ]
+    },
+    {
+      "id": "O613-015",
+      "rule_type": "land_use_classification",
+      "statement": "Flächen mit Töpfen oder Substratkulturen sind als Feldstücksnutzungsart GA zu beantragen.",
+      "conditions": [
+        {
+          "expression": "cultivation_medium in pots, substrate",
+          "description": "Die Pflanzen wachsen in Töpfen oder Substratkultur.",
+          "input_paths": [
+            "land.parcels[].protected_cultivation.cultivation_medium",
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "land_use_GA",
+        "description": "Die zulässige Nutzungsart ist GA.",
+        "value": "GA"
+      },
+      "source_reference_ids": [
+        "SRC-O613-CLASS"
+      ],
+      "rego_symbols": [
+        "land_use_matches"
+      ]
+    },
+    {
+      "id": "O613-016",
+      "rule_type": "land_use_classification",
+      "statement": "Bei wechselnder Bewirtschaftung auf gewachsenem Boden und in Töpfen/Substrat ist der 1. April für die Einstufung A oder GA maßgeblich.",
+      "conditions": [
+        {
+          "expression": "cultivation_medium == mixed and classification_medium_april_1 is present",
+          "description": "Die Kulturform wechselt innerhalb des Jahres.",
+          "input_paths": [
+            "land.parcels[].protected_cultivation.classification_medium_april_1",
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "land_use_by_1_april",
+        "description": "Die Fläche wird nach der am 1. April maßgeblichen Kulturform beantragt."
+      },
+      "source_reference_ids": [
+        "SRC-O613-CLASS"
+      ],
+      "rego_symbols": [
+        "land_use_matches"
+      ]
+    },
+    {
+      "id": "O613-017",
+      "rule_type": "withdrawal",
+      "statement": "Nach Erfüllung des einjährigen Vertragszeitraums ist der Ausstieg möglich; er ist online im Rahmen des aktuellen Mehrfachantrags für das laufende Förderjahr bekanntzugeben.",
+      "conditions": [
+        {
+          "expression": "one-year contract is fulfilled",
+          "description": "Das laufende Vertragsjahr ist abgeschlossen.",
+          "input_paths": [
+            "farm.measure_application.contract_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "withdrawal_allowed",
+        "description": "Der Ausstieg kann nach dem Vertragsjahr erklärt werden."
+      },
+      "source_reference_ids": [
+        "SRC-O613-WITHDRAW",
+        "SRC-GEN-EXIT"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O613-018",
+      "rule_type": "withdrawal_effect",
+      "statement": "Wird zwischen 1. Jänner und einschließlich 31. Dezember abgemeldet, ist die Maßnahme im betroffenen Förderjahr nicht gültig; bei Erfüllung bis 31. Dezember ist die Abmeldung erst ab 1. Jänner des Folgejahres zulässig.",
+      "conditions": [
+        {
+          "expression": "withdrawal occurs during current funding year",
+          "description": "Die Abmeldung liegt im laufenden Förderjahr.",
+          "input_paths": [
+            "farm.measure_application.withdrawal_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "invalid_current_year",
+        "description": "Die laufende Jahresprämie entfällt; eine fristgerechte Neubeantragung ist für eine spätere Teilnahme erforderlich."
+      },
+      "source_reference_ids": [
+        "SRC-O613-WITHDRAW",
+        "SRC-GEN-EXIT"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O613-019",
+      "rule_type": "premium",
+      "statement": "Für Flächen im geschützten Anbau beträgt die Prämie im Förderjahr 2023 2.000 Euro je Hektar.",
+      "conditions": [
+        {
+          "expression": "contract_year == 2023 and eligible area",
+          "description": "Das Förderjahr ist 2023.",
+          "input_paths": [
+            "farm.measure_application.contract_year",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_rate",
+        "description": "Der Basissatz beträgt 2.000 Euro/ha.",
+        "value": 2000
+      },
+      "source_reference_ids": [
+        "SRC-O613-PREMIUM",
+        "SRC-GEN-CAP"
+      ],
+      "rego_symbols": [
+        "premium_per_ha"
+      ]
+    },
+    {
+      "id": "O613-020",
+      "rule_type": "premium",
+      "statement": "Ab dem Förderjahr 2024 beträgt die Prämie für Flächen im geschützten Anbau 2.160 Euro je Hektar.",
+      "conditions": [
+        {
+          "expression": "contract_year >= 2024 and eligible area",
+          "description": "Das Förderjahr ist mindestens 2024.",
+          "input_paths": [
+            "farm.measure_application.contract_year",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_rate",
+        "description": "Der Basissatz beträgt 2.160 Euro/ha.",
+        "value": 2160
+      },
+      "source_reference_ids": [
+        "SRC-O613-PREMIUM",
+        "SRC-LEGAL-CAP"
+      ],
+      "rego_symbols": [
+        "premium_per_ha"
+      ]
+    },
+    {
+      "id": "O613-021",
+      "rule_type": "combination",
+      "statement": "Die Prämie ist auf der Einzelfläche mit keiner anderen Prämie kombinierbar; für Topf- oder Substratkultur im geschützten Anbau ist laut Kombinationstabelle keine andere Maßnahme kombinierbar.",
+      "conditions": [
+        {
+          "expression": "other_premium == false",
+          "description": "Auf der beantragten Fläche besteht keine weitere Prämienkombination.",
+          "input_paths": [
+            "land.parcels[].measure_application.other_premium"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combination_allowed_or_denied",
+        "description": "Eine weitere Prämie auf derselben Einzelfläche schließt die Kombination aus."
+      },
+      "source_reference_ids": [
+        "SRC-O613-PREMIUM",
+        "SRC-ANNEX-COMBINATION"
+      ],
+      "rego_symbols": [
+        "all_selected_parcels_valid"
+      ]
+    },
+    {
+      "id": "O613-022",
+      "rule_type": "general_minimum_size",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr sind mindestens 0,50 ha Flächen im geschützten Anbau unabhängig von Nutzungsart und Maßnahmeantrag oder alternativ mindestens 1,50 ha landwirtschaftliche Fläche zuzüglich der anrechenbaren Zusatzflächen erforderlich.",
+      "conditions": [
+        {
+          "expression": "first_participation == true and protected_area >= 0.50 or alternative_area >= 1.50",
+          "description": "Die Betriebsmindestgröße wird im ersten Teilnahmejahr geprüft.",
+          "input_paths": [
+            "farm.measure_application.first_participation",
+            "land.parcels[].area_ha",
+            "land.arable_area_ha",
+            "land.grassland_area_ha",
+            "land.special_crops_area_ha",
+            "land.alpine_pasture_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "minimum_size",
+        "description": "Ab dem zweiten Teilnahmejahr entfällt die allgemeine Betriebsmindestgröße; die jährliche Maßnahmemindestteilnahme bleibt bestehen."
+      },
+      "source_reference_ids": [
+        "SRC-GEN-MINSIZE",
+        "SRC-LEGAL-MINSIZE"
+      ],
+      "rego_symbols": [
+        "minimum_business_size_met"
+      ]
+    },
+    {
+      "id": "O613-023",
+      "rule_type": "general_management",
+      "statement": "Auf Flächen im geschützten Anbau sind ordnungsgemäßer Anbau, jährliche ordnungsgemäße Pflege sowie Ernte und Verbringen des Ernteguts von zumindest 85 Prozent des jeweiligen Schlages einzuhalten.",
+      "conditions": [
+        {
+          "expression": "proper_cultivation and proper_annual_care and harvested_percent >= 85",
+          "description": "Die allgemeinen Mindestbewirtschaftungskriterien werden erfüllt.",
+          "input_paths": [
+            "land.parcels[].measure_application.harvested_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "minimum_management_met",
+        "description": "Die allgemeine Ernteverpflichtung ist erfüllt, soweit keine anwendbare 2026-Ausnahme greift."
+      },
+      "source_reference_ids": [
+        "SRC-GEN-MINCRITERIA",
+        "SRC-LEGAL-MINCRITERIA"
+      ],
+      "rego_symbols": [
+        "harvest_requirement_met"
+      ]
+    },
+    {
+      "id": "O613-024",
+      "rule_type": "general_eligibility",
+      "statement": "Nicht aktiv landwirtschaftlich bewirtschaftete, falsch identifizierte oder nicht für die Maßnahme angegebene Flächen sowie sonstige Flächen im geschützten Anbau sind nicht förderfähig.",
+      "conditions": [
+        {
+          "expression": "active production and correct measure identification",
+          "description": "Die Fläche ist aktiv bewirtschaftet und korrekt beantragt.",
+          "input_paths": [
+            "land.parcels[].measure_application",
+            "land.parcels[].protected_cultivation"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_or_excluded",
+        "description": "Die allgemeine Flächenförderfähigkeit ist Voraussetzung."
+      },
+      "source_reference_ids": [
+        "SRC-GEN-INELIGIBLE",
+        "SRC-LEGAL-INELIGIBLE"
+      ],
+      "rego_symbols": [
+        "parcel_is_eligible"
+      ]
+    },
+    {
+      "id": "O613-025",
+      "rule_type": "location",
+      "statement": "Die geförderten Flächen müssen in Österreich liegen.",
+      "conditions": [
+        {
+          "expression": "parcel is located in Austria",
+          "description": "Die geografische Lage erfüllt die Fördervoraussetzung.",
+          "input_paths": [
+            "farm.region"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "location_valid",
+        "description": "Ausländische Flächen werden nicht gefördert."
+      },
+      "source_reference_ids": [
+        "SRC-GEN-LOCATION",
+        "SRC-LEGAL-LOCATION"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O613-026",
+      "rule_type": "application_continuation",
+      "statement": "Die im Maßnahmenantrag beantragte einjährige Maßnahme ist für Folgejahre vorbeantragt und wird durch die Abgabe des Mehrfachantrags mit den förderrelevanten Flächen weitergeführt.",
+      "conditions": [
+        {
+          "expression": "measure not deregistered and payment application contains relevant parcels",
+          "description": "Die Weiterführung wird im Folgejahr beantragt.",
+          "input_paths": [
+            "farm.measure_application",
+            "land.parcels[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "continued_or_not_continued",
+        "description": "Ohne Abmeldung verlängert sich die Maßnahme; die jährlichen förderrelevanten Angaben bleiben erforderlich."
+      },
+      "source_reference_ids": [
+        "SRC-GEN-APPLICATION",
+        "SRC-LEGAL-APPLICATION"
+      ],
+      "rego_symbols": [
+        "contract_active"
+      ]
+    },
+    {
+      "id": "O613-027",
+      "rule_type": "controls",
+      "statement": "Die Einhaltung der Förderbedingungen wird durch Verwaltungskontrollen, Vor-Ort-Kontrollen und nachgängige Prüfungen überprüft; Aufzeichnungen und Unterlagen sind vorzulegen.",
+      "conditions": [
+        {
+          "expression": "application is subject to control",
+          "description": "Förderantrag oder Auszahlung wird kontrolliert.",
+          "input_paths": [
+            "documentation"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "control_required",
+        "description": "Kontrollen und Mitwirkungspflichten gelten für die Maßnahme."
+      },
+      "source_reference_ids": [
+        "SRC-GEN-CONTROLS",
+        "SRC-LEGAL-CONTROLS"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O613-028",
+      "rule_type": "sanction",
+      "statement": "Verstöße gegen Zugangsvoraussetzungen, Flächenangaben, Förderverpflichtungen, Konditionalität oder den Vertragszeitraum können Kürzung, Einbehalt oder Rückforderung auslösen; die Bewertung berücksichtigt Schwere, Ausmaß, Dauer und Häufigkeit.",
+      "conditions": [
+        {
+          "expression": "any applicable obligation is not met",
+          "description": "Eine Fördervoraussetzung oder Verpflichtung wird verletzt.",
+          "input_paths": [
+            "land.parcels[]",
+            "documentation",
+            "farm.measure_application"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "sanction_or_recovery",
+        "description": "Die konkrete Sanktion wird nach den maßgeblichen Verwaltungsvorschriften bestimmt."
+      },
+      "source_reference_ids": [
+        "SRC-GEN-SANCTIONS",
+        "SRC-LEGAL-SANCTIONS"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O613-029",
+      "rule_type": "payment",
+      "statement": "Die Förderung wird als jährliche Prämie gewährt und grundsätzlich bis 30. Juni des Folgejahres auf das im Mehrfachantrag angegebene Namenskonto überwiesen; eine Teilzahlung von maximal 75 Prozent ist nach Verwaltungskontrolle möglich.",
+      "conditions": [
+        {
+          "expression": "approved eligible application",
+          "description": "Der Antrag ist genehmigt und die Kontrollen sind berücksichtigt.",
+          "input_paths": [
+            "farm.measure_application",
+            "land.parcels[]"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "annual_payment",
+        "description": "Auszahlung und mögliche Teilzahlung folgen den allgemeinen Abwicklungsregeln."
+      },
+      "source_reference_ids": [
+        "SRC-GEN-PAYMENT",
+        "SRC-LEGAL-PAYMENT"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O613-030",
+      "rule_type": "premium_cap",
+      "statement": "Die Prämienobergrenze für die Summe der flächenbezogenen Zahlungen beträgt bei dieser Maßnahme 2.160 Euro je Hektar; die Maßnahme ist damit in ihrer Förderobergrenze gesondert ausgewiesen.",
+      "conditions": [
+        {
+          "expression": "measure == o6_13",
+          "description": "Die Obergrenze für o6_13 wird angewendet.",
+          "input_paths": [
+            "farm.measure_application.contract_year",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_cap",
+        "description": "Die flächenbezogene Berechnung darf die maßnahmenspezifische Obergrenze nicht überschreiten.",
+        "value": 2160
+      },
+      "source_reference_ids": [
+        "SRC-GEN-CAP",
+        "SRC-LEGAL-CAP"
+      ],
+      "rego_symbols": [
+        "premium_eur"
+      ]
+    },
+    {
+      "id": "O613-031",
+      "rule_type": "modulation",
+      "statement": "Das Prämienausmaß wird nach der gesamten Betriebsfläche moduliert: bis 200 ha 100 Prozent, über 200 bis 300 ha 90 Prozent, über 300 bis 1.000 ha 85 Prozent und über 1.000 ha 75 Prozent.",
+      "conditions": [
+        {
+          "expression": "total farm area is evaluated by marginal bands",
+          "description": "Die Modulation wird auf Basis der Angaben im Mehrfachantrag berechnet.",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "modulated_premium",
+        "description": "Der gewichtete Modulationsfaktor wird auf die Maßnahmeprämie angewendet."
+      },
+      "source_reference_ids": [
+        "SRC-GEN-MODULATION",
+        "SRC-LEGAL-MODULATION"
+      ],
+      "rego_symbols": [
+        "modulation_factor",
+        "premium_eur"
+      ]
+    },
+    {
+      "id": "O613-032",
+      "rule_type": "force_majeure_2026",
+      "statement": "Für 2026 wird in den besonders von der Dürre betroffenen ausgewiesenen Bezirken die Wettersituation automatisch als höhere Gewalt anerkannt, wenn bei spät im Sommer oder Herbst geernteten Ackerkulturen wegen der Dürre kein erntbarer Bestand vorliegt; die 85-Prozent-Ernte und das Verbringen müssen dann nicht erfolgen und die Prämie wird dennoch gewährt.",
+      "conditions": [
+        {
+          "expression": "contract_year == 2026 and no harvestable stock and late-summer/autumn crop and district in published scope",
+          "description": "Die kumulativen Voraussetzungen der Dürre-Ausnahme liegen vor.",
+          "input_paths": [
+            "farm.year",
+            "farm.region.federal_state",
+            "farm.region.district",
+            "farm.measure_application.drought_no_harvestable_stock",
+            "land.parcels[].measure_application"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "harvest_exception",
+        "description": "Die Erntevoraussetzung gilt für die betroffene Fläche als erfüllt; keine Einzelmeldung ist erforderlich."
+      },
+      "source_reference_ids": [
+        "SRC-2026-DROUGHT-85",
+        "SRC-2026-DROUGHT-SCOPE"
+      ],
+      "rego_symbols": [
+        "harvest_requirement_met",
+        "region_in_drought_scope"
+      ]
+    }
+  ]
+}

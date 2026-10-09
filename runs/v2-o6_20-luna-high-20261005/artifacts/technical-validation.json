@@ -1,0 +1,120 @@
+{
+  "command": "validate",
+  "duration_ms": 175,
+  "exit_code": 0,
+  "opa": {
+    "binary": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_20-luna-high-20261005/workspace/tools/opa",
+    "expected_version": "1.18.2",
+    "image": null,
+    "runtime": "local"
+  },
+  "rego_files": [
+    "policy/o6_20.rego",
+    "tests/o6_20_test.rego"
+  ],
+  "schema_version": "oepul-rule-lab-opa-validation-v1",
+  "stages": {
+    "check": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_20-luna-high-20261005/workspace/tools/opa",
+          "check",
+          "--strict",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 20,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "",
+        "stdout_truncated": false
+      },
+      "name": "check",
+      "status": "passed"
+    },
+    "fmt": {
+      "checked_files": [
+        "policy/o6_20.rego",
+        "tests/o6_20_test.rego"
+      ],
+      "duration_ms": 29,
+      "executions": [
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_20-luna-high-20261005/workspace/tools/opa",
+            "fmt",
+            "policy/o6_20.rego"
+          ],
+          "duration_ms": 17,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_20\n\nimport rego.v1\n\ndefault decision := {\n\t\"eligible\": false,\n\t\"violations\": [],\n\t\"categories\": [],\n\t\"premium\": {},\n}\n\no6_20 := object.get(object.get(object.get(input, \"farm\", {}), \"livestock\", {}), \"o6_20\", [])\napplication := object.get(input, \"o6_20_application\", {})\ncontext := object.get(input, \"context\", {})\nfarm := object.get(input, \"farm\", {})\n\ncategory_records contains c if {\n\tc := o6_20[_]\n\tobject.get(c, \"participating\", false) == true\n}\n\ncategory_config(c) := data.categories[c.category] if {\n\tdata.categories[c.category]\n\tobject.get(data.categories[c.category], \"measure_eligible\", false) == true\n}\n\ncategory_threshold(c) := 150 if {\n\tobject.get(c, \"optional_150_days\", false) == true\n}\n\ncategory_threshold(c) := 120 if {\n\tobject.get(c, \"optional_150_days\", false) == false\n}\n\ncategory_minimum_met(c) if {\n\tobject.get(c, \"weide_days\", 0) >= category_threshold(c)\n}\n\ncategory_minimum_met(c) := false if {\n\tobject.get(c, \"weide_days\", 0) < category_threshold(c)\n}\n\ncategory_species(c) := category_config(c).species\n\ntotal_rgve := sum([object.get(c, \"average_rgve\", 0) | c := category_records[_]])\n\nhas_valid_application if {\n\tobject.get(application, \"measure_requested\", false) == true\n\tobject.get(application, \"application_date_before_31_december\", false) == true\n}\n\ndefault has_valid_application := false\n\nreport_satisfied(c) if {\n\tobject.get(c, \"correction_or_report\", false) == true\n}\n\nsheep_or_goat(c) if {\n\tspecies := category_species(c)\n\tspecies in {\"sheep\", \"goats\"}\n}\n\nequid_or_camel(c) if {\n\tspecies := category_species(c)\n\tspecies in {\"equids\", \"camelids\"}\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-valid-categories\",\n\t\"message\": sprintf(\"Unbekannte Tierkategorie: %v\", [c.category]),\n} if {\n\tc := category_records[_]\n\tnot category_config(c)\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-minimum-rgve\",\n\t\"message\": sprintf(\"Mindestens 2,00 RGVE erforderlich; ermittelt: %.3f\", [total_rgve]),\n} if {\n\ttotal_rgve < 2\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-minimum-category-presence\",\n\t\"message\": sprintf(\"Kategorie %v benötigt mindestens ein teilnehmendes/prämienfähiges Tier\", [c.category]),\n} if {\n\tc := category_records[_]\n\tobject.get(c, \"animal_count\", 0) < 1\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-all-category-animals\",\n\t\"message\": sprintf(\"Nicht alle Tiere der Kategorie %v nehmen teil\", [c.category]),\n} if {\n\tc := category_records[_]\n\tobject.get(c, \"all_category_animals_participate\", false) == false\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-weide-period\",\n\t\"message\": sprintf(\"Kategorie %v liegt nicht vollständig im Weidezeitraum 1. April bis 31. Oktober\", [c.category]),\n} if {\n\tc := category_records[_]\n\tobject.get(c, \"weide_period_valid\", false) == false\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-minimum-weide-days\",\n\t\"message\": sprintf(\"Kategorie %v erreicht die erforderlichen %v Weidetage nicht\", [c.category, category_threshold(c)]),\n} if {\n\tc := category_records[_]\n\tnot category_minimum_met(c)\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-groundfeed-grazing\",\n\t\"message\": sprintf(\"Grundfutterbedarf der Kategorie %v wird nicht überwiegend durch Beweidung gedeckt\", [c.category]),\n} if {\n\tc := category_records[_]\n\tobject.get(c, \"groundfeed_predominantly_grazing\", false) == false\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-substantial-day-grazing\",\n\t\"message\": sprintf(\"Kategorie %v wird nicht über einen wesentlichen Teil des Tages beweidet\", [c.category]),\n} if {\n\tc := category_records[_]\n\tobject.get(c, \"grazing_substantial_part_of_day\", false) == false\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-water-shelter\",\n\t\"message\": sprintf(\"Tränke oder Unterstell-/rasch-verbringbare Stallmöglichkeit für %v fehlt\", [c.category]),\n} if {\n\tc := category_records[_]\n\tobject.get(c, \"water_access\", false) == false\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-water-shelter\",\n\t\"message\": sprintf(\"Unterstellmöglichkeit für %v fehlt\", [c.category]),\n} if {\n\tc := category_records[_]\n\tobject.get(c, \"shelter_access\", false) == false\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-diary\",\n\t\"message\": sprintf(\"Weidetagebuch für %v ist nicht vollständig\", [c.category]),\n} if {\n\tc := category_records[_]\n\tobject.get(c, \"weide_diary_complete\", false) == false\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-missed-days-report\",\n\t\"message\": sprintf(\"Nichterreichung der Mindestweidedauer für %v ist nicht gemeldet/korrigiert\", [c.category]),\n} if {\n\tc := category_records[_]\n\tnot category_minimum_met(c)\n\tnot report_satisfied(c)\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-sheep-goat-entry-7-days\",\n\t\"message\": sprintf(\"Zugangsmeldung für %v wurde nicht innerhalb von 7 Tagen vorgenommen\", [c.category]),\n} if {\n\tc := category_records[_]\n\tsheep_or_goat(c)\n\tobject.get(c, \"entry_after_april\", false) == true\n\tobject.get(c, \"entry_report_within_7_days\", false) == false\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-sheep-goat-exit-7-days\",\n\t\"message\": sprintf(\"Abgangsmeldung für %v wurde nicht innerhalb von 7 Tagen vorgenommen\", [c.category]),\n} if {\n\tc := category_records[_]\n\tsheep_or_goat(c)\n\tobject.get(c, \"exit_after_april\", false) == true\n\tobject.get(c, \"exit_report_within_7_days\", false) == false\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-sheep-goat-pasture-not-exit\",\n\t\"message\": sprintf(\"Vorübergehender Aufenthalt von %v auf Alm-/Gemeinschafts-/Zinsweide wurde als Abgang behandelt\", [c.category]),\n} if {\n\tc := category_records[_]\n\tsheep_or_goat(c)\n\tobject.get(c, \"temporary_pasture_stay\", false) == true\n\tobject.get(c, \"pasture_treated_as_exit\", false) == true\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-equid-camel-correction\",\n\t\"message\": sprintf(\"Korrektur der Anzahl für %v bei Nichterreichung der Mindestweidetage fehlt\", [c.category]),\n} if {\n\tc := category_records[_]\n\tequid_or_camel(c)\n\tnot category_minimum_met(c)\n\tobject.get(c, \"replacement_by_growing_animals\", false) == false\n\tobject.get(c, \"count_correction_done\", false) == false\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-vis-reporting\",\n\t\"message\": sprintf(\"VIS-Tiermeldungen für %v sind nicht als vollständig angegeben\", [c.category]),\n} if {\n\tc := category_records[_]\n\tspecies := category_species(c)\n\tspecies in {\"sheep\", \"goats\", \"equids\"}\n\tobject.get(c, \"vis_reporting_complete\", false) == false\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-austria-location\",\n\t\"message\": sprintf(\"Tiere der Kategorie %v werden nicht in Österreich gehalten\", [c.category]),\n} if {\n\tc := category_records[_]\n\tobject.get(c, \"animals_held_in_austria\", false) == false\n}\n\nviolations contains {\n\t\"rule_id\": \"o620-drought-control-context\",\n\t\"message\": \"2026-Dürrekontext: Grundfutterbedarf auf der Weide ist in der Kontrolle gesondert zu plausibilisieren\",\n} if {\n\tobject.get(farm, \"year\", 0) == 2026\n\tobject.get(context, \"drought_2026\", false) == true\n\tobject.get(context, \"control_note_acknowledged\", false) == false\n}\n\noptional_150_premium_eligible(c) if {\n\tobject.get(c, \"optional_150_days\", false) == true\n\tcategory_minimum_met(c)\n}\n\noptional_150_premium_eligible(c) := false if {\n\tobject.get(c, \"optional_150_days\", false) == false\n}\n\noptional_150_premium_eligible(c) := false if {\n\tobject.get(c, \"optional_150_days\", false) == true\n\tnot category_minimum_met(c)\n}\n\ncategory_results contains result if {\n\tc := category_records[_]\n\tcategory_config(c)\n\tresult := {\n\t\t\"category\": c.category,\n\t\t\"label\": category_config(c).label,\n\t\t\"required_weide_days\": category_threshold(c),\n\t\t\"actual_weide_days\": object.get(c, \"weide_days\", 0),\n\t\t\"minimum_met\": category_minimum_met(c),\n\t\t\"average_rgve\": object.get(c, \"average_rgve\", 0),\n\t\t\"base_premium_eligible\": category_minimum_met(c),\n\t\t\"optional_150_premium_eligible\": optional_150_premium_eligible(c),\n\t}\n}\n\npremium_amounts := {\n\t\"base_band_eur_per_rgve\": data.premium_band_eur_per_rgve.base_min,\n\t\"base_band_max_eur_per_rgve\": data.premium_band_eur_per_rgve.base_max,\n\t\"optional_150_band_eur_per_rgve\": data.premium_band_eur_per_rgve.optional_150_min,\n\t\"optional_150_band_max_eur_per_rgve\": data.premium_band_eur_per_rgve.optional_150_max,\n\t\"coupled_alpine_support_base_factor\": 0.5,\n\t\"common_pasture_base_factor\": 1.0,\n}\n\nis_eligible if {\n\tcount(violations) == 0\n\tcount(category_records) > 0\n}\n\ndefault is_eligible := false\n\ndecision := {\n\t\"eligible\": is_eligible,\n\t\"violations\": sort([v | v := violations[_]]),\n\t\"categories\": [c | c := category_results[_]],\n\t\"premium\": premium_amounts,\n\t\"total_average_rgve\": total_rgve,\n\t\"application_valid\": has_valid_application,\n\t\"annual_contract\": true,\n}\n",
+          "stdout_truncated": false
+        },
+        {
+          "argv": [
+            "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_20-luna-high-20261005/workspace/tools/opa",
+            "fmt",
+            "tests/o6_20_test.rego"
+          ],
+          "duration_ms": 11,
+          "returncode": 0,
+          "stderr": "",
+          "stderr_truncated": false,
+          "stdout": "package oepul.o6_20_test\n\nimport data.oepul.o6_20\nimport rego.v1\n\nvalid_input := {\n\t\"farm\": {\n\t\t\"year\": 2026,\n\t\t\"livestock\": {\n\t\t\t\"o6_20\": [\n\t\t\t\t{\n\t\t\t\t\t\"category\": \"female_cattle_2_plus\",\n\t\t\t\t\t\"participating\": true,\n\t\t\t\t\t\"animal_count\": 2,\n\t\t\t\t\t\"average_rgve\": 1.2,\n\t\t\t\t\t\"weide_days\": 120,\n\t\t\t\t\t\"optional_150_days\": false,\n\t\t\t\t\t\"all_category_animals_participate\": true,\n\t\t\t\t\t\"weide_period_valid\": true,\n\t\t\t\t\t\"groundfeed_predominantly_grazing\": true,\n\t\t\t\t\t\"grazing_substantial_part_of_day\": true,\n\t\t\t\t\t\"water_access\": true,\n\t\t\t\t\t\"shelter_access\": true,\n\t\t\t\t\t\"weide_diary_complete\": true,\n\t\t\t\t\t\"animals_held_in_austria\": true,\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"category\": \"female_sheep_1_plus\",\n\t\t\t\t\t\"participating\": true,\n\t\t\t\t\t\"animal_count\": 6,\n\t\t\t\t\t\"average_rgve\": 0.9,\n\t\t\t\t\t\"weide_days\": 150,\n\t\t\t\t\t\"optional_150_days\": true,\n\t\t\t\t\t\"all_category_animals_participate\": true,\n\t\t\t\t\t\"weide_period_valid\": true,\n\t\t\t\t\t\"groundfeed_predominantly_grazing\": true,\n\t\t\t\t\t\"grazing_substantial_part_of_day\": true,\n\t\t\t\t\t\"water_access\": true,\n\t\t\t\t\t\"shelter_access\": true,\n\t\t\t\t\t\"weide_diary_complete\": true,\n\t\t\t\t\t\"animals_held_in_austria\": true,\n\t\t\t\t\t\"vis_reporting_complete\": true,\n\t\t\t\t},\n\t\t\t],\n\t\t},\n\t},\n\t\"o6_20_application\": {\n\t\t\"measure_requested\": true,\n\t\t\"application_date_before_31_december\": true,\n\t},\n\t\"context\": {\n\t\t\"drought_2026\": false,\n\t\t\"control_note_acknowledged\": true,\n\t},\n}\n\ntest_valid_o6_20_decision if {\n\tresult := o6_20.decision with input as valid_input\n\tresult.eligible\n\tresult.total_average_rgve == 2.1\n}\n\ntest_optional_150_is_stricter if {\n\tresult := o6_20.decision with input as valid_input\n\tresult.categories[_].category == \"female_sheep_1_plus\"\n\tresult.categories[_].required_weide_days == 150\n}\n\ntest_all_category_animals_is_required if {\n\tcase_input := {\n\t\t\"farm\": {\n\t\t\t\"livestock\": {\n\t\t\t\t\"o6_20\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"category\": \"female_cattle_2_plus\",\n\t\t\t\t\t\t\"participating\": true,\n\t\t\t\t\t\t\"animal_count\": 2,\n\t\t\t\t\t\t\"average_rgve\": 2,\n\t\t\t\t\t\t\"weide_days\": 120,\n\t\t\t\t\t\t\"all_category_animals_participate\": false,\n\t\t\t\t\t\t\"weide_period_valid\": true,\n\t\t\t\t\t\t\"groundfeed_predominantly_grazing\": true,\n\t\t\t\t\t\t\"grazing_substantial_part_of_day\": true,\n\t\t\t\t\t\t\"water_access\": true,\n\t\t\t\t\t\t\"shelter_access\": true,\n\t\t\t\t\t\t\"weide_diary_complete\": true,\n\t\t\t\t\t\t\"animals_held_in_austria\": true,\n\t\t\t\t\t},\n\t\t\t\t],\n\t\t\t},\n\t\t},\n\t}\n\tresult := o6_20.decision with input as case_input\n\tresult.violations[_].rule_id == \"o620-all-category-animals\"\n}\n\ntest_minimum_rgve_violation if {\n\tcase_input := {\n\t\t\"farm\": {\n\t\t\t\"year\": 2026,\n\t\t\t\"livestock\": {\n\t\t\t\t\"o6_20\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"category\": \"female_sheep_1_plus\",\n\t\t\t\t\t\t\"participating\": true,\n\t\t\t\t\t\t\"animal_count\": 1,\n\t\t\t\t\t\t\"average_rgve\": 0.15,\n\t\t\t\t\t\t\"weide_days\": 120,\n\t\t\t\t\t\t\"all_category_animals_participate\": true,\n\t\t\t\t\t\t\"weide_period_valid\": true,\n\t\t\t\t\t\t\"groundfeed_predominantly_grazing\": true,\n\t\t\t\t\t\t\"grazing_substantial_part_of_day\": true,\n\t\t\t\t\t\t\"water_access\": true,\n\t\t\t\t\t\t\"shelter_access\": true,\n\t\t\t\t\t\t\"weide_diary_complete\": true,\n\t\t\t\t\t\t\"animals_held_in_austria\": true,\n\t\t\t\t\t\t\"vis_reporting_complete\": true,\n\t\t\t\t\t},\n\t\t\t\t],\n\t\t\t},\n\t\t},\n\t}\n\tresult := o6_20.decision with input as case_input\n\tresult.violations[_].rule_id == \"o620-minimum-rgve\"\n}\n\ntest_equids_need_count_correction_when_days_missed if {\n\tcase_input := {\n\t\t\"farm\": {\n\t\t\t\"livestock\": {\n\t\t\t\t\"o6_20\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"category\": \"equids_small_adult\",\n\t\t\t\t\t\t\"participating\": true,\n\t\t\t\t\t\t\"animal_count\": 4,\n\t\t\t\t\t\t\"average_rgve\": 2,\n\t\t\t\t\t\t\"weide_days\": 100,\n\t\t\t\t\t\t\"all_category_animals_participate\": true,\n\t\t\t\t\t\t\"weide_period_valid\": true,\n\t\t\t\t\t\t\"groundfeed_predominantly_grazing\": true,\n\t\t\t\t\t\t\"grazing_substantial_part_of_day\": true,\n\t\t\t\t\t\t\"water_access\": true,\n\t\t\t\t\t\t\"shelter_access\": true,\n\t\t\t\t\t\t\"weide_diary_complete\": true,\n\t\t\t\t\t\t\"animals_held_in_austria\": true,\n\t\t\t\t\t\t\"count_correction_done\": false,\n\t\t\t\t\t\t\"replacement_by_growing_animals\": false,\n\t\t\t\t\t},\n\t\t\t\t],\n\t\t\t},\n\t\t},\n\t}\n\tresult := o6_20.decision with input as case_input\n\tresult.violations[_].rule_id == \"o620-equid-camel-correction\"\n}\n",
+          "stdout_truncated": false
+        }
+      ],
+      "formatted_files": [],
+      "status": "passed",
+      "unformatted_files": [],
+      "write": false
+    },
+    "test": {
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_20-luna-high-20261005/workspace/tools/opa",
+          "test",
+          "policy",
+          "data",
+          "tests"
+        ],
+        "duration_ms": 23,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "PASS: 5/5\n",
+        "stdout_truncated": false
+      },
+      "name": "test",
+      "status": "passed"
+    },
+    "version": {
+      "actual": "1.18.2",
+      "execution": {
+        "argv": [
+          "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_20-luna-high-20261005/workspace/tools/opa",
+          "version"
+        ],
+        "duration_ms": 102,
+        "returncode": 0,
+        "stderr": "",
+        "stderr_truncated": false,
+        "stdout": "Version: 1.18.2\nBuild Commit: e695c9ef8edb0f8b9f13d014d7bc8a7fbcc57297\nBuild Timestamp: 2026-07-02T13:14:00Z\nBuild Hostname: \nGo Version: go1.26.4\nPlatform: darwin/arm64\nRego Version: v1\nWebAssembly: unavailable\n",
+        "stdout_truncated": false
+      },
+      "expected": "1.18.2",
+      "status": "passed"
+    }
+  },
+  "status": "passed",
+  "targets": [
+    "policy",
+    "data",
+    "tests"
+  ],
+  "workspace": "/Users/gue/.codex-workspaces/worktrees/3d4a1cc9-9611-4bb6-965b-8040f3717410/oepul-rule-lab/runs/v2-o6_20-luna-high-20261005/workspace"
+}

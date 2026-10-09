@@ -180,6 +180,27 @@ Der technisch validierte Terra-Discover-Lauf für den zuvor geparkten
 Grundwasserschutz ist ebenfalls als Draft dokumentiert:
 [`reports/draft-o6_16-gpt-5.6-terra.md`](reports/draft-o6_16-gpt-5.6-terra.md).
 
+## Manuelle Adaptationen
+
+Der [Quellenreview und Variablenvertrag für die o6_3-App-Integration](docs/analysis/o6_3-variable-contract-20261007/README.md)
+verbindet den Adaptationsvertrag mit dem App-Stand nach PR #135 und weist
+die vor einer vollständigen Empfehlung offenen Nachweise ausdrücklich aus.
+
+`adaptations/o6_3/` enthält den quellengebundenen Heuwirtschaft-Kandidaten
+für [Issue #97](https://github.com/ghinta/oepul-rule-lab/issues/97).
+Die getrennte Lineage erhält die historischen Modell-Runs unverändert.
+Prüfumfang, aktueller Datenvertrag und Grenzen stehen im
+[Adaptations-README](adaptations/o6_3/README.md). Der Kandidat wird über
+`python3 -m rulelab.heuwirtschaft` mit einem expliziten lokalen OPA geprüft;
+eine App-Promotion erfolgt erst nach den dort genannten Abnahmen.
+
+CI führt die Repository-Tests und die OPA-Gates aus. Lokal mit gepinntem OPA:
+
+```bash
+OPA_BIN=/absolute/path/to/opa PYTHONPATH=src python3 -m unittest discover -s tests -v
+PYTHONPATH=src python3 -m unittest discover -s runner/validation/tests -v
+```
+
 ## Grundsatz
 
 Compile-Erfolg und selbst erzeugte Tests sind technische Signale, keine
