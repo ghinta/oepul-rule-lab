@@ -135,7 +135,9 @@ Quellenstand, Gates, den Modellvergleich Opus 5.5 gegen Terra, alle
 vorgeschlagenen Profilpfade mit Konzept- und AMA-Zuordnung, offene Punkte aus
 den Coverage-Ledgern und den Plan für den Recommender. Ihre Daten stehen
 ausschließlich in `docs/assets/data.js` und werden deterministisch aus `runs/*`
-erzeugt. Nach jedem neu veröffentlichten Run:
+erzeugt. Gibt es für eine Maßnahme und ein Modell mehrere finalisierte Runs
+(etwa einen Rerun mit aktualisiertem Quellenpack), zählt nur der neueste; die
+älteren erscheinen unter „Ersetzte Runs“. Nach jedem neu veröffentlichten Run:
 
 ```bash
 python3 -m rulelab site           # docs/assets/data.js neu erzeugen

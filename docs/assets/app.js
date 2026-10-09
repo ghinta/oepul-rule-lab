@@ -681,6 +681,29 @@ function renderCatalog() {
   document.querySelector("#run-table").replaceChildren(table(columns, items, "Keine finalisierten Runs für diesen Filter."));
 }
 
+function renderHistory() {
+  const history = DATA.history || [];
+  const byId = Object.fromEntries(runs.map((run) => [run.run_id, run]));
+  document.querySelector("#history-caption").textContent = history.length
+    ? `${fmt(history.length)} frühere Runs wurden durch einen neueren Run derselben Maßnahme und desselben Modells ersetzt (z. B. Rerun mit aktualisiertem Quellenpack). Sie zählen in keiner Kennzahl dieser Seite mit.`
+    : "Keine ersetzten Runs.";
+  const columns = [
+    { label: "Maßnahme", render: (item) => el("div", {}, el("span", { class: "measure" }, item.measure), el("div", { class: "small muted" }, measureTitle[item.measure] || "")), wide: true },
+    { label: "Modell", render: (item) => modelTag(item.model) },
+    { label: "Ersetzter Run", render: (item) => el("a", { class: "artifact", href: runLink(item), target: "_blank", rel: "noreferrer" }, item.run_id) },
+    { label: "Regeln", num: true, render: (item) => `${fmt(item.rules)} → ${fmt(byId[item.superseded_by]?.rules)}` },
+    { label: "Referenzen", num: true, render: (item) => `${fmt(item.references)} → ${fmt(byId[item.superseded_by]?.references)}` },
+    { label: "Offen", num: true, render: (item) => `${fmt(item.unresolved)} → ${fmt(openCount(item.superseded_by))}` },
+    { label: "Ersetzt durch", render: (item) => el("a", { class: "artifact", href: runLink(byId[item.superseded_by] || { run_id: item.superseded_by }), target: "_blank", rel: "noreferrer" }, item.superseded_by) },
+  ];
+  document.querySelector("#history-table").replaceChildren(table(columns, history, "Keine ersetzten Runs."));
+}
+
+function openCount(runId) {
+  const index = runs.findIndex((run) => run.run_id === runId);
+  return DATA.unresolved.filter(([runIndex]) => runIndex === index).length;
+}
+
 /* ---------- Boot ---------- */
 
 function renderCharts() {
@@ -713,6 +736,7 @@ renderAmaMatrix();
 renderOpenItems();
 initCatalog();
 renderCatalog();
+renderHistory();
 renderCharts();
 lastWidth = document.querySelector("#measure-chart").clientWidth;
 let resizeTimer = null;

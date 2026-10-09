@@ -395,6 +395,7 @@ def build_site_data(
         if _read_json(run_dir / "run.json").get("status") != "finalized":
             continue
         summaries.append(summarize_run(run_dir, concepts, categories))
+    summaries, history = _split_superseded(summaries)
     summaries.sort(
         key=lambda item: (
             measure_order.get(item["record"]["measure"], len(measure_order)),
@@ -468,10 +469,57 @@ def build_site_data(
             for c in concepts
         ],
         "runs": runs,
+        "history": history,
         "proposals": proposals,
         "unresolved": unresolved,
         "pairs": pairs,
     }
+
+
+def _split_superseded(
+    summaries: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Keep the newest finalized run per measure and model; list the rest.
+
+    A rerun (for example with a refreshed source pack) replaces the earlier run
+    of the same measure and model in every aggregate, comparison and table, so
+    nothing is counted twice. The replaced runs stay visible as history.
+    """
+
+    def order(item: dict[str, Any]) -> tuple[str, str]:
+        record = item["record"]
+        return (record["finalized_at"] or "", record["run_id"])
+
+    latest: dict[tuple[str, str | None], dict[str, Any]] = {}
+    for item in summaries:
+        key = (item["record"]["measure"], item["record"]["model"])
+        if key not in latest or order(item) > order(latest[key]):
+            latest[key] = item
+    current_ids = {item["record"]["run_id"] for item in latest.values()}
+    history = []
+    for item in summaries:
+        record = item["record"]
+        if record["run_id"] in current_ids:
+            continue
+        history.append(
+            {
+                "run_id": record["run_id"],
+                "measure": record["measure"],
+                "model": record["model"],
+                "finalized_at": record["finalized_at"],
+                "rules": record["rules"],
+                "references": record["references"],
+                "coverage": record["coverage"],
+                "unresolved": len(item["unresolved"]),
+                "cost_usd": record["generation"]["cost_usd"],
+                "superseded_by": latest[(record["measure"], record["model"])][
+                    "record"
+                ]["run_id"],
+            }
+        )
+    history.sort(key=lambda entry: (entry["measure"], entry["model"] or "", entry["run_id"]))
+    current = [item for item in summaries if item["record"]["run_id"] in current_ids]
+    return current, history
 
 
 def render_site_data(data: dict[str, Any]) -> str:

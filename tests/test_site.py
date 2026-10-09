@@ -278,6 +278,40 @@ class BuildSiteDataTests(unittest.TestCase):
         )
         self.assertEqual(len(data["unresolved"]), 2)
 
+    def test_rerun_replaces_earlier_run_of_same_measure_and_model(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for run_id, finalized_at, rule_count in (
+                ("v2-o6_9-opus-old", "2026-09-25T10:00:00+00:00", 2),
+                ("v2-o6_9-opus-new", "2026-10-03T10:00:00+00:00", 1),
+            ):
+                make_run(
+                    root,
+                    run_id,
+                    "claude-opus-5-5",
+                    rules=[{"rule_type": "eligibility", "statement": "Regel."}] * rule_count,
+                    citations=[],
+                    added={f"farm.{run_id}": "string"},
+                )
+                run_json = root / run_id / "run.json"
+                metadata = json.loads(run_json.read_text(encoding="utf-8"))
+                metadata["finalized_at"] = finalized_at
+                write_json(run_json, metadata)
+
+            data = site.build_site_data(root)
+
+        self.assertEqual([run["run_id"] for run in data["runs"]], ["v2-o6_9-opus-new"])
+        [entry] = data["history"]
+        self.assertEqual(entry["run_id"], "v2-o6_9-opus-old")
+        self.assertEqual(entry["superseded_by"], "v2-o6_9-opus-new")
+        self.assertEqual(entry["rules"], 2)
+        self.assertEqual(entry["unresolved"], 1)
+        # Replaced runs contribute no proposals or open items.
+        self.assertEqual(
+            [path for _, path, _, _, _ in data["proposals"]], ["farm.v2-o6_9-opus-new"]
+        )
+        self.assertEqual(len(data["unresolved"]), 1)
+
     def test_inside_git_only_tracked_runs_are_published(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             repo = Path(directory)
