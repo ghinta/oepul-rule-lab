@@ -4,15 +4,20 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
+import io
 import json
 import re
+import sqlite3
 import sys
 import tempfile
 import unicodedata
 import urllib.error
 import urllib.parse
 import urllib.request
+import xml.etree.ElementTree as ET
+import zipfile
 from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -32,6 +37,7 @@ ORIGINALS_DIR = SOURCE_DIR / "originals"
 LEGAL_DIR = SOURCE_DIR / "legal"
 NOTICES_DIR = SOURCE_DIR / "notices" / "2026"
 PROVENANCE_DIR = SOURCE_DIR / "provenance"
+SUPPLEMENTAL_DIR = SOURCE_DIR / "supplemental"
 MANIFEST_PATH = SOURCE_DIR / "manifest.json"
 SCHEMA_PATH = SOURCE_DIR / "manifest.schema.json"
 SHEETS_INDEX_URL = "https://www.ama.at/fachliche-informationen/oepul/merkblaetter"
@@ -43,7 +49,7 @@ VALID_CATEGORIES = ("Allgemein", "Grünland", "Acker", "Dauerkulturen", "Tiere")
 CATEGORY_COUNTS = {"Allgemein": 6, "Grünland": 6, "Acker": 6, "Dauerkulturen": 4, "Tiere": 5}
 EXPECTED_MEASURE_IDS = {"o6_1a", "o6_1b", "o6_1c", *(f"o6_{n}" for n in range(2, 25))}
 EXPECTED_DOCUMENT_IDS = {"o6_general", *EXPECTED_MEASURE_IDS}
-LEGAL_SOURCES = {
+HISTORICAL_LEGAL_SOURCES = {
     "oepul_sonderrichtlinie_2023": {
         "filename": "20241011_srl_oepul_2023.pdf",
         "title": "Sonderrichtlinie ÖPUL 2023",
@@ -56,6 +62,39 @@ LEGAL_SOURCES = {
         "source_date": "2024-10-11",
         "version_label": "Zuletzt geändert mit: 2024-0.489.174",
     },
+}
+LEGAL_SOURCES = {
+    source_id: {
+        **spec,
+        "filename": "srl_oepul_2023" + ("_anhaenge" if source_id.endswith("_anhaenge") else "") + "_20261001.pdf",
+        "source_date": "2026-10-01",
+        "version_label": "Zuletzt geändert mit: 2024-0.489.174 sowie 2026-0.267.890",
+        "page_count": 104 if source_id.endswith("_anhaenge") else 94,
+    }
+    for source_id, spec in HISTORICAL_LEGAL_SOURCES.items()
+}
+LEGAL_EDITIONS = {
+    source_id: {spec["filename"]: spec, LEGAL_SOURCES[source_id]["filename"]: LEGAL_SOURCES[source_id]}
+    for source_id, spec in HISTORICAL_LEGAL_SOURCES.items()
+}
+SUPPLEMENTAL_PDFS = {
+    "wrrl_programme": "grundwasserschutzprogramm-graz-bis-bad-radkersburg-2018-fassung-vom-01072026.pdf",
+    "wrrl_annex3": "grundwasserschutzprogramm-graz-bis-bad-radkersburg-2018_anlage3_2026.pdf",
+    "training_providers": "oepul2023_liste_anerkannter_bildungsanbieter_2025_10.pdf",
+}
+SUPPLEMENTAL_IMPORT_FORMATS = {
+    "gsp_av": {"pdf", "html"}, "napv": {"pdf", "html"},
+    "premium_rates": {"xlsx", "pdf"}, "nitrogen_factors": {"pdf", "xlsx", "csv"},
+    "plant_protection_register": {"xlsx", "csv", "json", "xml", "html", "zip"},
+    "bio_input_catalogue": {"xlsx", "csv", "json", "xml", "html", "zip", "pdf"},
+    "gis_layer_versions": {"geojson", "json", "gpkg", "zip"},
+    "year_specific_notices": {"html", "zip"},
+}
+# Attribution is supplied by the maintainer, never fabricated HTTP provenance.
+# Adding a new publisher is an explicit reviewed registry change.
+SUPPLEMENTAL_AUTHORITY_DOMAINS = {
+    "ama.at", "bmluk.gv.at", "ris.bka.gv.at", "baes.gv.at", "bev.gv.at",
+    "data.gv.at", "steiermark.at", "stmk.gv.at", "betriebsmittelbewertung.at",
 }
 NOTICE_SOURCES = {
     "duerre_2026_foerderungsabwicklung": {
@@ -279,6 +318,72 @@ def generic_pdf_metadata(path: Path) -> tuple[int, str]:
     return len(reader.pages), reader.pdf_header
 
 
+def original_format_metadata(path: Path, source_id: str) -> dict[str, Any]:
+    """Recognise supplied original formats; content/authority review stays separate."""
+    kind = path.suffix.lower().removeprefix(".")
+    if kind not in SUPPLEMENTAL_IMPORT_FORMATS.get(source_id, set()):
+        raise SourceError(f"unsupported original format for {source_id}: {kind}")
+    body = path.read_bytes()
+    try:
+        if kind == "pdf":
+            pages, version = generic_pdf_metadata(path)
+            return {"original_format": kind, "page_count": pages, "pdf_version": version}
+        if kind in {"zip", "xlsx"}:
+            with zipfile.ZipFile(io.BytesIO(body)) as archive:
+                names = archive.namelist()
+                if not names or any(Path(name).is_absolute() or ".." in Path(name).parts for name in names):
+                    raise SourceError("empty/unsafe original archive inventory")
+                if kind == "xlsx":
+                    required = {"[Content_Types].xml", "xl/workbook.xml"}
+                    worksheets = [name for name in names if re.fullmatch(r"xl/worksheets/sheet\d+\.xml", name)]
+                    if not required <= set(names) or not worksheets:
+                        raise SourceError("not an XLSX workbook with actual worksheets")
+                    for name in sorted(required) + worksheets:
+                        ET.fromstring(archive.read(name))
+                return {"original_format": kind, "archive_member_count": len(names)}
+        if kind in {"json", "geojson"}:
+            parsed = json.loads(body)
+            if not isinstance(parsed, (list, dict)):
+                raise SourceError("original JSON must contain an object or list")
+            if source_id == "gis_layer_versions" and (not isinstance(parsed, dict) or parsed.get("type") != "FeatureCollection" or not isinstance(parsed.get("features"), list)):
+                raise SourceError("GIS JSON must be a GeoJSON FeatureCollection")
+        elif kind == "xml":
+            ET.fromstring(body)
+        elif kind == "html":
+            if b"<html" not in body[:10000].lower():
+                raise SourceError("not a complete HTML original")
+        elif kind == "csv":
+            rows = list(csv.reader(io.StringIO(body.decode("utf-8-sig"))))
+            if not rows or not any(rows):
+                raise SourceError("empty CSV original")
+        elif kind == "gpkg":
+            if not body.startswith(b"SQLite format 3\x00"):
+                raise SourceError("not a SQLite/GeoPackage original")
+            # A SQLite header alone does not identify a GeoPackage.
+            with sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True) as connection:
+                if not connection.execute("SELECT name FROM sqlite_master WHERE name='gpkg_contents'").fetchone():
+                    raise SourceError("GeoPackage content registry missing")
+        return {"original_format": kind}
+    except (ValueError, UnicodeDecodeError, ET.ParseError, zipfile.BadZipFile, sqlite3.DatabaseError, OSError) as exc:
+        raise SourceError(f"invalid supplied {kind} original: {exc}") from exc
+
+
+def reviewed_authority_url(url: str) -> bool:
+    parsed = urllib.parse.urlparse(url)
+    host = (parsed.hostname or "").lower()
+    return parsed.scheme == "https" and not parsed.username and not parsed.password and not parsed.fragment and any(host == domain or host.endswith("." + domain) for domain in SUPPLEMENTAL_AUTHORITY_DOMAINS)
+
+
+def legal_pdf_metadata(path: Path, spec: dict[str, Any]) -> tuple[int, str]:
+    reader, cover = read_pdf(path)
+    marker = "2026-0.267.890" if spec["source_date"] == "2026-10-01" else "2024-0.489.174"
+    if marker not in cover:
+        raise SourceError(f"legal PDF cover does not identify registered amendment {marker}")
+    if spec.get("page_count") is not None and len(reader.pages) != spec["page_count"]:
+        raise SourceError(f"legal PDF is not the registered complete {spec['page_count']}-page edition")
+    return len(reader.pages), reader.pdf_header
+
+
 def atomic_write(path: Path, body: bytes) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as stream:
@@ -334,13 +439,20 @@ def build_sheet(link: SourceLink, response: ResponseData, at: str) -> dict[str, 
 
 
 def build_legal(source_id: str, link: SourceLink, response: ResponseData, at: str) -> dict[str, Any]:
-    spec, target = LEGAL_SOURCES[source_id], LEGAL_DIR / LEGAL_SOURCES[source_id]["filename"]
+    filename = Path(urllib.parse.urlparse(link.url).path).name
+    spec = LEGAL_EDITIONS[source_id].get(filename)
+    if spec is None:
+        raise SourceError(f"unregistered legal edition: {source_id}/{filename}")
+    target = LEGAL_DIR / filename
+    with tempfile.NamedTemporaryFile(suffix=".pdf") as stream:
+        stream.write(response.body)
+        stream.flush()
+        pages, pdf_version = legal_pdf_metadata(Path(stream.name), spec)
     preserve(target, response.body)
-    pages, pdf_version = generic_pdf_metadata(target)
     return {
         "source_id": source_id, "source_type": "legal_basis_pdf", "title": spec["title"], "source_date": spec["source_date"],
         "current_status": "current_official_target_at_capture", "version_label": spec["version_label"],
-        "version_note": "Official filename dated 2024-10-11; current AMA target at capture, not relabelled as a 2026 edition.",
+        "version_note": f"Official edition dated {spec['source_date']}; current AMA target at capture. Publication date does not establish clause applicability.",
         "official_url": link.url, "source_filename": spec["filename"], "local_path": relative_path(target), "retrieved_at": at,
         "sha256": sha256_bytes(response.body), "file_size_bytes": len(response.body), "page_count": pages,
         "pdf_version": pdf_version, "http_provenance": http_record(response),
@@ -496,12 +608,12 @@ def validate_manifest(manifest: dict[str, Any], check_files: bool) -> None:
     require(dict(categories) == CATEGORY_COUNTS, "category counts mismatch", errors)
     for pos, record in enumerate(legal_documents):
         label, source_id = f"legal_basis_documents[{pos}]", record.get("source_id")
-        spec = LEGAL_SOURCES.get(source_id, {})
+        spec = LEGAL_EDITIONS.get(source_id, {}).get(record.get("source_filename"), {})
         require(record.get("source_filename") == spec.get("filename") and record.get("source_date") == spec.get("source_date"), f"{label} identity mismatch", errors)
         require(record.get("version_label") == spec.get("version_label"), f"{label} version label mismatch", errors)
         if check_files and (path := check_file(record, label, errors)):
             try:
-                require(generic_pdf_metadata(path) == (record.get("page_count"), record.get("pdf_version")), f"{label} PDF metadata mismatch", errors)
+                require(legal_pdf_metadata(path, spec) == (record.get("page_count"), record.get("pdf_version")), f"{label} PDF metadata mismatch", errors)
             except SourceError as exc:
                 errors.append(str(exc))
     require({r.get("source_id") for r in legal_documents} == set(LEGAL_SOURCES), "legal IDs incomplete", errors)
@@ -540,9 +652,9 @@ def validate_live(manifest: dict[str, Any]) -> None:
     check_notice_index(request(NOTICES_INDEX_URL).body)
 
 
-def validate_sources(check_index: bool) -> None:
+def validate_sources(check_index: bool, manifest_path: Path = MANIFEST_PATH) -> None:
     try:
-        manifest = json.loads(MANIFEST_PATH.read_text())
+        manifest = json.loads(manifest_path.read_text())
     except (OSError, json.JSONDecodeError) as exc:
         raise SourceError(f"cannot read manifest: {exc}") from exc
     validate_manifest(manifest, check_files=True)
@@ -553,16 +665,96 @@ def validate_sources(check_index: bool) -> None:
     print(f"PASS: 27/27 core PDFs, 2/2 legal PDFs and 4/4 notices verified; 2026 editions={summary['current_2026_document_count']}, official-current 2025 editions={summary['official_current_2025_document_count']}{suffix}")
 
 
+def import_original(source_id: str, input_path: Path, official_url: str, retrieved_at: str, evidence_note: str) -> Path:
+    """Archive supplied originals without pretending to have fetched them over HTTP.
+
+    The immutable import record does not change the current manifest or prove
+    that a public index still points to these bytes. Review/promote separately.
+    """
+    parsed = urllib.parse.urlparse(official_url)
+    filename = Path(parsed.path).name
+    if parsed.scheme != "https" or not parsed.hostname or parsed.username or parsed.password or parsed.fragment:
+        raise SourceError("local import expects a public HTTPS document URL without credentials")
+    core_or_fixed_pdf = source_id in EXPECTED_DOCUMENT_IDS or source_id in LEGAL_EDITIONS or source_id in SUPPLEMENTAL_PDFS
+    if core_or_fixed_pdf and (parsed.hostname != "www.ama.at" or parsed.query):
+        raise SourceError("registered AMA originals require the exact public AMA PDF URL")
+    if core_or_fixed_pdf and input_path.name != filename:
+        raise SourceError("supplied filename must match the official document URL")
+    try:
+        captured = datetime.fromisoformat(retrieved_at.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise SourceError("retrieved-at must be an ISO date/time") from exc
+    if captured.tzinfo is None or captured > datetime.now(timezone.utc):
+        raise SourceError("retrieved-at must have a timezone and cannot be in the future")
+    if not evidence_note.strip():
+        raise SourceError("local import requires a source/evidence note")
+    if source_id in EXPECTED_DOCUMENT_IDS:
+        if document_id(filename) != source_id:
+            raise SourceError("information-sheet ID does not match supplied filename")
+        source_edition = edition(filename)
+        label, pages, version = sheet_pdf_metadata(input_path, source_edition)
+        metadata = {"edition": source_edition, "edition_label": label}
+        target = ORIGINALS_DIR / filename
+    elif source_id in LEGAL_EDITIONS:
+        spec = LEGAL_EDITIONS[source_id].get(filename)
+        if spec is None:
+            raise SourceError("unregistered legal edition")
+        pages, version = legal_pdf_metadata(input_path, spec)
+        metadata = {"source_date": spec["source_date"], "version_label": spec["version_label"]}
+        target = LEGAL_DIR / filename
+    elif SUPPLEMENTAL_PDFS.get(source_id) == filename:
+        pages, version = generic_pdf_metadata(input_path)
+        metadata = {}
+        target = LEGAL_DIR / filename
+    elif source_id in SUPPLEMENTAL_IMPORT_FORMATS:
+        if not reviewed_authority_url(official_url):
+            raise SourceError("supplemental publisher is not in the reviewed authority registry")
+        metadata = original_format_metadata(input_path, source_id)
+        target = SUPPLEMENTAL_DIR / source_id / sha256_file(input_path) / input_path.name
+        pages, version = None, None
+        filename = input_path.name
+    else:
+        raise SourceError("source ID or document edition is not registered for local import")
+    body = input_path.read_bytes()
+    record = {
+        "schema_version": 1, "source_id": source_id, "capture_method": "supplied_original_file",
+        "official_url": official_url, "source_filename": filename, "local_path": relative_path(target),
+        "retrieved_at": retrieved_at, "imported_at": utc_now(), "sha256": sha256_bytes(body),
+        "file_size_bytes": len(body), "page_count": pages, "pdf_version": version,
+        "http_provenance": None, "index_verified": False, "evidence_note": evidence_note,
+        **metadata,
+    }
+    run_dir = PROVENANCE_DIR / ("import-" + new_run_id())
+    if run_dir.exists():
+        raise SourceError(f"import provenance run already exists: {run_dir}")
+    preserve(target, body)
+    preserve(run_dir / "import.json", json_bytes(record))
+    return run_dir / "import.json"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("update")
     validate_parser = commands.add_parser("validate")
     validate_parser.add_argument("--check-index", action="store_true")
+    validate_parser.add_argument("--manifest", type=Path, default=MANIFEST_PATH)
+    import_parser = commands.add_parser("import", help="archive supplied original PDF with truthful local provenance")
+    import_parser.add_argument("--source-id", required=True)
+    import_parser.add_argument("--file", type=Path, required=True)
+    import_parser.add_argument("--official-url", required=True)
+    import_parser.add_argument("--retrieved-at", required=True)
+    import_parser.add_argument("--evidence-note", required=True)
     args = parser.parse_args()
     try:
-        update_sources() if args.command == "update" else validate_sources(args.check_index)
-    except SourceError as exc:
+        if args.command == "update":
+            update_sources()
+        elif args.command == "validate":
+            validate_sources(args.check_index, args.manifest)
+        else:
+            path = import_original(args.source_id, args.file, args.official_url, args.retrieved_at, args.evidence_note)
+            print(f"PASS: original imported; current manifest unchanged; index/table review pending: {relative_path(path)}")
+    except (SourceError, OSError) as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
     return 0

@@ -1,6 +1,9 @@
 # AMA-ÖPUL-Quellen
 
-Dieser Ordner spiegelt einen prüfbaren AMA-ÖPUL-Quellenstand. Der Pflichtkern
+Dieser Ordner enthält einen prüfbaren AMA-ÖPUL-Quellenstand. Das unveränderte
+Root-Manifest dokumentiert den Abruf vom 14.09.2026, einschließlich der damals
+verlinkten SRL/Anhänge von 2024. Der Updater kennt zusätzlich die Ausgaben vom
+01.10.2026; deren Originalbytes sind noch aufzunehmen. Der Pflichtkern
 besteht aus den aktuell verlinkten allgemeinen Teilnahmebedingungen und allen
 26 Maßnahmeninformationsblättern. Ergänzend werden die aktuell von AMA
 verlinkte Sonderrichtlinie samt Anhängen sowie ausgewählte, regelrelevante
@@ -22,6 +25,9 @@ verlinkt.
 - `provenance/<run-id>/`: Snapshots aller drei Indexseiten, Manifest-Snapshot
   und Abrufprotokoll
 - `manage_sources.py`: Update und lokale bzw. Online-Validierung
+- `intake.json` / `source_intake.py`: getrennte aktuelle Aufnahmeverpflichtungen,
+  Originalbelege, Indexbeobachtungen und vollständige Tabellen-/Register-/GIS-Prüfung
+- `supplemental/`: unveränderliche, nach Inhalts-Hash abgelegte Originale ergänzender Quellen
 
 Die Informationsblätter weisen selbst darauf hin, dass sie rechtlich
 unverbindlich sind. Dieser Pack behauptet auch mit Sonderrichtlinie, Anhängen
@@ -78,3 +84,94 @@ Indexseiten. Ein späterer Abruf kann legitime amtliche Aktualisierungen melden;
 dann ist zuerst `update` auszuführen und der entstandene Delta zu prüfen. Neue
 regelrelevante Jahresmeldungen werden bewusst kuratiert: `NOTICE_SOURCES` im
 Updater ist die explizite, überprüfbare Auswahlliste und kann erweitert werden.
+
+## Aktuelle Quellenaufnahme für App #139 — Lab #104
+
+`intake.json` erhält 43 erforderliche Scopes: alle 27 Merkblätter, aktuelle SRL
+und Anhänge, WRRL/Anlage 3, GSP-AV/NAPV, Anbieter, Prämien, L-/J-Matrizen samt
+Fußnoten, Tier-/N-Faktoren, Produkt-/Betriebsmittelregister, echte GIS-Fassungen
+und die benötigte kuratierte Jahresmeldungsmenge. Scopes dürfen nicht entfernt
+werden, um die Prüfung grün zu bekommen. Nicht jede Quelle ist für jede Maßnahme
+erforderlich; die Aufnahmeprüfung kann auf den konkreten Verbraucher begrenzt werden.
+
+Am 10.10.2026 wurden über den Web-Connector alle 27 AMA-Merkblattlinks aufgelöst:
+gleiche URLs wie im September-Pack, **kein frischer Nachweis gleicher PDFbytes**.
+Metadaten, Web-Textextrakte, komplette Originaldatei, vollständiges Tabelleninventar
+und fachliche Zulassung bleiben eigene Nachweise. Alle 43 Scopes bleiben aktuell
+pending; grüne CI bestätigt nur den Inventar-/Evidenzvertrag.
+
+Mit erlaubtem Netzwerkzugriff archiviert der bestehende Updater den aktuellen
+Pflichtkern samt SRL/Anhängen, Indexsnapshots und vier ausdrücklich kuratierten
+Meldungen. Er behauptet damit weder die Vollständigkeit aller Jahresmeldungen noch
+aller österreichischen/EU-Rechtsakte:
+
+```bash
+python3 sources/oepul/manage_sources.py update
+python3 sources/oepul/manage_sources.py validate --check-index
+```
+
+Bereitgestellte Originale können ohne Netzwerk über **denselben Manager** importiert
+werden. Quelle und tatsächliches Abrufdatum sind anzugeben; es wird keine HTTP-
+Antwort erfunden. Import allein aktualisiert weder das Root-Manifest noch die
+fachlichen Regeln oder Tabellenfreigaben:
+
+```bash
+python3 sources/oepul/manage_sources.py import \
+  --source-id oepul_sonderrichtlinie_2023 \
+  --file /tmp/srl_oepul_2023_20261001.pdf \
+  --official-url https://www.ama.at/media/tp2fbtou/srl_oepul_2023_20261001.pdf \
+  --retrieved-at 2026-10-10T08:00:00Z \
+  --evidence-note 'Unverändertes amtliches Original, durch Betreuer bereitgestellt'
+```
+
+Der Manager prüft PDFstruktur, registrierte Änderungskennung und die bekannten
+94/104 Seiten der neuen SRL/Anhänge. Historische 2024-Originale bleiben erhalten.
+WRRL-Originale und Bildungsanbieter sind ebenfalls registriert. Zusätzliche
+`gsp_av`, `napv`, `premium_rates`, `nitrogen_factors`,
+`plant_protection_register`, `bio_input_catalogue`, `gis_layer_versions` und
+`year_specific_notices` unterstützen die passenden PDF-/HTML-/XLSX-/CSV-/JSON-/
+XML-/ZIP-/GeoPackage-Formate aus der geprüften Herausgeberliste. Beispiel für
+eine tatsächlich bereitgestellte Prämien-XLSX: dieselbe Importanweisung mit
+`--source-id premium_rates`, ihrem lokalen Dateinamen und der echten BMLUK-URL.
+XLSX-Struktur, GeoJSON-FeatureCollection bzw. GeoPackage-Katalog werden geprüft;
+das ist noch keine vollständige Tabellen-, GIS- oder Rechtsprüfung. Bei weiteren
+Herausgebern ist die Registry zuerst überprüfbar zu erweitern. Selbst erzeugte
+Extraktionsdateien werden nicht als amtliche Originale ausgegeben.
+
+Danach werden in `intake.json` die Original-/Provenancepins und die **rohen,
+gehashten Indexsnapshots** aufgenommen. Quellenprovenance verweist auf den
+unveränderlichen Abruf-/Importlauf, nicht den überschreibbaren Root-Manifestzeiger.
+Ein Originalimport beweist allein nicht, dass dessen URL noch aktuell verlinkt ist.
+Datum und Zielmenge der Indexaufnahme müssen exakt zum Inventarstichtag passen;
+bei mehreren Originalen eines Register-/GIS-/Meldungsscope werden zusätzliche
+Captures und Indexziele explizit erfasst. Fehlende oder künftig datierte Belege
+dürfen keine aktuelle Aufnahme vortäuschen.
+
+Für Tabellen/Register/GIS und ergänzende Rechtsfassungen braucht `review` eine
+gehashte vollständige Erfassung und ein **separat gepinntes Sollinventar**:
+`scope_id`, `original_source_hashes`, `source_locator`, `established_by`,
+`expected_item_ids`, `expected_footnote_ids`. Ein anderer Reviewer kontrolliert
+die Erfassung; deren `items` tragen `id`, `value`, `source_locator`, deren
+`footnotes` tragen `id`, `text`, `source_locator`. GIS ergänzt `crs`,
+`layer_version`, `spatial_extent`. Die Maschine prüft die Bindung und vollständige
+Abdeckung dieses unabhängig erstellten Inventars. Die korrekte Ermittlung aller
+amtlichen Tabellen-/Listen-/Fußnotenelemente bleibt eine dokumentierte manuelle
+Originalprüfung. Eine selbst verkleinerte Extraktionsliste gilt nicht als Sollinventar.
+Für L-/J-Matrizen und RGVE-Faktoren wird die aktuelle Anhang-PDF als Original
+verwendet; ihre Extraktion ist eine Reviewdatei. Ein alter 441-/64-Zellenaudit
+beweist keine aktuelle Abdeckung.
+
+```bash
+python3 sources/oepul/source_intake.py
+python3 sources/oepul/source_intake.py --require-ready --scope o6_3
+python3 sources/oepul/source_intake.py --require-ready
+```
+
+`ready` gilt ausschließlich **zum angezeigten Inventarstichtag**, nicht als
+automatisch erneuter Livecheck bei jedem Aufruf. Die beiden strikten Befehle
+scheitern derzeit absichtlich an ausstehenden Belegen. Sie ändern keine App-
+Empfehlung und schließen keine Expertenfrage. Abschnitt 1.20 der neuen SRL
+benennt die Anwendung der zweiten Änderung ab 01.01.2027 und die Ausnahme für
+PSM-Angaben im Antragsjahr 2026. Für letztere wird kein zusätzlicher kalendarischer
+Geltungsbeginn erfunden. Andere Klauseln und alte Belege behalten ihren eigenen
+Zeitbezug; zukünftige Leistungen werden nicht als heutige Erfüllung aufgenommen.
