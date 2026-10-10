@@ -1,23 +1,25 @@
 # Current source intake — Lab #104
 
-The September source pack pins 27 original information sheets and the 2024
-special directive. Current research found a new October 2026 directive and
-annexes, but did not archive their bytes or all needed tables. Reusing that
-research as a complete current rule source would overstate the evidence.
+The September pack retained 27 information sheets and the 2024 legal originals.
+Reusing its metadata as completed October intake would miss the new legal edition
+and required tables, registers and geographic sources.
 
-Extend the existing `sources/oepul/manage_sources.py` updater with explicit legal
-editions and local original-file import, retaining immutable originals and
-historical manifests. A separate intake inventory records original capture,
-index observation and complete table/register/GIS review separately. Its strict
-check rejects missing required scopes and premature completion. Neither a
-metadata hash nor an old completed matrix audit establishes today's completeness.
+The existing manager supports additive legal editions, original-file imports and
+explicit changed-notice captures. Fresh full AMA originals now have SHA-256,
+immutable provenance and raw index snapshots. The 27 sheets match September bytes;
+the new directive/annexes pass the registered 94/104-page checks. Changed notice
+HTML is stored under a new hash path only with --capture-changed-notices; existing
+originals stay protected.
 
-No historical run, original, canonical profile, citation or App rule is repinned.
-2027 clauses remain future context for a 2026 evaluation, except the published
-2026 PSM declaration change. Expert questions and admission decisions remain open.
-The current original downloads require permitted network access or supplied files;
-missing bytes and unaudited tables are explicitly pending, not silently skipped.
+The protected 43-scope inventory advances to 33 ready and ten pending. Independent
+inventories and original visual reviews cover the J matrix, providers and WRRL
+Anlage 3. L and livestock tables are recorded, while the clipped official L
+footnote and missing period-source mapping keep their broader scopes pending.
+Six complete notices await full consumer-specific selection/review; the captured
+AMA-mirrored GSP-AV/NAPV await current RIS comparison and complete review.
 
-Acceptance: historical manifests still validate; new editions can be imported or
-fetched without overwriting old bytes; altered originals, missing intake IDs and
-false completion are rejected. `verification.md` records actual evidence.
+Historical rules, model runs, canonical profile, expert questions and App
+admission are unchanged. SRL section 1.20 keeps the second amendment generally
+applicable from 2027 and the PSM declaration change separately applicable to the
+2026 application year. Acquisition readiness does not close the eight o6_3 gates.
+verification.md and current-source-status.md record the evidence and remaining gaps.

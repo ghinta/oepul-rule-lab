@@ -1,9 +1,9 @@
 # AMA-ÖPUL-Quellen
 
-Dieser Ordner enthält einen prüfbaren AMA-ÖPUL-Quellenstand. Das unveränderte
-Root-Manifest dokumentiert den Abruf vom 14.09.2026, einschließlich der damals
-verlinkten SRL/Anhänge von 2024. Der Updater kennt zusätzlich die Ausgaben vom
-01.10.2026; deren Originalbytes sind noch aufzunehmen. Der Pflichtkern
+Dieser Ordner enthält einen prüfbaren AMA-ÖPUL-Quellenstand. Das Root-Manifest
+verweist auf den frischen Abruf vom 10.10.2026 mit den SRL/Anhängen vom
+01.10.2026. Die unveränderlichen September-Manifeste und damals verlinkten
+2024-Originale bleiben erhalten. Der Pflichtkern
 besteht aus den aktuell verlinkten allgemeinen Teilnahmebedingungen und allen
 26 Maßnahmeninformationsblättern. Ergänzend werden die aktuell von AMA
 verlinkte Sonderrichtlinie samt Anhängen sowie ausgewählte, regelrelevante
@@ -62,7 +62,16 @@ Das Update:
 
 Vorhandene Originale werden nie mit abweichenden Bytes überschrieben. Eine
 solche Kollision bricht das Update ab und muss als neue Quellenedition geklärt
-werden. Nicht mehr aktuelle Originale bleiben erhalten.
+werden. Bei geänderten HTML-Meldungen kann ein neuer Capture ausdrücklich unter
+einem eigenen Inhalts-Hash-Pfad archiviert werden:
+
+```bash
+python3 sources/oepul/manage_sources.py update --capture-changed-notices
+```
+
+Ohne diese Option bleibt der Kollisionsschutz aktiv; er wird für PDFs durch die
+Option nicht verändert. Nicht mehr aktuelle Originale und Meldungsbytes bleiben
+erhalten. Das Inhaltsdatum einer Meldung wird nicht auf das Abrufdatum umgestellt.
 
 ## Validieren
 
@@ -94,11 +103,34 @@ und die benötigte kuratierte Jahresmeldungsmenge. Scopes dürfen nicht entfernt
 werden, um die Prüfung grün zu bekommen. Nicht jede Quelle ist für jede Maßnahme
 erforderlich; die Aufnahmeprüfung kann auf den konkreten Verbraucher begrenzt werden.
 
-Am 10.10.2026 wurden über den Web-Connector alle 27 AMA-Merkblattlinks aufgelöst:
-gleiche URLs wie im September-Pack, **kein frischer Nachweis gleicher PDFbytes**.
-Metadaten, Web-Textextrakte, komplette Originaldatei, vollständiges Tabelleninventar
-und fachliche Zulassung bleiben eigene Nachweise. Alle 43 Scopes bleiben aktuell
-pending; grüne CI bestätigt nur den Inventar-/Evidenzvertrag.
+Am 10.10.2026 wurden alle 27 AMA-Merkblätter frisch heruntergeladen. Ihre Bytes
+stimmen mit den September-Originalen überein; 11 Dokumente tragen eine
+2026-Ausgabe und 16 weiterhin den offiziell verlinkten Stand Oktober 2025.
+Die neuen SRL/Anhänge bestehen die Prüfung auf 94/104 Seiten und die Kennung
+2026-0.267.890. Der unveränderliche Lauf
+`provenance/20261010T205920107220Z/` enthält alle drei rohen Indexsnapshots,
+das Manifest und die Abrufprovenance des Pflichtkerns einschließlich vier
+kuratierter Meldungen. Geänderte HTML-Seiten liegen additiv in `notices/2026/captures/`;
+die Artikel-HTMLs der vier Meldungen sind unverändert, ihre Umgebungs-HTMLs nicht.
+
+Aktuell sind **33/43 Aufnahme-Scopes bereit**, zehn bleiben offen. Vollständige
+Originalaufnahme, Tabelleninventar und fachliche Zulassung bleiben eigene Nachweise.
+WRRL-Programm/Anlage 3, Bildungsanbieter sowie die datierten AMA-Spiegel der
+GSP-AV/NAPV sind ebenfalls archiviert. Die beiden Rechtsfassungen brauchen noch
+den Abgleich mit der aktuellen RIS-Konsolidierung. J-Matrix, WRRL-Anlage 3 und
+Bildungsanbieter haben vollständige, separat inventarisierte Quellenreviews.
+L-Matrix und Tierfaktoren bleiben trotz erfasster Originaltabellen offen:
+L-Fußnote 4 ist im amtlichen Original abgeschnitten; Anhang A belegt allein
+keine Jahres-, Weide- und Almzeiträume. `reviews/20261010/reconciliation.json`
+dokumentiert den nachträglichen Abgleich der Extraktionen, deren Entstehungsstand
+in den einzelnen Artefakten erhalten bleibt. Details und weitere Quellenlücken
+stehen in `docs/changes/current-source-intake/`.
+
+Die zwei im Expertenagenda-Issue genannten fehlenden Meldungen vom 25.08.2026
+(Grundwasserschutz-Aufzeichnungen) und 02.09.2026 (Tiermeldungen) ergänzen die
+vier Kernmeldungen über separate unveränderliche Imports. Der Meldungsscope
+pinnt alle sechs Originale und Ziel-URLs, bleibt aber bis zur vollständigen
+verbraucherspezifischen Auswahl und Quellenprüfung offen.
 
 Mit erlaubtem Netzwerkzugriff archiviert der bestehende Updater den aktuellen
 Pflichtkern samt SRL/Anhängen, Indexsnapshots und vier ausdrücklich kuratierten
@@ -168,9 +200,10 @@ python3 sources/oepul/source_intake.py --require-ready
 ```
 
 `ready` gilt ausschließlich **zum angezeigten Inventarstichtag**, nicht als
-automatisch erneuter Livecheck bei jedem Aufruf. Die beiden strikten Befehle
-scheitern derzeit absichtlich an ausstehenden Belegen. Sie ändern keine App-
-Empfehlung und schließen keine Expertenfrage. Abschnitt 1.20 der neuen SRL
+automatisch erneuter Livecheck bei jedem Aufruf. Der einzelne Aufnahmescope
+`o6_3` besteht jetzt; die strikte Gesamtprüfung scheitert weiterhin an zehn
+ausstehenden Scopes. Beide ändern keine App-Empfehlung und schließen keine
+Expertenfrage. Die acht o6_3-Zulassungsgates bleiben offen. Abschnitt 1.20 der neuen SRL
 benennt die Anwendung der zweiten Änderung ab 01.01.2027 und die Ausnahme für
 PSM-Angaben im Antragsjahr 2026. Für letztere wird kein zusätzlicher kalendarischer
 Geltungsbeginn erfunden. Andere Klauseln und alte Belege behalten ihren eigenen

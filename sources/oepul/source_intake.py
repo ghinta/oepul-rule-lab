@@ -160,6 +160,7 @@ def verify_capture(scope: Scope, root: Path, observed_on: date) -> None:
         'combination_matrix_j': {'oepul_sonderrichtlinie_2023_anhaenge'},
         'livestock_factors': {'oepul_sonderrichtlinie_2023_anhaenge'},
         'nitrogen_factors': {'nitrogen_factors', 'napv', 'wrrl_annex3', 'oepul_sonderrichtlinie_2023_anhaenge'},
+        'year_specific_notices': {'year_specific_notices', *sources.NOTICE_SOURCES},
     }.get(scope.source_id, {scope.source_id})
     if not any((record.get('document_id') or record.get('source_id')) in expected_sources and all(record.get(key) == getattr(capture, key) for key in ('local_path', 'sha256', 'file_size_bytes', 'official_url')) and datetime.fromisoformat(record.get('retrieved_at', '').replace('Z', '+00:00')) == capture.retrieved_at for record in records):
         raise sources.SourceError(f'capture is not supported by original provenance: {capture.local_path}')

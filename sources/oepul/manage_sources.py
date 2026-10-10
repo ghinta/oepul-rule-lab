@@ -459,11 +459,10 @@ def build_legal(source_id: str, link: SourceLink, response: ResponseData, at: st
     }
 
 
-def build_notice(source_id: str, response: ResponseData, at: str) -> dict[str, Any]:
+def build_notice(source_id: str, response: ResponseData, at: str, *, capture_changed: bool = False) -> dict[str, Any]:
     spec = NOTICE_SOURCES[source_id]
     filename = f"{spec['published_on']}__{spec['slug']}.html"
     target = NOTICES_DIR / filename
-    preserve(target, response.body)
     if b"<html" not in response.body[:10000].lower():
         raise SourceError(f"notice is not recognizable HTML: {source_id}")
     printed_date = notice_publication_date(response.body)
@@ -472,6 +471,9 @@ def build_notice(source_id: str, response: ResponseData, at: str) -> dict[str, A
             f"notice publication-date mismatch for {source_id}: "
             f"expected={spec['published_on']}, page={printed_date}"
         )
+    if capture_changed and target.exists() and sha256_file(target) != sha256_bytes(response.body):
+        target = NOTICES_DIR / "captures" / sha256_bytes(response.body) / filename
+    preserve(target, response.body)
     return {
         "source_id": source_id, "source_type": "year_specific_notice_html", "publication_year": 2026,
         "published_on": spec["published_on"], "title": spec["title"], "topic_tags": spec["topic_tags"],
@@ -480,7 +482,7 @@ def build_notice(source_id: str, response: ResponseData, at: str) -> dict[str, A
     }
 
 
-def update_sources() -> None:
+def update_sources(*, capture_changed_notices: bool = False) -> None:
     at, run_id = utc_now(), new_run_id()
     run_dir = PROVENANCE_DIR / run_id
     if run_dir.exists():
@@ -504,7 +506,7 @@ def update_sources() -> None:
         response = request(notice_url(spec))
         if response.status != 200 or response.content_type != "text/html":
             raise SourceError(f"unexpected notice response for {source_id}: HTTP {response.status}, {response.content_type}")
-        record = build_notice(source_id, response, at)
+        record = build_notice(source_id, response, at, capture_changed=capture_changed_notices)
         notices.append(record)
         print(f"[notice {pos:02d}/{len(NOTICE_SOURCES):02d}] {source_id} {record['sha256']}")
     counts = Counter(record["edition"] for record in documents)
@@ -735,7 +737,8 @@ def import_original(source_id: str, input_path: Path, official_url: str, retriev
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
-    commands.add_parser("update")
+    update_parser = commands.add_parser("update")
+    update_parser.add_argument("--capture-changed-notices", action="store_true", help="explicitly archive changed notice HTML under a new content-hash path; retain historical bytes")
     validate_parser = commands.add_parser("validate")
     validate_parser.add_argument("--check-index", action="store_true")
     validate_parser.add_argument("--manifest", type=Path, default=MANIFEST_PATH)
@@ -748,7 +751,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         if args.command == "update":
-            update_sources()
+            update_sources(capture_changed_notices=args.capture_changed_notices)
         elif args.command == "validate":
             validate_sources(args.check_index, args.manifest)
         else:

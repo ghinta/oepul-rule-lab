@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 import zipfile
+from datetime import date, datetime
 from pathlib import Path
 from unittest.mock import patch
 
@@ -17,6 +18,9 @@ from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'sources' / 'oepul'))
 import manage_sources as sources
 import source_intake as intake
+
+HISTORICAL_MANIFEST = sources.PROVENANCE_DIR / '20260914T112150197375Z' / 'manifest.json'
+HISTORICAL_INTAKE = Path(__file__).parent / 'fixtures' / 'source_intake' / '2026-10-10-before-http-capture.json'
 
 
 def pdf(path: Path, text: str, page_count: int = 1) -> bytes:
@@ -43,10 +47,10 @@ def evidence(root: Path, relative: str, body: bytes) -> dict:
 
 class EditionTests(unittest.TestCase):
     def test_historical_manifest_remains_valid_without_repinning(self):
-        before = sources.MANIFEST_PATH.read_bytes()
+        before = HISTORICAL_MANIFEST.read_bytes()
         manifest = json.loads(before)
         sources.validate_manifest(manifest, check_files=True)
-        self.assertEqual(sources.MANIFEST_PATH.read_bytes(), before)
+        self.assertEqual(HISTORICAL_MANIFEST.read_bytes(), before)
         self.assertEqual(manifest['legal_basis_documents'][0]['source_date'], '2024-10-11')
 
     def test_current_index_selects_new_editions_and_rejects_old_only_index(self):
@@ -141,13 +145,18 @@ class IntakeTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.original = json.loads(intake.INVENTORY_PATH.read_text())
+        cls.historical = json.loads(HISTORICAL_INTAKE.read_text())
 
     def fixture(self, root: Path) -> dict:
         data = copy.deepcopy(self.original)
         data['baseline_manifest'] = evidence(root, 'baseline.json', b'{}')
         for scope in data['scopes']:
             scope['capture'] = None
+            scope['additional_captures'] = []
             scope['index_observation'] = None
+            scope['review'] = None
+        for clause in data['clause_applicability']:
+            clause['original_capture_pending'] = True
         return data
 
     def current_scope(self, data: dict, root: Path, source_id: str = 'o6_3') -> dict:
@@ -165,11 +174,63 @@ class IntakeTests(unittest.TestCase):
         return scope
 
     def test_real_archived_bytes_and_link_observations_do_not_prove_current_completion(self):
-        result = intake.validate_inventory(self.original)
+        result = intake.validate_inventory(self.historical)
         self.assertEqual(result['ready'], [])
         self.assertEqual(len(result['pending']), 43)
         with self.assertRaisesRegex(sources.SourceError, 'incomplete'):
-            intake.validate_inventory(self.original, require_ready=True)
+            intake.validate_inventory(self.historical, require_ready=True)
+
+    def test_repository_current_core_binds_fresh_capture_and_raw_immutable_index_evidence(self):
+        core = set(sources.EXPECTED_DOCUMENT_IDS) | set(sources.LEGAL_SOURCES)
+        result = intake.validate_inventory(self.original, require_ready=True, needed_scopes=core)
+        self.assertTrue(core <= set(result['ready']))
+        observed_on = date.fromisoformat(self.original['observed_on'])
+        for scope in self.original['scopes']:
+            if scope['source_id'] not in core:
+                continue
+            with self.subTest(source_id=scope['source_id']):
+                capture, observation = scope['capture'], scope['index_observation']
+                self.assertEqual(datetime.fromisoformat(capture['retrieved_at'].replace('Z', '+00:00')).date(), observed_on)
+                self.assertEqual(observation['method'], 'http_index_snapshot')
+                self.assertEqual(observation['checked_on'], self.original['observed_on'])
+                provenance_path = Path(capture['provenance']['local_path'])
+                snapshot_path = Path(observation['snapshot']['local_path'])
+                self.assertEqual(provenance_path.name, 'manifest.json')
+                self.assertEqual(provenance_path.parts[:3], ('sources', 'oepul', 'provenance'))
+                self.assertNotEqual(capture['provenance']['local_path'], self.original['baseline_manifest']['local_path'])
+                self.assertEqual(snapshot_path.parent, provenance_path.parent)
+                self.assertEqual(observation['target_url'], capture['official_url'])
+                manifest = json.loads((sources.REPO_ROOT / provenance_path).read_text())
+                index_id = 'information_sheets' if scope['source_id'] in sources.EXPECTED_DOCUMENT_IDS else 'legal_basis'
+                index_record = manifest['source_indexes'][index_id]
+                self.assertEqual(observation['snapshot']['sha256'], index_record['sha256'])
+                self.assertEqual(observation['index_url'], index_record['url'])
+                self.assertEqual(manifest['provenance']['manifest_snapshot_path'], capture['provenance']['local_path'])
+        self.assertTrue(all(not clause['original_capture_pending'] for clause in self.original['clause_applicability']))
+
+    def test_original_capture_does_not_admit_unreviewed_tables_or_supplemental_scopes(self):
+        result = intake.validate_inventory(self.original)
+        review_scopes = set(intake.EXTRA_SCOPES) - set(sources.LEGAL_SOURCES) - {'wrrl_programme'}
+        pending_review_scopes = set()
+        for scope in self.original['scopes']:
+            if scope['source_id'] in review_scopes and scope['review'] is None:
+                with self.subTest(source_id=scope['source_id']):
+                    self.assertIn(scope['source_id'], result['pending'])
+                    pending_review_scopes.add(scope['source_id'])
+        if pending_review_scopes:
+            with self.assertRaisesRegex(sources.SourceError, 'incomplete'):
+                intake.validate_inventory(self.original, require_ready=True, needed_scopes=pending_review_scopes)
+
+    def test_current_notice_batch_retains_all_originals_without_claiming_full_notice_review(self):
+        scope = intake.Scope.model_validate(next(item for item in self.original['scopes'] if item['source_id'] == 'year_specific_notices'))
+        captures = [scope.capture] + scope.additional_captures
+        self.assertGreaterEqual(len(captures), len(sources.NOTICE_SOURCES))
+        self.assertTrue({sources.notice_url(spec) for spec in sources.NOTICE_SOURCES.values()} <= {capture.official_url for capture in captures})
+        for capture in captures:
+            intake.verify_capture(scope.model_copy(update={'capture': capture}), sources.REPO_ROOT, date.fromisoformat(self.original['observed_on']))
+        self.assertIsNone(scope.review)
+        with self.assertRaisesRegex(sources.SourceError, 'year_specific_notices'):
+            intake.validate_inventory(self.original, require_ready=True, needed_scopes={'year_specific_notices'})
 
     def test_deleting_or_altering_required_scopes_never_passes(self):
         for action in ('delete', 'rename', 'duplicate', 'kind'):
@@ -272,7 +333,7 @@ class IntakeTests(unittest.TestCase):
             elif action == 'date':
                 data['clause_applicability'][0]['effective_from'] = '2026-01-01'
             else:
-                data['clause_applicability'][0]['original_capture_pending'] = False
+                data['clause_applicability'][0]['original_capture_pending'] = not data['clause_applicability'][0]['original_capture_pending']
             with self.subTest(action=action), self.assertRaises(sources.SourceError):
                 intake.validate_inventory(data)
 
