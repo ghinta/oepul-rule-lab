@@ -155,6 +155,15 @@ Grundwasserschutz ist ebenfalls als Draft dokumentiert:
 
 ## Manuelle Adaptationen
 
+Die [diagnostische Luna-Sichtung aller 26 Maßnahmen](docs/analysis/luna-screening-20261011/README.md)
+führt 78 synthetische Entwicklungsfälle auf den unveränderten historischen
+Kandidaten aus. Das Manifest bindet Runs, Quellen, Profile, Prompts und Fixtures;
+native Ausgaben, undefinierte Ergebnisse und Integrationslücken bleiben sichtbar.
+Eine [aufklappbare Vorschau](docs/analysis/luna-screening-20261011/index.html)
+zeigt Eingaben und Ergebnisse. CI wiederholt die Diagnose mit gepinntem OPA.
+Diese Sichtung ist Vorbereitung der Thesis-Auswahl, keine unabhängige
+Genauigkeitsmessung und keine automatische App-Übernahme.
+
 Der [Quellenreview und Variablenvertrag für die o6_3-App-Integration](docs/analysis/o6_3-variable-contract-20261007/README.md)
 verbindet den Adaptationsvertrag mit dem App-Stand nach PR #135 und weist
 die vor einer vollständigen Empfehlung offenen Nachweise ausdrücklich aus.
