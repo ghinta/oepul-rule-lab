@@ -66,6 +66,12 @@ stammen teilweise aus historischen Modelltests; Herkunft und Änderungen sind
 pro Fixture beschrieben. Sie dürfen später weder als unabhängig bestätigtes
 Gold noch als unbekannte Prüfmenge wiederverwendet werden.
 
+Ausführbare Fixtures beginnen mit `baseline`; optional folgen `variation`
+und `missing_fact` in dieser Reihenfolge. Unbekannte oder vertauschte Fallnamen
+werden vor der Ausführung abgelehnt, damit ausgeführte Fälle nicht aus den
+festen Berichtsspalten fallen. Ohne ausführbare Fälle ist ein expliziter `gap`
+erforderlich.
+
 `results.json` und `results/<measure>.json` enthalten vollständige Eingaben,
 Eingabehashes, JSON-Pointer-Differenzen zur Basis, native Ausgaben und die
 vollständigen OPA-JSON-Antworten. Fehlend, `null`, `false`, `0`

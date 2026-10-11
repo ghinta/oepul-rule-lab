@@ -117,6 +117,10 @@ def validate_fixture(fixture: dict, measure_id: str, run_id: str) -> None:
         if {"expected", "expected_output", "golden_label"} & case.keys():
             raise ValueError("Development observations must not contain reference labels")
         json_bytes(case["input"])
+    case_ids = [case["case_id"] for case in cases]
+    expected_ids = ["baseline", *(name for name in ("variation", "missing_fact") if name in seen)]
+    if case_ids and case_ids != expected_ids:
+        raise ValueError("Cases must start with baseline, followed by optional variation and missing_fact in that order")
     references = fixture.get("references")
     if not isinstance(references, list) or not references:
         raise ValueError("Fixture needs native artifact references")

@@ -5,7 +5,7 @@ Geprüft am 11. Oktober 2026 mit Python 3.12.14 und dem Repository-Pin OPA 1.18.
 
 | Prüfung | Ergebnis |
 |---|---|
-| Repository-Unittests | 117 bestanden, einschließlich 28 Screening-Tests; keine übersprungen |
+| Repository-Unittests | 118 bestanden, einschließlich 29 Screening-Tests; keine übersprungen |
 | Validator-Unittests | 11 bestanden |
 | Neuer Strict-Compile der isolierten Luna-Bundles | 26/26 technisch erfolgreich |
 | Gebundene synthetische Entwicklungsfälle | 78 ausgeführt: 76 definierte Ausgaben, 2 undefinierte Ausgaben, keine technischen Ausführungsfehler |
@@ -21,6 +21,11 @@ Lauf-/Quellen-/Profil-/Runtime-Bindungen, unerlaubte Queries, Pfadausbrüche,
 fehlend/null und verschiedene JSON-Typen, technische Fehlerklassifikation,
 Modelltest-Ausschluss und native Verzeichnisladung. Sie enthalten keine
 fachlichen Golden-Sollwerte für die historischen Luna-Ausgaben.
+
+Der zusätzliche Review-Regressionsfall schützt die festen Berichtsspalten:
+unbekannte, fehlende oder vertauschte Basisrollen werden vor der Ausführung
+abgelehnt; die Basis mit optionalen Variations-/Fehlendatenproben bleibt erlaubt.
+Die ursprünglichen 78 Eingaben und Ergebnisse bleiben bytegleich.
 
 Die beiden undefinierten Ausgaben sind `o6_8/variation` und
 `o6_17/missing_fact`. Sie bleiben als Befunde in der Matrix. Technischer

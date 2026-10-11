@@ -79,6 +79,20 @@ class QueryBoundaryTests(unittest.TestCase):
 
 
 class FixtureContractTests(unittest.TestCase):
+    def test_case_roles_match_report_columns_and_first_case_baseline(self):
+        for roles in (("baseline",), ("baseline", "variation"), ("baseline", "missing_fact"),
+                      ("baseline", "variation", "missing_fact")):
+            fixture = development_fixture()
+            fixture["cases"] = [{"case_id": role, "purpose": "Synthetische Rolle prüfen.", "input": {}} for role in roles]
+            with self.subTest(accepted=roles):
+                validate_fixture(fixture, "o6_3", "synthetic-run")
+        for roles in (("positive",), ("variation",), ("missing_fact",), ("variation", "baseline"),
+                      ("baseline", "probe"), ("baseline", "missing_fact", "variation")):
+            fixture = development_fixture()
+            fixture["cases"] = [{"case_id": role, "purpose": "Unbekannte oder vertauschte Rolle.", "input": {}} for role in roles]
+            with self.subTest(rejected=roles), self.assertRaisesRegex(ValueError, "Cases must start with baseline"):
+                validate_fixture(fixture, "o6_3", "synthetic-run")
+
     def test_synthetic_fixture_and_explicit_unexecutable_gap_are_allowed(self):
         validate_fixture(development_fixture(), "o6_3", "synthetic-run")
         gap = development_fixture()
