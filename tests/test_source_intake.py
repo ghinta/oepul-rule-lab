@@ -149,6 +149,8 @@ class IntakeTests(unittest.TestCase):
 
     def fixture(self, root: Path) -> dict:
         data = copy.deepcopy(self.original)
+        # Synthetic evidence below has fixed dates; the live intake can advance.
+        data['observed_on'] = '2026-10-10'
         data['baseline_manifest'] = evidence(root, 'baseline.json', b'{}')
         for scope in data['scopes']:
             scope['capture'] = None

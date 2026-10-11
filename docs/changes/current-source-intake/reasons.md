@@ -1,5 +1,15 @@
 # Current source intake — Lab #104
 
+The 11 October continuation resumes the same draft after publication of a new
+cloud configuration. Real AMA/BMLUK/RIS requests now succeed. Fresh core and
+supplemental captures advance the inventory observation date honestly, while
+new current RIS legal originals and the full BMLUK workbook remove acquisition
+gaps. The NAPV comparison identifies an expired exception in the old AMA mirror;
+full workbook review retains hidden historical data, formulas, notes and blanks.
+Broad legal/rate/source-scope reviews remain pending: 33 ready / 10 pending.
+Current evidence is in continuation-20261011.md and current-source-status.md.
+The following description preserves the 10 October implementation background.
+
 The September pack retained 27 information sheets and the 2024 legal originals.
 Reusing its metadata as completed October intake would miss the new legal edition
 and required tables, registers and geographic sources.

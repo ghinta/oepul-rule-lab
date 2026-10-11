@@ -1,7 +1,7 @@
 # AMA-ÖPUL-Quellen
 
 Dieser Ordner enthält einen prüfbaren AMA-ÖPUL-Quellenstand. Das Root-Manifest
-verweist auf den frischen Abruf vom 10.10.2026 mit den SRL/Anhängen vom
+verweist auf den frischen Abruf vom 11.10.2026 mit den SRL/Anhängen vom
 01.10.2026. Die unveränderlichen September-Manifeste und damals verlinkten
 2024-Originale bleiben erhalten. Der Pflichtkern
 besteht aus den aktuell verlinkten allgemeinen Teilnahmebedingungen und allen
@@ -95,6 +95,22 @@ regelrelevante Jahresmeldungen werden bewusst kuratiert: `NOTICE_SOURCES` im
 Updater ist die explizite, überprüfbare Auswahlliste und kann erweitert werden.
 
 ## Aktuelle Quellenaufnahme für App #139 — Lab #104
+
+Der aktuelle Inventarstichtag ist **11.10.2026**: Alle bisher ausgewählten AMA-Original-
+und Indexbelege wurden tatsächlich erneut erhoben. Hinzu kommen die amtliche
+BMLUK-Prämien-XLSX und datierte vollständige RIS-Fassungen von GSP-AV/NAPV
+samt unterstützenden Kundmachungs-/Änderungsoriginalen. Das Intake pinnt
+42 unterschiedliche vollständige Originale und weiterhin **33 ready / 10 pending**.
+Unabhängige Workbookaufnahme ersetzt keine vollständige aktuelle SRL-/Projekt-/
+Regionalzuordnung; Prämien und GSP-Rechtsreview bleiben offen. Der vollständige
+NAPV-Struktur-/Tabellenreview ist an beide Originalhashes gebunden; sein
+PDF/HTML-Paket bleibt im strikten Ein-Index-Vertrag offen. Der NAPV-Abgleich
+belegt eine abgelaufene Ausnahme im alten AMA-Spiegel. Historische Reviews
+bleiben unverändert; identische frisch abgerufene Originalhashes erlauben ihre
+Wiederverwendung. Aktuelle Belege und Grenzen stehen in
+`docs/changes/current-source-intake/current-source-status.md` und
+`continuation-20261011.md`. Die folgenden Absätze dokumentieren die erhaltene
+Aufnahme vom 10. Oktober; deren Abrufdaten werden nicht umdatiert.
 
 `intake.json` erhält 43 erforderliche Scopes: alle 27 Merkblätter, aktuelle SRL
 und Anhänge, WRRL/Anlage 3, GSP-AV/NAPV, Anbieter, Prämien, L-/J-Matrizen samt

@@ -1,4 +1,57 @@
-# Verification — Lab #104 continuation, 10 October 2026
+# Verification — Lab #104 current source intake
+
+## Fresh continuation — 11 October 2026
+
+The current observation date is 11 October. The following older sections retain
+their own 10 October verification dates; they are not redated live checks.
+
+- New configuration version `cecfgver_6acb2101fb988198bc942ad2df1c3c3d`, fresh
+  revision 2 and `unrestricted/enforced`; real AMA/BMLUK/both-RIS GETs succeeded
+  with inherited proxy and TLS verification. See network-check-20261011.json.
+- The existing manager refreshed all 27 sheets, two 94/104-page legal PDFs,
+  four core notices and three raw indexes in `20261011T071518180217Z`.
+  Seven supplemental AMA originals and their indices were separately refreshed;
+  original bytes equal October 10 hashes, allowing unchanged historical reviews.
+- First full BMLUK workbook: six sheets, 2,633 physical populated cells,
+  214 merges, 286 formulas/caches, 14 notes, explicit blanks and all metadata.
+  Separate original-based inventory/extraction reconcile all 2,847 item IDs,
+  14 note IDs and 580 bounded rate-grid blanks; an independent reviewer also
+  checked every stored cell/value, merge, formula/cache and blank against OOXML.
+  Broad clause/project/regional premium scope stays pending, with no rate fill.
+- Full current GSP-AV compared across all 94 pages, decoded content streams,
+  images and media boxes: only the cover consolidation date differs from AMA.
+  Full BGBl II 1/2026 original and index archived; broad legal review stays open.
+- Full NAPV current PDF/HTML and authentic promulgation/amendment originals
+  archived. Exact dated raw href includes `?FassungVom=2026-10-11`; its actual
+  linked original has its own import/time/hash. Earlier queryless PDF is retained
+  separately. All 42 decoded page streams/text match between these current
+  PDFs; generated metadata differs and distinct hashes are never substituted.
+  Complete comparison proves the removal of expired §2(1a); BGBl II 277/2024
+  §12(3) names expiry at end 31.12.2024.
+- Independently inventoried NAPV literal review binds both full original hashes;
+  all 196 prose blocks, 13 tables, 1,200 physical rows, 6,282 physical cells,
+  the printed formula and ten notes match. These are source-artifact counts,
+  not unique normative facts or executable rules. Genuine dated index links
+  only the PDF; the single-index package contract keeps `napv` pending.
+- Intake pins 42 distinct originals at the new date, with immutable previous
+  and final intake snapshots. Final snapshot:
+  `provenance/intake-refresh-20261011T072540259715Z/intake-20261011.json`.
+  Integrity and selected o6_3/J/providers/WRRL gates pass; global readiness
+  intentionally rejects all ten pending scopes. Required 43 scopes unchanged.
+- Final Python suite: 112 tests passed without skips. Synthetic fixture date
+  is explicitly frozen to its fixed evidence dates, so live intake advancement
+  does not break old/future-capture safeguards. No production validator weakened.
+  Validator regressions: eleven tests passed. Repository-pinned OPA 1.18.2
+  format/strict compilation and nonempty adaptation tests passed, 3/3.
+- All 2,245 protected files at prior head `3966d870` match their exact Git blob
+  hashes. Original/history/model/profile/adaptation artifacts remain intact;
+  new originals/provenance/reviews are additive. `git diff --check` passed.
+
+The independent continuation review and final-head CI are recorded on PR #105.
+No model run, thesis edit, App admission, expert closure or merge is authorized
+or performed by the continuation.
+
+## Historical verification — 10 October 2026
 
 Continuation starts at PR #105 head 3077bdc. The mutable root manifest now points
 to immutable AMA capture run 20261010T205920107220Z. All September originals and
