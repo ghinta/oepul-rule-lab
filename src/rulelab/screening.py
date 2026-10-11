@@ -170,17 +170,28 @@ def candidate_artifacts(root: Path, run_id: str) -> list[Path]:
     return sorted(files)
 
 
-def create_manifest(root: Path, report_dir: Path, base_commit: str = BASE_COMMIT) -> dict:
+def create_manifest(root: Path, report_dir: Path, base_commit: str = BASE_COMMIT, *,
+                    model: str = MODEL, run_ids: dict[str, str] | None = None,
+                    candidate_root: Path | None = None) -> dict:
+    candidate_root = candidate_root or root
     selected = {}
-    for path in sorted((root / "runs").glob("*/run.json")):
+    if run_ids is not None and (set(run_ids) != set(MEASURES) or
+                               any(not isinstance(value, str) or Path(value).name != value for value in run_ids.values())):
+        raise ValueError("Explicit selection must bind exactly one normalized run ID per measure")
+    paths = (sorted((candidate_root / "runs").glob("*/run.json")) if run_ids is None else
+             [relative_file(candidate_root, f"runs/{run_ids[m]}/run.json") for m in MEASURES])
+    for path in paths:
         run = load_json(path)
-        if run.get("model", {}).get("model") == MODEL:
+        if run.get("model", {}).get("model") == model:
             measure = run.get("measure")
             if measure in selected:
-                raise ValueError(f"Multiple Luna candidates for {measure}; select explicitly")
+                raise ValueError(f"Multiple {model} candidates for {measure}; select explicitly")
             selected[measure] = run
     if set(selected) != set(MEASURES):
-        raise ValueError("Luna inventory must contain exactly the 26 measures")
+        raise ValueError("Candidate inventory must contain exactly the 26 measures")
+    if run_ids is not None and (set(run_ids) != set(MEASURES) or
+                               any(selected[m]["run_id"] != run_ids[m] for m in MEASURES)):
+        raise ValueError("Explicit selection differs from candidate identity")
     entries = []
     for measure in MEASURES:
         run = selected[measure]
@@ -191,8 +202,8 @@ def create_manifest(root: Path, report_dir: Path, base_commit: str = BASE_COMMIT
         fixture = load_json(fixture_path)
         validate_fixture(fixture, measure, run_id)
         for ref in fixture["references"]:
-            relative_file(root, ref["path"])
-        artifacts = [record(root, p) for p in candidate_artifacts(root, run_id)]
+            relative_file(candidate_root, ref["path"])
+        artifacts = [record(candidate_root, p) for p in candidate_artifacts(candidate_root, run_id)]
         load_paths = [item["path"] for item in artifacts if
                       (f"/workspace/policy/" in item["path"] and item["path"].endswith(".rego")) or
                       (f"/workspace/data/" in item["path"] and item["path"].endswith(".json"))]
@@ -200,11 +211,11 @@ def create_manifest(root: Path, report_dir: Path, base_commit: str = BASE_COMMIT
             raise ValueError(f"Missing policy bundle: {run_id}")
         sources = []
         for source in run["sources"]:
-            actual = record(root, relative_file(root, "sources/oepul/" + source["source_path"]))
+            actual = record(candidate_root, relative_file(candidate_root, "sources/oepul/" + source["source_path"]))
             if actual["sha256"] != source["sha256"] or actual["bytes"] != source["bytes"]:
                 raise ValueError(f"Historical source unavailable or changed: {actual['path']}")
             sources.append(actual)
-        profile = record(root, relative_file(root, run["profile"]["path"]))
+        profile = record(candidate_root, relative_file(candidate_root, run["profile"]["path"]))
         if profile["sha256"] != run["profile"]["sha256"]:
             raise ValueError("Canonical profile no longer matches historical candidate")
         entries.append({"measure_id": measure, "run_id": run_id, "model": run["model"],
@@ -213,7 +224,7 @@ def create_manifest(root: Path, report_dir: Path, base_commit: str = BASE_COMMIT
                         "fixture": record(root, fixture_path), "profile": profile,
                         "sources": sources, "artifacts": artifacts, "load_paths": load_paths})
     return {"schema_version": 1, "kind": "development-diagnostic", "base_commit": base_commit,
-            "model": MODEL, "opa_version": (root / "runner/validation/opa-version.txt").read_text().strip(),
+            "model": model, "opa_version": (root / "runner/validation/opa-version.txt").read_text().strip(),
             "runtime_contract": {"blocked_builtins": list(BLOCKED_BUILTINS), "eval_timeout_seconds": 10,
                                  "process_timeout_seconds": 20, "strict_builtin_errors": True},
             "runtime_records": [record(root, root / p) for p in
@@ -221,8 +232,10 @@ def create_manifest(root: Path, report_dir: Path, base_commit: str = BASE_COMMIT
             "entries": entries}
 
 
-def verify_manifest(root: Path, manifest: dict) -> None:
-    if manifest.get("schema_version") != 1 or manifest.get("kind") != "development-diagnostic" or manifest.get("model") != MODEL:
+def verify_manifest(root: Path, manifest: dict, *, model: str = MODEL,
+                    candidate_root: Path | None = None) -> None:
+    candidate_root = candidate_root or root
+    if manifest.get("schema_version") != 1 or manifest.get("kind") != "development-diagnostic" or manifest.get("model") != model:
         raise ValueError("Unsupported screening manifest")
     if manifest.get("runtime_contract") != {"blocked_builtins": list(BLOCKED_BUILTINS), "eval_timeout_seconds": 10,
                                             "process_timeout_seconds": 20, "strict_builtin_errors": True}:
@@ -238,11 +251,11 @@ def verify_manifest(root: Path, manifest: dict) -> None:
     if (root / "runner/validation/opa-version.txt").read_text().strip() != manifest["opa_version"]:
         raise ValueError("Manifest OPA version differs from repository pin")
     for entry in entries:
-        records = [entry["fixture"], entry["profile"], *entry["artifacts"], *entry["sources"]]
-        verify_records(root, records)
+        verify_records(root, [entry["fixture"]])
+        verify_records(candidate_root, [entry["profile"], *entry["artifacts"], *entry["sources"]])
         artifact_paths = {r["path"] for r in entry["artifacts"]}
-        run = load_json(root / f"runs/{entry['run_id']}/run.json")
-        if run["measure"] != entry["measure_id"] or run["run_id"] != entry["run_id"] or run["model"] != entry["model"] or run["model"]["model"] != MODEL or run["status"] != "finalized":
+        run = load_json(candidate_root / f"runs/{entry['run_id']}/run.json")
+        if run["measure"] != entry["measure_id"] or run["run_id"] != entry["run_id"] or run["model"] != entry["model"] or run["model"]["model"] != model or run["status"] != "finalized":
             raise ValueError("Manifest candidate metadata differs from bound run")
         for field in ("mode", "generation_attempt", "created_at", "finalized_at"):
             if entry.get(field) != run.get(field):
@@ -253,7 +266,7 @@ def verify_manifest(root: Path, manifest: dict) -> None:
                             for source in run["sources"]]
         if entry["sources"] != expected_sources:
             raise ValueError("Manifest sources differ from historical source selection")
-        expected_artifacts = {p.relative_to(root).as_posix() for p in candidate_artifacts(root, entry["run_id"])}
+        expected_artifacts = {p.relative_to(candidate_root).as_posix() for p in candidate_artifacts(candidate_root, entry["run_id"])}
         if expected_artifacts != artifact_paths:
             raise ValueError("Candidate artifact inventory changed")
         expected_load = [r["path"] for r in entry["artifacts"] if
@@ -306,8 +319,10 @@ def diagnostic_inventory(root: Path, entry: dict) -> dict:
     }
 
 
-def execute(root: Path, manifest: dict, opa_bin: Path) -> dict:
-    verify_manifest(root, manifest)
+def execute(root: Path, manifest: dict, opa_bin: Path, *, model: str = MODEL,
+            candidate_root: Path | None = None) -> dict:
+    candidate_root = candidate_root or root
+    verify_manifest(root, manifest, model=model, candidate_root=candidate_root)
     opa_bin = opa_bin.resolve()
     verify_opa_binary(opa_bin, manifest["opa_version"])
     checksums = load_json(root / "runner/validation/opa-checksums.json")
@@ -334,7 +349,7 @@ def execute(root: Path, manifest: dict, opa_bin: Path) -> dict:
                 suffix = name.split("/workspace/", 1)[1]
                 target = bundle / suffix
                 target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(relative_file(root, name), target)
+                shutil.copyfile(relative_file(candidate_root, name), target)
                 bound = next(r for r in entry["artifacts"] if r["path"] == name)
                 if hashlib.sha256(target.read_bytes()).hexdigest() != bound["sha256"]:
                     raise ValueError(f"Candidate changed during bundle copy: {name}")
@@ -342,7 +357,9 @@ def execute(root: Path, manifest: dict, opa_bin: Path) -> dict:
             compiled = run_opa(opa_bin, ["check", "--strict", "--format=json", "--capabilities", "capabilities.json",
                               *load_args[1::2]], runtime)
             measure = {key: fixture[key] for key in ("measure_id", "run_id", "query", "input_contract_note", "output_contract_note", "case_origin", "references", "open_dependencies")}
-            measure["inventory"] = diagnostic_inventory(root, entry)
+            measure["inventory"] = diagnostic_inventory(candidate_root, entry)
+            if "luna_translation" in fixture:
+                measure["luna_translation"] = fixture["luna_translation"]
             if "gap" in fixture:
                 measure["gap"] = fixture["gap"]
             measure["compile"] = {"status": "compiled" if compiled["exit_code"] == 0 else "compile_error", "errors": compiled.get("json", {}).get("errors", []), **({"error": compiled["error"]} if "error" in compiled else {})}
@@ -367,7 +384,7 @@ def execute(root: Path, manifest: dict, opa_bin: Path) -> dict:
                 measure["cases"].append(value)
             observed.append(measure)
             shutil.rmtree(bundle)
-    verify_manifest(root, manifest)  # also detects any historical writes during execution
+    verify_manifest(root, manifest, model=model, candidate_root=candidate_root)
     return {"schema_version": 1, "kind": "development-diagnostic", "opa_version": manifest["opa_version"],
             "manifest_sha256": hashlib.sha256(json_bytes(manifest)).hexdigest(), "measures": observed}
 

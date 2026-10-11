@@ -43,6 +43,21 @@ jobs:
         run: python tools/validate_o6_3_contract.py
       - name: Frozen Luna development screening replay
         run: python -m rulelab.screening verify --report-dir docs/analysis/luna-screening-20261011
+      - name: Checkout immutable Opus publication for read-only diagnosis
+        uses: actions/checkout@v4
+        with:
+          ref: e009eed4a83ff076b26eba33ac433ac2b0642621
+          path: .analysis-candidates/opus
+          persist-credentials: false
+      - name: Frozen Opus development screening replay
+        run: |
+          python - <<'PY'
+          import subprocess
+          from rulelab.opus_screening import CANDIDATE_COMMIT
+          actual = subprocess.check_output(['git', '-C', '.analysis-candidates/opus', 'rev-parse', 'HEAD'], text=True).strip()
+          assert actual == CANDIDATE_COMMIT, (actual, CANDIDATE_COMMIT)
+          PY
+          python -m rulelab.opus_screening verify --candidate-root .analysis-candidates/opus
       - name: Adaptation format, strict compilation and OPA tests
         run: |
           python runner/validation/opa_validate.py validate \

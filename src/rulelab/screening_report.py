@@ -68,8 +68,8 @@ def _markdown(value: Any) -> str:
     ).replace("`", "\\`")
 
 
-def _repo_href(path: str) -> str:
-    return "../../../" + quote(path, safe="/._-")
+def _repo_href(path: str, artifact_base_url: str | None = None) -> str:
+    return (artifact_base_url or "../../../") + quote(path, safe="/._-")
 
 
 def _fixture_href(measure: dict[str, Any]) -> str:
@@ -237,9 +237,9 @@ def _html_case(case: dict[str, Any]) -> str:
     )
 
 
-def _html_measure(measure: dict[str, Any], entry: dict[str, Any]) -> str:
+def _html_measure(measure: dict[str, Any], entry: dict[str, Any], artifact_base_url: str | None = None) -> str:
     references = "".join(
-        '<li><a href="' + _escape(_repo_href(ref["path"])) + '"><code>'
+        '<li><a href="' + _escape(_repo_href(ref["path"], artifact_base_url)) + '"><code>'
         + _escape(ref["path"]) + "</code></a>: " + _escape(ref["detail"])
         + "</li>" for ref in measure["references"]
     )
@@ -277,6 +277,8 @@ def _html_measure(measure: dict[str, Any], entry: dict[str, Any]) -> str:
         + _escape(measure["case_origin"]) + "</dd><dt>Native Query</dt><dd><code>"
         + _escape(measure["query"]) + "</code></dd></dl>"
         + _html_inventory(measure)
+        + ("<details><summary>Zuordnung der Luna-Fakten und Vergleichslücken</summary>"
+           + _pre(measure["luna_translation"]) + "</details>" if "luna_translation" in measure else "")
         + "<details><summary>Belege und offene Abhängigkeiten</summary><h3>Belege</h3><ul>"
         + references + "</ul><h3>Offene Abhängigkeiten</h3><ul>" + dependencies
         + "</ul><p class=hash>Fixture SHA-256: <code>"
@@ -285,13 +287,15 @@ def _html_measure(measure: dict[str, Any], entry: dict[str, Any]) -> str:
     )
 
 
-def render_report(manifest: dict, results: dict) -> dict[str, str]:
+def render_report(manifest: dict, results: dict, *, label: str = "Luna",
+                  replay_command: str = REPLAY_COMMAND, disclaimer: str = DISCLAIMER,
+                  artifact_base_url: str | None = None) -> dict[str, str]:
     """Return static report files without reading files or mutating arguments."""
     entries = {entry["measure_id"]: entry for entry in manifest["entries"]}
     measures = results["measures"]
     markdown = [
-        "# Luna: diagnostische Sichtung der vorhandenen Regelkandidaten\n",
-        DISCLAIMER + "\n",
+        f"# {label}: diagnostische Sichtung der vorhandenen Regelkandidaten\n",
+        disclaimer + "\n",
         EXPERT_NOTE + "\n",
         INVENTORY_NOTE + "\n",
         REFERENCE_NOTE + "\n",
@@ -355,7 +359,7 @@ def render_report(manifest: dict, results: dict) -> dict[str, str]:
         "die konkrete Lücke steht beim Kandidaten. Diese Statuswerte sind keine fachlichen Bewertungen.\n",
         "## Reproduzieren\n",
         "Vom Repository-Wurzelverzeichnis mit der passenden absoluten OPA-Binary:\n",
-        "```bash\n" + REPLAY_COMMAND + "\n```\n",
+        "```bash\n" + replay_command + "\n```\n",
         "Die Überprüfung vergleicht den eingefrorenen Bestand und die Ausgaben. "
         "Eingabe-, Artefakt- und Quellenhashes stehen im Manifest beziehungsweise "
         "Ergebnis-JSON. Die methodischen Grenzen sind in [method.md](method.md) beschrieben.\n",
@@ -371,6 +375,8 @@ def render_report(manifest: dict, results: dict) -> dict[str, str]:
             "**Herkunft:** " + _markdown(measure["case_origin"]) + "\n",
             "**Query:** `" + _markdown(measure["query"]) + "`\n",
             *_markdown_inventory(measure),
+            *( ["**Zuordnung der Luna-Fakten und Vergleichslücken:**\n"
+                + _markdown_code(_json(measure["luna_translation"]))] if "luna_translation" in measure else []),
             "| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |\n"
             "|---|---|---|---|",
         ])
@@ -408,7 +414,7 @@ def render_report(manifest: dict, results: dict) -> dict[str, str]:
             )
         markdown.append("\n**Belege:**\n")
         markdown.extend(
-            f"- [{_markdown(ref['path'])}]({_repo_href(ref['path'])}): "
+            f"- [{_markdown(ref['path'])}]({_repo_href(ref['path'], artifact_base_url)}): "
             + _markdown(ref["detail"]) for ref in measure["references"]
         )
         markdown.append("")
@@ -433,9 +439,9 @@ def render_report(manifest: dict, results: dict) -> dict[str, str]:
     html_document = (
         '<!doctype html><html lang="de"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
-        "<title>Luna: diagnostische Regelvorschau</title><style>" + css
-        + "</style></head><body><main><h1>Luna: diagnostische Regelvorschau</h1>"
-        + '<section class="intro"><p class="notice">' + _escape(DISCLAIMER)
+        "<title>" + _escape(label) + ": diagnostische Regelvorschau</title><style>" + css
+        + "</style></head><body><main><h1>" + _escape(label) + ": diagnostische Regelvorschau</h1>"
+        + '<section class="intro"><p class="notice">' + _escape(disclaimer)
         + "</p><p>" + _escape(EXPERT_NOTE) + "</p><p>" + _escape(INVENTORY_NOTE)
         + "</p><p>" + _escape(REFERENCE_NOTE) + "</p><p>Basiscommit: <code>"
         + _escape(manifest["base_commit"]) + "</code> · OPA <code>"
@@ -446,14 +452,14 @@ def render_report(manifest: dict, results: dict) -> dict[str, str]:
         + "<p>Ein definierter Wert bestätigt keine fachliche Richtigkeit. Eine undefinierte "
         "Query ist ein Befund und hat keinen Wert; ein definierter JSON-Wert null bleibt null. "
         "Die Bedeutung von eligible und ähnlichen Feldern wird je Kandidat erläutert.</p>"
-        + "<details><summary>Wiederholung</summary><pre>" + _escape(REPLAY_COMMAND)
+        + "<details><summary>Wiederholung</summary><pre>" + _escape(replay_command)
         + "</pre><p>Im Repository-Wurzelverzeichnis ausführen. Details zur Fixierung "
         + "stehen in method.md.</p></details></section>"
         + '<section class="matrix"><h2>Ausführungsübersicht</h2><div class="table-wrap">'
         + "<table><thead><tr><th>Maßnahme</th><th>Run</th><th>Kompilierung</th>"
         + "<th>Basis</th><th>Variation</th><th>Fehlende Tatsache</th></tr></thead><tbody>"
         + "".join(html_rows) + "</tbody></table></div></section>"
-        + "".join(_html_measure(measure, entries[measure["measure_id"]]) for measure in measures)
+        + "".join(_html_measure(measure, entries[measure["measure_id"]], artifact_base_url) for measure in measures)
         + "</main></body></html>\n"
     )
     return {
