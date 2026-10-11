@@ -2,6 +2,9 @@
 
 Status: **DRAFT – technisch finalisierter Discover-Kandidat, nicht fachlich freigegeben**
 
+Ersetzt durch `v2-o6_17-opus-5.5-high-20261011`, der die hier fehlenden
+§§ 42–47 GSP-AV belegt.
+
 Dieser Run untersucht die Maßnahme `o6_17` (Humuserhalt und Bodenschutz auf
 umbruchsfähigem Grünland) erneut, diesmal mit der GSP-AV als zusätzlicher
 Rechtsquelle. Er liefert einen quellengebundenen, ausführbaren

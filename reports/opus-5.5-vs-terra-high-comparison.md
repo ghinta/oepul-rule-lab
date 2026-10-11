@@ -4,7 +4,7 @@ Stand: 2. Oktober 2026 · Auswertung von `origin/main` bei `b6e8917` · Zahlen
 reproduzierbar mit `python3 -m rulelab site` (siehe
 [Run Explorer](https://ghinta.github.io/oepul-rule-lab/))
 
-Nachtrag 9./10. Oktober 2026: Neun Opus-Runs wurden mit dem erweiterten
+Nachtrag 9.–11. Oktober 2026: Neun Opus-Runs wurden mit dem erweiterten
 Quellenpack wiederholt (Abschnitt
 [Reruns mit aktualisiertem Quellenpack](#reruns-mit-aktualisiertem-quellenpack)).
 Die Seite zählt seither je Maßnahme und Modell nur den neuesten Run; ihre
@@ -256,7 +256,9 @@ samt Anlage 3 sowie drei weitere AMA-Meldungen (22.07., 25.08. und
 (`applies_to_measures`). Wiederholt wurden zuerst die fünf Maßnahmen mit den
 meisten offenen Punkten aus fehlenden Quellen (3./4. Oktober), danach die vier
 übrigen Maßnahmen mit offenen GSP-AV-Punkten (9./10. Oktober), alle mit
-Opus 5.5, Effort `high`, unverändertem Prompt und Quality Gate v1:
+Opus 5.5, Effort `high`, unverändertem Prompt und Quality Gate v1. `o6_17`
+lief am 11. Oktober ein zweites Mal, weil der erste Rerun §§ 42–47 GSP-AV
+nicht belegte:
 
 | Maßnahme | Quellen | Regeln | Belege | davon neue Quellen | offen | Tests | Versuche | Kosten (USD) |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -268,30 +270,32 @@ Opus 5.5, Effort `high`, unverändertem Prompt und Quality Gate v1:
 | `o6_1c` | 8 → 9 | 97 → 97 | 258 → 221 | 31 | 4 → 0 | 80 | 2 | 11,53 → 15,13 |
 | `o6_4` | 8 → 9 | 74 → 90 | 162 → 224 | 40 | 2 → 0 | 67 | 3 | 9,38 → 14,38 |
 | `o6_12` | 8 → 9 | 91 → 94 | 190 → 193 | 35 | 1 → 0 | 66 | 2 | 11,57 → 15,07 |
-| `o6_17` | 8 → 9 | 118 → 106 | 303 → 337 | 38 | 1 → 0 | 75 | 3 | 15,45 → 17,84 |
+| `o6_17` | 8 → 9 | 118 → 133 | 303 → 418 | 81 | 1 → 0 | 70 | 2 | 15,45 → 19,15 |
 
 „Neue Quellen“ zählt Belege aus GSP-AV, NAPV, Grundwasserschutzprogramm und
 den Meldungen vom 25.08. und 02.09.2026. Kosten sind Listenpreis-Äquivalente
-laut `run.json`; Claude Code meldet sie bei Fortsetzungen kumulativ.
+laut `run.json`; Claude Code meldet sie bei Fortsetzungen kumulativ. Für
+`o6_17` zeigt die Tabelle den zweiten Rerun; der erste (10.10.: 106 Regeln,
+337 Belege, davon 38 GSP-AV, 17,84 USD) steht unter „Ersetzte Runs“.
 
 - **Geschlossen:** Alle sechs offenen Punkte zu den fehlenden Meldungen
-  (25.08. und 02.09.) und neun der elf GSP-AV-Punkte sind aus den neuen
+  (25.08. und 02.09.) und zehn der elf GSP-AV-Punkte sind aus den neuen
   Quellen belegt, darunter alle vier bei `o6_1c` (§§ 6, 25 Abs. 4, 31 und
-  42–47) und die Flächenabweichungen nach §§ 42–47 bei `o6_4` und `o6_12`.
+  42–47) und die Flächenabweichungen nach §§ 42–47 bei `o6_4`, `o6_12` und
+  `o6_17` (dort erst im zweiten Rerun).
   Bei `o6_24` liefert das Grundwasserschutzprogramm Düngeklassen,
   N-Obergrenzen sowie Nmin-, Bewässerungs- und Aufzeichnungspflichten
   (25 neue Regeln).
-- **Nur formal geschlossen (2 GSP-AV-Punkte):** Die Reruns führen diese
-  Punkte nicht mehr als offen, belegen sie aber nicht.
-  - `o6_4`, PSM-Angaben nach § 34 Abs. 2 Z 12 lit. f GSP-AV: Der Run zitiert
-    die Stelle nicht. Aus der Quelle ist die Frage beantwortbar: Lit. f nennt
-    70-02, 70-03, 70-09, 70-10, 70-12 und 70-14, `o6_4` ist 70-05 und damit
-    nicht erfasst.
-  - `o6_17`, Flächen- und Tierabweichungen nach §§ 42–47 GSP-AV: Der Run hat
-    die GSP-AV nur gezielt gelesen und §§ 42–47 nicht zitiert; die
-    Flächenabweichungssanktion fehlt weiterhin. Ein weiterer Rerun oder eine
-    manuelle Ergänzung nach dem Muster von `o6_1c`, `o6_4` und `o6_12` wäre
-    nötig.
+- **Nur formal geschlossen (1 GSP-AV-Punkt):** `o6_4`, PSM-Angaben nach
+  § 34 Abs. 2 Z 12 lit. f GSP-AV. Der Rerun führt den Punkt nicht mehr als
+  offen, zitiert die Stelle aber nicht. Aus der Quelle ist die Frage
+  beantwortbar: Lit. f nennt 70-02, 70-03, 70-09, 70-10, 70-12 und 70-14,
+  `o6_4` ist 70-05 und damit nicht erfasst.
+- **Gleicher Prompt, unterschiedliche Lesetiefe:** Der erste `o6_17`-Rerun las
+  die GSP-AV nur auf den Seiten 9–24, 30–31 und 88–93 und zitierte §§ 42–47
+  nicht; der zweite las die Seiten 9–33 und 87–94 und belegt sie. Ob ein Run
+  eine referenzierte Rechtsquelle vollständig auswertet, ist also nicht
+  garantiert und muss je Run geprüft werden.
 - **Offen nach den Reruns (8 statt 20):** Die vier späteren Reruns führen
   keine offenen Punkte mehr. Die acht verbleibenden stammen aus den ersten
   fünf: Widersprüche zwischen NAPV und
@@ -300,8 +304,8 @@ laut `run.json`; Claude Code meldet sie bei Fortsetzungen kumulativ.
   bei `o6_16`, Düngeklassen-Karten bei `o6_24`), nicht als Daten übernommene
   NAPV-Tabellen (`o6_16`) und die Anwendbarkeit flächenbezogener SRL-Regeln
   auf tierbezogene Maßnahmen (`o6_21`).
-- **Weniger Regeln bei gleicher oder höherer Abdeckung:** Bei `o6_16`,
-  `o6_21` und `o6_17` fassen die Reruns Regeln stärker zusammen. Regelzahlen sind auch
+- **Weniger Regeln bei gleicher oder höherer Abdeckung:** Bei `o6_16` und
+  `o6_21` fassen die Reruns Regeln stärker zusammen. Regelzahlen sind auch
   zwischen Läufen desselben Modells kein Qualitätsmaß; die Einzelvergleiche
   stehen je Run in `artifacts/compare-previous.json`.
 
