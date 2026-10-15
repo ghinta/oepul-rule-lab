@@ -12,7 +12,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -58,10 +58,14 @@ jobs:
           assert actual == CANDIDATE_COMMIT, (actual, CANDIDATE_COMMIT)
           PY
           python -m rulelab.opus_screening verify --candidate-root .analysis-candidates/opus
-      - name: Reproduce individual UBB source-audit observations
+      - name: Validate sequential Opus audit collection
+        run: python tools/validate_opus_run_review.py --candidate-root .analysis-candidates/opus
+      - name: Reproduce completed individual Opus source audits
         run: |
-          python docs/analysis/opus-o6-1a-audit-20261015/replay.py \
-            --candidate-root .analysis-candidates/opus --opa "$OPA_BIN" --verify
+          python docs/analysis/opus-run-review/audit_runner.py --all --verify \
+            --candidate-root .analysis-candidates/opus --opa "$OPA_BIN"
+      - name: Reproduce pinned runtime numeric evidence
+        run: python docs/analysis/opus-run-review/runtime_numeric.py --opa "$OPA_BIN" --verify
       - name: Adaptation format, strict compilation and OPA tests
         run: |
           python runner/validation/opa_validate.py validate \
