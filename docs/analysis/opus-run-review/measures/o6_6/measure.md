@@ -10,7 +10,7 @@ Studienlabels, Referenzantworten, GM-Urteile, originale Selbsttests und manuelle
 
 ## Eingefrorene Bindung
 
-Die vollständigen Eingaben, Queries, Sollwerte, Beobachtungen, Regeltexte und Fundstellen stehen in [measure.json](/workspace/scratch/opus-o6-1a-source-audit/docs/analysis/opus-run-review/measures/o6_6/measure.json). SHA-256: `c8dc470e6631bd2c4662f8eb54b9d6801addd7e6398fa8784772628b8c8b1da3`. Alle **524 Beleg-Vorkommen** wurden nach Unicode-/Leerraumnormalisierung gegen die genaue Originalseite bzw. HTML-Datei gefunden. Alle Codezeilen liegen in den unveränderten Originalmodulen.
+Die vollständigen Eingaben, Queries, Sollwerte, Beobachtungen, Regeltexte und Fundstellen stehen in [measure.json](/workspace/scratch/opus-o6-1a-source-audit/docs/analysis/opus-run-review/measures/o6_6/measure.json). SHA-256: `c08a5046ce15e83ebf97e41be3bd0851e3786db3869ca4caf7b3ee5e18132581`. Alle **524 Beleg-Vorkommen** wurden nach Unicode-/Leerraumnormalisierung gegen die genaue Originalseite bzw. HTML-Datei gefunden. Alle Codezeilen liegen in den unveränderten Originalmodulen.
 
 Die Proben laden mit `/tmp/issue-51-review-opa` jeweils die vollständigen nativen Verzeichnisse `workspace/policy` und `workspace/data`. Policy-Paket: `data.oepul.o6_6`; Datenpaket: `data.o6_6`. Es gibt keine Dateiabflachung, Typkonvertierung oder Zahlennormalisierung. Alle Erwartungen verwenden `equals` auf expliziten numerischen 0/1-Abfragen; Regelobjekte und Stringarrays werden nicht verwechselt. Die Zahlen werden nicht als JSON-Booleans umgedeutet.
 
@@ -397,3 +397,7 @@ Alle 129 Zeilen sind neue, aus den aktuellen Originalquellen ausgewählte Prüfu
 | `o6_6-drought-undersowing-erosion` | 0 | 0 | erfüllt |
 
 Dieses Dossier schließt den Maßnahmenteil von Run 8/26 ab. Die gemeinsame Sammlung, das gesamte Replay und der unabhängige Schluss-QC liegen bei Root. Es wurden keine historischen oder produktiven Regeln repariert und keine weiteren Runs begonnen.
+
+## Metadatenkorrektur vom 15. Oktober 2026
+
+Der Abschnitt `ATB-complete-shared` enthielt versehentlich `page_end: 25`. Das gebundene Original hat 21 PDF-Seiten; der Eintrag ist auf 21 korrigiert. Wörtliche Belege, Eingaben, Queries und Sollwerte bleiben unverändert. Die gemeinsame Sammlung und alle 391 Fälle werden für die neuen Hashbindungen erneut reproduziert; dies ändert kein fachliches Urteil.

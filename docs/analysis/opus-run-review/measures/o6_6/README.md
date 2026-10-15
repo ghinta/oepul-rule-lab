@@ -95,3 +95,7 @@ getrennt. Keine öffentlichen oder privaten Studienreferenzen, Expertenantworten
 oder Sollwerte manueller Adaptationstests dienen als Orakel. Originale,
 Canonical-Profile und produktive App bleiben unverändert. Gemeinsame Lösungen
 werden nach allen 26 Einzelprüfungen zusammen durchgesehen.
+
+Die nachträgliche [Metadatenkorrektur](measure.md) berichtigt ausschließlich den
+ATB-Lesebereich von 25 auf die tatsächlichen 21 PDF-Seiten. Quellenfälle und
+fachliche Urteile bleiben gleich; Sammlung und Replay werden neu gebunden.
