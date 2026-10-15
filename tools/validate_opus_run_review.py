@@ -91,6 +91,9 @@ def validate_observations(directory, binding):
                        "Undefined/error output must be absent; defined null remains present")
         checks = [runner.check_expectation(item, result) for item in source["expectations"]]
         runner.require(runner.typed_equal(checks, result["checks"]), "Recorded expectation checks differ")
+        runner.require(not any(check.get("invalid_rule_collection") is True for check in checks),
+                       f"Invalid rule collection in fixture case {source['case_id']}: "
+                       "contains_rule/excludes_rule require arrays of rule_id objects")
     summary = {"cases": len(observed), "checks": sum(len(case["checks"]) for case in observed),
                "expectations_met": sum(check["passed"] for case in observed for check in case["checks"])}
     runner.require(runner.typed_equal(observations["summary"], summary), "Observation summary differs")

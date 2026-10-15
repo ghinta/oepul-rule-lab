@@ -15,6 +15,7 @@ from unittest.mock import patch
 
 from rulelab import opus_screening as opus
 from rulelab import screening as core
+from tools import validate_opus_run_review as review
 
 
 REPOSITORY = Path(__file__).resolve().parents[1]
@@ -354,6 +355,67 @@ class AnalysisWriteBoundaryTests(unittest.TestCase):
                     opus.main(["freeze", "--candidate-root", str(root / "candidates"),
                                "--report-dir", "runs/overwritten"])
                 create.assert_not_called()
+
+
+class SourceAuditObservationTests(unittest.TestCase):
+    """A malformed probe must not become a recorded source disagreement."""
+
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.root = Path(self.directory.name)
+        # The legacy envelope avoids unrelated manifest dependencies. Both
+        # dossier formats use the same expectation checks under validation.
+        self.binding = {"run_id": "synthetic-audit", "opa_version": "synthetic-runtime"}
+        write_json(self.root / "binding.json", self.binding)
+
+    def observations(self, operator, output):
+        expectation = {"path": ["violations"], "operator": operator, "expected": "RULE-A"}
+        case = {"case_id": "synthetic-rule-collection", "input": {},
+                "expectations": [expectation]}
+        write_json(self.root / "development-probes.json", {"cases": [case]})
+        result = {"case_id": case["case_id"], "status": "defined", "output": {"violations": output},
+                  "input_sha256": hashlib.sha256(review.runner.encoded(case["input"])).hexdigest()}
+        result["checks"] = [review.runner.check_expectation(expectation, result)]
+        observations = {"candidate_commit": review.runner.CANDIDATE_COMMIT,
+                        "run_id": self.binding["run_id"], "opa_version": self.binding["opa_version"],
+                        "compile": "strict_passed",
+                        "binding_sha256": review.runner.digest(self.root / "binding.json"),
+                        "fixture_sha256": review.runner.digest(self.root / "development-probes.json"),
+                        "cases": [result],
+                        "summary": {"cases": 1, "checks": 1,
+                                    "expectations_met": int(result["checks"][0]["passed"])}}
+        write_json(self.root / "observations.json", observations)
+        return result["checks"][0]
+
+    def test_rule_matchers_reject_nonempty_string_and_malformed_object_collections(self):
+        outputs = (["RULE-A"], ["RULE-B"], [{"rule_id": None}],
+                   [{"rule_id": "RULE-A"}, "RULE-B"])
+        for operator in ("contains_rule", "excludes_rule"):
+            for output in outputs:
+                with self.subTest(operator=operator, output=output):
+                    check = self.observations(operator, output)
+                    self.assertIs(check["invalid_rule_collection"], True)
+                    self.assertIs(check["passed"], False)
+                    with self.assertRaisesRegex(ValueError, "Invalid rule collection.*synthetic-rule-collection"):
+                        review.validate_observations(self.root, self.binding)
+
+    def test_empty_rule_collections_remain_valid_without_static_type_inference(self):
+        for operator, passed in (("contains_rule", False), ("excludes_rule", True)):
+            with self.subTest(operator=operator):
+                check = self.observations(operator, [])
+                self.assertNotIn("invalid_rule_collection", check)
+                self.assertIs(check["passed"], passed)
+                review.validate_observations(self.root, self.binding)
+
+    def test_well_formed_rule_collections_can_record_agreements_and_disagreements(self):
+        for operator in ("contains_rule", "excludes_rule"):
+            for rule_id in ("RULE-A", "RULE-B"):
+                with self.subTest(operator=operator, rule_id=rule_id):
+                    check = self.observations(operator, [{"rule_id": rule_id}])
+                    self.assertNotIn("invalid_rule_collection", check)
+                    self.assertIs(check["passed"], (rule_id == "RULE-A") == (operator == "contains_rule"))
+                    review.validate_observations(self.root, self.binding)
 
 
 if __name__ == "__main__":

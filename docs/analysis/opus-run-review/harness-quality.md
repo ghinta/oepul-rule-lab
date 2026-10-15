@@ -3,7 +3,10 @@
 Stand 15.10.2026. Nach den dokumentierten Korrekturen ist keine wesentliche
 offene Unstimmigkeit an Bindung, Replay oder Strukturprüfung der geprüften
 Werkzeugfassung bekannt. Diese technische Kontrolle schließt keine weitere
-fachliche Einzelprüfung ab; aktuell bleibt ausschließlich o6_1b in Arbeit.
+fachliche Einzelprüfung ab. Die ursprüngliche Werkzeugsichtung fand während
+des o6_1b-Reviews statt; ihre Kontroll- und Batchzahlen beschreiben diesen
+damaligen Stand. Der unten dokumentierte Nachtrag während des rohen o6_3-Reviews
+prüft ausschließlich die zusätzliche Matcher-Absicherung.
 
 Diese Fassung ersetzt die frühere Werkzeugbewertung nach einem von der
 Hauptprüfung gefundenen Namespace-Fehler: Einzelne JSON-Dateien mit `--data`
@@ -80,5 +83,26 @@ Richtigkeit. Temporäre Kontrollen bestätigten unveränderte Erwartungen und
 Quellenbelege sowie die Erhaltung beider überlappender Regelbewertungen.
 
 Die Einzelkontrollen, Ergebnisse und Dateihashes stehen in
-[harness-quality.json](harness-quality.json). Die fachliche Abnahme des o6_1b-Fallpakets gehört zur separaten
-Einzelprüfung und folgt aus diesem Werkzeugbericht nicht.
+[harness-quality.json](harness-quality.json). Die jeweiligen fachlichen
+Einzelprüfungen und Expertenabnahmen folgen aus diesem Werkzeugbericht nicht.
+
+Nachtrag zur Matcher-Absicherung während o6_3, 15.10.2026: Einige verfasste
+Zugangsproben in o6_2 und o6_3 verwendeten Objektregel-Matcher für Stringlisten.
+Die Proben vergleichen nun ausdrücklich die erwarteten Stringlisten; fachliche
+Erwartungen, Eingaben und historische Policies bleiben unverändert. Die beiden
+vollständigen Replays wurden nach der Korrektur unabhängig erneut ausgeführt.
+
+Der hier gesondert geprüfte Werkzeug-Diff ergänzt drei Validatorzeilen: Ein
+neu berechnetes `invalid_rule_collection: true` verhindert jetzt den Abschluss
+als gültige Quellenprobe. Der Vergleich selbst wurde nicht umdefiniert. Das
+zugehörige Doku-Addendum verlangt `rule_id`-Objektarrays und nennt für Stringlisten
+explizite Gleichheit oder zugelassene Bool-Abfragen. Ein leeres Array erlaubt
+keine automatische Ableitung seines Elementtyps.
+
+Die drei neuen technischen Tests wurden unabhängig ausgeführt und bestanden:
+acht unzulässige Kombinationen werden abgewiesen; zwei Leerarray- und vier
+wohlgeformte Varianten bleiben zulässig, einschließlich legitimer nicht erfüllter
+Erwartungen. Diese Kontrolle betrifft den engen Diff und die genannten Tests.
+Frühere numerische, Collector-, Namespace- und sonstige Werkzeugtests werden
+hiermit nicht als erneut ausgeführt ausgegeben; ihre übrigen Dateihashes sind
+unverändert. Eine vollständige Repository-Testsuite ist eine getrennte Prüfung.

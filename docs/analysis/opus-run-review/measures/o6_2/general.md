@@ -61,6 +61,8 @@ Die Antragsdatum-Fehlend-Probe ist ausdrücklich ein `declared_native_positive_e
 
 Die zusätzliche bedingte Betriebsübergabe-Probe wird **nicht** als ausgeführter unbedingter Quellenfall gezählt. Sie setzt den Nachweis voraus, dass der Nachfolger tatsächlich in den bestehenden Vertrag eintritt und sämtliche Pflichten fortführt; dieses Faktum kann der native Vertrag nicht vollständig ausdrücken.
 
-Alle 48 Proben sind zur Ausführung durch den gemeinsamen Runner übergeben. Dieses Teilreview behauptet keinen bestandenen Lauf. Der separat nachgewiesene Zahlenvergleichsfehler der gepinnten OPA-Binärdatei bleibt unabhängig von der normativen Quellenbewertung. Erwartete Grenzwerte werden nicht an falsche Laufzeitergebnisse angepasst. Komponentenproben sind öffentliche Entwicklungsfälle und keine zurückgehaltenen oder fachlich abgenommenen Expertenfälle.
+Alle 48 Proben wurden dem gemeinsamen Runner übergeben; die tatsächlichen Ergebnisse werden im gemeinsamen Replay-Protokoll dokumentiert. Bei der anschließenden Qualitätsprüfung wurde die Vergleichsdarstellung dreier Kombinationskontrollen korrigiert: `access_condition_failures` liefert Stringlisten, während `contains_rule`/`excludes_rule` für Objektkollektionen vorgesehen waren. Die Prüfungen erwarten nun exakt `["O6_2-ACC-UBB-001"]`, `["O6_2-COMB-BIO-001"]` bzw. `[]`. Eingaben, Queries, Quellen und fachliche Sollwerte ändern sich dadurch nicht. Dies ist eine Prüfharness-Korrektur und kein Quellenfehler des Kandidaten; die gemeinsame Sammlung wird erneut gebunden und ausgeführt.
 
-JSON-Bindung bei Übergabe: SHA-256 `bff4da35f8f6d442a00256a61830a1d707ce56faa0a985cb800f502f8f0993d1`.
+Der separat nachgewiesene Zahlenvergleichsfehler der gepinnten OPA-Binärdatei bleibt unabhängig von der normativen Quellenbewertung. Erwartete Grenzwerte werden nicht an falsche Laufzeitergebnisse angepasst. Komponentenproben sind öffentliche Entwicklungsfälle und keine zurückgehaltenen oder fachlich abgenommenen Expertenfälle.
+
+JSON-Bindung nach der Stringlisten-Vergleichskorrektur: SHA-256 `d92454c200c4e1c83be20b333958a95d12c5ea784ab3aa23c0be9bcd5467288e`.

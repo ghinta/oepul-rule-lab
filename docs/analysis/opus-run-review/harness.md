@@ -78,6 +78,13 @@ erhalten. `undefined`, `runtime_error` und `process_timeout` haben keine
 erfundene Ausgabe. Ein definiertes `null` enthält dagegen ausdrücklich
 `output: null`. Ursprüngliche OPA-Fehler bleiben im Ergebnis erhalten.
 
+`contains_rule` und `excludes_rule` erwarten Arrays von Objekten mit einem
+Stringfeld `rule_id`. Für Arrays bloßer Regelkennungen ist `equals` mit dem
+vollständig erwarteten Array oder eine ausdrücklich zugelassene Bool-Abfrage
+zu verwenden. `invalid_rule_collection: true` verhindert den Dossierabschluss;
+eine falsch verfasste Prüfung zählt nicht als Quellenwiderspruch. Ein leeres
+Array erlaubt allein keine automatische Ableitung seines Elementtyps.
+
 Die Ausführung verwendet ausschließlich die im Manifest verzeichneten
 Originaldateien aus `policy/` und `data/`, keine historischen Selbsttests
 oder neu geschriebenen Policy-Ergänzungen. Jede Kopie wird erneut gehasht.

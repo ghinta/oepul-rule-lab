@@ -7,7 +7,7 @@ oder Freigabe einer weiteren Maßnahme.
 
 Alle 157 öffentlichen Entwicklungsfälle mit 167 Komponentenprüfungen wurden
 unabhängig bytegenau reproduziert: 148 definierte Ergebnisse, eines undefiniert,
-acht Laufzeitfehler. 123 Erwartungen treffen zu, 44 nicht. Gezielte, verwandte,
+acht Laufzeitfehler. 125 Erwartungen treffen zu, 42 nicht. Gezielte, verwandte,
 technische und vertragsbezogene Fälle ergeben keine Genauigkeitsquote. Der
 ursprüngliche Verzeichnis-Namensraum und die Zahlenrepräsentationen bleiben
 unverändert; die zusätzliche BIO-Baseline dient nur als technische Regression.
@@ -68,3 +68,12 @@ Domainexpert:innen und erzeugt keine App-Promotion. Befehle, Hashbindungen,
 konkrete Quellenkontrollen und Grenzen stehen in [quality.json](quality.json).
 Historische Artefakte, Quellen, Canonical-Profil, Runtime-Pin und produktive App
 blieben unverändert.
+
+Revision der Vergleichsprüfungen vom 15.10.2026: Drei Zugangsprüfungen lieferten
+Stringlisten, wurden aber mit einem Matcher für Regelobjekte verglichen. Beide
+nichtleeren Fälle und die leere Gegenkontrolle vergleichen jetzt ausdrücklich
+Stringlisten. Dadurch ändern sich die Prüfzähler von 123/44 auf 125/42. Eingaben,
+Queries, fachliche Erwartungen und historische Regeln bleiben unverändert.
+Alle 157 Fälle wurden nach dieser Korrektur erneut unabhängig bytegenau
+reproduziert; die Hashbindungen sind erneuert. Der fachliche Leseumfang bleibt
+der oben dokumentierte.

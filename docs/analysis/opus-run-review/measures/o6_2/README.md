@@ -57,7 +57,7 @@ bereinigten Betrag anderer cap-relevanter Flächenzahlungen.
 [development-probes.json](development-probes.json) enthält 157 öffentliche
 Entwicklungsfälle mit 167 Komponentenprüfungen. 148 Ausgaben sind definiert,
 eine ist undefiniert und acht enden im ursprünglichen Laufzeitfehler.
-123 Prüfungen treffen zu, 44 nicht. Gezielte und verwandte Gegenfälle,
+125 Prüfungen treffen zu, 42 nicht. Gezielte und verwandte Gegenfälle,
 Vertragsdiagnosen und Typstresstests ergeben keine Modellgenauigkeitsquote.
 
 Die eine undefinierte Ausgabe ist der reine Ackerfall ohne Futterfläche.
@@ -92,6 +92,12 @@ Die tatsächliche App-Projektion wurde mit gesperrtem Datenbankzugriff ausgefüh
 Sie erhält zehn von 14 bestehenden nativen Pfaden und keinen der 26 neuen
 Vorschlagspfade. Auch Kulturobjekt und regionale Fallbackpfade gehen verloren;
 ein flaches `raw_label` ersetzt ihre Bedeutung im nativen Code nicht.
+
+Drei Kontrollen der Zugangsvoraussetzungen verwenden vollständige Stringarrays.
+Die Abschlusskontrolle der nächsten Maßnahme fand hier zuvor unpassende
+Objektmatcher; zwei korrekte Ergebnisse waren dadurch fälschlich als nicht
+erfüllt gezählt. Nur die Prüfungsform wurde korrigiert und vollständig erneut
+ausgeführt; Quellenurteile, Eingaben und Regelcode bleiben gleich.
 
 Die getrennte Gegenprüfung steht in [quality.md](quality.md). Historische
 Regeln, Quellen, Profile und die produktive App wurden nicht verändert.
