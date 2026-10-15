@@ -441,6 +441,61 @@ class ClaudeAdapterTests(unittest.TestCase):
                 )
 
 class PrepareTests(unittest.TestCase):
+    def test_source_selection_respects_measure_scope(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            source_root = Path(directory).resolve()
+            names = {
+                "sheet": "o6_24_wrrl_2025_10.pdf",
+                "other_sheet": "o6_16_grundwasser_2026_04.pdf",
+                "general": "o6_allgemeine_teilnahmebedingungen_2026_04.pdf",
+                "srl": "srl.pdf",
+                "scoped": "grundwasserschutzprogramm.pdf",
+                "notice": "2026-08-25__aufzeichnungen.html",
+            }
+            for name in names.values():
+                (source_root / name).write_bytes(b"x")
+
+            def path(key: str) -> str:
+                return str(source_root / names[key])
+
+            manifest = {
+                "documents": [
+                    {"measure_id": "o6_24", "local_path": path("sheet")},
+                    {"measure_id": "o6_16", "local_path": path("other_sheet")},
+                    {"document_id": "o6_general", "local_path": path("general")},
+                ],
+                "legal_basis_documents": [
+                    {"source_type": "legal_basis_pdf", "local_path": path("srl")},
+                    {
+                        "source_type": "legal_basis_pdf",
+                        "applies_to_measures": ["o6_24"],
+                        "local_path": path("scoped"),
+                    },
+                ],
+                "year_specific_notices": [
+                    {
+                        "source_type": "year_specific_notice_html",
+                        "applies_to_measures": ["o6_16"],
+                        "local_path": path("notice"),
+                    }
+                ],
+            }
+            (source_root / "manifest.json").write_text(
+                json.dumps(manifest), encoding="utf-8"
+            )
+
+            for_o6_24 = {p.name for p in cli.source_files(source_root, "o6_24", False)}
+            for_o6_16 = {p.name for p in cli.source_files(source_root, "o6_16", False)}
+
+        self.assertEqual(
+            for_o6_24,
+            {names["sheet"], names["general"], names["srl"], names["scoped"]},
+        )
+        self.assertEqual(
+            for_o6_16,
+            {names["other_sheet"], names["general"], names["srl"], names["notice"]},
+        )
+
     def test_prepare_creates_an_isolated_workspace(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory).resolve()

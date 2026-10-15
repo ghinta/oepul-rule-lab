@@ -1,0 +1,2758 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_21",
+  "rules": [
+    {
+      "id": "O6_21-CONTRACT-01",
+      "rule_type": "contract_period",
+      "statement": "Verpflichtungs- und Vertragszeitraum der Maßnahme (inkl. Zuschlag) ist das Kalenderjahr (1.1.–31.12.); einjährige Maßnahme.",
+      "conditions": [
+        {
+          "expression": "farm.year == Antragsjahr",
+          "description": "Vertragsjahr = Kalenderjahr des Antragsjahres",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "commitment_period",
+        "description": "Verpflichtungszeitraum 1. Jänner bis 31. Dezember",
+        "value": {
+          "from": "01-01",
+          "to": "12-31"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P01-03",
+        "CIT-MB-P01-06",
+        "CIT-ATB-P10-03",
+        "CIT-ATB-P12-01",
+        "CIT-ATB-P12-02",
+        "CIT-SRL-P12-01",
+        "CIT-SRL-P12-02",
+        "CIT-GSP-P17-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.application.commitment_period"
+      ]
+    },
+    {
+      "id": "O6_21-CONTRACT-02",
+      "rule_type": "consequence",
+      "statement": "Wird die Mindestteilnahme (2,00 RGVE) nicht eingehalten bzw. sind Zugangsvoraussetzungen nicht erfüllt, kommt für einjährige Maßnahmen kein gültiger Vertrag zustande bzw. erlischt der Vertrag.",
+      "conditions": [
+        {
+          "expression": "eligible_rgve < 2.0",
+          "description": "Mindestteilnahme nicht erreicht",
+          "input_paths": [
+            "livestock.cattle_animals[].birth_date",
+            "oepul_measures.o6_21.categories[].category_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_lapses",
+        "description": "Vertrag erlischt, keine Prämie",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P01-05",
+        "CIT-SRL-P24-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.eligibility.contract_lapses",
+        "data.oepul.o6_21.main.notices"
+      ]
+    },
+    {
+      "id": "O6_21-APP-01",
+      "rule_type": "deadline",
+      "statement": "Kategorien und optionaler Zuschlag sind vor Vertragsbeginn im Maßnahmenantrag des Mehrfachantrages bis spätestens 31. Dezember des Vorjahres zu beantragen.",
+      "conditions": [
+        {
+          "expression": "applied_on <= 31.12.(first_year-1)",
+          "description": "Beantragung bis 31.12. vor dem ersten Verpflichtungsjahr",
+          "input_paths": [
+            "oepul_measures.o6_21.categories[].applied_on",
+            "oepul_measures.o6_21.categories[].first_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "application_timely",
+        "description": "Verspätete Beantragung begründet keinen Vertrag für das Folgejahr",
+        "value": {
+          "deadline": "12-31 des Vorjahres"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P09-08",
+        "CIT-ATB-P12-05",
+        "CIT-SRL-P21-02",
+        "CIT-GSP-P23-01",
+        "CIT-GSP-P24-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.application.application_timely",
+        "data.oepul.o6_21.main.violations"
+      ]
+    },
+    {
+      "id": "O6_21-APP-10",
+      "rule_type": "deadline",
+      "statement": "Die Frist für den Maßnahmenantrag (31.12.) verschiebt sich nicht auf den nächsten Arbeitstag, wenn sie auf ein Wochenende oder einen Feiertag fällt.",
+      "conditions": [
+        {
+          "expression": "deadline == 31.12. (fix)",
+          "description": "§ 5 Abs. 2 GSP-AV schließt § 33 Abs. 2 Z 1 von der Fristverlängerung aus",
+          "input_paths": [
+            "oepul_measures.o6_21.categories[].applied_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_deadline_shift",
+        "description": "Fristende bleibt der 31. Dezember",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-P10-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.application.application_timely"
+      ]
+    },
+    {
+      "id": "O6_21-APP-02",
+      "rule_type": "calculation_input",
+      "statement": "Die prämienfähigen Rinder werden automatisch aus der Rinderdatenbank kalenderjahrbezogen ermittelt und müssen nicht gesondert beantragt werden.",
+      "conditions": [
+        {
+          "expression": "Rind in Rinderdatenbank registriert",
+          "description": "Ermittlung aus RDB",
+          "input_paths": [
+            "livestock.cattle_animals[].registered_in_cattle_database"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "automatic_determination",
+        "description": "Keine Einzeltierbeantragung erforderlich",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P09-11",
+        "CIT-SRL-P10-02",
+        "CIT-ATB-P10-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animals.determined",
+        "data.oepul.o6_21.animals.eligible_animal_rgve"
+      ]
+    },
+    {
+      "id": "O6_21-APP-03",
+      "rule_type": "deadline",
+      "statement": "Letzter Einstieg in Kategorien der Maßnahme ist mit Förderjahr 2027 möglich (Beantragung bis 31.12.2026).",
+      "conditions": [
+        {
+          "expression": "first_year <= 2027",
+          "description": "Vertragsbeginn spätestens 1.1.2027",
+          "input_paths": [
+            "oepul_measures.o6_21.categories[].first_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "last_entry",
+        "description": "Kategorie-Einstieg ab 2028 nicht möglich",
+        "value": {
+          "last_contract_start_year": 2027,
+          "last_application_date": "2026-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P09-09",
+        "CIT-ATB-P12-03",
+        "CIT-SRL-P12-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.application.within_last_entry_categories",
+        "data.oepul.o6_21.main.violations"
+      ]
+    },
+    {
+      "id": "O6_21-APP-04",
+      "rule_type": "deadline",
+      "statement": "Letzter Einstieg in den optionalen Zuschlag Festmistkompostierung ist mit Förderjahr 2028 möglich (Beantragung bis 31.12.2027); der Zuschlag erfordert einen Maßnahmenantrag.",
+      "conditions": [
+        {
+          "expression": "supplement.first_year <= 2028",
+          "description": "Zuschlag-Beginn spätestens 2028",
+          "input_paths": [
+            "oepul_measures.o6_21.composting_supplement.first_year",
+            "oepul_measures.o6_21.composting_supplement.applied_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "last_entry_supplement",
+        "description": "Zuschlag-Einstieg ab 2029 nicht möglich",
+        "value": {
+          "last_contract_start_year": 2028,
+          "last_application_date": "2027-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P09-10",
+        "CIT-ATB-P12-04",
+        "CIT-SRL-P21-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.application.within_last_entry_supplement",
+        "data.oepul.o6_21.application.supplement_valid"
+      ]
+    },
+    {
+      "id": "O6_21-APP-05",
+      "rule_type": "obligation",
+      "statement": "Beim Ersetzen einer Kategorie ist die neue Kategorie bis 31.12. zu beantragen; die ersetzte Kategorie muss nach dem 31.12. abgemeldet werden, sonst sind alle gültigen Kategorien weiter einzuhalten.",
+      "conditions": [
+        {
+          "expression": "replaced_by_category_id != null and category not exited",
+          "description": "Ersetzte Kategorie nicht abgemeldet",
+          "input_paths": [
+            "oepul_measures.o6_21.categories[].replaced_by_category_id",
+            "oepul_measures.o6_21.exits[].declared_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "replaced_category_still_binding",
+        "description": "Ersetzte Kategorie bleibt verpflichtend",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P09-12",
+        "CIT-MB-P10-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.application.replaced_categories_still_binding",
+        "data.oepul.o6_21.main.notices"
+      ]
+    },
+    {
+      "id": "O6_21-APP-06",
+      "rule_type": "consequence",
+      "statement": "Wird in einem Förderjahr in einer Kategorie nicht mit mindestens einem prämienfähigen Tier teilgenommen, erlischt der Vertrag für diese Kategorie automatisch; für eine erneute Teilnahme ist ein neuer fristgerechter Maßnahmenantrag erforderlich.",
+      "conditions": [
+        {
+          "expression": "count(premium_eligible animals in category) == 0",
+          "description": "Kein prämienfähiges Tier in der Kategorie",
+          "input_paths": [
+            "livestock.cattle_animals[].ear_tag",
+            "oepul_measures.o6_21.categories[].category_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "category_lapses",
+        "description": "Kategorievertrag erlischt nach dem Förderjahr",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P10-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animals.categories_lapsing",
+        "data.oepul.o6_21.application.not_lapsed",
+        "data.oepul.o6_21.main.notices"
+      ]
+    },
+    {
+      "id": "O6_21-APP-07",
+      "rule_type": "exception",
+      "statement": "Nach Erlöschen einer Kategorie kann bei abgelaufener Antragsfrist eine Korrektur zum vorhergehenden Maßnahmenantrag samt gesondertem schriftlichem Ersuchen an die AMA eingebracht werden; wirksam erst bei Anerkennung durch die AMA.",
+      "conditions": [
+        {
+          "expression": "late_reentry_correction_submitted and late_reentry_written_request_submitted and late_reentry_accepted",
+          "description": "Korrektur, Ersuchen und Anerkennung liegen vor",
+          "input_paths": [
+            "oepul_measures.o6_21.categories[].late_reentry_correction_submitted",
+            "oepul_measures.o6_21.categories[].late_reentry_written_request_submitted",
+            "oepul_measures.o6_21.categories[].late_reentry_accepted"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "late_reentry_valid",
+        "description": "Kategorie gilt als fristgerecht beantragt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P10-03",
+        "CIT-MB-P10-04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.application.application_timely"
+      ]
+    },
+    {
+      "id": "O6_21-APP-08",
+      "rule_type": "renewal",
+      "statement": "Maßnahme und optionaler Zuschlag verlängern sich automatisch um ein weiteres Förderjahr, wenn sie nicht abgemeldet werden; Weiterführung durch Abgabe des Mehrfachantrags.",
+      "conditions": [
+        {
+          "expression": "no effective exit and not lapsed",
+          "description": "Keine Abmeldung, kein Erlöschen",
+          "input_paths": [
+            "oepul_measures.o6_21.exits[].declared_on",
+            "oepul_measures.o6_21.categories[].lapsed_after_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "auto_renewal",
+        "description": "Kategorie gilt im Folgejahr weiter",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P01-04",
+        "CIT-ATB-P13-01",
+        "CIT-SRL-P21-04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.application.category_valid",
+        "data.oepul.o6_21.application.valid_categories"
+      ]
+    },
+    {
+      "id": "O6_21-APP-09",
+      "rule_type": "procedure",
+      "statement": "Unmögliche Maßnahmenkombinationen können bis zum Erhalt der Auszahlungsmitteilung korrigiert werden, sofern keine Beanstandung vorliegt; bis zur Abmeldung sind alle Verpflichtungen einzuhalten.",
+      "conditions": [
+        {
+          "expression": "participating",
+          "description": "Teilnahme an der Maßnahme",
+          "input_paths": [
+            "oepul_measures.o6_21.categories[].category_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Korrekturmöglichkeit",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-ATB-P13-06"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.main.general_obligations"
+      ]
+    },
+    {
+      "id": "O6_21-EXIT-01",
+      "rule_type": "option",
+      "statement": "Nach Erfüllung des einjährigen Vertragszeitraums ist ein gänzlicher Ausstieg oder ein Ausstieg aus einzelnen Kategorien bzw. dem Zuschlag möglich; er ist online im aktuellen Mehrfachantrag bekanntzugeben.",
+      "conditions": [
+        {
+          "expression": "exit.scope in {measure, category, supplement}",
+          "description": "Ausstiegsumfang",
+          "input_paths": [
+            "oepul_measures.o6_21.exits[].scope",
+            "oepul_measures.o6_21.exits[].category_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exit_allowed",
+        "description": "Ausstieg wirkt für den betroffenen Umfang",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P10-05",
+        "CIT-MB-P10-06",
+        "CIT-MB-P10-07"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.application.exited_scope_for"
+      ]
+    },
+    {
+      "id": "O6_21-EXIT-02",
+      "rule_type": "consequence",
+      "statement": "Wird die Abmeldung im Zeitraum 1.1.–31.12. durchgeführt, ist die Maßnahme im betroffenen Förderjahr nicht mehr gültig; wer die Auflagen bis 31.12. erfüllt, darf erst ab 1.1. des Folgejahres abmelden.",
+      "conditions": [
+        {
+          "expression": "year(exit.declared_on) == farm.year",
+          "description": "Abmeldung im laufenden Jahr",
+          "input_paths": [
+            "oepul_measures.o6_21.exits[].declared_on",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "year_invalid",
+        "description": "Keine Prämie im Abmeldejahr",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P11-01",
+        "CIT-MB-P11-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.application.exits_invalidating_current_year",
+        "data.oepul.o6_21.main.notices"
+      ]
+    },
+    {
+      "id": "O6_21-EXIT-03",
+      "rule_type": "obligation",
+      "statement": "Bis zum Ausstieg sind die Förderverpflichtungen einzuhalten.",
+      "conditions": [
+        {
+          "expression": "participating",
+          "description": "Teilnahme",
+          "input_paths": [
+            "oepul_measures.o6_21.categories[].category_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Verpflichtungen bis Ausstieg",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-ATB-P13-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.main.general_obligations"
+      ]
+    },
+    {
+      "id": "O6_21-EXIT-04",
+      "rule_type": "restriction",
+      "statement": "Ein Maßnahmenausstieg ist nur bis zur Durchführung oder Ankündigung einer Vor-Ort-Kontrolle bzw. bis zur Mitteilung des Ergebnisses einer Verwaltungskontrolle möglich.",
+      "conditions": [
+        {
+          "expression": "exit.declared_on < control_announced_on",
+          "description": "Ausstieg vor Kontrollankündigung",
+          "input_paths": [
+            "oepul_measures.o6_21.exits[].declared_on",
+            "oepul_measures.o6_21.control_announced_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exit_ineffective",
+        "description": "Späterer Ausstieg unwirksam",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-ATB-P13-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.application.exit_effective",
+        "data.oepul.o6_21.main.notices"
+      ]
+    },
+    {
+      "id": "O6_21-EXIT-05",
+      "rule_type": "condition",
+      "statement": "Nach Ausstieg, Ausschluss oder einjähriger Nichtabgabe des Mehrfachantrags ist ein Wiedereinstieg nur mit neuerlichem Maßnahmenantrag möglich.",
+      "conditions": [
+        {
+          "expression": "new category entry applied after exit",
+          "description": "Neuer Maßnahmenantrag nach Ausstieg",
+          "input_paths": [
+            "oepul_measures.o6_21.categories[].applied_on",
+            "oepul_measures.o6_21.exits[].declared_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reentry_requires_new_application",
+        "description": "Alte Beantragung lebt nicht wieder auf",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-ATB-P13-04",
+        "CIT-SRL-P22-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.application.exited_scope_for"
+      ]
+    },
+    {
+      "id": "O6_21-TAKE-01",
+      "rule_type": "restriction",
+      "statement": "Eine Maßnahmenübernahme ist bei Tierwohl – Stallhaltung Rinder (inkl. Zuschlag) nur in Einzelfällen bei Betriebsauflösung, -teilung oder -zusammenlegung möglich; Tiere und Flächen müssen vom selben Vorbetrieb stammen.",
+      "conditions": [
+        {
+          "expression": "takeover.reason in {farm_dissolution, farm_division, farm_merger} and same_previous_holding",
+          "description": "Zulässiger Übernahmegrund",
+          "input_paths": [
+            "oepul_measures.o6_21.takeover.is_takeover",
+            "oepul_measures.o6_21.takeover.reason",
+            "oepul_measures.o6_21.takeover.animals_and_areas_from_same_previous_holding"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "takeover_allowed",
+        "description": "Sonst keine Übernahme",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-ATB-P15-01",
+        "CIT-ATB-P15-02",
+        "CIT-ATB-P15-03",
+        "CIT-SRL-P14-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.application.takeover_allowed",
+        "data.oepul.o6_21.application.takeover_violation",
+        "data.oepul.o6_21.main.violations"
+      ]
+    },
+    {
+      "id": "O6_21-APPL-01",
+      "rule_type": "eligibility",
+      "statement": "Förderwerbend sind natürliche Personen, eingetragene Personengesellschaften, juristische Personen und Personenvereinigungen; bei juristischen Personen/Personenvereinigungen darf die Beteiligung von Gebietskörperschaften 25 % nicht übersteigen.",
+      "conditions": [
+        {
+          "expression": "person_type in applicant_types and public_body_share_percent <= 25",
+          "description": "Zulässige Rechtsform",
+          "input_paths": [
+            "farm.applicant.person_type",
+            "farm.applicant.public_body_share_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "applicant_eligible",
+        "description": "Sonst keine Förderung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-ATB-P04-02",
+        "CIT-SRL-P08-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.administration.applicant_issue",
+        "data.oepul.o6_21.administration.applicant_issues",
+        "data.oepul.o6_21.main.violations"
+      ]
+    },
+    {
+      "id": "O6_21-APPL-02",
+      "rule_type": "exclusion",
+      "statement": "Gebietskörperschaften und deren Einrichtungen sind ausgeschlossen; die Ausnahmen (Zwischenfrucht, Immergrün, Tierwohl – Weide, Erosionsschutz WOH bis 2024, Nichtproduktive Ackerflächen ab 2025) umfassen Tierwohl – Stallhaltung Rinder nicht.",
+      "conditions": [
+        {
+          "expression": "is_public_body",
+          "description": "Gebietskörperschaft",
+          "input_paths": [
+            "farm.applicant.is_public_body"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "excluded",
+        "description": "Keine Teilnahme",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-ATB-P05-01",
+        "CIT-SRL-P08-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.administration.public_body_exception_for_measure",
+        "data.oepul.o6_21.administration.applicant_issue"
+      ]
+    },
+    {
+      "id": "O6_21-APPL-03",
+      "rule_type": "eligibility",
+      "statement": "Es muss ein landwirtschaftlicher Betrieb im eigenen Namen und auf eigene Rechnung bewirtschaftet werden; aktiver Landwirt und landwirtschaftliche Tätigkeit sind erforderlich.",
+      "conditions": [
+        {
+          "expression": "is_active_farmer and manages_farm_in_own_name_and_account",
+          "description": "Aktiver Landwirt, eigene Rechnung",
+          "input_paths": [
+            "farm.applicant.is_active_farmer",
+            "farm.applicant.manages_farm_in_own_name_and_account"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "applicant_eligible",
+        "description": "Sonst keine Förderung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-ATB-P04-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.administration.applicant_issue"
+      ]
+    },
+    {
+      "id": "O6_21-ELIG-01",
+      "rule_type": "access_condition",
+      "statement": "Teilnahme mit mindestens 2,00 RGVE je Betrieb im Jahresdurchschnitt, summiert über alle beantragten Kategorien (nicht je Kategorie, nicht täglich).",
+      "conditions": [
+        {
+          "expression": "eligible_rgve >= 2.0",
+          "description": "Summe der prämienfähigen RGVE aller Kategorien",
+          "input_paths": [
+            "livestock.cattle_animals[].birth_date",
+            "livestock.cattle_animals[].on_farm_from",
+            "livestock.cattle_animals[].on_farm_until"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "min_participation_met",
+        "description": "Unterschreitung: kein Vertrag/keine Prämie",
+        "value": {
+          "min_rgve": 2.0
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P02-01",
+        "CIT-MB-P02-02",
+        "CIT-SRL-P86-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.eligibility.min_participation_met",
+        "data.oepul.o6_21.main.violations"
+      ]
+    },
+    {
+      "id": "O6_21-ELIG-02",
+      "rule_type": "eligibility",
+      "statement": "Geförderte Tiere müssen in Österreich gehalten werden.",
+      "conditions": [
+        {
+          "expression": "kept_in_austria",
+          "description": "Haltung in Österreich",
+          "input_paths": [
+            "livestock.cattle_animals[].kept_in_austria"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_eligible",
+        "description": "Sonst nicht förderfähig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-ATB-P09-01",
+        "CIT-SRL-P09-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animals.kept_in_austria"
+      ]
+    },
+    {
+      "id": "O6_21-ELIG-03",
+      "rule_type": "eligibility",
+      "statement": "Teilnahmefähig sind Rinder gemäß RGVE-Schlüssel in den beantragten Kategorien.",
+      "conditions": [
+        {
+          "expression": "animal.sex matches category and age band overlaps year",
+          "description": "Tier fällt in beantragte Kategorie",
+          "input_paths": [
+            "livestock.cattle_animals[].sex",
+            "livestock.cattle_animals[].birth_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "participating",
+        "description": "Tier nimmt teil",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P02-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animals.participating_categories"
+      ]
+    },
+    {
+      "id": "O6_21-ELIG-04",
+      "rule_type": "exclusion",
+      "statement": "Betriebe mit Milchanlieferung an Molkereien (auch saisonal auf der Alm) sind von der Kategorie weibliche Rinder ab ½ bis unter 2 Jahre ausgeschlossen; direkt verarbeitende/vermarktende Betriebe ohne Anlieferung nicht.",
+      "conditions": [
+        {
+          "expression": "milk_delivery_to_dairy or seasonal_alpine_milk_delivery",
+          "description": "Milchanlieferung",
+          "input_paths": [
+            "farm.dairy.milk_delivery_to_dairy",
+            "farm.dairy.seasonal_alpine_milk_delivery"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "category_excluded",
+        "description": "Kategorie female_half_to_2_years nicht prämienfähig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P02-04",
+        "CIT-MB-P02-05",
+        "CIT-SRL-P86-05"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animals.milk_delivery_excluded",
+        "data.oepul.o6_21.animals.milk_delivery",
+        "data.oepul.o6_21.eligibility.milk_delivery_conflict",
+        "data.oepul.o6_21.main.violations"
+      ]
+    },
+    {
+      "id": "O6_21-ELIG-05",
+      "rule_type": "access_condition",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr muss der Betrieb mindestens 1,50 ha landwirtschaftliche Fläche (oder 0,50 ha geschützten Anbau) bewirtschaften; ab dem zweiten Teilnahmejahr entfällt dies.",
+      "conditions": [
+        {
+          "expression": "farm.year == oepul_first_participation_year => total_area_ha >= 1.5 or protected >= 0.5",
+          "description": "Betriebsmindestgröße",
+          "input_paths": [
+            "farm.oepul_first_participation_year",
+            "land.total_area_ha",
+            "land.protected_cultivation_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "farm_min_size_met",
+        "description": "Sonst kein Vertrag",
+        "value": {
+          "min_ha": 1.5,
+          "min_protected_ha": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "CIT-ATB-P05-02",
+        "CIT-ATB-P05-03",
+        "CIT-ATB-P05-04",
+        "CIT-SRL-P10-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.eligibility.farm_min_size_met",
+        "data.oepul.o6_21.main.violations"
+      ]
+    },
+    {
+      "id": "O6_21-CAT-01",
+      "rule_type": "definition",
+      "statement": "Geschlossene Liste der Tierkategorien: männliche Rinder < ½ Jahr, männliche Rinder ≥ ½ Jahr, weibliche Rinder < ½ Jahr, weibliche Rinder ≥ ½ bis < 2 Jahre; optionaler Zuschlag Festmistkompostierung.",
+      "conditions": [
+        {
+          "expression": "category_id in animal_categories",
+          "description": "Kategorie aus Tabelle",
+          "input_paths": [
+            "oepul_measures.o6_21.categories[].category_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "category_defined",
+        "description": "Andere Kategorien nicht möglich",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P02-06",
+        "CIT-MB-P02-07",
+        "CIT-MB-P02-08",
+        "CIT-SRL-P86-02",
+        "CIT-MB-P01-01",
+        "CIT-MB-P01-02",
+        "CIT-GSP-ANL1-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.lib.category_def",
+        "data.oepul.o6_21.application.valid_categories"
+      ]
+    },
+    {
+      "id": "O6_21-TGD-01",
+      "rule_type": "obligation",
+      "statement": "Werden über 10,00 RGVE förderbare Rinder gehalten, ist die Teilnahme an einem anerkannten Tiergesundheitsdienst für Rinder vom 1.1. bis 31.12. erforderlich (2023: ab 15.4. ausreichend).",
+      "conditions": [
+        {
+          "expression": "gross_category_rgve > 10 => TGD covers year",
+          "description": "TGD-Teilnahme ganzjährig",
+          "input_paths": [
+            "farm.programmes.animal_health_service_cattle.participating",
+            "farm.programmes.animal_health_service_cattle.from",
+            "farm.programmes.animal_health_service_cattle.until"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animal_health_service_ok",
+        "description": "Sonst Zugangsvoraussetzung nicht erfüllt",
+        "value": {
+          "threshold_rgve_exclusive": 10.0
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P03-03",
+        "CIT-MB-P03-04",
+        "CIT-SRL-P86-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.eligibility.animal_health_service_required",
+        "data.oepul.o6_21.eligibility.animal_health_service_ok",
+        "data.oepul.o6_21.eligibility.programme_covers_year",
+        "data.oepul.o6_21.main.violations"
+      ]
+    },
+    {
+      "id": "O6_21-TGD-02",
+      "rule_type": "documentation",
+      "statement": "Nachweis der TGD-Teilnahme ist nach Aufforderung an die AMA zu übermitteln, sofern nicht der TGD selbst übermittelt.",
+      "conditions": [
+        {
+          "expression": "animal_health_service_required",
+          "description": "TGD-Pflicht",
+          "input_paths": [
+            "farm.programmes.animal_health_service_cattle.participating"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Nachweis auf Aufforderung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P03-05",
+        "CIT-SRL-P26-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.main.obligations"
+      ]
+    },
+    {
+      "id": "O6_21-QPL-01",
+      "rule_type": "obligation",
+      "statement": "Bei Beantragung weiblicher Kategorien ist die Teilnahme am Qualitätsprogramm Qplus Rind (oder vergleichbarem Programm – derzeit keines) vom 1.1. bis 31.12. erforderlich (2023: gültiger Vertrag bis 15.4.).",
+      "conditions": [
+        {
+          "expression": "female category valid => programme == 'Qplus Rind' covering year",
+          "description": "Qplus-Teilnahme",
+          "input_paths": [
+            "farm.programmes.quality_programme_female_cattle.programme",
+            "farm.programmes.quality_programme_female_cattle.from",
+            "farm.programmes.quality_programme_female_cattle.until"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "quality_programme_ok",
+        "description": "Sonst Zugangsvoraussetzung nicht erfüllt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P03-06",
+        "CIT-MB-P03-07",
+        "CIT-MB-P03-08",
+        "CIT-SRL-P86-04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.eligibility.quality_programme_ok",
+        "data.oepul.o6_21.eligibility.female_category_applied",
+        "data.oepul.o6_21.main.violations"
+      ]
+    },
+    {
+      "id": "O6_21-QPL-02",
+      "rule_type": "documentation",
+      "statement": "Nachweis der Qplus-Teilnahme ist nach Aufforderung an die AMA zu übermitteln, sofern nicht die Abwicklungs- oder Zahlstelle übermittelt.",
+      "conditions": [
+        {
+          "expression": "female_category_applied",
+          "description": "Weibliche Kategorie",
+          "input_paths": [
+            "oepul_measures.o6_21.categories[].category_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Nachweis auf Aufforderung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P03-05",
+        "CIT-SRL-P26-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.main.obligations"
+      ]
+    },
+    {
+      "id": "O6_21-DEF-01",
+      "rule_type": "definition",
+      "statement": "Stall: befestigtes Gebäude mit mindestens dreiseitiger Verschalung oder Windfangnetzen, überdachten Liegeplätzen und befestigtem Boden (Schotter/Lehm nicht); flüssiger Kot und Harn müssen in einem Behälter gesammelt werden können.",
+      "conditions": [
+        {
+          "expression": "fixed_building and enclosed_sides>=3 and roofed and floor paved and liquids collectable",
+          "description": "Stalldefinition",
+          "input_paths": [
+            "livestock.stall_compartments[].building.is_fixed_building",
+            "livestock.stall_compartments[].building.enclosed_sides_count",
+            "livestock.stall_compartments[].building.lying_area_roofed",
+            "livestock.stall_compartments[].building.floor_material",
+            "livestock.stall_compartments[].building.liquid_excreta_collectable"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "stall_definition_met",
+        "description": "Sonst Stallabteil nicht konform",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P02-09",
+        "CIT-MB-P02-10"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.housing.standard_stall_ok",
+        "data.oepul.o6_21.housing.liquid_collection_ok",
+        "data.oepul.o6_21.housing.building_ok"
+      ]
+    },
+    {
+      "id": "O6_21-DEF-02",
+      "rule_type": "definition",
+      "statement": "Offenstallhaltungssysteme: festes Dach über Liegeflächen, flüssigkeitsdicht befestigte Stallflächen, Abfluss der Sickerwässer in eine Sammelgrube.",
+      "conditions": [
+        {
+          "expression": "open_stall and solid_roof and liquid_tight and seepage_drain",
+          "description": "Offenstall",
+          "input_paths": [
+            "livestock.stall_compartments[].building.is_open_stall_system",
+            "livestock.stall_compartments[].building.solid_roof_over_lying_area",
+            "livestock.stall_compartments[].building.surfaces_liquid_tight",
+            "livestock.stall_compartments[].building.seepage_drain_to_collection_pit"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "stall_definition_met",
+        "description": "Anerkennung als Stall",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P02-11",
+        "CIT-MB-P02-12"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.housing.open_stall_ok",
+        "data.oepul.o6_21.housing.building_ok"
+      ]
+    },
+    {
+      "id": "O6_21-SPACE-01",
+      "rule_type": "threshold",
+      "statement": "Mindestnutzbare Gesamtfläche je Tier im Stallabteil (inkl. dauernd zugänglicher Auslaufflächen) laut Gewichtsklassentabelle (bis 150 kg 1,80 m² … ab 500 kg 4,20 m²); der Stall muss Platz für alle Tiere bieten, auch für Tiere auf der Weide.",
+      "conditions": [
+        {
+          "expression": "usable_paved_area_m2 >= sum(total_area_per_animal)",
+          "description": "Platzbedarf",
+          "input_paths": [
+            "livestock.stall_compartments[].usable_paved_area_m2",
+            "livestock.cattle_animals[].current_weight_kg",
+            "livestock.cattle_animals[].stall_compartment_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "usable_area_ok",
+        "description": "Sonst Abteil nicht konform",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P04-10",
+        "CIT-MB-P04-11",
+        "CIT-MB-P04-12",
+        "CIT-MB-P04-13",
+        "CIT-MB-P02-13",
+        "CIT-SRL-P86-08",
+        "CIT-SRL-P86-09",
+        "CIT-SRL-P87-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.housing.required_total_area",
+        "data.oepul.o6_21.housing.total_area_ok",
+        "data.oepul.o6_21.housing.animal_total_area_requirement",
+        "data.oepul.o6_21.lib.space_row_for_weight"
+      ]
+    },
+    {
+      "id": "O6_21-SPACE-02",
+      "rule_type": "definition",
+      "statement": "Zur nutzbaren Gesamtfläche zählen alle befestigten (betonierten oder perforierten) Flächen inkl. befestigtem Auslauf mit ständigem Zugang; Absperren von Teilflächen nur für Routinearbeiten zulässig.",
+      "conditions": [
+        {
+          "expression": "not partial_areas_closed_except_routine_work and not usable_area_includes_unpaved_or_inaccessible",
+          "description": "Nutzbare Fläche",
+          "input_paths": [
+            "livestock.stall_compartments[].partial_areas_closed_except_routine_work",
+            "livestock.stall_compartments[].usable_area_includes_unpaved_or_inaccessible"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "usable_area_definition",
+        "description": "Verstoß bei Absperrung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P03-01",
+        "CIT-MB-P03-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.housing.compartment_check_failed"
+      ]
+    },
+    {
+      "id": "O6_21-SPACE-03",
+      "rule_type": "threshold",
+      "statement": "Bei gemeinsamer Haltung förderfähiger und nicht förderfähiger Rinder gelten die Platzbedarfe für alle Tiere der Box; Kühe benötigen 2,4 m² Liegefläche und 6,00 m² Gesamtfläche je Tier.",
+      "conditions": [
+        {
+          "expression": "is_cow => 6.0 m² total, 2.4 m² lying",
+          "description": "Kühe in der Gruppe",
+          "input_paths": [
+            "livestock.cattle_animals[].is_cow"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "mixed_group_requirement",
+        "description": "Berechnung mit allen Tieren",
+        "value": {
+          "cow_total_m2": 6.0,
+          "cow_lying_m2": 2.4
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P05-01",
+        "CIT-MB-P05-02",
+        "CIT-MB-P05-03",
+        "CIT-MB-P05-04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.housing.animal_total_area_requirement",
+        "data.oepul.o6_21.housing.animal_lying_area_requirement",
+        "data.oepul.o6_21.housing.table_lying_area"
+      ]
+    },
+    {
+      "id": "O6_21-SPACE-04",
+      "rule_type": "exception",
+      "statement": "Mutterkuhbetriebe mit Liegeboxenlaufstall: Gesamtfläche gilt bei Einhaltung des Tierschutzgesetzes als erfüllt; Liegefläche gilt als erfüllt, wenn jedes Tier über 6 Monate eine gesetzeskonforme Liegebox und alle Kälber einen zusätzlichen Liegeplatz haben; im Kälberschlupf mind. 40 % eingestreut.",
+      "conditions": [
+        {
+          "expression": "suckler_cubicle_housing.applies",
+          "description": "Liegeboxenlaufstall Mutterkuh",
+          "input_paths": [
+            "livestock.stall_compartments[].suckler_cubicle_housing.applies",
+            "livestock.stall_compartments[].suckler_cubicle_housing.meets_animal_welfare_act_space",
+            "livestock.stall_compartments[].suckler_cubicle_housing.each_animal_over_6_months_has_legal_cubicle",
+            "livestock.stall_compartments[].suckler_cubicle_housing.calves_have_additional_free_lying_place",
+            "livestock.stall_compartments[].suckler_cubicle_housing.calf_creep_bedded_area_m2"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "suckler_exception",
+        "description": "Abweichende Erfüllung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P05-05",
+        "CIT-MB-P05-06",
+        "CIT-MB-P05-07"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.housing.suckler_cubicle",
+        "data.oepul.o6_21.housing.total_area_ok",
+        "data.oepul.o6_21.housing.bedded_area_ok",
+        "data.oepul.o6_21.housing.calf_creep_required_total_area"
+      ]
+    },
+    {
+      "id": "O6_21-LIE-01",
+      "rule_type": "threshold",
+      "statement": "Den in Gruppen gehaltenen Tieren muss eine geschlossene (planbefestigte) Liegefläche zur Verfügung stehen; Perforationsanteil max. 5 %.",
+      "conditions": [
+        {
+          "expression": "lying_area_perforation_percent <= 5",
+          "description": "Planbefestigt",
+          "input_paths": [
+            "livestock.stall_compartments[].lying_area_perforation_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "closed_lying_area",
+        "description": "Sonst nicht konform",
+        "value": {
+          "max_perforation_percent": 5
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P04-02",
+        "CIT-MB-P04-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.housing.closed_lying_area_ok"
+      ]
+    },
+    {
+      "id": "O6_21-LIE-02",
+      "rule_type": "threshold",
+      "statement": "Die eingestreute Liegefläche muss mindestens 40 % der geforderten nutzbaren Gesamtfläche betragen.",
+      "conditions": [
+        {
+          "expression": "bedded_lying_area_m2 >= 0.4 * required_total_area",
+          "description": "40 %-Regel",
+          "input_paths": [
+            "livestock.stall_compartments[].bedded_lying_area_m2"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "bedded_area_ok",
+        "description": "Sonst nicht konform",
+        "value": {
+          "min_share": 0.4
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P04-04",
+        "CIT-MB-P04-13"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.housing.required_bedded_area",
+        "data.oepul.o6_21.housing.bedded_area_ok"
+      ]
+    },
+    {
+      "id": "O6_21-LIE-03",
+      "rule_type": "obligation",
+      "statement": "Liegefläche aus weichem Kunststoff/Gummi (mit dem Daumen eindrückbar): Einstreu zur Sicherstellung der Trockenheit; weiche und trockene Liegefläche gemäß 1. THVO.",
+      "conditions": [
+        {
+          "expression": "material == soft_rubber_or_plastic => bedded and soft_and_dry",
+          "description": "Weiche Matte",
+          "input_paths": [
+            "livestock.stall_compartments[].lying_surface_material",
+            "livestock.stall_compartments[].bedding_soft_and_dry"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "bedding_ok",
+        "description": "Sonst nicht konform",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P04-05"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.housing.bedding_ok"
+      ]
+    },
+    {
+      "id": "O6_21-LIE-04",
+      "rule_type": "threshold",
+      "statement": "Liegefläche aus hartem Gummi oder befestigter Fläche: mindestens 3 cm dicke Einstreudecke, Trockenheit durch ständiges Nachstreuen.",
+      "conditions": [
+        {
+          "expression": "material in {hard_rubber, paved} => bedding_depth_cm >= 3",
+          "description": "Einstreudecke",
+          "input_paths": [
+            "livestock.stall_compartments[].lying_surface_material",
+            "livestock.stall_compartments[].bedding_depth_cm"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "bedding_ok",
+        "description": "Sonst nicht konform",
+        "value": {
+          "min_cm": 3
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P04-06"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.housing.bedding_ok"
+      ]
+    },
+    {
+      "id": "O6_21-LIE-05",
+      "rule_type": "option",
+      "statement": "Einstreuart frei wählbar (saugfähige, weiche Materialien wie Stroh, Strohpellets, Heu, Sägespäne, Maisspindel, Elefantengras, Stein-/Sägemehl); keine Aufwandmenge je GVE vorgegeben, aber jedenfalls weiche und trockene Liegefläche.",
+      "conditions": [
+        {
+          "expression": "participating",
+          "description": "Teilnahme",
+          "input_paths": [
+            "livestock.stall_compartments[].bedding_soft_and_dry"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Freie Materialwahl",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P04-07",
+        "CIT-MB-P04-08",
+        "CIT-MB-P04-09"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.main.general_obligations"
+      ]
+    },
+    {
+      "id": "O6_21-GROUP-01",
+      "rule_type": "obligation",
+      "statement": "Die Haltung im Stall hat für jede teilnehmende Kategorie in Gruppen und auf eingestreuten Systemen zu erfolgen; grundsätzlich mit allen Tieren der Kategorie.",
+      "conditions": [
+        {
+          "expression": "group_housing and bedded_system",
+          "description": "Gruppenhaltung eingestreut",
+          "input_paths": [
+            "livestock.stall_compartments[].group_housing",
+            "livestock.stall_compartments[].bedded_system"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "group_housing_ok",
+        "description": "Sonst Abmeldepflicht",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P03-09",
+        "CIT-MB-P03-10",
+        "CIT-SRL-P86-07"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.housing.compartment_check_failed",
+        "data.oepul.o6_21.animals.animal_issue"
+      ]
+    },
+    {
+      "id": "O6_21-GROUP-02",
+      "rule_type": "exception",
+      "statement": "Einzelhaltung nur für erkrankte/verletzte Tiere bei Notwendigkeit, max. 10 Tage, auf eingestreutem System, ohne Meldung; > 10 Tage Abmeldung; Krankheit und Dauer sind am Betrieb zu dokumentieren (z. B. Tierarztrechnungen).",
+      "conditions": [
+        {
+          "expression": "reason in {illness, injury} and days <= 10 and bedded",
+          "description": "Zulässige Einzelhaltung",
+          "input_paths": [
+            "livestock.cattle_animals[].individual_housing_periods[].reason",
+            "livestock.cattle_animals[].individual_housing_periods[].start",
+            "livestock.cattle_animals[].individual_housing_periods[].end",
+            "livestock.cattle_animals[].individual_housing_periods[].bedded",
+            "livestock.cattle_animals[].individual_housing_periods[].documented"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "individual_housing_ok",
+        "description": "> 10 Tage: Abmeldepflicht; undokumentiert: Verstoß",
+        "value": {
+          "max_days": 10
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P06-03",
+        "CIT-MB-P06-04",
+        "CIT-MB-P06-05",
+        "CIT-MB-P06-06",
+        "CIT-MB-P06-07"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animals.animal_issue",
+        "data.oepul.o6_21.animals.documentation_issue",
+        "data.oepul.o6_21.animals.individual_period_days",
+        "data.oepul.o6_21.main.violations",
+        "data.oepul.o6_21.main.obligations"
+      ]
+    },
+    {
+      "id": "O6_21-GROUP-03",
+      "rule_type": "exception",
+      "statement": "Kälber unter 21 Tagen dürfen einzeln auf eingestreutem System gemäß 1. THVO mit ausreichendem Sozialkontakt zu anderen Kälbern gehalten werden.",
+      "conditions": [
+        {
+          "expression": "reason == calf_under_21_days and age < 21 and bedded and social_contact",
+          "description": "Kälbereinzelhaltung",
+          "input_paths": [
+            "livestock.cattle_animals[].individual_housing_periods[].reason",
+            "livestock.cattle_animals[].individual_housing_periods[].social_contact",
+            "livestock.cattle_animals[].birth_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "calf_individual_ok",
+        "description": "Sonst Abmeldepflicht",
+        "value": {
+          "max_age_days_exclusive": 21
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P06-08",
+        "CIT-MB-P06-09",
+        "CIT-SRL-P87-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animals.animal_issue"
+      ]
+    },
+    {
+      "id": "O6_21-HOUS-01",
+      "rule_type": "obligation",
+      "statement": "Haltungsbedingungen: Kategorien bis ½ Jahr ab Geburt bis ½ Jahr; Kategorien ab ½ Jahr ab Erreichen von ½ Jahr bis Verlassen des Betriebs bzw. Verpflichtungsende (31.12. bzw. 2 Jahre bei weiblichen Rindern); bei Zukauf ab Zukaufsdatum.",
+      "conditions": [
+        {
+          "expression": "period intersects participation interval",
+          "description": "Relevanter Zeitraum je Tier",
+          "input_paths": [
+            "livestock.cattle_animals[].birth_date",
+            "livestock.cattle_animals[].on_farm_from",
+            "livestock.cattle_animals[].on_farm_until"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "participation_interval",
+        "description": "Pflichten gelten im Teilnahmezeitraum",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P03-11",
+        "CIT-MB-P03-12",
+        "CIT-MB-P04-01",
+        "CIT-MB-P01-06",
+        "CIT-ATB-P10-04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animals.participation_intervals",
+        "data.oepul.o6_21.animals.period_overlaps_participation",
+        "data.oepul.o6_21.main.general_obligations"
+      ]
+    },
+    {
+      "id": "O6_21-PLAN-01",
+      "rule_type": "documentation",
+      "statement": "Bis einschließlich Antragsjahr 2024: Stallskizze und Belegungsplan (maximal mögliche Belegung) je Kategorie und Stallabteil am Betrieb; Maße der Buchten (Vermessung ab Mitte der Aufstallung bzw. lichte Weite); ab 2025 entfallen.",
+      "conditions": [
+        {
+          "expression": "farm.year <= 2024",
+          "description": "Antragsjahr bis 2024",
+          "input_paths": [
+            "farm.year",
+            "oepul_measures.o6_21.stall_sketch_and_occupancy_plan_available"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "sketch_required",
+        "description": "Fehlen = Verstoß bis 2024",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P05-08",
+        "CIT-MB-P05-09",
+        "CIT-MB-P05-10",
+        "CIT-MB-P06-02",
+        "CIT-SRL-P86-06"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.housing.stall_sketch_required",
+        "data.oepul.o6_21.housing.stall_sketch_missing",
+        "data.oepul.o6_21.main.violations",
+        "data.oepul.o6_21.main.obligations"
+      ]
+    },
+    {
+      "id": "O6_21-PLAN-02",
+      "rule_type": "calculation",
+      "statement": "Die maximal mögliche Belegung je Stallabteil wird aus der Fläche und dem Mindestplatzbedarf je Gewichtsklasse berechnet (z. B. 25,50 m²: 6/7/8/10/14 Tiere).",
+      "conditions": [
+        {
+          "expression": "floor(area / total_area_per_animal)",
+          "description": "Je Gewichtsklasse",
+          "input_paths": [
+            "livestock.stall_compartments[].usable_paved_area_m2"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "max_occupancy",
+        "description": "Belegungsplan",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P05-11",
+        "CIT-MB-P06-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.housing.max_occupancy",
+        "data.oepul.o6_21.housing.occupancy_plan"
+      ]
+    },
+    {
+      "id": "O6_21-COMB-01",
+      "rule_type": "combination",
+      "statement": "Kombination mit Tierwohl – Weide ist einzeltierbezogen möglich; Weide- bzw. Alpungsperioden unterbrechen die Stallhaltung und gelten als erfüllt; ein Stall am Heimbetrieb muss zur Verfügung stehen.",
+      "conditions": [
+        {
+          "expression": "participating",
+          "description": "Teilnahme",
+          "input_paths": [
+            "livestock.cattle_animals[].pasture_measure_o6_20",
+            "livestock.cattle_animals[].stall_compartment_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combination_allowed",
+        "description": "Kombination zulässig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P09-03",
+        "CIT-MB-P09-05",
+        "CIT-MB-P09-06",
+        "CIT-ATB-P13-05",
+        "CIT-SRL-P18-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.main.general_obligations",
+        "data.oepul.o6_21.animals.animal_issue"
+      ]
+    },
+    {
+      "id": "O6_21-COMB-02",
+      "rule_type": "exclusion",
+      "statement": "Tiere in ganzjähriger Freilandhaltung ohne entsprechendes Stallsystem sind nicht förderfähig.",
+      "conditions": [
+        {
+          "expression": "year_round_outdoor_without_stall",
+          "description": "Ganzjährige Freilandhaltung",
+          "input_paths": [
+            "livestock.cattle_animals[].year_round_outdoor_without_stall"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Tier nicht förderfähig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P09-04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animals.animal_issue",
+        "data.oepul.o6_21.animals.premium_eligible"
+      ]
+    },
+    {
+      "id": "O6_21-REP-01",
+      "rule_type": "reporting",
+      "statement": "Gesonderte Meldepflicht an die AMA, wenn die Stallhaltung für einzelne Tiere einer Kategorie im Förderjahr nicht einhaltbar ist und die Tiere am Betrieb bleiben: Abmeldung umgehend, ohrmarkenbezogen in der Beilage „Tierwohl – Weide/Stallhaltung“ (Anlässe z. B. Platzmangel, Vollspalten, Separierung > 10 Tage, Anbindehaltung).",
+      "conditions": [
+        {
+          "expression": "noncompliant(animal) and not deregistered",
+          "description": "Pflichtverletzung ohne Abmeldung",
+          "input_paths": [
+            "livestock.cattle_animals[].tethering_periods[].start",
+            "livestock.cattle_animals[].full_slatted_periods[].start",
+            "oepul_measures.o6_21.deregistered_animals[].ear_tag"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "missing_deregistration",
+        "description": "Verstoß; Tier nicht prämienfähig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P08-01",
+        "CIT-MB-P08-02",
+        "CIT-MB-P08-03",
+        "CIT-SRL-P87-03",
+        "CIT-NSEP-03",
+        "CIT-NSEP-04",
+        "CIT-NSEP-05",
+        "CIT-NSEP-07"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animals.deregistration_required",
+        "data.oepul.o6_21.animals.missing_deregistrations",
+        "data.oepul.o6_21.main.violations"
+      ]
+    },
+    {
+      "id": "O6_21-REP-02",
+      "rule_type": "consequence",
+      "statement": "Die Abmeldung eines Tieres ist eine Abmeldung von der Maßnahme: das Tier ist im Förderjahr in keiner Kategorie (männlich wie weiblich) prämienfähig, auch nicht für Zeiträume mit erfüllten Bedingungen; Umstallung auf Vollspalten nach Ende einer nur bis ½ Jahr beantragten Kategorie ist zulässig.",
+      "conditions": [
+        {
+          "expression": "ear_tag in deregistered_animals",
+          "description": "Tier abgemeldet",
+          "input_paths": [
+            "oepul_measures.o6_21.deregistered_animals[].ear_tag"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible_full_year",
+        "description": "Keine Prämie im Förderjahr",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P08-04",
+        "CIT-MB-P08-05",
+        "CIT-MB-P08-06",
+        "CIT-MB-P08-07",
+        "CIT-NSEP-06"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animals.deregistered_tags",
+        "data.oepul.o6_21.animals.premium_eligible"
+      ]
+    },
+    {
+      "id": "O6_21-REP-03",
+      "rule_type": "reporting",
+      "statement": "Keine gesonderte Meldepflicht bei Abgängen über die Rinderdatenbank (Schlachtung, Verkauf); diese Rinder werden anteilsmäßig (Kalenderjahr) berücksichtigt; Meldungen nach Tierkennzeichnungsvorschriften sind unabhängig von der Förderung durchzuführen.",
+      "conditions": [
+        {
+          "expression": "on_farm_until set",
+          "description": "Abgang laut RDB",
+          "input_paths": [
+            "livestock.cattle_animals[].on_farm_until"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "pro_rata",
+        "description": "Anteilige Berücksichtigung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P08-08",
+        "CIT-MB-P08-09",
+        "CIT-MB-P09-01",
+        "CIT-MB-P09-02",
+        "CIT-NSEP-01",
+        "CIT-NSEP-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.lib.presence_end_ns",
+        "data.oepul.o6_21.main.general_obligations"
+      ]
+    },
+    {
+      "id": "O6_21-RGVE-01",
+      "rule_type": "calculation",
+      "statement": "RGVE-Schlüssel: Rinder < ½ Jahr 0,40; ½ bis < 2 Jahre 0,60; ab 2 Jahre 1,00; Zwergrinder (Dahomey, Dexter, Kerry, Zwergzebu) 0,20/0,30/0,50.",
+      "conditions": [
+        {
+          "expression": "rgve_factor(age_band, dwarf)",
+          "description": "Umrechnungsfaktor",
+          "input_paths": [
+            "livestock.cattle_animals[].birth_date",
+            "livestock.cattle_animals[].is_dwarf_breed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rgve_factor",
+        "description": "Faktor laut Tabelle",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P11-11",
+        "CIT-MB-P11-13",
+        "CIT-MB-P11-14",
+        "CIT-SRL-P10-01",
+        "CIT-ANH-P03-01",
+        "CIT-ANH-P03-02",
+        "CIT-ANH-P03-03",
+        "CIT-GSP-P16-01",
+        "CIT-GSP-P16-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.lib.rgve_factor",
+        "data.oepul.o6_21.lib.band_rgve"
+      ]
+    },
+    {
+      "id": "O6_21-RGVE-02",
+      "rule_type": "calculation",
+      "statement": "Prämienfähige RGVE werden im Jahresdurchschnitt taggenau aus der Rinderdatenbank ermittelt (Hineinwachsen in eine Alterskategorie anteilig), abzüglich abgemeldeter Tiere.",
+      "conditions": [
+        {
+          "expression": "sum(days_in_band * factor / days_in_year)",
+          "description": "Jahresdurchschnitt",
+          "input_paths": [
+            "livestock.cattle_animals[].birth_date",
+            "livestock.cattle_animals[].on_farm_from",
+            "livestock.cattle_animals[].on_farm_until"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_rgve",
+        "description": "RGVE-Basis der Prämie",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P11-10",
+        "CIT-MB-P11-12",
+        "CIT-SRL-P87-10",
+        "CIT-SRL-P10-02",
+        "CIT-ATB-P10-01",
+        "CIT-ATB-P10-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.lib.band_days",
+        "data.oepul.o6_21.lib.category_rgve",
+        "data.oepul.o6_21.animals.animal_rgve",
+        "data.oepul.o6_21.animals.eligible_animal_rgve",
+        "data.oepul.o6_21.animals.eligible_rgve",
+        "data.oepul.o6_21.animals.rgve_by_category"
+      ]
+    },
+    {
+      "id": "O6_21-PREM-01",
+      "rule_type": "premium_rate",
+      "statement": "Prämie je RGVE förderbarer Tiere: 2023 180,0 €; ab 2024 194,4 € (Anhebung um 8 % gemäß 1. Änderung, 1a ab 01.01.2024).",
+      "conditions": [
+        {
+          "expression": "rate('standard', farm.year)",
+          "description": "Standardsatz",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_rate",
+        "description": "€/RGVE",
+        "value": {
+          "2023": 180.0,
+          "from_2024": 194.4
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P11-03",
+        "CIT-MB-P11-04",
+        "CIT-SRL-P87-07",
+        "CIT-SRL-P04-01",
+        "CIT-SRL-P27-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.lib.rate",
+        "data.oepul.o6_21.animals.animal_premium",
+        "data.oepul.o6_21.premium.animal_premium_total"
+      ]
+    },
+    {
+      "id": "O6_21-PREM-02",
+      "rule_type": "premium_rate",
+      "statement": "Reduzierter Satz bei gleichzeitiger tierbezogener Prämienbeantragung in Almbewirtschaftung, Tierwohl – Weide oder gekoppelter Stützung für Almrinder: 2023 150,0 €; ab 2024 162,0 € je RGVE.",
+      "conditions": [
+        {
+          "expression": "alpine_pasture_measure_premium or pasture_measure_o6_20 or coupled_support_alpine",
+          "description": "Leistungsüberschneidung",
+          "input_paths": [
+            "livestock.cattle_animals[].alpine_pasture_measure_premium",
+            "livestock.cattle_animals[].pasture_measure_o6_20",
+            "livestock.cattle_animals[].coupled_support_alpine"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduced_rate",
+        "description": "€/RGVE",
+        "value": {
+          "2023": 150.0,
+          "from_2024": 162.0
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P09-07",
+        "CIT-MB-P11-05",
+        "CIT-MB-P11-06",
+        "CIT-MB-P11-07",
+        "CIT-SRL-P87-08"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animals.reduced_rate_animal",
+        "data.oepul.o6_21.animals.animal_rate_id"
+      ]
+    },
+    {
+      "id": "O6_21-PREM-03",
+      "rule_type": "premium_rate",
+      "statement": "Optionaler Zuschlag Festmistkompostierung je RGVE in der Maßnahme: 2023 20,0 €; ab 2024 21,6 €.",
+      "conditions": [
+        {
+          "expression": "supplement_compliant",
+          "description": "Zuschlag gültig und eingehalten",
+          "input_paths": [
+            "oepul_measures.o6_21.composting_supplement.applied_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "supplement_amount",
+        "description": "€/RGVE",
+        "value": {
+          "2023": 20.0,
+          "from_2024": 21.6
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P11-08",
+        "CIT-MB-P11-09",
+        "CIT-SRL-P87-09"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.premium.supplement_rate",
+        "data.oepul.o6_21.premium.supplement_amount"
+      ]
+    },
+    {
+      "id": "O6_21-MOD-01",
+      "rule_type": "calculation",
+      "statement": "Betriebsgrößenmodulation aller Maßnahmenprämien nach Gesamtfläche: bis 200 ha 100 %, 200–300 ha 90 %, 300–1.000 ha 85 %, über 1.000 ha 75 % (Basis Mehrfachantrag).",
+      "conditions": [
+        {
+          "expression": "modulation_factor(land.total_area_ha)",
+          "description": "Gestaffelter Faktor",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "modulation_factor",
+        "description": "Faktor auf Prämie",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-ATB-P19-01",
+        "CIT-ATB-P19-02",
+        "CIT-ATB-P19-03",
+        "CIT-SRL-P17-01",
+        "CIT-SRL-P17-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.lib.modulation_factor",
+        "data.oepul.o6_21.lib.band_upper",
+        "data.oepul.o6_21.premium.modulation_factor",
+        "data.oepul.o6_21.premium.net_amount"
+      ]
+    },
+    {
+      "id": "O6_21-PAY-01",
+      "rule_type": "threshold",
+      "statement": "Von der Gewährung kann abgesehen werden, wenn der Betrag je Fördermaßnahme 50 € nicht überschreitet.",
+      "conditions": [
+        {
+          "expression": "net_amount <= 50",
+          "description": "Kleinbetrag",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "payout_may_be_withheld",
+        "description": "Keine Auszahlung möglich",
+        "value": {
+          "max_eur": 50
+        }
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P22-03",
+        "CIT-GSP-P12-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.premium.payout_may_be_withheld",
+        "data.oepul.o6_21.main.notices"
+      ]
+    },
+    {
+      "id": "O6_21-PAY-02",
+      "rule_type": "procedure",
+      "statement": "Förderung in Form jährlicher Prämien; der Vertrag kommt mit Verständigung über die Genehmigung zustande.",
+      "conditions": [
+        {
+          "expression": "participating",
+          "description": "Teilnahme",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Jährliche Prämie",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P16-02",
+        "CIT-SRL-P22-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.main.general_obligations"
+      ]
+    },
+    {
+      "id": "O6_21-PAY-03",
+      "rule_type": "deadline",
+      "statement": "Auszahlung bis 30. Juni des Folgejahres; Zahlungen erfolgen nach dem 1. Dezember des Antragsjahres.",
+      "conditions": [
+        {
+          "expression": "farm.year",
+          "description": "Antragsjahr",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "payment_window",
+        "description": "Zahlungsfenster",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-ATB-P18-04",
+        "CIT-SRL-P22-04",
+        "CIT-GSP-P32-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.administration.payment_window"
+      ]
+    },
+    {
+      "id": "O6_21-PAY-04",
+      "rule_type": "threshold",
+      "statement": "Nach Abschluss der Verwaltungskontrolle kann eine Teilzahlung von höchstens 75 % erfolgen.",
+      "conditions": [
+        {
+          "expression": "advance <= 0.75 * amount",
+          "description": "Vorauszahlung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "max_advance_payment",
+        "description": "Höchstbetrag",
+        "value": {
+          "max_share": 0.75
+        }
+      },
+      "source_reference_ids": [
+        "CIT-ATB-P18-05",
+        "CIT-SRL-P22-05"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.administration.max_advance_payment"
+      ]
+    },
+    {
+      "id": "O6_21-PAY-05",
+      "rule_type": "consequence",
+      "statement": "Zu Unrecht gewährte Beträge sind binnen vier Wochen zurückzuzahlen; von der Wiedereinziehung bis 100 € (Zinsen allein bis 50 €) kann abgesehen werden.",
+      "conditions": [
+        {
+          "expression": "amount <= 100 (interest only: <= 50)",
+          "description": "Kleinbetrag",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "recovery_may_be_waived",
+        "description": "Absehen möglich",
+        "value": {
+          "max_eur": 100,
+          "interest_only_max_eur": 50
+        }
+      },
+      "source_reference_ids": [
+        "CIT-GSP-P13-01",
+        "CIT-GSP-P13-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.administration.recovery_may_be_waived"
+      ]
+    },
+    {
+      "id": "O6_21-SANC-01",
+      "rule_type": "sanction",
+      "statement": "Verstöße gegen inhaltliche Förderverpflichtungen werden maßnahmenbezogen inkl. Zuschläge nach Stufen (Verwarnung, 2, 5, 10, 25, 50, 100 %) unter Berücksichtigung von Schwere, Ausmaß, Dauer und Häufigkeit sanktioniert; mehrere Verstöße kumulieren additiv bis 100 %.",
+      "conditions": [
+        {
+          "expression": "sum(stage_percent) capped 100",
+          "description": "Kumulation",
+          "input_paths": [
+            "oepul_measures.o6_21.content_violation_stages"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "content_reduction_percent",
+        "description": "Kürzung in %",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-ATB-P17-02",
+        "CIT-ATB-P18-01",
+        "CIT-SRL-P24-04",
+        "CIT-GSP-P30-02",
+        "CIT-GSP-P31-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.administration.stage_percent",
+        "data.oepul.o6_21.administration.content_reduction_percent",
+        "data.oepul.o6_21.premium.after_sanctions"
+      ]
+    },
+    {
+      "id": "O6_21-SANC-02",
+      "rule_type": "sanction",
+      "statement": "Ab dem Jahr 2027 wird anstelle einer Verwarnung ein Einbehalt von 1 % der Maßnahmenprämie ausgesprochen.",
+      "conditions": [
+        {
+          "expression": "stage == 1 and farm.year >= 2027",
+          "description": "Verwarnungsstufe ab 2027",
+          "input_paths": [
+            "farm.year",
+            "oepul_measures.o6_21.content_violation_stages"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "withholding_1_percent",
+        "description": "1 % Einbehalt",
+        "value": {
+          "from_year": 2027,
+          "percent": 1
+        }
+      },
+      "source_reference_ids": [
+        "CIT-ATB-P18-02",
+        "CIT-GSP-P31-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.administration.stage_percent"
+      ]
+    },
+    {
+      "id": "O6_21-SANC-03",
+      "rule_type": "sanction",
+      "statement": "Bei zweimaliger 100 %-Kürzung im Vertragszeitraum/in der Förderperiode: Ausschluss aus der Maßnahme und Rückforderung.",
+      "conditions": [
+        {
+          "expression": "full_reductions_total >= 2",
+          "description": "Zwei 100 %-Kürzungen",
+          "input_paths": [
+            "oepul_measures.o6_21.previous_full_reductions_in_period",
+            "oepul_measures.o6_21.content_violation_stages"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exclusion",
+        "description": "Ausschluss und Rückforderung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-ATB-P18-03",
+        "CIT-GSP-P31-05"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.administration.exclusion_from_measure",
+        "data.oepul.o6_21.main.notices"
+      ]
+    },
+    {
+      "id": "O6_21-SANC-04",
+      "rule_type": "sanction",
+      "statement": "Vor-Ort-Kontroll-Verstöße werden grundsätzlich höher sanktioniert als Verwaltungskontroll-Verstöße; Wiederholungsverstöße derselben Verpflichtung erhöhen die Stufe; schwerwiegende Verstöße bzw. > 3 Verstöße bei einer VOK können zu 100 % führen. Die Stufe wird als Kontrollergebnis übernommen.",
+      "conditions": [
+        {
+          "expression": "content_violation_stages provided",
+          "description": "Stufen aus Kontrolle",
+          "input_paths": [
+            "oepul_measures.o6_21.content_violation_stages"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "stage_assessment",
+        "description": "Stufenzuordnung durch AMA",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-P31-03",
+        "CIT-GSP-P31-04",
+        "CIT-GSP-P31-06"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.administration.violation_stages"
+      ]
+    },
+    {
+      "id": "O6_21-SANC-05",
+      "rule_type": "calculation",
+      "statement": "Reihenfolge der Mehrfachkürzungen gemäß SRL 1.12.2 (Übererklärung, Zugangsvoraussetzungen, Fristversäumnis, Untererklärung, inhaltliche Kürzung, Obergrenze, Modulation …, Konditionalität).",
+      "conditions": [
+        {
+          "expression": "order(reduction_order)",
+          "description": "Kürzungsreihenfolge",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "reduction_order",
+        "description": "Inhaltliche Kürzung vor Modulation",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P25-02",
+        "CIT-GSP-P33-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.premium.after_sanctions",
+        "data.oepul.o6_21.premium.net_amount"
+      ]
+    },
+    {
+      "id": "O6_21-CTRL-01",
+      "rule_type": "consequence",
+      "statement": "Verweigert die förderwerbende Person die Auskunft oder verhindert sie die Vor-Ort-Kontrolle (außer höhere Gewalt), wird der Antrag abgelehnt, keine Prämie im laufenden Jahr, Verträge beendet und rückabgewickelt.",
+      "conditions": [
+        {
+          "expression": "control_refused and not force majeure",
+          "description": "Kontrollverweigerung",
+          "input_paths": [
+            "oepul_measures.o6_21.control_refused",
+            "oepul_measures.o6_21.control_refusal_due_to_force_majeure"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "application_rejected",
+        "description": "Keine Prämie",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P23-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.administration.control_refused",
+        "data.oepul.o6_21.premium.measure_blocked",
+        "data.oepul.o6_21.main.violations"
+      ]
+    },
+    {
+      "id": "O6_21-CTRL-02",
+      "rule_type": "obligation",
+      "statement": "Kontrollen (Verwaltung, Vor-Ort, nachgängig) sind zuzulassen, Auskünfte zu erteilen, Unterlagen vorzulegen und Betreten zu gestatten; Vor-Ort-Kontrollen umfassen alle beantragten Tiere; mit Vertragsbeginn ist die Person an die Förderbedingungen gebunden.",
+      "conditions": [
+        {
+          "expression": "participating",
+          "description": "Teilnahme",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Duldungs- und Mitwirkungspflicht",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-ATB-P17-01",
+        "CIT-SRL-P23-01",
+        "CIT-SRL-P21-01",
+        "CIT-GSP-P15-02",
+        "CIT-GSP-P28-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.main.general_obligations"
+      ]
+    },
+    {
+      "id": "O6_21-CTRL-03",
+      "rule_type": "calculation",
+      "statement": "Rinder gelten nur als ermittelt, wenn sie aus der Rinderdatenbank ermittelt werden; liegt die Zahl über den bei Kontrollen ermittelten Tieren, wird anhand der ermittelten Tiere berechnet; Zahlung max. angemeldete Tiere; Abweichungsregeln §§ 42–47 GSP-AV.",
+      "conditions": [
+        {
+          "expression": "registered_in_cattle_database and determined_at_control != false",
+          "description": "Ermittelt",
+          "input_paths": [
+            "livestock.cattle_animals[].registered_in_cattle_database",
+            "livestock.cattle_animals[].determined_at_control"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "determined",
+        "description": "Nicht ermittelte Tiere ohne Prämie",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-P29-01",
+        "CIT-GSP-P29-02",
+        "CIT-GSP-P30-01",
+        "CIT-GSP-P32-01",
+        "CIT-SRL-P24-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animals.determined"
+      ]
+    },
+    {
+      "id": "O6_21-FM-01",
+      "rule_type": "exception",
+      "statement": "Höhere Gewalt/außergewöhnliche Umstände (u. a. Tod eines Tieres durch Blitzschlag/Steinschlag/Beutegreifer, behördliche Seuchenanordnungen) sind binnen drei Wochen ab Möglichkeit mit Unterlagen geltend zu machen; dann bleibt der Anspruch für die bei Eintritt förderfähigen Tiere.",
+      "conditions": [
+        {
+          "expression": "reported_on - able_to_report_from <= 21 days and documented",
+          "description": "Rechtzeitig belegt",
+          "input_paths": [
+            "oepul_measures.o6_21.force_majeure_events[].able_to_report_from",
+            "oepul_measures.o6_21.force_majeure_events[].reported_on",
+            "oepul_measures.o6_21.force_majeure_events[].documented",
+            "livestock.cattle_animals[].noncompliance_force_majeure_event_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "force_majeure_recognised",
+        "description": "Kein Verlust für betroffene Tiere",
+        "value": {
+          "notification_days": 21
+        }
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P15-01",
+        "CIT-GSP-P10-02",
+        "CIT-GSP-P10-03",
+        "CIT-GSP-P11-01",
+        "CIT-GSP-P11-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.administration.recognised_force_majeure_events",
+        "data.oepul.o6_21.administration.late_force_majeure_events",
+        "data.oepul.o6_21.animals.force_majeure_excused"
+      ]
+    },
+    {
+      "id": "O6_21-FM-02",
+      "rule_type": "procedure",
+      "statement": "Ansuchen auf Anerkennung höherer Gewalt oder besonderer Umstände sind über eAMA im Register „Eingaben“ einzubringen.",
+      "conditions": [
+        {
+          "expression": "participating",
+          "description": "Teilnahme",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Einreichweg",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-NMAY-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.main.general_obligations"
+      ]
+    },
+    {
+      "id": "O6_21-FM-03",
+      "rule_type": "exception",
+      "statement": "Natürliche Umstände (z. B. Tod durch Krankheit/Unfall): keine Verwaltungssanktion, wenn binnen drei Wochen nach Feststellung der Reduzierung schriftlich gemeldet; keine Sanktion bei Behördenfehler.",
+      "conditions": [
+        {
+          "expression": "reported_on - reduction_found_on <= 21 days",
+          "description": "Rechtzeitige Meldung",
+          "input_paths": [
+            "oepul_measures.o6_21.natural_circumstance_events[].reduction_found_on",
+            "oepul_measures.o6_21.natural_circumstance_events[].reported_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "sanction_waived",
+        "description": "Keine Sanktion",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-P11-04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.administration.natural_circumstance_sanction_waived"
+      ]
+    },
+    {
+      "id": "O6_21-FM-04",
+      "rule_type": "procedure",
+      "statement": "Bei Fristversäumnis wegen höherer Gewalt ist die versäumte Handlung mit deren Ende unverzüglich nachzuholen.",
+      "conditions": [
+        {
+          "expression": "participating",
+          "description": "Teilnahme",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Nachholung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-P11-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.main.general_obligations"
+      ]
+    },
+    {
+      "id": "O6_21-REC-01",
+      "rule_type": "documentation",
+      "statement": "Antrags-, Bewilligungsunterlagen und Belege sind bei einjährigen Invekos-Maßnahmen vier Jahre ab Ende des Kalenderjahres aufzubewahren.",
+      "conditions": [
+        {
+          "expression": "farm.year",
+          "description": "Antragsjahr",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "records_retention_until",
+        "description": "Aufbewahrung bis 31.12.(Jahr+4)",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P24-01",
+        "CIT-GSP-P15-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.administration.records_retention_until",
+        "data.oepul.o6_21.main.obligations"
+      ]
+    },
+    {
+      "id": "O6_21-REC-02",
+      "rule_type": "reporting",
+      "statement": "Die Übertragung eines Betriebs ist von Übergeber und Übernehmer binnen vier Wochen ab Wirksamkeit anzuzeigen; bei Übertragung nach Einreichung des Mehrfachantrags erhält der Übergeber die Beihilfe, sofern alle Bedingungen erfüllt werden.",
+      "conditions": [
+        {
+          "expression": "notified_on - effective_on <= 28 days",
+          "description": "Rechtzeitige Anzeige",
+          "input_paths": [
+            "oepul_measures.o6_21.farm_transfer.effective_on",
+            "oepul_measures.o6_21.farm_transfer.notified_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "notification_timely",
+        "description": "Sonst Verstoß",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-P14-03",
+        "CIT-GSP-P14-04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.administration.farm_transfer_notification_late",
+        "data.oepul.o6_21.main.violations"
+      ]
+    },
+    {
+      "id": "O6_21-COMP-01",
+      "rule_type": "obligation",
+      "statement": "Zuschlag Festmistkompostierung: der gesamte am Betrieb anfallende Festmist (unabhängig von der Tierart) ist zu Kompostmieten am Betrieb aufzusetzen.",
+      "conditions": [
+        {
+          "expression": "all_solid_manure_composted_on_farm",
+          "description": "Gesamter Festmist kompostiert",
+          "input_paths": [
+            "livestock.solid_manure_composting.all_solid_manure_composted_on_farm"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "supplement_condition",
+        "description": "Sonst kein Zuschlag",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P06-10",
+        "CIT-MB-P06-11",
+        "CIT-SRL-P87-04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.composting.supplement_failed",
+        "data.oepul.o6_21.composting.supplement_violations",
+        "data.oepul.o6_21.composting.supplement_compliant",
+        "data.oepul.o6_21.main.violations"
+      ]
+    },
+    {
+      "id": "O6_21-COMP-02",
+      "rule_type": "threshold",
+      "statement": "Kompostmieten sind mindestens zweimal im Abstand von mindestens 14 Tagen mittels Kompostwender umzusetzen.",
+      "conditions": [
+        {
+          "expression": "count(turnings)>=2 and interval >= 14 days",
+          "description": "Umsetzen",
+          "input_paths": [
+            "livestock.solid_manure_composting.windrows[].turnings[].date",
+            "livestock.solid_manure_composting.windrows[].turnings[].equipment"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "turning_ok",
+        "description": "Sonst Miete nicht konform",
+        "value": {
+          "min_turnings": 2,
+          "min_interval_days": 14
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P07-01",
+        "CIT-SRL-P87-04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.composting.turning_requirement_met",
+        "data.oepul.o6_21.composting.windrow_method_ok"
+      ]
+    },
+    {
+      "id": "O6_21-COMP-03",
+      "rule_type": "restriction",
+      "statement": "Umsetzen mittels Frontlader ist nicht förderfähig; Miststreuer oder andere adäquate Geräte sind zulässig, wenn sie dem Arbeitsergebnis eines Kompostwenders entsprechen und die Miete vollständig umgesetzt wird.",
+      "conditions": [
+        {
+          "expression": "equipment counts_for_turning",
+          "description": "Gerät",
+          "input_paths": [
+            "livestock.solid_manure_composting.windrows[].turnings[].equipment",
+            "livestock.solid_manure_composting.windrows[].turnings[].windrow_completely_turned"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "counting_turning",
+        "description": "Frontlader zählt nicht",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P07-03",
+        "CIT-MB-P07-04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.composting.counting_turning",
+        "data.oepul.o6_21.composting.equipment_row"
+      ]
+    },
+    {
+      "id": "O6_21-COMP-04",
+      "rule_type": "obligation",
+      "statement": "Der Kompostwender muss am Betrieb vorhanden sein; bei überbetrieblichem Einsatz ist die Verwendung durch Unterlagen (z. B. Rechnungen) nachzuweisen.",
+      "conditions": [
+        {
+          "expression": "compost_turner_on_farm or external_turner_use_documented",
+          "description": "Wenderverfügbarkeit",
+          "input_paths": [
+            "livestock.solid_manure_composting.compost_turner_on_farm",
+            "livestock.solid_manure_composting.external_turner_use_documented"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "turner_available",
+        "description": "Sonst nicht konform",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P07-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.composting.turner_available",
+        "data.oepul.o6_21.composting.turner_availability_ok"
+      ]
+    },
+    {
+      "id": "O6_21-COMP-05",
+      "rule_type": "option",
+      "statement": "Ab Antragsjahr 2025 werden Kompostmieten aus Mischung/Schichtung von Festmist und organischem Material der Feldproduktion (Ernterückstände, Stroh, Grünschnitt) oder Strauch-/Astschnitt anerkannt; Umsetzen nicht erforderlich.",
+      "conditions": [
+        {
+          "expression": "method == mixed_or_layered and farm.year >= 2025",
+          "description": "Mischmiete",
+          "input_paths": [
+            "livestock.solid_manure_composting.windrows[].method",
+            "livestock.solid_manure_composting.windrows[].plant_materials",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "windrow_ok",
+        "description": "Anerkannt ab 2025",
+        "value": {
+          "from_year": 2025
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-P07-05",
+        "CIT-MB-P07-06",
+        "CIT-SRL-P87-05"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.composting.windrow_method_ok"
+      ]
+    },
+    {
+      "id": "O6_21-COMP-06",
+      "rule_type": "option",
+      "statement": "Kann nicht mit Kompostwender gewendet werden: Beimengung organischen Materials in nennenswertem Ausmaß (z. B. 50:50), Miete aufsetzen und Kompostierungsverfahren anwenden (z. B. Heißrotte, mikrobielle Carbonisierung); Umsetzen nicht erforderlich; strohreicher Mist allein genügt nicht.",
+      "conditions": [
+        {
+          "expression": "added_material_significant and composting_process and not straw_rich_manure_only",
+          "description": "Wendefreie Kompostierung",
+          "input_paths": [
+            "livestock.solid_manure_composting.windrows[].added_material_significant",
+            "livestock.solid_manure_composting.windrows[].composting_process",
+            "livestock.solid_manure_composting.windrows[].straw_rich_manure_only"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "windrow_ok",
+        "description": "Anerkannt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P07-07",
+        "CIT-MB-P07-08",
+        "CIT-MB-P07-09"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.composting.windrow_method_ok"
+      ]
+    },
+    {
+      "id": "O6_21-COMP-07",
+      "rule_type": "documentation",
+      "statement": "Anlage und Umsetzen der Kompostmiete sowie Ausbringung des Komposts bzw. Abgabe an Dritte sind zu dokumentieren (Vorlage verfügbar, andere Aufzeichnungen anerkannt).",
+      "conditions": [
+        {
+          "expression": "documented_set_up and documented_turnings and documented_application_or_transfer",
+          "description": "Dokumentation",
+          "input_paths": [
+            "livestock.solid_manure_composting.windrows[].documented_set_up",
+            "livestock.solid_manure_composting.windrows[].documented_turnings",
+            "livestock.solid_manure_composting.documented_application_or_transfer"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "documented",
+        "description": "Sonst nicht konform",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P07-10",
+        "CIT-MB-P07-11",
+        "CIT-SRL-P87-06"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.composting.windrow_documented",
+        "data.oepul.o6_21.composting.supplement_failed",
+        "data.oepul.o6_21.main.obligations"
+      ]
+    },
+    {
+      "id": "O6_21-COMP-08",
+      "rule_type": "obligation",
+      "statement": "Bei der Anlage von Kompostmieten sind die NAPV-Vorgaben einzuhalten: auf unbefestigten Flächen nur abgedeckt und mit ≥ 25 m Abstand zu Oberflächengewässern, ohne Sickersaftgefahr, nicht auf staunassen Böden, Grundwasserabstand > 1 m.",
+      "conditions": [
+        {
+          "expression": "on_unpaved_area => covered and dist>=25 and no seepage risk and not waterlogged and groundwater > 1",
+          "description": "NAPV § 6",
+          "input_paths": [
+            "livestock.solid_manure_composting.windrows[].on_unpaved_area",
+            "livestock.solid_manure_composting.windrows[].covered",
+            "livestock.solid_manure_composting.windrows[].distance_to_surface_water_m",
+            "livestock.solid_manure_composting.windrows[].risk_of_seepage_to_water",
+            "livestock.solid_manure_composting.windrows[].waterlogged_soil",
+            "livestock.solid_manure_composting.windrows[].groundwater_depth_m"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "napv_ok",
+        "description": "Sonst nicht konform",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P07-12",
+        "CIT-NAPV-P04-01",
+        "CIT-NAPV-P05-01",
+        "CIT-NAPV-P05-02",
+        "CIT-NAPV-P05-03",
+        "CIT-NAPV-P05-04"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.composting.napv_ok"
+      ]
+    },
+    {
+      "id": "O6_21-COMP-09",
+      "rule_type": "exclusion",
+      "statement": "Für Kompostställe kann der Zuschlag nicht gewährt werden.",
+      "conditions": [
+        {
+          "expression": "is_compost_barn",
+          "description": "Kompoststall",
+          "input_paths": [
+            "livestock.solid_manure_composting.is_compost_barn"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_supplement",
+        "description": "Kein Zuschlag",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-P07-13"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.composting.supplement_failed"
+      ]
+    },
+    {
+      "id": "O6_21-GEN-01",
+      "rule_type": "obligation",
+      "statement": "Konditionalität (Klima/Umwelt, öffentliche Gesundheit, Pflanzengesundheit, Tierwohl) und soziale Konditionalität gemäß §§ 6e, 6f MOG 2021 sind einzuhalten; MOG 2021 und GSP-AV gelten zusätzlich zur Sonderrichtlinie.",
+      "conditions": [
+        {
+          "expression": "participating",
+          "description": "Teilnahme",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Verwaltungssanktionen bei Verstoß",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-ATB-P04-01",
+        "CIT-ATB-P02-01",
+        "CIT-SRL-P25-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.main.general_obligations"
+      ]
+    },
+    {
+      "id": "O6_21-GEN-02",
+      "rule_type": "exclusion",
+      "statement": "Dieselbe Leistung ist nicht förderbar, wenn sie aus anderem Titel öffentlicher Mittel gefördert wird; gesetzlich/behördlich vorgeschriebene Maßnahmen sind nicht abgeltbar.",
+      "conditions": [
+        {
+          "expression": "participating",
+          "description": "Teilnahme",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Keine Doppelförderung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P11-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.main.general_obligations"
+      ]
+    },
+    {
+      "id": "O6_21-GEN-03",
+      "rule_type": "reporting",
+      "statement": "Jede Veränderung, durch die tatsächliche oder rechtliche Verhältnisse nicht mehr den Angaben entsprechen, ist unverzüglich anzuzeigen.",
+      "conditions": [
+        {
+          "expression": "participating",
+          "description": "Teilnahme",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Mitteilungspflicht",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-P14-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.main.general_obligations"
+      ]
+    },
+    {
+      "id": "O6_21-GEN-04",
+      "rule_type": "exclusion",
+      "statement": "Werden Fördervoraussetzungen künstlich geschaffen, wird der Vorteil nicht gewährt bzw. ist zurückzuzahlen.",
+      "conditions": [
+        {
+          "expression": "participating",
+          "description": "Teilnahme",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Umgehungsverbot",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-P14-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.main.general_obligations"
+      ]
+    },
+    {
+      "id": "O6_21-GEN-05",
+      "rule_type": "option",
+      "statement": "Revisionsklausel: Bei Änderungen des verbindlichen Rechtsrahmens kann die Zustimmung zur Vertragsanpassung verweigert werden; der Vertrag endet dann ohne Rückforderung für die Vergangenheit.",
+      "conditions": [
+        {
+          "expression": "participating",
+          "description": "Teilnahme",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Vertragsende ohne Rückforderung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P16-01"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.main.general_obligations"
+      ]
+    },
+    {
+      "id": "O6_21-GEN-06",
+      "rule_type": "restriction",
+      "statement": "Abtretung, Anweisung, Verpfändung oder sonstige Verfügung über Förderforderungen ist gegenüber der Republik Österreich unwirksam.",
+      "conditions": [
+        {
+          "expression": "participating",
+          "description": "Teilnahme",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Unwirksam",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-P26-02"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.main.general_obligations"
+      ]
+    },
+    {
+      "id": "O6_21-GEN-07",
+      "rule_type": "procedure",
+      "statement": "Offensichtliche Fehler in Anträgen können jederzeit berichtigt werden, wenn sie durch einfache Prüfung erkennbar sind und in gutem Glauben gehandelt wurde.",
+      "conditions": [
+        {
+          "expression": "participating",
+          "description": "Teilnahme",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Berichtigung möglich",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-P11-05"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.main.general_obligations"
+      ]
+    },
+    {
+      "id": "O6_21-GEN-08",
+      "rule_type": "consequence",
+      "statement": "Bei Vertragsbeitritt können während der Vertragslaufzeit entstandene Rückforderungen gegen vorherige und nachfolgende förderwerbende Person geltend gemacht werden.",
+      "conditions": [
+        {
+          "expression": "participating",
+          "description": "Teilnahme",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "obligation",
+        "description": "Solidarhaftung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-P13-03"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.main.general_obligations"
+      ]
+    }
+  ]
+}

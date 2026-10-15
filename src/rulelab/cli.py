@@ -21,6 +21,12 @@ from typing import Any
 
 from .contracts import GENERATOR_CONTRACT_MODELS, export_generator_schemas
 from .grounding import known_profile_paths, validate_grounded_outputs
+from .site import (
+    DEFAULT_RUNS_ROOT,
+    DEFAULT_SITE_DATA,
+    build_site_data,
+    render_site_data,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -565,11 +571,15 @@ def source_files(source_root: Path, measure: str, all_sources: bool) -> list[Pat
         for record in records:
             if not isinstance(record, dict):
                 continue
+            scope = record.get("applies_to_measures")
             include = (
                 record.get("measure_id") == measure
                 or record.get("document_id") == "o6_general"
-                or record.get("source_type")
-                in {"legal_basis_pdf", "year_specific_notice_html"}
+                or (
+                    record.get("source_type")
+                    in {"legal_basis_pdf", "year_specific_notice_html"}
+                    and (not scope or measure in scope)
+                )
             )
             if not include:
                 continue
@@ -1555,6 +1565,26 @@ def compare_runs(args: argparse.Namespace) -> int:
     return 0
 
 
+def build_site(args: argparse.Namespace) -> int:
+    """Regenerate the run explorer data bundle, or check that it is current."""
+    rendered = render_site_data(build_site_data(Path(args.runs).resolve()))
+    output = Path(args.output).resolve()
+    if args.check:
+        current = output.read_text(encoding="utf-8") if output.is_file() else ""
+        if current != rendered:
+            print(
+                f"{output} is stale; regenerate with `python3 -m rulelab site`",
+                file=sys.stderr,
+            )
+            return 1
+        print(f"{output} is current")
+        return 0
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(rendered, encoding="utf-8")
+    print(output)
+    return 0
+
+
 def export_schemas(args: argparse.Namespace) -> int:
     output = Path(args.output).resolve()
     for path in export_generator_schemas(output):
@@ -1639,6 +1669,18 @@ def build_parser() -> argparse.ArgumentParser:
     compare_parser.add_argument("run_dirs", nargs="+")
     compare_parser.add_argument("--output")
     compare_parser.set_defaults(func=compare_runs)
+
+    site_parser = subparsers.add_parser(
+        "site", help="Build the GitHub Pages data bundle from finalized runs"
+    )
+    site_parser.add_argument("--runs", default=str(DEFAULT_RUNS_ROOT))
+    site_parser.add_argument("--output", default=str(DEFAULT_SITE_DATA))
+    site_parser.add_argument(
+        "--check",
+        action="store_true",
+        help="Exit non-zero if the committed bundle differs from a rebuild",
+    )
+    site_parser.set_defaults(func=build_site)
 
     schemas_parser = subparsers.add_parser("export-schemas")
     schemas_parser.add_argument("--output", default=str(REPO_ROOT / "contracts"))

@@ -1,0 +1,3911 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_17",
+  "rules": [
+    {
+      "id": "O6_17-SCOPE-MEASURE-IDENTITY",
+      "rule_type": "definition",
+      "statement": "Die Maßnahme o6_17 'Humuserhalt und Bodenschutz auf umbruchsfähigem Grünland' entspricht Punkt 2.17 (Maßnahme 17) der SRL ÖPUL 2023 und der GAP-Intervention 70-15.",
+      "conditions": [
+        {
+          "expression": "measure == 'o6_17'",
+          "description": "Regelkatalog gilt für die Maßnahme o6_17."
+        }
+      ],
+      "result": {
+        "outcome": "identity",
+        "description": "Maßnahmenzuordnung o6_17 = SRL 2.17 (17) = Intervention 70-15.",
+        "value": {
+          "srl_point": "2.17",
+          "srl_measure_number": "17",
+          "intervention_code": "70-15"
+        }
+      },
+      "source_reference_ids": [
+        "MB-TITLE",
+        "SRL-2.17-TITLE",
+        "GSPAV-ANL1"
+      ],
+      "rego_symbols": [
+        "data.o6_17.premium_rates.intervention_code"
+      ]
+    },
+    {
+      "id": "O6_17-MB-1-BASE-PREMIUM-SCOPE",
+      "rule_type": "eligibility",
+      "statement": "Die Grundprämie wird nur für umbruchsfähige Grünlandflächen mit einer Hangneigung unter 18 % gewährt; Flächen ab 18 % erhalten keine Grundprämie.",
+      "conditions": [
+        {
+          "expression": "parcel.land_use == 'grassland'",
+          "description": "Schlag ist Grünland.",
+          "input_paths": [
+            "land.parcels[].land_use"
+          ]
+        },
+        {
+          "expression": "parcel.slope_percent < 18",
+          "description": "Hangneigung unter 18 % (aus INVEKOS-GIS).",
+          "input_paths": [
+            "land.parcels[].slope_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_for_base_premium",
+        "description": "Schlag ist für die Grundprämie dem Grunde nach förderfähig.",
+        "value": {
+          "slope_threshold_percent": 18
+        }
+      },
+      "source_reference_ids": [
+        "MB-1-OVERVIEW",
+        "SRL-2.17-ART"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.base_premium_eligible"
+      ]
+    },
+    {
+      "id": "O6_17-MB-1-AGL-SLOPE-BY-YEAR",
+      "rule_type": "eligibility",
+      "statement": "Der Zuschlag für artenreiches Grünland wird bis einschließlich Antragsjahr 2024 nur für Flächen mit Hangneigung unter 18 % gewährt, ab dem Antragsjahr 2025 auch für Flächen mit Hangneigung ab 18 %.",
+      "conditions": [
+        {
+          "expression": "parcel.slope_percent < 18 or farm.year >= 2025",
+          "description": "Hangneigung < 18 % oder Antragsjahr ab 2025.",
+          "input_paths": [
+            "land.parcels[].slope_percent",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "agl_slope_class_allowed",
+        "description": "Hangneigungsklasse für den Zuschlag zulässig; sonst kein Zuschlag.",
+        "value": {
+          "ge18_from_year": 2025
+        }
+      },
+      "source_reference_ids": [
+        "MB-1-AGL",
+        "MB-1-SLOPE2025",
+        "MB-6.6-SLOPE",
+        "SRL-2.17-ART-GE18"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.agl_rate_eur_per_ha",
+        "data.oepul.o6_17.agl_slope_class"
+      ]
+    },
+    {
+      "id": "O6_17-MB-3.1-CONTRACT-PERIOD",
+      "rule_type": "temporal_constraint",
+      "statement": "Der Verpflichtungs- und Vertragszeitraum beträgt mindestens 4 Jahre und endet am 31.12.2028: Beginn 01.01.2023 = 6 Jahre, 01.01.2024 = 5 Jahre, 01.01.2025 = 4 Jahre.",
+      "conditions": [
+        {
+          "expression": "oepul.o6_17.contract_start_year in {2023, 2024, 2025}",
+          "description": "Vertragsbeginn laut Tabelle.",
+          "input_paths": [
+            "oepul.o6_17.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_duration",
+        "description": "Vertragsdauer laut Tabelle data/o6_17/general_conditions.json#/general/contract_periods.",
+        "value": {
+          "end_date": "2028-12-31",
+          "min_years": 4
+        }
+      },
+      "source_reference_ids": [
+        "MB-3.1-PERIOD",
+        "MB-3.1-TABLE",
+        "AT-5.9-LIST",
+        "SRL-1.7.1.2-HEAD",
+        "SRL-1.7.1.2-17",
+        "SRL-1.7.1.2-TABLE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.contract_duration_years",
+        "data.oepul.o6_17.contract_period_row"
+      ]
+    },
+    {
+      "id": "O6_17-MB-3.1-AGL-ANNUAL-CONTRACT",
+      "rule_type": "temporal_constraint",
+      "statement": "Für den optionalen Zuschlag für artenreiches Grünland beträgt der Verpflichtungs- und Vertragszeitraum ein Kalenderjahr (1. Jänner bis 31. Dezember).",
+      "conditions": [
+        {
+          "expression": "parcel.codes contains 'AGL' or parcel.field_use_type in {einmaehdige_wiese, streuwiese}",
+          "description": "Zuschlag AGL beantragt bzw. automatisch berücksichtigt.",
+          "input_paths": [
+            "land.parcels[].codes",
+            "land.parcels[].field_use_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "annual_commitment",
+        "description": "Zuschlagsverpflichtung gilt jeweils für ein Kalenderjahr.",
+        "value": {
+          "duration_years": 1
+        }
+      },
+      "source_reference_ids": [
+        "MB-3.1-AGL",
+        "AT-5.9-OPTIONS",
+        "SRL-1.7.1.2-OPTIONS"
+      ]
+    },
+    {
+      "id": "O6_17-AT-5.9-ANNUAL-OPTION-DEADLINES",
+      "rule_type": "temporal_constraint",
+      "statement": "Einjährige Optionen oder Zuschläge bei mehrjährigen Maßnahmen (wie der Zuschlag AGL) können bis inklusive Förderjahr 2028 beantragt werden; der letzte Einstieg in die mehrjährige Maßnahme selbst ist das Förderjahr 2025.",
+      "conditions": [
+        {
+          "expression": "farm.year <= 2028",
+          "description": "Antragsjahr bis 2028.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "option_application_possible",
+        "description": "Zuschlag AGL kann bis 2028 jährlich beantragt werden.",
+        "value": {
+          "last_option_year": 2028
+        }
+      },
+      "source_reference_ids": [
+        "AT-5.9-OPT2028",
+        "AT-5.9-LASTENTRY"
+      ],
+      "rego_symbols": [
+        "data.o6_17.general.last_year_annual_options"
+      ]
+    },
+    {
+      "id": "O6_17-MB-3.2-COMBINATION-OBLIGATION",
+      "rule_type": "access_condition",
+      "statement": "Es muss zeitgleich an 'Umweltgerechte und biodiversitätsfördernde Bewirtschaftung' (UBB) oder 'Biologische Wirtschaftsweise' bzw. 'Biologische Wirtschaftsweise – Teilbetrieb' teilgenommen werden (Kombinationsverpflichtung).",
+      "conditions": [
+        {
+          "expression": "oepul.participating_measures ∩ {UBB, BIO, BIO_TEILBETRIEB} != ∅",
+          "description": "Teilnahme an UBB, BIO oder BIO-Teilbetrieb im selben Jahr.",
+          "input_paths": [
+            "oepul.participating_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_unmet",
+        "description": "Ohne Kombinationsmaßnahme: im 1. Jahr kein Vertrag, ab dem 2. Jahr keine Prämie im betroffenen Jahr.",
+        "value": {
+          "measures": [
+            "UBB",
+            "BIO",
+            "BIO_TEILBETRIEB"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "MB-3.2",
+        "SRL-2.17-ACCESS-UBB",
+        "AT-8.2-CAT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.combination_obligation_met",
+        "data.oepul.o6_17.access_violations",
+        "data.oepul.o6_17.ubb_or_bio_participation"
+      ]
+    },
+    {
+      "id": "O6_17-SRL-1.9.4-UBB-BIO-EXCLUSIVE",
+      "rule_type": "combination_constraint",
+      "statement": "Eine gleichzeitige betriebliche Teilnahme an UBB (bzw. Einschränkung ertragssteigernder Betriebsmittel, Herbizid-/Insektizidverzicht) und Biologischer Wirtschaftsweise ist ausgeschlossen, ausgenommen Bio-Teilbetriebe; die Kombinationsverpflichtung ist daher entweder über UBB oder über BIO zu erfüllen.",
+      "conditions": [
+        {
+          "expression": "not ('UBB' in measures and 'BIO' in measures) or 'BIO_TEILBETRIEB' in measures",
+          "description": "Kein gleichzeitiges UBB und BIO ohne Teilbetrieb.",
+          "input_paths": [
+            "oepul.participating_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combination_not_possible",
+        "description": "Unmögliche Maßnahmenkombination; Korrektur bis zur Auszahlungsmitteilung zulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-1.9.4-EXCL"
+      ],
+      "rego_symbols": [
+        "data.o6_17.combination_table.farm_level_exclusions_srl_1_9_4"
+      ]
+    },
+    {
+      "id": "O6_17-MB-3.3-MIN-GRASSLAND",
+      "rule_type": "access_condition",
+      "statement": "Im ersten Teilnahmejahr müssen zumindest 2,00 ha Grünlandfläche bewirtschaftet werden.",
+      "conditions": [
+        {
+          "expression": "farm.year == oepul.o6_17.contract_start_year",
+          "description": "Erstes Teilnahmejahr.",
+          "input_paths": [
+            "farm.year",
+            "oepul.o6_17.contract_start_year"
+          ]
+        },
+        {
+          "expression": "sum(parcels[land_use=='grassland'].area_ha) >= 2.0",
+          "description": "Grünlandfläche mindestens 2,00 ha.",
+          "input_paths": [
+            "land.parcels[].area_ha",
+            "land.parcels[].land_use",
+            "land.grassland_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_unmet",
+        "description": "Bei Unterschreitung im 1. Jahr kommt kein Vertrag zustande.",
+        "value": {
+          "min_grassland_ha": 2.0
+        }
+      },
+      "source_reference_ids": [
+        "MB-3.3-MIN",
+        "SRL-2.17-ACCESS-2HA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.access_violations",
+        "data.oepul.o6_17.grassland_area_ha"
+      ]
+    },
+    {
+      "id": "O6_17-MB-3.3-MIN-GRASSLAND-SHARE",
+      "rule_type": "access_condition",
+      "statement": "Im ersten Teilnahmejahr müssen mindestens 40 % der landwirtschaftlichen Nutzfläche des Betriebs (ohne Almweideflächen) als Grünland bewirtschaftet werden.",
+      "conditions": [
+        {
+          "expression": "farm.year == oepul.o6_17.contract_start_year",
+          "description": "Erstes Teilnahmejahr.",
+          "input_paths": [
+            "farm.year",
+            "oepul.o6_17.contract_start_year"
+          ]
+        },
+        {
+          "expression": "grassland_ha / (land.total_area_ha - land.alpine_pasture_area_ha) >= 0.40",
+          "description": "Grünlandanteil an der LN ohne Almweide mindestens 40 %.",
+          "input_paths": [
+            "land.total_area_ha",
+            "land.alpine_pasture_area_ha",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_unmet",
+        "description": "Bei Unterschreitung im 1. Jahr kommt kein Vertrag zustande.",
+        "value": {
+          "min_share": 0.4
+        }
+      },
+      "source_reference_ids": [
+        "MB-3.3-SHARE",
+        "SRL-2.17-ACCESS-40"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.grassland_share",
+        "data.oepul.o6_17.grassland_share_sufficient",
+        "data.oepul.o6_17.access_violations"
+      ]
+    },
+    {
+      "id": "O6_17-MB-3.3-FOLLOW-YEARS-RELAXED",
+      "rule_type": "exception",
+      "statement": "In den Folgejahren nach dem ersten Teilnahmejahr darf weniger als 2,00 ha Grünland bewirtschaftet werden und der Grünlandanteil unter 40 % liegen; auch die Tierhaltereigenschaft ist nur im ersten Jahr Voraussetzung.",
+      "conditions": [
+        {
+          "expression": "farm.year > oepul.o6_17.contract_start_year",
+          "description": "Folgejahr.",
+          "input_paths": [
+            "farm.year",
+            "oepul.o6_17.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "first_year_minimums_not_checked",
+        "description": "Mindestgrünland, Grünlandanteil und Tierhaltereigenschaft werden nicht geprüft.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-3.3-NOTE",
+        "MB-3.4"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.first_participation_year"
+      ]
+    },
+    {
+      "id": "O6_17-MB-3.4-LIVESTOCK-FIRST-YEAR",
+      "rule_type": "access_condition",
+      "statement": "Im ersten Teilnahmejahr muss die Eigenschaft als tierhaltender Betrieb erfüllt sein.",
+      "conditions": [
+        {
+          "expression": "farm.year == oepul.o6_17.contract_start_year",
+          "description": "Erstes Teilnahmejahr.",
+          "input_paths": [
+            "farm.year",
+            "oepul.o6_17.contract_start_year"
+          ]
+        },
+        {
+          "expression": "is_livestock_farm",
+          "description": "Mindestens 0,30 RGVE je ha Futterfläche.",
+          "input_paths": [
+            "livestock.species_groups[].rgve_category",
+            "livestock.species_groups[].animal_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_unmet",
+        "description": "Ohne Tierhaltereigenschaft im 1. Jahr kommt kein Vertrag zustande.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-3.4",
+        "SRL-2.17-ACCESS-2HA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.is_livestock_farm",
+        "data.oepul.o6_17.access_violations"
+      ]
+    },
+    {
+      "id": "O6_17-MB-4-LIVESTOCK-DEFINITION",
+      "rule_type": "definition",
+      "statement": "Tierhaltend ist ein Betrieb mit mindestens 0,30 RGVE (Rinder, Schafe, Ziegen, Equiden, Rot- und Damwild, Neuweltkamele) je Hektar Futterfläche (Summe der Grünland- und Ackerfutterflächen); andernfalls gilt er als nicht-tierhaltend.",
+      "conditions": [
+        {
+          "expression": "rgve_total / (grassland_ha + arable_forage_ha) >= 0.30",
+          "description": "Viehbesatz je ha Futterfläche.",
+          "input_paths": [
+            "livestock.species_groups[].rgve_category",
+            "livestock.species_groups[].animal_count",
+            "land.parcels[].area_ha",
+            "land.parcels[].land_use",
+            "land.parcels[].field_use_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "is_livestock_farm",
+        "description": "Betrieb gilt als tierhaltend.",
+        "value": {
+          "threshold_rgve_per_ha": 0.3
+        }
+      },
+      "source_reference_ids": [
+        "MB-4-DEF",
+        "MB-4-FUTTER",
+        "AT-5.7-DEF",
+        "SRL-1.5.4"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.is_livestock_farm",
+        "data.oepul.o6_17.livestock_density_rgve_per_ha",
+        "data.oepul.o6_17.forage_area_ha"
+      ]
+    },
+    {
+      "id": "O6_17-MB-4-ALL-FORAGE-AREAS",
+      "rule_type": "calculation",
+      "statement": "Die Berechnung als tierhaltender Betrieb bezieht sich auf sämtliche beantragten Futterflächen des Betriebes, auch solche in den Maßnahmen 'Naturschutz' oder 'Bewirtschaftung von Bergmähdern'.",
+      "conditions": [
+        {
+          "expression": "forage_area = all grassland + arable forage parcels",
+          "description": "Alle beantragten Futterflächen unabhängig von anderen Maßnahmen.",
+          "input_paths": [
+            "land.parcels[].area_ha",
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "forage_area_basis",
+        "description": "Futterfläche ohne Abzug von Naturschutz-/Bergmähderflächen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-4-ALLAREAS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.forage_area_ha",
+        "data.oepul.o6_17.grassland_area_ha"
+      ]
+    },
+    {
+      "id": "O6_17-MB-4-ARABLE-FORAGE-LIST",
+      "rule_type": "definition",
+      "statement": "Als Ackerfutterflächen gelten die Schlagnutzungsarten Futtergräser, Wechselwiese, Kleegras, Klee, Luzerne, sonstiges Feldfutter und Ackerweide (ausschließlich beweidete Ackerflächen).",
+      "conditions": [
+        {
+          "expression": "parcel.land_use == 'arable' and parcel.field_use_type in arable_forage_field_uses",
+          "description": "Schlagnutzung in der geschlossenen Liste.",
+          "input_paths": [
+            "land.parcels[].land_use",
+            "land.parcels[].field_use_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "is_arable_forage",
+        "description": "Fläche zählt zur Futterfläche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-4-ACKERFUTTER",
+        "AT-4-AF",
+        "SRL-1.5.3.2-AF"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.is_arable_forage",
+        "data.oepul.o6_17.arable_forage_keys",
+        "data.o6_17.lists.arable_forage_field_uses"
+      ]
+    },
+    {
+      "id": "O6_17-MB-11-RGVE-KEY",
+      "rule_type": "calculation",
+      "statement": "Für die Ermittlung der förderfähigen RGVE sind die Umrechnungsfaktoren des RGVE-Schlüssels (Merkblatt Kapitel 11, SRL Anhang A, § 21 Abs. 4 GSP-AV) anzuwenden; Schweine haben nur GVE-Werte und zählen nicht als RGVE.",
+      "conditions": [
+        {
+          "expression": "rgve = sum(animal_count * rgve_per_head[rgve_category])",
+          "description": "RGVE je Tierkategorie aus Datentabelle.",
+          "input_paths": [
+            "livestock.species_groups[].rgve_category",
+            "livestock.species_groups[].animal_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rgve_total",
+        "description": "Summe RGVE des Betriebs.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-4-KEY",
+        "MB-11-INTRO",
+        "MB-11-CATTLE",
+        "MB-11-HORSES",
+        "MB-11-GAME",
+        "ANH-A-TITLE",
+        "ANH-A-CATTLE",
+        "ANH-A-CAMELIDS",
+        "ANH-A-PIGS",
+        "SRL-1.5.5.1",
+        "GSPAV-21-4"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.rgve_total",
+        "data.oepul.o6_17.rgve_row",
+        "data.o6_17.rgve_key.rgve_conversion"
+      ]
+    },
+    {
+      "id": "O6_17-ANH-A-DWARF-CATTLE-BREEDS",
+      "rule_type": "definition",
+      "statement": "Als Zwergrinder (mit reduzierten RGVE-Faktoren 0,2/0,3/0,5) gelten die Rassen Dahomey, Dexter, Kerry und Zwergzebu.",
+      "conditions": [
+        {
+          "expression": "breed in {Dahomey, Dexter, Kerry, Zwergzebu}",
+          "description": "Rasse ist Zwergrind.",
+          "input_paths": [
+            "livestock.species_groups[].category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "dwarf_cattle_factors",
+        "description": "Zwergrinder-Faktoren anzuwenden.",
+        "value": {
+          "breeds": [
+            "Dahomey",
+            "Dexter",
+            "Kerry",
+            "Zwergzebu"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "ANH-A-DWARF",
+        "GSPAV-21-4-DWARF"
+      ],
+      "rego_symbols": [
+        "data.o6_17.rgve_key.dwarf_cattle_breeds"
+      ]
+    },
+    {
+      "id": "O6_17-ANH-A-GAME-DEFINITION",
+      "rule_type": "definition",
+      "statement": "Andere raufutterverzehrende GVE sind pflanzenfressende Wildhuftiere, die in Gefangenschaft gehalten, gezüchtet oder zur Fleischgewinnung getötet werden, sofern die Haltung auf landwirtschaftlichen Nutzflächen erfolgt.",
+      "conditions": [
+        {
+          "expression": "game kept in captivity on agricultural land",
+          "description": "Gehegewild auf LN.",
+          "input_paths": [
+            "livestock.species_groups[].species"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "game_counts_as_rgve",
+        "description": "Rotwild, Damwild, anderes Zuchtwild und Neuweltkamele mit Faktoren laut Tabelle.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "ANH-A-GAME"
+      ],
+      "rego_symbols": [
+        "data.o6_17.rgve_key.rgve_conversion"
+      ]
+    },
+    {
+      "id": "O6_17-AT-5.7-ANNUAL-SWITCH",
+      "rule_type": "temporal_constraint",
+      "statement": "Ein jährlicher Wechsel zwischen tierhaltendem und nicht-tierhaltendem Betrieb ist möglich; die Eigenschaft wird für jedes Antragsjahr gesondert ermittelt.",
+      "conditions": [
+        {
+          "expression": "evaluated per farm.year",
+          "description": "Jährliche Ermittlung.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "annual_determination",
+        "description": "Tierhaltereigenschaft je Antragsjahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-5.7-SWITCH",
+        "SRL-1.5.4-SWITCH"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.is_livestock_farm"
+      ]
+    },
+    {
+      "id": "O6_17-AT-5.7-HERD-SOURCE",
+      "rule_type": "calculation",
+      "statement": "Der Tierbestand wird bei Rindern taggenau als Durchschnittsbestand aus der Rinderdatenbank errechnet, bei anderen Tierkategorien aus der Tierliste zum Stichtag 1. April oder – bei beantragtem Durchschnittsbestand – aus der Durchschnittstierliste; bei schwankenden Beständen ist eine Durchschnittstierliste ein- oder nachzureichen.",
+      "conditions": [
+        {
+          "expression": "species == 'cattle' -> cattle database average",
+          "description": "Rinder aus Rinderdatenbank.",
+          "input_paths": [
+            "livestock.species_groups[].species"
+          ]
+        },
+        {
+          "expression": "else -> Stichtagstierliste 1. April or Durchschnittstierliste",
+          "description": "Andere Tiere aus Tierliste.",
+          "input_paths": [
+            "livestock.species_groups[].animal_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "herd_size_source",
+        "description": "animal_count ist als Jahresdurchschnitt bzw. Stichtagsbestand gemäß dieser Quelle anzugeben.",
+        "value": {
+          "reference_date": "04-01"
+        }
+      },
+      "source_reference_ids": [
+        "AT-5.7-CATTLE",
+        "AT-5.7-STICHTAG",
+        "SRL-1.5.5.2",
+        "GSPAV-34-9"
+      ]
+    },
+    {
+      "id": "O6_17-AT-5.7-STRUCTURE-CHANGE",
+      "rule_type": "consequence",
+      "statement": "Bei einem unterjährigen Betriebsstrukturwechsel werden Rinder ab dem Tag des Wechsels der neuen Betriebsstruktur zugerechnet; dies kann zum Verlust der Tierhaltereigenschaft führen.",
+      "conditions": [
+        {
+          "expression": "structure change during year",
+          "description": "Hauptbetrieb/Teilbetrieb-Wechsel."
+        }
+      ],
+      "result": {
+        "outcome": "livestock_reassigned",
+        "description": "Rinder werden ab Wechseltag neu zugerechnet.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-5.7-STRUCT"
+      ]
+    },
+    {
+      "id": "O6_17-AT-5.6-ANIMALS-IN-AUSTRIA",
+      "rule_type": "eligibility",
+      "statement": "Nur im Inland gehaltene Tiere sind für den prämienrelevanten Viehbesatz anrechenbar.",
+      "conditions": [
+        {
+          "expression": "species_group.kept_in_austria == true",
+          "description": "Tiere werden in Österreich gehalten.",
+          "input_paths": [
+            "livestock.species_groups[].kept_in_austria"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "animals_counted",
+        "description": "Im Ausland gehaltene Tiere zählen nicht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-5.6-ANIMALS",
+        "SRL-1.4.2.2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.kept_in_austria",
+        "data.oepul.o6_17.rgve_total"
+      ]
+    },
+    {
+      "id": "O6_17-AT-5.6-AREAS-IN-AUSTRIA",
+      "rule_type": "eligibility",
+      "statement": "Geförderte Flächen müssen in Österreich liegen; Flächen außerhalb Österreichs werden nicht gefördert und bei Begrenzungen nicht berücksichtigt.",
+      "conditions": [
+        {
+          "expression": "parcel located in Austria",
+          "description": "Lage im Bundesgebiet.",
+          "input_paths": [
+            "farm.region.federal_state"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "area_eligible",
+        "description": "Auslandsflächen nicht förderfähig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-5.6-AREAS",
+        "SRL-1.4.2.1"
+      ]
+    },
+    {
+      "id": "O6_17-MB-5.1-CONVERSION-DEFINITION",
+      "rule_type": "definition",
+      "statement": "Als Grünlandumbruch gelten alle technischen Verfahren, die eine Zerstörung der Grasnarbe zur Folge haben.",
+      "conditions": [
+        {
+          "expression": "operation destroys sward",
+          "description": "Grasnarbe wird zerstört.",
+          "input_paths": [
+            "land.parcels[].operations.grassland_conversions"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "is_conversion",
+        "description": "Maßnahme gilt als Umbruch.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-5.1-DEF",
+        "SRL-2.17-DEF-UMBRUCH"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.conversion_events"
+      ]
+    },
+    {
+      "id": "O6_17-MB-5.1-MINOR-DEVIATION-300M2",
+      "rule_type": "exception",
+      "statement": "Geringfügige Abweichungen (z. B. temporärer Gemüsegarten, Erneuerung/Anlage von Drainagen, Aufschüttungen, Planierungen, Kanalbau) gelten bis zu 300 m² je Einzelfläche nicht als Umbruch.",
+      "conditions": [
+        {
+          "expression": "event.area_m2 <= 300",
+          "description": "Fläche je Einzelfläche höchstens 300 m².",
+          "input_paths": [
+            "land.parcels[].operations.grassland_conversions[].area_m2"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_a_conversion",
+        "description": "Kein Verstoß gegen den Umbruchsverzicht.",
+        "value": {
+          "max_m2": 300
+        }
+      },
+      "source_reference_ids": [
+        "MB-5.1-MINOR",
+        "SRL-2.17-DEF-MINOR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.conversion_permitted",
+        "data.o6_17.lists.minor_deviation_max_m2_per_area"
+      ]
+    },
+    {
+      "id": "O6_17-MB-5.1-FILL-PERMIT",
+      "rule_type": "exception",
+      "statement": "Aufschüttungen mit nachfolgender Einsaat sind unter Einhaltung des Landesrechts zulässig; bei Aufschüttungen größer 300 m² muss vorab eine landesrechtliche Bewilligung eingeholt werden.",
+      "conditions": [
+        {
+          "expression": "event.kind == 'fill' and event.reseeded",
+          "description": "Aufschüttung mit Einsaat.",
+          "input_paths": [
+            "land.parcels[].operations.grassland_conversions[].kind",
+            "land.parcels[].operations.grassland_conversions[].reseeded"
+          ]
+        },
+        {
+          "expression": "event.area_m2 <= 300 or event.permit_obtained",
+          "description": "Bewilligung ab mehr als 300 m².",
+          "input_paths": [
+            "land.parcels[].operations.grassland_conversions[].area_m2",
+            "land.parcels[].operations.grassland_conversions[].permit_obtained"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "fill_permitted",
+        "description": "Aufschüttung verletzt den Umbruchsverzicht nicht.",
+        "value": {
+          "permit_threshold_m2": 300
+        }
+      },
+      "source_reference_ids": [
+        "MB-5.1-FILL-OK",
+        "MB-5.1-FILL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.conversion_permitted"
+      ]
+    },
+    {
+      "id": "O6_17-MB-5.1-NO-USE-SONSTIGE",
+      "rule_type": "obligation",
+      "statement": "Erfolgt auf einer Fläche (z. B. nach Aufschüttung) im betroffenen Jahr keine Nutzung, ist sie als 'Sonstige Grünlandfläche' zu beantragen; Sonstige Grünlandflächen sind nicht förderfähig.",
+      "conditions": [
+        {
+          "expression": "no use in year",
+          "description": "Keine Nutzung im Antragsjahr.",
+          "input_paths": [
+            "land.parcels[].operations.cutting_dates",
+            "land.parcels[].operations.full_grazing"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "apply_as_sonstige_gruenlandflaeche",
+        "description": "Fläche ohne Prämie (field_use_type sonstige_gruenlandflaeche).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-5.1-NOUSE",
+        "AT-5.5.1-SONSTIGE",
+        "GSPAV-25-6"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.parcel_excluded_general"
+      ]
+    },
+    {
+      "id": "O6_17-MB-5.2-SPECIES-RICH-DEFINITION",
+      "rule_type": "definition",
+      "statement": "Als artenreiches Grünland gelten gemähte Grünlandflächen mit mindestens 5 Kennarten gemäß Kennartenliste sowie einmähdige Wiesen (inklusive Streuwiesen, ohne Bergmähder).",
+      "conditions": [
+        {
+          "expression": "mown grassland with >= 5 Kennarten or field_use_type in {einmaehdige_wiese, streuwiese}",
+          "description": "Kennarten oder einmähdige Nutzung.",
+          "input_paths": [
+            "land.parcels[].field_use_type",
+            "land.parcels[].agl_survey.sections"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "is_species_rich_grassland",
+        "description": "Fläche kann für den Zuschlag AGL berücksichtigt werden.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-5.2",
+        "MB-5.2b",
+        "SRL-2.17-DEF-AGL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.agl_conditions_met"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.1-NO-CONVERSION",
+      "rule_type": "obligation",
+      "statement": "Auf sämtlichen Grünlandflächen des Betriebes ist während des gesamten Vertragszeitraums auf Grünlandumbruch einschließlich Grünlanderneuerung mittels Umbruch zu verzichten.",
+      "conditions": [
+        {
+          "expression": "for all grassland parcels: no conversion event unless permitted",
+          "description": "Kein unzulässiger Umbruch auf irgendeiner Grünlandfläche.",
+          "input_paths": [
+            "land.parcels[].operations.grassland_conversions",
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_breached",
+        "description": "Verstoß gegen inhaltliche Förderverpflichtung (Sanktion nach § 48 GSP-AV).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-6.1",
+        "SRL-2.17-OBL-UMBRUCH"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.violations",
+        "data.oepul.o6_17.conversion_events",
+        "data.oepul.o6_17.conversion_permitted"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.1-NO-ARABLE-GRASSLAND-SWAP",
+      "rule_type": "prohibition",
+      "statement": "Ein Acker-Grünland-Flächentausch ist nicht möglich.",
+      "conditions": [
+        {
+          "expression": "oepul.o6_17.arable_grassland_swap == true",
+          "description": "Tausch von Acker- und Grünlandflächen.",
+          "input_paths": [
+            "oepul.o6_17.arable_grassland_swap"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_breached",
+        "description": "Verstoß gegen den Umbruchsverzicht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-6.1-SWAP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.violations"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.2-RENEWAL-EQUIPMENT",
+      "rule_type": "obligation",
+      "statement": "Eine umbruchslose Grünlanderneuerung ist erlaubt, jedoch nur mit Saatstriegel, Schlitzdrillgerät, Walze oder Wiesenegge.",
+      "conditions": [
+        {
+          "expression": "all(parcel.operations.renewal_equipment in allowed_renewal_equipment)",
+          "description": "Nur Geräte der geschlossenen Liste.",
+          "input_paths": [
+            "land.parcels[].operations.renewal_equipment"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_breached",
+        "description": "Andere Geräte sind für die Erneuerung nicht zulässig.",
+        "value": {
+          "allowed": [
+            "saatstriegel",
+            "schlitzdrillgeraet",
+            "walze",
+            "wiesenegge"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "MB-6.2",
+        "MB-6.2-LIST"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.violations",
+        "data.oepul.o6_17.allowed_renewal_equipment",
+        "data.o6_17.lists.allowed_renewal_equipment"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.3-PEST-EXCEPTION",
+      "rule_type": "exception",
+      "statement": "Eine Grünlanderneuerung durch Umbruch ist ausnahmsweise bei erforderlicher Grünlandsanierung nach Schädlingsbefall (z. B. Engerlinge, Maulwurfsgrillen, Schwarzkopfregenwurm, Wildschweinschäden) zulässig; die Notwendigkeit ist zu dokumentieren und die Unterlagen sind am Betrieb aufzubewahren.",
+      "conditions": [
+        {
+          "expression": "event.reason == 'pest_damage'",
+          "description": "Sanierung nach Schädlingsbefall.",
+          "input_paths": [
+            "land.parcels[].operations.grassland_conversions[].reason"
+          ]
+        },
+        {
+          "expression": "event.documented == true",
+          "description": "Notwendigkeit dokumentiert.",
+          "input_paths": [
+            "land.parcels[].operations.grassland_conversions[].documented"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "conversion_permitted",
+        "description": "Umbruch zulässig.",
+        "value": {
+          "examples": [
+            "Engerlinge",
+            "Maulwurfsgrillen",
+            "Schwarzkopfregenwurm",
+            "Wildschweinschäden"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "MB-6.3-PEST",
+        "MB-6.3-DOC",
+        "SRL-2.17-OBL-EXC",
+        "SRL-2.17-OBL-DOC"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.conversion_permitted",
+        "data.o6_17.lists.conversion_exception_reasons"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.3-BIODIVERSITY-RESEEDING-EXCEPTION",
+      "rule_type": "exception",
+      "statement": "Eine Grünlanderneuerung durch Umbruch ist ausnahmsweise zulässig bei der Neueinsaat einer dauerhaften, regionalen Grünland-Saatgutmischung für Biodiversitätsflächen gemäß SRL 2.1.4-4d bzw. 2.1.9-5d in UBB oder BIO.",
+      "conditions": [
+        {
+          "expression": "event.reason == 'biodiversity_reseeding'",
+          "description": "Neueinsaat Biodiversitätsfläche (DIVRS).",
+          "input_paths": [
+            "land.parcels[].operations.grassland_conversions[].reason"
+          ]
+        },
+        {
+          "expression": "UBB or BIO participation",
+          "description": "Teilnahme an UBB oder BIO.",
+          "input_paths": [
+            "oepul.participating_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "conversion_permitted",
+        "description": "Umbruch zulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-6.3-DIV",
+        "SRL-2.17-OBL-EXC",
+        "SRL-2.1.4-4D"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.conversion_permitted"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.4-TRAINING",
+      "rule_type": "obligation",
+      "statement": "Bis spätestens 31.12.2025 sind unabhängig von der Vorqualifikation fachspezifische Kurse zum Thema Grünlandbewirtschaftung im Mindestausmaß von 5 Stunden zu absolvieren.",
+      "conditions": [
+        {
+          "expression": "sum(creditable training hours) >= 5",
+          "description": "Mindestens 5 anrechenbare Stunden.",
+          "input_paths": [
+            "oepul.o6_17.training[].hours",
+            "oepul.o6_17.training[].course_date"
+          ]
+        },
+        {
+          "expression": "deadline 2025-12-31 passed",
+          "description": "Prüfung nach Fristablauf.",
+          "input_paths": [
+            "farm.year",
+            "oepul.evaluation_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_breached",
+        "description": "Verstoß gegen einmalige Weiterbildungsverpflichtung (geahndet im Jahr der Feststellung).",
+        "value": {
+          "hours": 5,
+          "deadline": "2025-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "MB-6.4-DEADLINE",
+        "MB-6.4-TRAIN",
+        "SRL-2.17-TRAIN",
+        "SRL-2.17-TRAIN-5H"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.training_obligation_met",
+        "data.oepul.o6_17.training_hours_creditable",
+        "data.oepul.o6_17.violations"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.4-TRAINING-TOPICS",
+      "rule_type": "obligation",
+      "statement": "Die Kurse müssen Grünlandbewirtschaftung behandeln; die Themen Nutzungsverfahren und Nutzungshäufigkeit, Düngeplanung unter Berücksichtigung des Tierbestandes oder Umsetzbarkeit des Konzepts des abgestuften Wiesenbaus müssen laut SRL jedenfalls Inhalt sein (Merkblatt: 'mögliche Themen').",
+      "conditions": [
+        {
+          "expression": "course.grassland_topic == true",
+          "description": "Kurs behandelt Grünlandbewirtschaftung mit einem der Themen.",
+          "input_paths": [
+            "oepul.o6_17.training[].grassland_topic"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "course_creditable",
+        "description": "Nur fachspezifische Grünlandkurse sind anrechenbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-6.4-TOPICS",
+        "SRL-2.17-TRAIN-TOPICS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.creditable_course",
+        "data.o6_17.lists.training.topics"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.4-TRAINING-PROVIDER",
+      "rule_type": "obligation",
+      "statement": "Es sind Kurse aus dem Bildungsangebot eines vom BMLUK (SRL: BML) anerkannten Bildungsanbieters zu wählen.",
+      "conditions": [
+        {
+          "expression": "course.provider_recognized == true",
+          "description": "Anerkannter Bildungsanbieter.",
+          "input_paths": [
+            "oepul.o6_17.training[].provider_recognized"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "course_creditable",
+        "description": "Kurse nicht anerkannter Anbieter zählen nicht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-6.4-PROVIDER",
+        "SRL-2.17-TRAIN-5H"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.creditable_course"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.4-TRAINING-PERSON",
+      "rule_type": "exception",
+      "statement": "Aufgrund betrieblicher Erfordernisse kann der Kurs auch von einer am Betrieb maßgeblich tätigen und in die Bewirtschaftung eingebundenen Person besucht werden.",
+      "conditions": [
+        {
+          "expression": "course.person_role in {applicant, significantly_involved_person}",
+          "description": "Förderwerber/in oder maßgeblich tätige Person.",
+          "input_paths": [
+            "oepul.o6_17.training[].person_role"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "course_creditable",
+        "description": "Kurs ist anrechenbar.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-6.4-PERSON",
+        "SRL-2.17-TRAIN-PERSON"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.creditable_course",
+        "data.o6_17.lists.training.eligible_person_roles"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.4-TRAINING-FROM-2022",
+      "rule_type": "temporal_constraint",
+      "statement": "Anrechenbar sind Kursbesuche ab dem 1. Jänner 2022 (bis zur Frist 31.12.2025).",
+      "conditions": [
+        {
+          "expression": "'2022-01-01' <= course.course_date <= '2025-12-31'",
+          "description": "Kursdatum im Anrechnungszeitraum.",
+          "input_paths": [
+            "oepul.o6_17.training[].course_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "course_creditable",
+        "description": "Ältere Kurse zählen nicht.",
+        "value": {
+          "from": "2022-01-01",
+          "to": "2025-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "MB-6.4-FROM2022",
+        "SRL-2.17-TRAIN-2022"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.creditable_course"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.4-TRAINING-ONE-FARM",
+      "rule_type": "prohibition",
+      "statement": "Der Kursbesuch einer Person kann grundsätzlich nicht auf mehrere Betriebe angerechnet werden.",
+      "conditions": [
+        {
+          "expression": "course.credited_to_other_farm == false",
+          "description": "Nicht bereits für anderen Betrieb angerechnet.",
+          "input_paths": [
+            "oepul.o6_17.training[].credited_to_other_farm"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "course_creditable",
+        "description": "Bereits anderweitig angerechnete Kurse zählen nicht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-6.4-ONEFARM"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.creditable_course"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.4-TRAINING-PERSON-LEAVES",
+      "rule_type": "temporal_constraint",
+      "statement": "Die Kursabsolvierung ist an die geschulte Person gebunden: verlässt sie den Betrieb vor dem 31.12.2025, muss bis dahin ein Kurs nachgeholt werden; scheidet sie danach aus, ist kein weiterer Kurs erforderlich.",
+      "conditions": [
+        {
+          "expression": "course.person_left_farm_date == null or >= '2025-12-31'",
+          "description": "Geschulte Person bis Fristende am Betrieb.",
+          "input_paths": [
+            "oepul.o6_17.training[].person_left_farm_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "course_creditable",
+        "description": "Kurse von vor Fristende ausgeschiedenen Personen zählen nicht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-6.4-LEAVE",
+        "MB-6.4-LEAVE2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.trained_person_still_counts"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.4-TRAINING-CONFIRMATION",
+      "rule_type": "documentation",
+      "statement": "Eine schriftliche Kursbesuchsbestätigung ist nach Aufforderung an die AMA zu übermitteln, sofern die Übermittlung nicht durch den Bildungsanbieter erfolgt.",
+      "conditions": [
+        {
+          "expression": "AMA request and provider did not transmit",
+          "description": "Aufforderung durch AMA."
+        }
+      ],
+      "result": {
+        "outcome": "submit_confirmation",
+        "description": "Bestätigung übermitteln.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-6.4-CONF",
+        "SRL-2.17-TRAIN-CONF",
+        "MB-6.4-QUERY"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.4-NO-DOUBLE-COUNTING",
+      "rule_type": "prohibition",
+      "statement": "Doppelanrechnungen ein und derselben Bildungsveranstaltung auf mehrere Verpflichtungen (z. B. auf die Biodiversitäts-Weiterbildung in UBB/BIO) sind nicht zulässig.",
+      "conditions": [
+        {
+          "expression": "course.credited_to_other_obligation == false",
+          "description": "Kurs nicht bereits für andere Verpflichtung angerechnet.",
+          "input_paths": [
+            "oepul.o6_17.training[].credited_to_other_obligation"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "course_creditable",
+        "description": "Doppelt angerechnete Kurse zählen nicht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-6.4-DOUBLE",
+        "SRL-2.17-TRAIN-DOUBLE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.creditable_course"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.4-UBB-BIO-TRAINING-NOTE",
+      "rule_type": "cross_reference",
+      "statement": "Zusätzlich gilt die Biodiversitäts-Weiterbildung (mindestens 3 Stunden) der UBB bzw. BIO; bei BIO sind zusätzlich 5 Stunden zu Themen der biologischen Wirtschaftsweise zu absolvieren. Diese Stunden sind von der o6_17-Weiterbildung getrennt.",
+      "conditions": [
+        {
+          "expression": "UBB or BIO participation",
+          "description": "Kombinationsmaßnahme.",
+          "input_paths": [
+            "oepul.participating_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "additional_training_obligations",
+        "description": "Weitere, getrennt zu erfüllende Weiterbildungen.",
+        "value": {
+          "ubb_bio_biodiversity_hours": 3,
+          "bio_organic_hours": 5
+        }
+      },
+      "source_reference_ids": [
+        "MB-6.4-UBB",
+        "MB-6.4-BIO5",
+        "SRL-2.1.4-TRAIN3"
+      ],
+      "rego_symbols": [
+        "data.o6_17.lists.training.related_obligations"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.5-SOIL-PARAMETERS",
+      "rule_type": "obligation",
+      "statement": "Bodenuntersuchungen auf den förderfähigen Grünlandflächen sind nach den Richtlinien für die sachgerechte Düngung oder der EUF-Methode hinsichtlich pH-Wert, Phosphor-, Kalium- und Humusgehalt durchzuführen.",
+      "conditions": [
+        {
+          "expression": "sample.parameters ⊇ {ph, phosphorus, potassium, humus}",
+          "description": "Alle vier Parameter.",
+          "input_paths": [
+            "oepul.o6_17.soil_samples[].parameters"
+          ]
+        },
+        {
+          "expression": "sample.method in {richtlinien_sachgerechte_duengung, euf}",
+          "description": "Zulässige Methode.",
+          "input_paths": [
+            "oepul.o6_17.soil_samples[].method"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "sample_valid",
+        "description": "Nur vollständige Untersuchungen zählen.",
+        "value": {
+          "parameters": [
+            "ph",
+            "phosphorus",
+            "potassium",
+            "humus"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "MB-6.5-PARAMS",
+        "SRL-2.17-SOIL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.valid_soil_sample",
+        "data.o6_17.lists.soil_sampling"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.5-SOIL-SAMPLES",
+      "rule_type": "obligation",
+      "statement": "Bis spätestens 31.12.2025 ist pro angefangene 5 ha förderfähige Grünlandfläche unter 18 % Hangneigung (gemäß MFA 2025) mindestens eine Bodenprobe zu ziehen und an ein akkreditiertes Labor zu übermitteln (Beispiele: 4,90 ha → 1 Probe; 10,40 ha → 3 Proben).",
+      "conditions": [
+        {
+          "expression": "count(valid samples) >= ceil(base_ha / 5)",
+          "description": "Ausreichende Zahl gültiger Proben.",
+          "input_paths": [
+            "oepul.o6_17.soil_samples",
+            "oepul.o6_17.eligible_grassland_lt18_mfa2025_ha"
+          ]
+        },
+        {
+          "expression": "deadline 2025-12-31 passed",
+          "description": "Prüfung nach Fristablauf.",
+          "input_paths": [
+            "farm.year",
+            "oepul.evaluation_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_breached",
+        "description": "Verstoß gegen einmalige Bodenprobenverpflichtung (geahndet im Jahr der Feststellung).",
+        "value": {
+          "hectares_per_sample": 5,
+          "deadline": "2025-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "MB-6.5-COUNT",
+        "MB-6.5-EX1",
+        "MB-6.5-EX2",
+        "SRL-2.17-SOIL-COUNT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.soil_samples_required",
+        "data.oepul.o6_17.soil_sample_obligation_met",
+        "data.oepul.o6_17.violations"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.5-SOIL-BASE",
+      "rule_type": "calculation",
+      "statement": "Ausgangsbasis für die Probenzahl sind alle Grünlandflächen mit Hangneigung unter 18 % laut MFA 2025, unabhängig von Schlagnutzung und Einbringung in andere Maßnahmen (Naturschutzflächen reduzieren nicht); Flächen mit Umbruchsverbot gemäß GLÖZ 2, 4 und 9 sind nicht förderfähig und zählen nicht zur Ausgangsbasis.",
+      "conditions": [
+        {
+          "expression": "base_ha = sum(grassland parcels with slope < 18 and not GLÖZ 2/4/9) in MFA 2025",
+          "description": "Ausgangsfläche.",
+          "input_paths": [
+            "land.parcels[].slope_percent",
+            "land.parcels[].constraints.gloez_conversion_ban",
+            "oepul.o6_17.eligible_grassland_lt18_mfa2025_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "soil_sample_base_ha",
+        "description": "Fläche für die Probenberechnung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-6.5-BASE",
+        "MB-6.5-NATURSCHUTZ",
+        "MB-6.5-GLOEZ"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.soil_sample_base_ha",
+        "data.oepul.o6_17.soil_base_parcel"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.5-SOIL-FROM-2022-ACCREDITED",
+      "rule_type": "temporal_constraint",
+      "statement": "Anrechenbar sind Bodenproben, die ab dem 1. Jänner 2022 gezogen und von einem akkreditierten Labor untersucht wurden; die Übermittlung an das Labor muss bis 31.12.2025 erfolgen.",
+      "conditions": [
+        {
+          "expression": "sample.drawn_date >= '2022-01-01'",
+          "description": "Ziehung ab 2022.",
+          "input_paths": [
+            "oepul.o6_17.soil_samples[].drawn_date"
+          ]
+        },
+        {
+          "expression": "sample.lab_submission_date <= '2025-12-31' and sample.lab_accredited",
+          "description": "Akkreditiertes Labor, fristgerecht übermittelt.",
+          "input_paths": [
+            "oepul.o6_17.soil_samples[].lab_submission_date",
+            "oepul.o6_17.soil_samples[].lab_accredited"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "sample_valid",
+        "description": "Probe ist anrechenbar.",
+        "value": {
+          "from": "2022-01-01",
+          "submission_deadline": "2025-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "MB-6.5-FROM2022",
+        "SRL-2.17-SOIL-2022",
+        "SRL-2.17-SOIL-LAB"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.valid_soil_sample"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.5-SOIL-RESULTS-ENTRY",
+      "rule_type": "documentation",
+      "statement": "Die Ergebnisse der Bodenproben sind im INVEKOS-GIS (AMA-Datenbank) in der vorgesehenen Erfassungsmaske einzutragen.",
+      "conditions": [
+        {
+          "expression": "sample.entered_in_invekos_gis == true",
+          "description": "Ergebnis erfasst.",
+          "input_paths": [
+            "oepul.o6_17.soil_samples[].entered_in_invekos_gis"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_breached",
+        "description": "Fehlende Erfassung ist als Verstoß ausgewiesen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-6.5-GIS",
+        "SRL-2.17-SOIL-DB"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.violations"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.5-SOIL-NOT-TRANSFERABLE",
+      "rule_type": "constraint",
+      "statement": "Eine Bodenuntersuchung kann nicht gemeinsam mit der Grünlandfläche an einen anderen Betrieb weitergegeben werden; für den abgebenden Betrieb bleibt sie anrechenbar, der übernehmende Betrieb muss ggf. neu untersuchen lassen.",
+      "conditions": [
+        {
+          "expression": "sample.received_with_transferred_land == false",
+          "description": "Probe stammt nicht vom Vorbewirtschafter.",
+          "input_paths": [
+            "oepul.o6_17.soil_samples[].received_with_transferred_land"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "sample_valid",
+        "description": "Mit der Fläche übernommene Proben zählen nicht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-6.5-TRANSFER",
+        "MB-6.5-GIVER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.valid_soil_sample"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.5-SOIL-LATE-ADDITIONS",
+      "rule_type": "temporal_constraint",
+      "statement": "Da die Bodenproben bis 31.12.2025 übermittelt sein müssen, haben Flächenhinzunahmen nach dem MFA 2025 keinen Einfluss auf die Bodenuntersuchungsverpflichtung.",
+      "conditions": [
+        {
+          "expression": "base fixed at MFA 2025",
+          "description": "Ausgangsbasis bleibt MFA 2025.",
+          "input_paths": [
+            "oepul.o6_17.eligible_grassland_lt18_mfa2025_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "base_fixed",
+        "description": "Spätere Zugänge erhöhen die Probenzahl nicht.",
+        "value": {
+          "reference_year": 2025
+        }
+      },
+      "source_reference_ids": [
+        "MB-6.5-ADDITIONS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.soil_sample_base_ha"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.5-SOIL-MFA-ASSIGNMENT",
+      "rule_type": "documentation",
+      "statement": "Eine Bodenprobe ist im INVEKOS-GIS dem Mehrfachantrag des Jahres zuzuordnen, in dem sie gezogen wurde (z. B. Ziehung November 2024 → MFA 2024); bei im Herbst 2024 neu hinzugekommenen Flächen ist die Erfassung zum MFA 2025 möglich.",
+      "conditions": [
+        {
+          "expression": "sample.mfa_year == year(sample.drawn_date)",
+          "description": "Zuordnung zum MFA des Ziehungsjahres.",
+          "input_paths": [
+            "oepul.o6_17.soil_samples[].drawn_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "record_in_mfa_of_draw_year",
+        "description": "Erfassung im passenden MFA.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-6.5-MFAYEAR"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.6-AGL-ANNUAL-APPLICATION",
+      "rule_type": "application",
+      "statement": "Der optionale Zuschlag für artenreiches Grünland (Code AGL) kann jährlich beantragt werden; beantragt werden Schläge mit mindestens 5 Kennarten gemäß Anhang H oder einmal jährlich genutzte Flächen.",
+      "conditions": [
+        {
+          "expression": "annual application via codes in MFA",
+          "description": "Jährliche Beantragung.",
+          "input_paths": [
+            "land.parcels[].codes",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "agl_requested",
+        "description": "Zuschlag für das Antragsjahr beantragt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-6.6-ANNUAL",
+        "SRL-2.17-AGL-ANNUAL",
+        "SRL-2.17-AGL-ONCE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.agl_requested"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.6-AGL-CONDITIONS",
+      "rule_type": "obligation",
+      "statement": "Auf als artenreiches Grünland beantragten Mähwiesen/-weiden (zwei bzw. drei und mehr Nutzungen) müssen die Kennarten verteilt vorkommen und zur Blüte gelangen, die erste Nutzung hat als Mahd zu erfolgen, und das jährliche Vorhandensein der Kennarten sowie die Begehungen sind zu dokumentieren.",
+      "conditions": [
+        {
+          "expression": "every section has >= 5 Kennarten",
+          "description": "Kennarten je Abschnitt.",
+          "input_paths": [
+            "land.parcels[].agl_survey.sections"
+          ]
+        },
+        {
+          "expression": "parcel.operations.first_use_type == 'mowing'",
+          "description": "Erste Nutzung Mahd.",
+          "input_paths": [
+            "land.parcels[].operations.first_use_type"
+          ]
+        },
+        {
+          "expression": "parcel.agl_survey.documented == true",
+          "description": "Dokumentation vorhanden.",
+          "input_paths": [
+            "land.parcels[].agl_survey.documented"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "agl_eligible_or_violation",
+        "description": "Erfüllt: Zuschlag gewährt; nicht erfüllt: kein Zuschlag und Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-6.6-DISTR",
+        "MB-6.6-MOW",
+        "MB-6.6-DOC",
+        "SRL-2.17-AGL-MOW",
+        "SRL-2.17-DEF-AGL-DISTR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.agl_conditions_met",
+        "data.oepul.o6_17.first_use_is_mowing",
+        "data.oepul.o6_17.agl_documented",
+        "data.oepul.o6_17.violations"
+      ]
+    },
+    {
+      "id": "O6_17-MB-6.6-AGL-AUTOMATIC",
+      "rule_type": "exception",
+      "statement": "Die Schlagnutzungsarten 'Einmähdige Wiese' und 'Streuwiese' werden automatisch für den Zuschlag berücksichtigt; dort müssen weder Kennarten vorkommen noch Begehung oder Dokumentation erfolgen.",
+      "conditions": [
+        {
+          "expression": "parcel.field_use_type in {einmaehdige_wiese, streuwiese}",
+          "description": "Einmähdige Wiese oder Streuwiese.",
+          "input_paths": [
+            "land.parcels[].field_use_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "agl_requested_automatically",
+        "description": "Zuschlag ohne Kennartennachweis.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-6.6-AUTO",
+        "MB-6.6-NODOC",
+        "ANH-H-AUTO"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.agl_requested",
+        "data.oepul.o6_17.agl_conditions_met"
+      ]
+    },
+    {
+      "id": "O6_17-MB-7-APPLICATION-DEADLINE",
+      "rule_type": "application",
+      "statement": "Die Maßnahme muss vor Vertragsbeginn im Maßnahmenantrag des Mehrfachantrages bis spätestens 31. Dezember beantragt werden, um ab dem Folgejahr einen gültigen Vertrag zu begründen; diese Frist verschiebt sich nicht auf den nächsten Werktag.",
+      "conditions": [
+        {
+          "expression": "oepul.o6_17.measure_application_date <= (contract_start_year - 1) + '-12-31'",
+          "description": "Antrag bis 31.12. vor Vertragsbeginn.",
+          "input_paths": [
+            "oepul.o6_17.measure_application_date",
+            "oepul.o6_17.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_unmet",
+        "description": "Ohne fristgerechten Maßnahmenantrag kein Vertrag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-7-APP",
+        "AT-6-APP",
+        "SRL-1.10.5.2",
+        "SRL-1.10.5.2-MA",
+        "GSPAV-33-2-1"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.entry_application_timely",
+        "data.oepul.o6_17.entry_application_deadline",
+        "data.oepul.o6_17.access_violations"
+      ]
+    },
+    {
+      "id": "O6_17-MB-7-LAST-ENTRY",
+      "rule_type": "temporal_constraint",
+      "statement": "Der letzte Einstieg in die Maßnahme ist mit dem Förderjahr 2025 möglich (Beantragung bis spätestens 31.12.2024).",
+      "conditions": [
+        {
+          "expression": "oepul.o6_17.contract_start_year <= 2025",
+          "description": "Vertragsbeginn spätestens 2025.",
+          "input_paths": [
+            "oepul.o6_17.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_unmet",
+        "description": "Neueinstieg ab 2026 nicht möglich.",
+        "value": {
+          "last_entry_year": 2025,
+          "last_application_date": "2024-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "MB-7-LAST",
+        "AT-5.9-LASTENTRY"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.access_violations",
+        "data.o6_17.general.last_entry_year"
+      ]
+    },
+    {
+      "id": "O6_17-MB-7-AGL-CODE-USE-TYPES",
+      "rule_type": "application",
+      "statement": "Der Zuschlag für artenreiches Grünland wird nicht im Maßnahmenantrag beantragt, sondern durch Kennzeichnung der Schlagnutzungsarten 'Mähwiese/-weide zwei Nutzungen' bzw. 'drei und mehr Nutzungen' mit dem Code AGL im INVEKOS-GIS; Einmähdige Wiesen und Streuwiesen benötigen keinen Code.",
+      "conditions": [
+        {
+          "expression": "'AGL' in parcel.codes -> parcel.field_use_type in {maehwiese_weide_2, maehwiese_weide_3plus}",
+          "description": "Code nur auf vorgesehenen Schlagnutzungsarten.",
+          "input_paths": [
+            "land.parcels[].codes",
+            "land.parcels[].field_use_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "agl_code_check",
+        "description": "Code AGL auf anderen Schlagnutzungsarten ist fehlerhaft.",
+        "value": {
+          "code": "AGL"
+        }
+      },
+      "source_reference_ids": [
+        "MB-7-AGLCODE",
+        "MB-7-AGLCODE2",
+        "MB-7-NOCODE",
+        "GSPAV-33-FSL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.violations",
+        "data.oepul.o6_17.agl_requested"
+      ]
+    },
+    {
+      "id": "O6_17-MB-8-BASE-PREMIUM-RATES",
+      "rule_type": "calculation",
+      "statement": "Grundprämie je ha für Grünland < 18 % nach durchschnittlicher Grünlandzahl des Schlages: < 20: 30,0 €/ha (2023) bzw. 32,4 €/ha (ab 2024); 20 bis < 30: 50,0/54,0; 30 bis < 40: 70,0/75,6; ab 40: 100,0/108,0 €/ha.",
+      "conditions": [
+        {
+          "expression": "rate = base_premium_rates[year, grassland_figure]",
+          "description": "Satz nach Jahr und Grünlandzahl.",
+          "input_paths": [
+            "farm.year",
+            "land.parcels[].grassland_figure"
+          ]
+        },
+        {
+          "expression": "premium = area_ha * rate",
+          "description": "Prämie je Schlag.",
+          "input_paths": [
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "base_premium_eur",
+        "description": "Grundprämie je Schlag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-8-T1",
+        "MB-8-T2",
+        "MB-8-T3",
+        "MB-8-T4",
+        "MB-8-TBAND",
+        "SRL-2.17-RATE1",
+        "SRL-2.17-RATE2",
+        "SRL-2.17-RATE3",
+        "SRL-2.17-RATE4"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.base_rate_eur_per_ha",
+        "data.oepul.o6_17.base_premium_parcel_eur",
+        "data.o6_17.premium_rates.base_premium_rates"
+      ]
+    },
+    {
+      "id": "O6_17-MB-8-AGL-RATES",
+      "rule_type": "calculation",
+      "statement": "Zuschlag artenreiches Grünland je ha: Hangneigung < 18 %: 150,0 €/ha (2023) bzw. 262,0 €/ha (ab 2024); Hangneigung ab 18 %: 162,0 €/ha ab 2025.",
+      "conditions": [
+        {
+          "expression": "rate = agl_premium_rates[slope_class, year]",
+          "description": "Satz nach Hangneigungsklasse und Jahr.",
+          "input_paths": [
+            "land.parcels[].slope_percent",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "agl_premium_eur",
+        "description": "Zuschlag je Schlag (vor Flächendeckelung).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-8-AGL1",
+        "MB-8-AGL2",
+        "SRL-2.17-AGLRATE1",
+        "SRL-2.17-AGLRATE2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.agl_rate_eur_per_ha",
+        "data.oepul.o6_17.agl_premium_parcel_eur",
+        "data.o6_17.premium_rates.agl_premium_rates"
+      ]
+    },
+    {
+      "id": "O6_17-SRL-2.17-RATES-VALIDITY",
+      "rule_type": "temporal_constraint",
+      "statement": "Die Prämiensätze der SRL gelten ab 01.01.2024 (1. Änderung, Impulsprogramm +8 %, mit 1a gekennzeichnet); mit 1b gekennzeichnete Änderungen (z. B. Zuschlag für Hangneigung >= 18 %, Deckel 25 %) gelten ab 01.01.2025; für 2023 gelten die Stammfassungssätze laut Merkblatt.",
+      "conditions": [
+        {
+          "expression": "farm.year >= 2024 -> 1a rates; farm.year >= 2025 -> 1b changes",
+          "description": "Anwendungszeitpunkt.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rate_period",
+        "description": "Satzwahl nach Antragsjahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-2.17-RATES-VALID",
+        "SRL-PRAEAMBEL-8",
+        "SRL-1.20"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.year_in_range"
+      ]
+    },
+    {
+      "id": "O6_17-MB-8-SLOPE-FROM-GIS",
+      "rule_type": "calculation",
+      "statement": "Hangneigung (und Grünlandzahl sowie GLÖZ-Einstufungen) werden von der AMA im INVEKOS-GIS festgelegt; die Hangneigung wird aus einem digitalen Geländehöhenmodell (Rasterweite höchstens 5 m) automatisch entnommen.",
+      "conditions": [
+        {
+          "expression": "parcel.slope_percent from INVEKOS-GIS",
+          "description": "Hangneigung aus GIS.",
+          "input_paths": [
+            "land.parcels[].slope_percent",
+            "land.parcels[].grassland_figure"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "gis_values_used",
+        "description": "Eingabewerte stammen aus dem INVEKOS-GIS.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-8-SLOPEGIS",
+        "GSPAV-23-2-SLOPE",
+        "GSPAV-23-2-GLZ",
+        "GSPAV-23-3"
+      ]
+    },
+    {
+      "id": "O6_17-MB-8-GLOEZ-EXCLUSION",
+      "rule_type": "eligibility",
+      "statement": "Flächen mit Umbruchsverbot gemäß GLÖZ 2 (Feuchtgebiete und Torfflächen), GLÖZ 4 (Pufferstreifen entlang von Wasserläufen) oder GLÖZ 9 (umweltsensibles Dauergrünland in Natura 2000-Gebieten) sind für die Grundprämie nicht förderfähig; der Zuschlag AGL ist davon ausgenommen.",
+      "conditions": [
+        {
+          "expression": "parcel.constraints.gloez_conversion_ban.{gloez2|gloez4|gloez9} == true",
+          "description": "GLÖZ-Umbruchsverbot.",
+          "input_paths": [
+            "land.parcels[].constraints.gloez_conversion_ban"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_base_premium",
+        "description": "Keine Grundprämie; Zuschlag AGL möglich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-8-GLOEZ",
+        "MB-8-GLOEZ-AGL",
+        "SRL-2.17-GLOEZ",
+        "SRL-2.17-GLOEZ-AGL",
+        "GSPAV-GLOEZ2",
+        "GSPAV-GLOEZ2-DEF",
+        "GSPAV-GLOEZ4",
+        "GSPAV-GLOEZ9",
+        "GSPAV-GLOEZ9-LIST",
+        "GSPAV-GLOEZ9-LIST2",
+        "GSPAV-23-2-GLOEZ9"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.gloez_conversion_ban",
+        "data.o6_17.gloez",
+        "data.o6_17.lists.gloez_conversion_ban_types"
+      ]
+    },
+    {
+      "id": "O6_17-MB-8-AGL-MOWN-ONLY",
+      "rule_type": "eligibility",
+      "statement": "Der Zuschlag für artenreiches Grünland wird nur auf gemähten Grünlandflächen (ohne Bergmähder) gewährt.",
+      "conditions": [
+        {
+          "expression": "field_use_type.is_mown and not is_bergmaehder",
+          "description": "Gemähtes Grünland ohne Bergmähder.",
+          "input_paths": [
+            "land.parcels[].field_use_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "agl_eligible",
+        "description": "Bergmähder und nicht gemähte Flächen ohne Zuschlag.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-8-AGLMOWN",
+        "SRL-2.17-AGL-CAP1"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.agl_eligible",
+        "data.oepul.o6_17.is_mown_grassland"
+      ]
+    },
+    {
+      "id": "O6_17-MB-8-AGL-AREA-CAP",
+      "rule_type": "calculation",
+      "statement": "Der Zuschlag wird bis einschließlich Antragsjahr 2024 für maximal 15 % und ab 2025 für maximal 25 % des gemähten Grünlands (ohne Bergmähder), jedenfalls aber für 2,00 ha gewährt.",
+      "conditions": [
+        {
+          "expression": "cap_ha = max(share * mown_grassland_ha, 2.0)",
+          "description": "Deckel des Zuschlags.",
+          "input_paths": [
+            "land.parcels[].area_ha",
+            "land.parcels[].field_use_type",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "agl_area_cap_ha",
+        "description": "Zuschlagsfähige Fläche begrenzt; Überhang anteilig gekürzt (Annahme).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-8-AGLCAP",
+        "SRL-2.17-AGL-CAP1",
+        "SRL-2.17-AGL-CAP2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.agl_area_cap_ha",
+        "data.oepul.o6_17.agl_paid_share",
+        "data.oepul.o6_17.mown_grassland_ha",
+        "data.o6_17.premium_rates.agl_area_caps"
+      ]
+    },
+    {
+      "id": "O6_17-MB-9-KENNARTEN-PER-SECTION",
+      "rule_type": "obligation",
+      "statement": "Auf dem beantragten Grünlandschlag müssen in jedem Abschnitt mindestens 5 Arten der Kennartenliste regelmäßig vorkommen; bei mehreren Erhebungsterminen zählt die Summe der gefundenen Kennarten.",
+      "conditions": [
+        {
+          "expression": "every section: count(distinct Kennarten) >= 5",
+          "description": "Mindestens 5 Kennarten je Abschnitt.",
+          "input_paths": [
+            "land.parcels[].agl_survey.sections[].kennarten"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "kennarten_sufficient",
+        "description": "Kennartenkriterium erfüllt.",
+        "value": {
+          "min_species": 5
+        }
+      },
+      "source_reference_ids": [
+        "MB-9-SECTION",
+        "ANH-H-SECTION",
+        "ANH-H-TITLE",
+        "MB-9-SUM"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.kennarten_sections_ok",
+        "data.oepul.o6_17.section_species"
+      ]
+    },
+    {
+      "id": "O6_17-MB-9-SURVEY-TIMING",
+      "rule_type": "obligation",
+      "statement": "Die Kennartenerhebung hat zumindest einmal jährlich je beantragtem Schlag zu erfolgen, idealerweise vor dem ersten Schnitt zur Blüte; empfohlen sind zwei oder mehr Termine im Mai und Juni (Anhang H: jedenfalls vor dem 30. Juni).",
+      "conditions": [
+        {
+          "expression": "count(parcel.agl_survey.survey_dates in year) >= 1",
+          "description": "Mindestens eine Erhebung im Jahr.",
+          "input_paths": [
+            "land.parcels[].agl_survey.survey_dates"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "survey_performed",
+        "description": "Erhebung erfolgt.",
+        "value": {
+          "recommended_latest_mmdd": "06-30"
+        }
+      },
+      "source_reference_ids": [
+        "MB-9-ONCE",
+        "ANH-H-ONCE",
+        "ANH-H-JUNE30"
+      ],
+      "rego_symbols": [
+        "data.o6_17.lists.agl"
+      ]
+    },
+    {
+      "id": "O6_17-MB-9-SURVEY-TRANSECT",
+      "rule_type": "method",
+      "statement": "Die Erhebung erfolgt entlang der längstmöglichen Geraden (bei unförmigen Flächen in Abschnitten), beginnt mindestens 5 m innerhalb des Schlages (Randbereiche ausgespart) und erfasst Kennarten in einem ca. 2 m breiten Erhebungsstreifen.",
+      "conditions": [
+        {
+          "expression": "transect along longest line, >= 5 m from edge, ~2 m wide",
+          "description": "Methodik eingehalten.",
+          "input_paths": [
+            "land.parcels[].agl_survey"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "survey_method",
+        "description": "Methodik gemäß Kapitel 9 / Anhang H.",
+        "value": {
+          "edge_distance_m": 5,
+          "strip_width_m": 2
+        }
+      },
+      "source_reference_ids": [
+        "MB-9-LINE",
+        "MB-9-EDGE",
+        "MB-9-STRIP",
+        "ANH-H-EDGE"
+      ],
+      "rego_symbols": [
+        "data.o6_17.lists.agl"
+      ]
+    },
+    {
+      "id": "O6_17-MB-9-ISOLATED-SPECIMENS-AND-SPLIT",
+      "rule_type": "method",
+      "statement": "Vereinzelt wachsende, nicht regelmäßig verteilte Exemplare sollen nicht erhoben werden; bei ungleicher Verteilung der Kennarten hat eine Schlagteilung zu erfolgen und nur der Teil mit mindestens 5 Kennarten darf als artenreiches Grünland beantragt werden.",
+      "conditions": [
+        {
+          "expression": "uneven distribution -> split parcel",
+          "description": "Schlagteilung.",
+          "input_paths": [
+            "land.parcels[].agl_survey.sections"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "split_parcel",
+        "description": "Nur der artenreiche Teilschlag ist zuschlagsfähig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-9-ISOLATED",
+        "MB-9-SPLIT",
+        "ANH-H-SPLIT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.kennarten_sections_ok"
+      ]
+    },
+    {
+      "id": "O6_17-MB-9-ONLY-IDENTIFIED-SPECIES",
+      "rule_type": "method",
+      "statement": "Als Hilfe dürfen Bestimmungsbücher oder Apps (z. B. Pl@ntNet) verwendet werden, es dürfen jedoch nur eindeutig identifizierte Kennarten aufgezeichnet bzw. beantragt werden.",
+      "conditions": [
+        {
+          "expression": "species name matches Kennartenliste",
+          "description": "Eindeutige Zuordnung zur Kennartenliste.",
+          "input_paths": [
+            "land.parcels[].agl_survey.sections[].kennarten"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "species_counted",
+        "description": "Nicht zuordenbare Namen werden nicht gezählt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-9-IDENT",
+        "ANH-H-IDENT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.kennart_matches"
+      ]
+    },
+    {
+      "id": "O6_17-MB-9-SURVEY-RECORDS",
+      "rule_type": "documentation",
+      "statement": "Die Ergebnisse sind für jedes Jahr und jeden Schlag in einem Erfassungsbogen entsprechend Anhang H aufzuzeichnen und die Lage des Erhebungsstreifens bzw. der Abschnitte in einer Skizze zu dokumentieren; andere Aufzeichnungen mit den notwendigen Angaben werden anerkannt.",
+      "conditions": [
+        {
+          "expression": "parcel.agl_survey.documented == true",
+          "description": "Erfassungsbogen und Skizze vorhanden.",
+          "input_paths": [
+            "land.parcels[].agl_survey.documented"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "documented",
+        "description": "Dokumentationspflicht erfüllt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-9-FORM",
+        "MB-9-SKETCH",
+        "MB-9-OTHER",
+        "ANH-H-SKETCH"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.agl_documented"
+      ]
+    },
+    {
+      "id": "O6_17-MB-9-PHOTO-DOCUMENTATION",
+      "rule_type": "documentation",
+      "statement": "Die Begehung kann auch mittels geolokalisierter Fotos mit der AMA MFA Fotos App dokumentiert werden, in denen die Kennarten eindeutig identifizierbar und die Fotos möglichst gleichmäßig über den Erhebungsstreifen verteilt sind.",
+      "conditions": [
+        {
+          "expression": "photo documentation via AMA MFA Fotos App",
+          "description": "Alternative Dokumentationsform.",
+          "input_paths": [
+            "land.parcels[].agl_survey.documented"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "documented",
+        "description": "Fotodokumentation gilt als Dokumentation.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "MB-9-PHOTO"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.agl_documented"
+      ]
+    },
+    {
+      "id": "O6_17-MB-10-KENNARTEN-LIST",
+      "rule_type": "reference_list",
+      "statement": "Förderfähige Kennarten sind ausschließlich die 50 Arten bzw. Artengruppen der Kennartenliste (Merkblatt Kapitel 10 / SRL Anhang H).",
+      "conditions": [
+        {
+          "expression": "species in data/o6_17/kennarten.json",
+          "description": "Art in geschlossener Liste.",
+          "input_paths": [
+            "land.parcels[].agl_survey.sections[].kennarten"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "kennart_recognised",
+        "description": "Nur gelistete Arten zählen.",
+        "value": {
+          "species_count": 50
+        }
+      },
+      "source_reference_ids": [
+        "MB-10-INTRO",
+        "MB-10-P9",
+        "MB-10-P10",
+        "MB-10-P11",
+        "ANH-H-LIST",
+        "ANH-H-LIST2",
+        "SRL-3-ANNEXES"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.kennart_matches",
+        "data.o6_17.kennarten.species"
+      ]
+    },
+    {
+      "id": "O6_17-AT-1-LEGAL-HIERARCHY",
+      "rule_type": "interpretation",
+      "statement": "Die Informationsblätter enthalten rechtlich unverbindliche Aussagen; rechtlich verbindlich sind die SRL ÖPUL 2023 samt Anhängen sowie MOG 2021 und GSP-AV, die zusätzlich einzuhalten sind.",
+      "conditions": [
+        {
+          "expression": "conflict between info sheet and SRL",
+          "description": "Abweichung zwischen Merkblatt und Rechtsgrundlage."
+        }
+      ],
+      "result": {
+        "outcome": "legal_basis_prevails",
+        "description": "Rechtsgrundlage geht vor.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-1",
+        "AT-2",
+        "MB-IMPRESSUM",
+        "SRL-1.1-INTEGRAL"
+      ]
+    },
+    {
+      "id": "O6_17-AT-5.1-CONDITIONALITY",
+      "rule_type": "obligation",
+      "statement": "Alle ÖPUL-Teilnehmer müssen die Konditionalität (Klima/Umwelt, Gesundheit, Pflanzengesundheit, Tierwohl) und die soziale Konditionalität einhalten, um die Förderung in voller Höhe zu erhalten; Sanktionen gemäß Art. 83 bis 89 VO (EU) 2021/2116.",
+      "conditions": [
+        {
+          "expression": "conditionality complied",
+          "description": "Konditionalität eingehalten.",
+          "input_paths": [
+            "documentation.audit_last_year_noncompliance"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_if_breached",
+        "description": "Kürzung wegen Konditionalität (letzter Schritt der Kürzungsreihenfolge).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-5.1",
+        "SRL-1.12.1.4"
+      ]
+    },
+    {
+      "id": "O6_17-AT-5.2-APPLICANT-TYPE",
+      "rule_type": "access_condition",
+      "statement": "Förderwerbende Personen können natürliche Personen, eingetragene Personengesellschaften, juristische Personen und Personenvereinigungen sein, die einen Betrieb im eigenen Namen und auf eigene Rechnung mit Verfügungsgewalt über die Flächen bewirtschaften.",
+      "conditions": [
+        {
+          "expression": "oepul.applicant.applicant_type in eligible_applicant_types",
+          "description": "Zulässige Rechtsform.",
+          "input_paths": [
+            "oepul.applicant.applicant_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_unmet",
+        "description": "Nicht zulässige Förderwerber erhalten keine Förderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-5.2-TYPES",
+        "AT-5.2-OWN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.applicant_type_eligible",
+        "data.oepul.o6_17.access_violations",
+        "data.o6_17.lists.eligible_applicant_types"
+      ]
+    },
+    {
+      "id": "O6_17-AT-5.2-PUBLIC-BODY",
+      "rule_type": "access_condition",
+      "statement": "Gebietskörperschaften und deren Einrichtungen sowie Einrichtungen mit Beteiligung von Gebietskörperschaften über 25 % sind ausgeschlossen; o6_17 zählt nicht zu den Ausnahmemaßnahmen.",
+      "conditions": [
+        {
+          "expression": "oepul.applicant.public_body_share <= 0.25",
+          "description": "Beteiligung öffentlicher Hand höchstens 25 %.",
+          "input_paths": [
+            "oepul.applicant.public_body_share"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_unmet",
+        "description": "Keine Förderung in o6_17.",
+        "value": {
+          "max_share": 0.25
+        }
+      },
+      "source_reference_ids": [
+        "AT-5.2-25",
+        "AT-5.2-PUBLIC",
+        "SRL-1.4-25"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.public_body_share_ok",
+        "data.oepul.o6_17.access_violations",
+        "data.o6_17.lists.public_body_exception_measures"
+      ]
+    },
+    {
+      "id": "O6_17-SRL-1.4-ACTIVE-FARMER",
+      "rule_type": "access_condition",
+      "statement": "Förderwerbende Personen müssen aktive Landwirte gemäß § 6d Abs. 9 MOG 2021 iVm § 21 Abs. 3 GSP-AV sein und eine landwirtschaftliche Tätigkeit gemäß § 20 GSP-AV ausüben.",
+      "conditions": [
+        {
+          "expression": "oepul.applicant.is_active_farmer == true",
+          "description": "Aktiver Landwirt.",
+          "input_paths": [
+            "oepul.applicant.is_active_farmer"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_unmet",
+        "description": "Keine Förderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-1.4-ACTIVE",
+        "AT-5.2-ACTIVE",
+        "GSPAV-21-3",
+        "GSPAV-20-1"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.access_violations"
+      ]
+    },
+    {
+      "id": "O6_17-SRL-1.5.1-HOLDING-DEFINITION",
+      "rule_type": "definition",
+      "statement": "Als Betrieb gilt die Gesamtheit aller von einer förderwerbenden Person verwalteten Produktionseinheiten in Österreich; die Verpflichtungen von o6_17 (z. B. Umbruchsverzicht) beziehen sich auf alle Grünlandflächen dieses Betriebes.",
+      "conditions": [
+        {
+          "expression": "all production units of applicant",
+          "description": "Gesamtbetrieb.",
+          "input_paths": [
+            "farm.farm_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "holding_scope",
+        "description": "Betriebsbezogene Prüfung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-1.5.1",
+        "AT-5.2-HOLDING"
+      ]
+    },
+    {
+      "id": "O6_17-AT-5.3-FARM-MIN-SIZE",
+      "rule_type": "access_condition",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr muss der Betrieb mindestens 0,50 ha geschützten Anbau oder 1,50 ha landwirtschaftliche Fläche bewirtschaften; ab dem zweiten ÖPUL-Teilnahmejahr entfällt die Betriebsmindestgröße.",
+      "conditions": [
+        {
+          "expression": "farm.year == oepul.first_oepul_year",
+          "description": "Erstes ÖPUL-Jahr.",
+          "input_paths": [
+            "farm.year",
+            "oepul.first_oepul_year"
+          ]
+        },
+        {
+          "expression": "land.total_area_ha >= 1.5 or land.protected_cultivation_area_ha >= 0.5",
+          "description": "Mindestfläche.",
+          "input_paths": [
+            "land.total_area_ha",
+            "land.protected_cultivation_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_violation_if_unmet",
+        "description": "Ohne Mindestgröße kommt kein Vertrag zustande.",
+        "value": {
+          "min_ln_ha": 1.5,
+          "min_ga_ha": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "AT-5.3-GA",
+        "AT-5.3-LN",
+        "AT-5.3-YEAR2",
+        "SRL-1.6.1"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.farm_minimum_size_met",
+        "data.oepul.o6_17.first_oepul_year",
+        "data.oepul.o6_17.access_violations"
+      ]
+    },
+    {
+      "id": "O6_17-SRL-1.6.3.3-MIN-MANAGEMENT",
+      "rule_type": "obligation",
+      "statement": "Auf Grünland- und Ackerfutterflächen ist jährlich mindestens eine vollflächige Mahd mit Verbringung des Mähgutes oder eine vollflächige Beweidung durchzuführen (Bergmähder: mindestens alle 2 Jahre Mahd); nur dann sind die Flächen förderfähig.",
+      "conditions": [
+        {
+          "expression": "count(cutting_dates) >= 1 or full_grazing or (bergmaehder and last mowing < 2 years)",
+          "description": "Mindestbewirtschaftung erfüllt.",
+          "input_paths": [
+            "land.parcels[].operations.cutting_dates",
+            "land.parcels[].operations.full_grazing",
+            "land.parcels[].operations.last_full_mowing_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_breached",
+        "description": "Fläche nicht förderfähig bzw. Verstoß.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-5.4-GL",
+        "AT-5.4-BM",
+        "SRL-1.6.3.3",
+        "SRL-1.6.2.1",
+        "GSPAV-20-2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.grassland_minimum_management_met",
+        "data.oepul.o6_17.violations"
+      ]
+    },
+    {
+      "id": "O6_17-AT-5.5.1-NON-ELIGIBLE-AREAS",
+      "rule_type": "eligibility",
+      "statement": "Nicht förderfähig sind u. a. nicht aktiv bewirtschaftete Flächen (Grünlandbrachen), Sonstige Grünland- und Hutweideflächen, im MFA nicht für die Maßnahme angegebene oder falsch identifizierte Flächen, gemäß § 31 GSP-AV nicht hauptsächlich landwirtschaftlich genutzte Flächen und GLÖZ-Landschaftselemente.",
+      "conditions": [
+        {
+          "expression": "field_use_type.premium_eligible == false or code in {OP, VF}",
+          "description": "Nicht förderfähige Flächenkategorie.",
+          "input_paths": [
+            "land.parcels[].field_use_type",
+            "land.parcels[].codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Keine Prämie auf diesen Flächen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-5.5",
+        "AT-5.5.1-HEAD",
+        "AT-5.5.1-BRACHE",
+        "AT-5.5.1-SONSTIGE",
+        "AT-5.5.1-LSE",
+        "SRL-1.6.2.2",
+        "SRL-1.6.2.2-GLOEZ8",
+        "GSPAV-31",
+        "GSPAV-25-3-BRACHE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.parcel_excluded_general",
+        "data.o6_17.lists.grassland_field_use_types"
+      ]
+    },
+    {
+      "id": "O6_17-AT-5.5.1-NATIONAL-PARKS",
+      "rule_type": "eligibility",
+      "statement": "Flächen in Nationalparks erhalten in o6_17 keine Prämie, wenn dort relevante Bewirtschaftungsauflagen festgelegt sind; in den Nationalparks Neusiedlersee und Donau-Auen werden generell keine flächenbezogenen Prämien gewährt; die gesamtbetrieblichen Verpflichtungen gelten dennoch auch auf Nationalparkflächen.",
+      "conditions": [
+        {
+          "expression": "parcel.constraints.national_park in {Neusiedlersee, Donau-Auen} or national_park_relevant_restrictions",
+          "description": "Nationalparkfläche mit Prämienausschluss.",
+          "input_paths": [
+            "land.parcels[].constraints.national_park",
+            "land.parcels[].constraints.national_park_relevant_restrictions"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Keine Prämie; Umbruchsverzicht gilt weiter.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-5.5.1-NP",
+        "AT-5.5.1-NP2",
+        "AT-5.5.1-NPREL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.parcel_excluded_general",
+        "data.o6_17.lists.national_parks_without_area_premiums"
+      ]
+    },
+    {
+      "id": "O6_17-AT-5.5.2-CODE-OP",
+      "rule_type": "eligibility",
+      "statement": "Für Flächen mit dem Code OP (bzw. maßnahmenbezogenem OP-Code) wird im Förderjahr keine ÖPUL-Prämie gewährt; der Code ist u. a. bei Leistungsüberschneidung mit der öffentlichen Hand, behördlichen Ausgleichsflächen und nicht ganzjährig bzw. nicht über den Vertragszeitraum erfüllbaren Verpflichtungen zu vergeben.",
+      "conditions": [
+        {
+          "expression": "'OP' in parcel.codes",
+          "description": "Code OP gesetzt.",
+          "input_paths": [
+            "land.parcels[].codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Keine Prämie im Förderjahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-5.5.2-OP",
+        "AT-5.5.2-OVERLAP",
+        "AT-5.5.2-YEAR",
+        "AT-5.5.2-PERIOD",
+        "AT-5.5.2-COMP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.parcel_excluded_general",
+        "data.o6_17.lists.non_eligible_parcel_codes"
+      ]
+    },
+    {
+      "id": "O6_17-AT-5.5.2-THIRD-PARTY-FAULT",
+      "rule_type": "consequence",
+      "statement": "Ist die Nichterfüllung auf reines Fremdverschulden zurückzuführen, ist die betroffene Fläche mit dem maßnahmenbezogenen OP-Code zu versehen (keine Prämie, Nachweise aufbewahren); ohne Fremdverschulden ist der Code zu löschen oder eine Selbstanzeige zu erstatten, die geringer sanktioniert wird als ein VOK-Befund.",
+      "conditions": [
+        {
+          "expression": "non-compliance caused solely by third party",
+          "description": "Fremdverschulden.",
+          "input_paths": [
+            "land.parcels[].codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "op_code_or_self_report",
+        "description": "OP-Code bzw. Selbstanzeige.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-5.5.2-FREMD",
+        "AT-5.5.2-SELF"
+      ]
+    },
+    {
+      "id": "O6_17-SRL-1.6.2.3-NO-DOUBLE-FUNDING",
+      "rule_type": "prohibition",
+      "statement": "Werden dieselben Leistungen aus einem anderen Titel der öffentlichen Hand gefördert oder sind sie gesetzlich/behördlich vorgeschrieben, sind sie nach der SRL nicht förderbar (Code OP).",
+      "conditions": [
+        {
+          "expression": "service funded elsewhere or legally required",
+          "description": "Leistungsüberschneidung.",
+          "input_paths": [
+            "land.parcels[].codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Keine Prämie für überschneidende Leistung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-1.6.2.3",
+        "AT-5.5.2-OVERLAP"
+      ]
+    },
+    {
+      "id": "O6_17-AT-5.5.1-TRIAL-AREAS",
+      "rule_type": "eligibility",
+      "statement": "Flächen, auf denen Verpflichtungen im Rahmen genehmigter wissenschaftlicher Versuche nicht eingehalten werden können, sind mit Code VF zu kennzeichnen (Genehmigung, Art, Ausmaß und Lage dokumentieren) und erhalten im laufenden Jahr keine Prämie.",
+      "conditions": [
+        {
+          "expression": "'VF' in parcel.codes",
+          "description": "Versuchsfläche.",
+          "input_paths": [
+            "land.parcels[].codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Keine Prämie im laufenden Jahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-5.5.1-VF",
+        "SRL-1.7.4.5"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.parcel_excluded_general"
+      ]
+    },
+    {
+      "id": "O6_17-AT-5.8-FULL-YEAR-COMMITMENT",
+      "rule_type": "temporal_constraint",
+      "statement": "Die Verpflichtungsdauer umfasst das gesamte Kalenderjahr; förderfähig sind nur Flächen, auf denen die Verpflichtungen ganzjährig erfüllt werden; unterjährige Weitergabe ist nur zulässig, wenn der Übernehmer die Verpflichtungen in gleicher oder höherwertiger Maßnahme bis Jahresende einhält, sonst Code OP.",
+      "conditions": [
+        {
+          "expression": "commitments fulfilled 01.01.-31.12.",
+          "description": "Ganzjährige Einhaltung.",
+          "input_paths": [
+            "land.parcels[].codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium_if_unmet",
+        "description": "Keine Prämie für das unvollendete Verpflichtungsjahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-5.8-FULL",
+        "AT-5.8-TRANSFER",
+        "SRL-1.7.1-DUR",
+        "SRL-1.7.1-TRANSFER"
+      ]
+    },
+    {
+      "id": "O6_17-AT-5.9-AREAS-BOUND-UNTIL-END",
+      "rule_type": "obligation",
+      "statement": "Die im ersten Vertragsjahr mit der Maßnahme belegten Flächen sowie alle späteren Flächenzugänge sind bis zum Ende des Vertragszeitraumes gemäß den Förderverpflichtungen zu bewirtschaften.",
+      "conditions": [
+        {
+          "expression": "parcel committed in any year <= farm.year",
+          "description": "Belegte Fläche.",
+          "input_paths": [
+            "oepul.o6_17.committed_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "binding_until_2028",
+        "description": "Bindung bis 31.12.2028.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-5.9-BOUND",
+        "SRL-1.7.2-BOUND"
+      ]
+    },
+    {
+      "id": "O6_17-AT-6-EXIT-RULES",
+      "rule_type": "procedure",
+      "statement": "Ein Ausstieg ist der AMA online im Rahmen des MFA zu melden; erfolgt die Abmeldung zwischen 1. Jänner und 31. Dezember, ist die Maßnahme im betroffenen Förderjahr nicht mehr gültig; bis zum Ausstieg sind die Verpflichtungen einzuhalten; ein Ausstieg ist grundsätzlich bis zur Durchführung oder Ankündigung einer Vor-Ort-Kontrolle bzw. Mitteilung eines Verwaltungskontrollergebnisses möglich.",
+      "conditions": [
+        {
+          "expression": "oepul.o6_17.exit_date set",
+          "description": "Ausstieg gemeldet.",
+          "input_paths": [
+            "oepul.o6_17.exit_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "measure_invalid_for_year",
+        "description": "Keine Prämie im Ausstiegsjahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-6-EXITYEAR",
+        "AT-6-UNTILEXIT",
+        "AT-6-EXITOTSC"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.early_exit"
+      ]
+    },
+    {
+      "id": "O6_17-AT-6-EARLY-EXIT-REPAYMENT",
+      "rule_type": "consequence",
+      "statement": "Ein Ausstieg aus der mehrjährigen Maßnahme vor Ende des Vertragszeitraumes (31.12.2028) führt zur Rückforderung aller bereits gewährten Maßnahmenprämien und kann Kombinationsverpflichtungen verletzen, sofern kein Ausnahmetatbestand (Verlust der Verfügungsgewalt, höhere Gewalt, dauerhafte Umstände, Revisionsklausel) vorliegt.",
+      "conditions": [
+        {
+          "expression": "oepul.o6_17.exit_date < '2028-12-31'",
+          "description": "Vorzeitiger Ausstieg.",
+          "input_paths": [
+            "oepul.o6_17.exit_date"
+          ]
+        },
+        {
+          "expression": "oepul.o6_17.exit_reason not in repayment_free_exit_reasons",
+          "description": "Kein Ausnahmetatbestand.",
+          "input_paths": [
+            "oepul.o6_17.exit_reason"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "repayment_required",
+        "description": "Rückforderung bis Vertragsbeginn.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-6-EXITREPAY",
+        "AT-7.1-REPAY",
+        "SRL-1.7.2-RECOVERY"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.early_exit_repayment_required",
+        "data.oepul.o6_17.repayment_free_exit_reasons"
+      ]
+    },
+    {
+      "id": "O6_17-AT-6-REENTRY",
+      "rule_type": "procedure",
+      "statement": "Nach Ausstieg, Ausschluss oder einjähriger Nichtabgabe des Mehrfachantrages ist ein Wiedereinstieg nur mit neuerlichem Maßnahmenantrag möglich (für o6_17 nach dem letzten Einstiegsjahr 2025 daher praktisch ausgeschlossen).",
+      "conditions": [
+        {
+          "expression": "after exit/exclusion/missing MFA",
+          "description": "Wiedereinstieg.",
+          "input_paths": [
+            "oepul.o6_17.exit_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "new_measure_application_required",
+        "description": "Neuer Maßnahmenantrag erforderlich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-6-REENTRY",
+        "SRL-1.10.5.3-REENTRY"
+      ]
+    },
+    {
+      "id": "O6_17-SRL-1.10.5.3-PAYMENT-CLAIM",
+      "rule_type": "consequence",
+      "statement": "Wird in einem Folgejahr eine Fläche oder Angabe nicht beantragt, bleibt die Verpflichtung aufrecht, es erfolgt aber keine Zahlung; wird der Zahlungsantrag nicht binnen 1 Jahr nachgereicht oder erfolgt Ausstieg/Ausschluss, endet die Verpflichtung und alle bisher gewährten Prämien sind zurückzuzahlen.",
+      "conditions": [
+        {
+          "expression": "area not applied in later year",
+          "description": "Nicht beantragt.",
+          "input_paths": [
+            "land.parcels[].codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_payment_or_repayment",
+        "description": "Keine Zahlung bzw. Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-1.10.5.3-KEEP",
+        "SRL-1.10.5.3-END",
+        "GSPAV-21-8"
+      ]
+    },
+    {
+      "id": "O6_17-AT-6.1-COMBINATION-ON-PARCEL",
+      "rule_type": "combination_constraint",
+      "statement": "Prämienmäßig ist o6_17 auf der Einzelfläche gemäß Anhang L nur mit UBB (1A), BIO (1B), Einschränkung ertragssteigernder Betriebsmittel (2), Heuwirtschaft (3) und Bodennaher Gülleausbringung (9) kombinierbar; mit allen anderen Maßnahmen ist keine Einzelflächenkombination vorgesehen (betriebliche Teilnahme bleibt möglich).",
+      "conditions": [
+        {
+          "expression": "other measure on same parcel in combination_table.rows['17'].cells",
+          "description": "Kombination laut Anhang L.",
+          "input_paths": [
+            "oepul.participating_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combinable_on_parcel",
+        "description": "Kombinierbarkeit je Fläche.",
+        "value": {
+          "combinable_with": [
+            "1A",
+            "1B",
+            "2",
+            "3",
+            "9"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "AT-6.1",
+        "SRL-1.9.4-ANNEXL",
+        "ANH-L-TITLE",
+        "ANH-L-ROW17",
+        "ANH-L-FN1"
+      ],
+      "rego_symbols": [
+        "data.o6_17.combination_table.rows"
+      ]
+    },
+    {
+      "id": "O6_17-AT-6.1-COMBINATION-CORRECTION",
+      "rule_type": "procedure",
+      "statement": "Unmögliche Maßnahmenkombinationen können bis zum Erhalt der Auszahlungsmitteilung korrigiert werden, sofern keine Beanstandung bei einer Vor-Ort-Kontrolle vorliegt; bis zur Abmeldung sind alle Verpflichtungen einzuhalten.",
+      "conditions": [
+        {
+          "expression": "impossible combination applied",
+          "description": "Unmögliche Kombination.",
+          "input_paths": [
+            "oepul.participating_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "correction_allowed",
+        "description": "Korrektur zulässig.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-6.1-CORR"
+      ]
+    },
+    {
+      "id": "O6_17-AT-6.2-NO-MEASURE-SWITCH",
+      "rule_type": "constraint",
+      "statement": "Ein Wechsel in eine höherwertige Maßnahme war nur bis 31.12.2025 und nur für die aufgezählten Maßnahmen möglich; o6_17 ist in der Wechseltabelle weder Ausgangs- noch Zielmaßnahme.",
+      "conditions": [
+        {
+          "expression": "'o6_17' not in measure_switch_table",
+          "description": "Kein Wechsel vorgesehen."
+        }
+      ],
+      "result": {
+        "outcome": "no_switch",
+        "description": "Kein rückzahlungsfreier Wechsel aus o6_17.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-6.2-DEADLINE",
+        "AT-6.2-TABLE",
+        "SRL-1.7.3.2"
+      ],
+      "rego_symbols": [
+        "data.o6_17.general.measure_switch_table"
+      ]
+    },
+    {
+      "id": "O6_17-AT-6.3-TAKEOVER",
+      "rule_type": "procedure",
+      "statement": "Flächen mit laufender o6_17-Verpflichtung können bis 15. April (2023 und 2028: 17. April) von einem bisher nicht teilnehmenden Betrieb für die Restlaufzeit übernommen werden (auch nach dem letzten Einstiegsjahr), wenn die Verpflichtung dadurch nicht um mehr als 50 % auf andere Flächen ausgeweitet wird; Antrag im MFA, Genehmigung durch die AMA.",
+      "conditions": [
+        {
+          "expression": "takeover.date <= deadline(year)",
+          "description": "Fristgerecht.",
+          "input_paths": [
+            "oepul.o6_17.takeover.date"
+          ]
+        },
+        {
+          "expression": "takeover.expansion_share <= 0.5 and not taker_already_participating",
+          "description": "Ausweitung max. 50 %.",
+          "input_paths": [
+            "oepul.o6_17.takeover.expansion_share",
+            "oepul.o6_17.takeover.taker_already_participating"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "takeover_permitted",
+        "description": "Neuer Vertrag bis Ende des ursprünglichen Vertragszeitraums.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-6.3-DEADLINE",
+        "AT-6.3-50",
+        "AT-6.3-AFTER",
+        "AT-6.3-AMA",
+        "SRL-1.7.3.1-DATE",
+        "SRL-1.7.3.1-50"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.takeover_permitted",
+        "data.oepul.o6_17.takeover_deadline",
+        "data.o6_17.general.measure_takeover"
+      ]
+    },
+    {
+      "id": "O6_17-AT-7.1-LOSS-OF-CONTROL",
+      "rule_type": "exception",
+      "statement": "Der Verlust der Verfügungsgewalt über belegte Flächen durch Übertragung an einen anderen Betrieb oder eine andere Person (Pachtende, Verkauf, Verpachtung) führt für den abgebenden Betrieb zu keiner Rückzahlung.",
+      "conditions": [
+        {
+          "expression": "area lost due to transfer of rights",
+          "description": "Verlust der Verfügungsgewalt.",
+          "input_paths": [
+            "oepul.o6_17.reduction_exempt_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_repayment",
+        "description": "Keine Rückzahlung für diese Flächen.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-7.1-LOSS",
+        "SRL-1.7.2.1",
+        "GSPAV-28-3"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.area_reduction_ha"
+      ]
+    },
+    {
+      "id": "O6_17-AT-7.1-OPERATOR-CHANGE",
+      "rule_type": "obligation",
+      "statement": "Bei Wechsel der bewirtschaftenden Person sind die belegten Flächen jedenfalls weiterzuführen; die nachfolgende Person tritt dem Fördervertrag bei und beide haften solidarisch; die Übertragung ist binnen vier Wochen anzuzeigen.",
+      "conditions": [
+        {
+          "expression": "operator changes",
+          "description": "Bewirtschafterwechsel.",
+          "input_paths": [
+            "farm.farm_id"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_accession",
+        "description": "Vertragsbeitritt mit Solidarhaftung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-7.1-SUCC",
+        "SRL-1.7.2.2",
+        "GSPAV-15",
+        "GSPAV-12-8",
+        "GSPAV-14-2"
+      ]
+    },
+    {
+      "id": "O6_17-AT-7.1-AREA-REDUCTION-TOLERANCE",
+      "rule_type": "calculation",
+      "statement": "Eine Verringerung der belegten Fläche (Aufgabe/Änderung der Nutzung, Streichung) ist jährlich bis 5 % der Vorjahresfläche, höchstens 5,00 ha, jedenfalls aber 0,50 ha zulässig; bei Überschreitung besteht für die gesamte Differenzfläche Rückzahlungspflicht.",
+      "conditions": [
+        {
+          "expression": "tolerance = max(min(0.05 * previous_ha, 5.0), 0.5)",
+          "description": "Toleranz.",
+          "input_paths": [
+            "oepul.o6_17.previous_year_committed_area_ha"
+          ]
+        },
+        {
+          "expression": "reduction = previous - current - exempt > tolerance",
+          "description": "Überschreitung.",
+          "input_paths": [
+            "oepul.o6_17.committed_area_ha",
+            "oepul.o6_17.reduction_exempt_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "repayment_required",
+        "description": "Rückzahlung für die gesamte Differenzfläche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-7.1-5PCT",
+        "AT-7.1-5HA",
+        "AT-7.1-05HA",
+        "AT-7.1-BASE",
+        "SRL-1.7.2.3-5HA",
+        "SRL-1.7.2.3-05"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.area_reduction_tolerance_ha",
+        "data.oepul.o6_17.area_reduction_repayment_required",
+        "data.oepul.o6_17.area_reduction_repayment_area_ha",
+        "data.o6_17.general.area_reduction_tolerance"
+      ]
+    },
+    {
+      "id": "O6_17-AT-7.1-PERMITTED-CONVERSIONS",
+      "rule_type": "exception",
+      "statement": "Jedenfalls zulässig (ohne Rückzahlung) ist u. a. die Umwandlung von Grünland/Gemeinschaftsweide in Almweidefläche sowie von Maßnahmenflächen in LSE Mehrnutzenhecke bzw. Agroforststreifen.",
+      "conditions": [
+        {
+          "expression": "reduction due to permitted conversion",
+          "description": "Zulässige Umwandlung.",
+          "input_paths": [
+            "oepul.o6_17.reduction_exempt_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exempt_from_reduction",
+        "description": "Fläche zählt nicht zur Verringerung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-7.1-CONV",
+        "SRL-1.7.2.3-CONV"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.area_reduction_ha"
+      ]
+    },
+    {
+      "id": "O6_17-AT-7.2-AREA-ADDITIONS",
+      "rule_type": "calculation",
+      "statement": "Flächenzugänge sind 2024 und 2025 voll prämienfähig; in den Folgejahren ist die Prämienfähigkeit von Flächenausweitungen auf max. 50 % auf Basis 2025 beschränkt, wobei eine Vergrößerung um bis zu 5,00 ha jedenfalls zulässig ist; bereits vorher mit o6_17 belegte Flächen gelten nicht als Zugang.",
+      "conditions": [
+        {
+          "expression": "farm.year > 2025",
+          "description": "Folgejahr nach 2025.",
+          "input_paths": [
+            "farm.year"
+          ]
+        },
+        {
+          "expression": "limit = area_2025 + max(0.5 * area_2025, 5.0) + previously_committed_additions",
+          "description": "Prämienfähige Höchstfläche.",
+          "input_paths": [
+            "oepul.o6_17.committed_area_2025_ha",
+            "oepul.o6_17.additions_previously_committed_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_area_limited",
+        "description": "Grundprämie anteilig auf Höchstfläche begrenzt (Zugangskürzung).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-7.2-HEAD",
+        "AT-7.2-LIST",
+        "AT-7.2-RULE",
+        "AT-7.2-5HA",
+        "AT-7.2-SAME",
+        "SRL-1.7.2.4-17",
+        "SRL-1.7.2.4-RULE",
+        "SRL-1.7.2.4-5HA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.premium_eligible_area_limit_ha",
+        "data.oepul.o6_17.addition_scale",
+        "data.o6_17.general.area_addition_limits"
+      ]
+    },
+    {
+      "id": "O6_17-AT-8.2-SANCTION-STAGES",
+      "rule_type": "sanction",
+      "statement": "Verstöße gegen inhaltliche Förderverpflichtungen werden maßnahmenbezogen (inkl. Zuschläge) nach Schwere, Ausmaß, Dauer und Häufigkeit in den Stufen Verwarnung, 2 %, 5 %, 10 %, 25 %, 50 % und 100 % Kürzung sanktioniert; ab 2027 wird statt der Verwarnung 1 % einbehalten.",
+      "conditions": [
+        {
+          "expression": "finding.base_stage in 1..7",
+          "description": "Stufe je Verstoß.",
+          "input_paths": [
+            "oepul.o6_17.findings[].base_stage",
+            "oepul.o6_17.findings[].year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "content_reduction_percent",
+        "description": "Kürzungsprozentsatz der Jahresprämie.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-8.2-CAT",
+        "AT-8.2-CRIT",
+        "AT-8.2-2027",
+        "GSPAV-48-1",
+        "GSPAV-48-2027",
+        "SRL-1.12.1.3"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.content_reduction_percent",
+        "data.oepul.o6_17.stage_percent",
+        "data.o6_17.general.sanction_stages"
+      ]
+    },
+    {
+      "id": "O6_17-GSPAV-48-ONE-OFF-OBLIGATIONS",
+      "rule_type": "sanction",
+      "statement": "Verstöße gegen einmalig in der Periode zu erfüllende Auflagen wie die Weiterbildungs- oder Bodenprobenverpflichtung werden im Jahr der Feststellung geahndet.",
+      "conditions": [
+        {
+          "expression": "training or soil sample violation detected",
+          "description": "Einmalauflage verletzt.",
+          "input_paths": [
+            "oepul.o6_17.findings[].year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "sanction_in_detection_year",
+        "description": "Sanktion im Feststellungsjahr.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "GSPAV-48-ONEOFF"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.findings_this_year"
+      ]
+    },
+    {
+      "id": "O6_17-GSPAV-48-ESCALATION-CUMULATION",
+      "rule_type": "sanction",
+      "statement": "Mehrere Verstöße in einem Jahr werden durch Addition kumuliert (max. 100 % der Jahresprämie); wiederholte Verstöße gegen dieselbe Verpflichtung werden ab dem zweiten Mal um eine Stufe, ab dem dritten um zwei Stufen erhöht; VOK-Feststellungen ziehen grundsätzlich höhere Sanktionen nach sich; bei schwerwiegenden Verstößen oder mehr als drei Verstößen bei einer VOK bis 100 %.",
+      "conditions": [
+        {
+          "expression": "percent = min(100, sum(stage_percent(base_stage + prior_occurrences)))",
+          "description": "Kumulation und Eskalation.",
+          "input_paths": [
+            "oepul.o6_17.findings[].prior_occurrences_same_obligation"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "content_reduction_percent",
+        "description": "Kumulierte Kürzung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "GSPAV-48-CUM",
+        "GSPAV-48-ESC",
+        "GSPAV-48-OTSC",
+        "GSPAV-48-SEVERE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.escalated_stage",
+        "data.oepul.o6_17.content_reduction_percent"
+      ]
+    },
+    {
+      "id": "O6_17-GSPAV-48-EXCLUSION",
+      "rule_type": "sanction",
+      "statement": "Wird im Vertragszeitraum zweimal eine 100 %-Kürzung vergeben, erfolgen Ausschluss aus der Maßnahme und Rückforderung bis Verpflichtungsbeginn (für die im Ausschlussjahr beantragten Flächen).",
+      "conditions": [
+        {
+          "expression": "full_reductions_in_period >= 2",
+          "description": "Zweite 100 %-Kürzung.",
+          "input_paths": [
+            "oepul.o6_17.previous_full_reductions"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exclusion_and_recovery",
+        "description": "Ausschluss und Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-8.2-EXCL",
+        "GSPAV-48-EXCL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.exclusion_from_measure",
+        "data.oepul.o6_17.full_reductions_in_period"
+      ]
+    },
+    {
+      "id": "O6_17-SRL-1.12.1.1-ACCESS-FAILURE-CONSEQUENCE",
+      "rule_type": "consequence",
+      "statement": "Werden Förder- bzw. Zugangsvoraussetzungen im 1. Verpflichtungsjahr nicht erfüllt, kommt kein Vertrag zustande; ab dem 2. Verpflichtungsjahr wird im betroffenen Jahr für die Maßnahme keine Prämie gewährt.",
+      "conditions": [
+        {
+          "expression": "count(access_violations) > 0",
+          "description": "Zugangsvoraussetzung verletzt.",
+          "input_paths": [
+            "farm.year",
+            "oepul.o6_17.contract_start_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_contract_or_no_premium",
+        "description": "Kein Vertrag (Jahr 1) bzw. Prämie 0 (Folgejahre).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-1.12.1.1-Y1",
+        "SRL-1.12.1.1-Y2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.contract_established",
+        "data.oepul.o6_17.premium_blocked_by_access_conditions",
+        "data.oepul.o6_17.premium_total_eur"
+      ]
+    },
+    {
+      "id": "O6_17-GSPAV-46-OVERDECLARATION",
+      "rule_type": "sanction",
+      "statement": "Ist die ermittelte Fläche kleiner als die angemeldete, wird die ermittelte Fläche herangezogen; übersteigt die Differenz 3 % der ermittelten Fläche oder 2 ha, wird die Beihilfe auf Basis der ermittelten Fläche abzüglich des 1,5fachen der Differenz berechnet (max. 100 %).",
+      "conditions": [
+        {
+          "expression": "diff = declared - determined",
+          "description": "Übererklärung.",
+          "input_paths": [
+            "land.parcels[].area_ha",
+            "land.parcels[].determined_area_ha"
+          ]
+        },
+        {
+          "expression": "diff > 0.03 * determined or diff > 2",
+          "description": "Schwelle."
+        }
+      ],
+      "result": {
+        "outcome": "payment_basis_ha",
+        "description": "Reduzierte Berechnungsfläche.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "GSPAV-42-4",
+        "GSPAV-46-1",
+        "GSPAV-46-1B",
+        "GSPAV-46-3",
+        "SRL-1.12.1.2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.overdeclaration_ha",
+        "data.oepul.o6_17.overdeclaration_sanction_applies",
+        "data.oepul.o6_17.overdeclaration_payment_basis_ha"
+      ]
+    },
+    {
+      "id": "O6_17-GSPAV-47-UNDERDECLARATION",
+      "rule_type": "sanction",
+      "statement": "Meldet der Begünstigte nicht alle Parzellen in seiner Verfügungsgewalt und beträgt die Differenz mehr als 3 % der angemeldeten Fläche, werden die flächenbezogenen Beihilfen um bis zu 3 % gekürzt.",
+      "conditions": [
+        {
+          "expression": "undeclared_area > 0.03 * declared_area",
+          "description": "Untererklärung.",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_up_to_3_percent",
+        "description": "Kürzung bis 3 %.",
+        "value": {
+          "max_reduction_share": 0.03
+        }
+      },
+      "source_reference_ids": [
+        "GSPAV-47"
+      ],
+      "rego_symbols": [
+        "data.o6_17.general.underdeclaration"
+      ]
+    },
+    {
+      "id": "O6_17-GSPAV-45-NO-SANCTION-CASES",
+      "rule_type": "exception",
+      "statement": "Für Abweichungen aus dem Flächenmonitoring oder aus Vorabprüfungen mit erfolgter Korrektur wird keine Verwaltungssanktion verhängt; nach Fristablauf sind bestimmte Korrekturen und Rücknahmen (bis 15 Kalendertage vor Auszahlung) zulässig.",
+      "conditions": [
+        {
+          "expression": "deviation detected by monitoring/pre-check and corrected",
+          "description": "Korrektur erfolgt."
+        }
+      ],
+      "result": {
+        "outcome": "no_sanction",
+        "description": "Keine Verwaltungssanktion.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "GSPAV-45-2",
+        "GSPAV-33-3",
+        "GSPAV-33-3-RUECK"
+      ]
+    },
+    {
+      "id": "O6_17-AT-9.1-PAYMENT",
+      "rule_type": "procedure",
+      "statement": "Die Förderung wird als jährliche Prämie gewährt und bis 30. Juni des Folgejahres auf das Namenskonto ausbezahlt (nicht vor dem 1. Dezember des Antragsjahres); nach Verwaltungskontrolle ist eine Teilzahlung bis 75 % möglich.",
+      "conditions": [
+        {
+          "expression": "annual premium",
+          "description": "Jährliche Zahlung.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "payment_schedule",
+        "description": "Auszahlung bis 30.06. des Folgejahres.",
+        "value": {
+          "advance_max_share": 0.75
+        }
+      },
+      "source_reference_ids": [
+        "AT-9.1-ANNUAL",
+        "AT-9.1-DATE",
+        "AT-9.1-ADV",
+        "SRL-1.9.1",
+        "SRL-1.10.7-75",
+        "GSPAV-52-3",
+        "SRL-1.10.6"
+      ]
+    },
+    {
+      "id": "O6_17-AT-9.2-AREA-PAYMENT-CAP",
+      "rule_type": "calculation",
+      "statement": "Die Summe der flächenbezogenen ÖPUL-Zahlungen je Schlag (inkl. umgelegter Landschaftselementzahlungen, ohne Begrünung Zwischenfrucht/Immergrün sowie Erosionsschutz WOH bzw. ab 2025 Nichtproduktive Ackerflächen) ist mit 1.200 €/ha (2023) bzw. 1.300 €/ha (ab 2024) begrenzt.",
+      "conditions": [
+        {
+          "expression": "o6_17_payment <= cap * area_ha - other_area_payments_eur",
+          "description": "Restspielraum je Schlag.",
+          "input_paths": [
+            "land.parcels[].area_ha",
+            "land.parcels[].other_area_payments_eur",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "capped_parcel_payment",
+        "description": "Zahlung je Schlag gedeckelt.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-9.2-HEAD",
+        "AT-9.2-2324",
+        "AT-9.2-2025",
+        "SRL-1.9.2.1"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.area_payment_cap_eur_per_ha",
+        "data.oepul.o6_17.parcel_cap_room_eur",
+        "data.oepul.o6_17.premium_parcel_eur",
+        "data.o6_17.general.area_payment_caps"
+      ]
+    },
+    {
+      "id": "O6_17-AT-9.3-MODULATION",
+      "rule_type": "calculation",
+      "statement": "Das Prämienausmaß wird nach Betriebsgröße moduliert: bis 200 ha 100 %, über 200 bis 300 ha 90 %, über 300 bis 1.000 ha 85 %, über 1.000 ha 75 % (z. B. 220 ha → 99,09 %); Almbewirtschaftung und Behirtung werden getrennt von der Heimfläche betrachtet; Basis sind die MFA-Angaben.",
+      "conditions": [
+        {
+          "expression": "factor = sum(overlap(area, tier) * share) / area",
+          "description": "Gewichteter Modulationsfaktor.",
+          "input_paths": [
+            "land.total_area_ha",
+            "land.alpine_pasture_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "modulation_factor",
+        "description": "Faktor auf alle Prämien.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "AT-9.3-HEAD",
+        "AT-9.3-T1",
+        "AT-9.3-T4",
+        "AT-9.3-EX",
+        "AT-9.3-ALM",
+        "AT-9.3-EXALM",
+        "SRL-1.9.2.2",
+        "SRL-1.9.2.2-T2",
+        "SRL-1.9.2.2-MFA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.modulation_factor",
+        "data.oepul.o6_17.tier_overlap",
+        "data.o6_17.general.modulation_tiers"
+      ]
+    },
+    {
+      "id": "O6_17-SRL-1.12.2-REDUCTION-ORDER",
+      "rule_type": "calculation",
+      "statement": "Mehrfachkürzungen erfolgen in der Reihenfolge: Übererklärung, Förder-/Zugangsvoraussetzungen, Fristversäumnis, Untererklärung, inhaltliche Kürzungen, Förderobergrenze je Maßnahme, Modulation, Obergrenze Flächenzahlungen, Vertragszeitraumüberprüfung, Zugangskürzung, Konditionalität.",
+      "conditions": [
+        {
+          "expression": "apply reductions in listed order",
+          "description": "Kürzungsreihenfolge."
+        }
+      ],
+      "result": {
+        "outcome": "reduction_order",
+        "description": "Reihenfolge laut Datentabelle.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-1.12.2",
+        "SRL-1.12.2-MOD",
+        "GSPAV-53"
+      ],
+      "rego_symbols": [
+        "data.o6_17.general.reduction_order_srl_1_12_2",
+        "data.oepul.o6_17.premium_parcel_eur"
+      ]
+    },
+    {
+      "id": "O6_17-GSPAV-11-MINIMUM-PAYMENT",
+      "rule_type": "exception",
+      "statement": "Von der Gewährung einer Förderung kann abgesehen werden, wenn der sich ergebende Betrag je Fördermaßnahme 50 € nicht überschreitet.",
+      "conditions": [
+        {
+          "expression": "premium_total_eur <= 50",
+          "description": "Kleinbetrag."
+        }
+      ],
+      "result": {
+        "outcome": "payment_may_be_withheld",
+        "description": "Keine Auszahlung möglich.",
+        "value": {
+          "threshold_eur": 50
+        }
+      },
+      "source_reference_ids": [
+        "GSPAV-11",
+        "SRL-1.10.7-50",
+        "GSPAV-52-2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.payment_may_be_withheld_minimum"
+      ]
+    },
+    {
+      "id": "O6_17-GSPAV-12-REPAYMENT",
+      "rule_type": "consequence",
+      "statement": "Zu Unrecht gewährte Förderungen sind über schriftliche Aufforderung binnen vier Wochen zurückzuzahlen (zuzüglich Zinsen); Rückforderungstatbestände sind u. a. unrichtige Angaben, fehlende Nachweise, verhinderte Kontrollen und Nichteinhaltung von Auflagen; Beträge bis 100 € (Zinsen bis 50 €) können unberücksichtigt bleiben; Umgehung (künstlich geschaffene Voraussetzungen) führt zum Ausschluss des Vorteils.",
+      "conditions": [
+        {
+          "expression": "payment unduly granted",
+          "description": "Zu Unrecht gewährt."
+        }
+      ],
+      "result": {
+        "outcome": "repayment_within_4_weeks",
+        "description": "Rückzahlung.",
+        "value": {
+          "weeks": 4,
+          "waiver_max_eur": 100
+        }
+      },
+      "source_reference_ids": [
+        "GSPAV-12-1",
+        "GSPAV-12-6",
+        "GSPAV-13",
+        "GSPAV-13A"
+      ],
+      "rego_symbols": [
+        "data.o6_17.general.repayment_period_weeks"
+      ]
+    },
+    {
+      "id": "O6_17-GSPAV-6-FORCE-MAJEURE",
+      "rule_type": "exception",
+      "statement": "Fälle höherer Gewalt oder außergewöhnlicher Umstände (u. a. dauerhafte Abtretung bzw. vorübergehende Inanspruchnahme von mind. 0,3 ha im öffentlichen Interesse, behördliche Anordnungen zu Seuchen/Pflanzenkrankheiten/Neophyten) führen dazu, dass der Beihilfeanspruch für die bei Eintritt förderfähigen Flächen erhalten bleibt und keine Rückforderung bzw. Konditionalitätssanktion erfolgt; bei Naturkatastrophen genügt eine gebietsweite Meldung.",
+      "conditions": [
+        {
+          "expression": "event in force_majeure_cases",
+          "description": "Anerkannter Fall.",
+          "input_paths": [
+            "oepul.o6_17.force_majeure_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "entitlement_kept",
+        "description": "Keine Sanktion/Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-1.7.4.1",
+        "GSPAV-6-1",
+        "GSPAV-6-1-5",
+        "GSPAV-6-3",
+        "GSPAV-6-4"
+      ],
+      "rego_symbols": [
+        "data.o6_17.general.force_majeure_cases_gsp_av_6"
+      ]
+    },
+    {
+      "id": "O6_17-GSPAV-6-FORCE-MAJEURE-NOTICE",
+      "rule_type": "procedure",
+      "statement": "Das Vorliegen höherer Gewalt ist binnen drei Wochen ab dem Zeitpunkt, ab dem die Person dazu in der Lage ist, mittels AMA-Vorlage geltend zu machen und zu belegen.",
+      "conditions": [
+        {
+          "expression": "notification_date - able_to_notify_date <= 21 days",
+          "description": "Fristgerechte Meldung.",
+          "input_paths": [
+            "oepul.o6_17.force_majeure_events[].able_to_notify_date",
+            "oepul.o6_17.force_majeure_events[].notification_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_late",
+        "description": "Verspätete Meldung.",
+        "value": {
+          "days": 21
+        }
+      },
+      "source_reference_ids": [
+        "GSPAV-6-2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.force_majeure_notified_in_time",
+        "data.oepul.o6_17.violations"
+      ]
+    },
+    {
+      "id": "O6_17-GSPAV-7-OTHER-CIRCUMSTANCES",
+      "rule_type": "exception",
+      "statement": "Keine Verwaltungssanktion bei natürlichen Umständen im Tierbestand mit Meldung binnen drei Wochen sowie bei Behördenfehlern, die nicht erkennbar waren; offensichtliche Fehler in Anträgen können berichtigt werden.",
+      "conditions": [
+        {
+          "expression": "natural circumstance or authority error or obvious error",
+          "description": "Entlastungsgrund."
+        }
+      ],
+      "result": {
+        "outcome": "no_sanction",
+        "description": "Keine Sanktion bzw. Berichtigung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "GSPAV-7-1",
+        "GSPAV-7-2",
+        "GSPAV-8"
+      ]
+    },
+    {
+      "id": "O6_17-SRL-1.7.4.2-PERMANENT-CIRCUMSTANCES",
+      "rule_type": "exception",
+      "statement": "Bei dauerhaften flächen- oder bewirtschaftungsverändernden Umständen ohne Einfluss der förderwerbenden Person kann die AMA die Verpflichtung vorzeitig ohne Rückforderung beenden (Meldung im MFA bzw. spätestens bei Vertragszeitraumüberprüfung); im Eintrittsjahr grundsätzlich keine Prämie, außer Eintritt nach dem 15.04.",
+      "conditions": [
+        {
+          "expression": "permanent circumstance reported",
+          "description": "Dauerhafter Umstand gemeldet.",
+          "input_paths": [
+            "oepul.o6_17.exit_reason"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "early_end_without_recovery",
+        "description": "Vorzeitige Beendigung ohne Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-1.7.4.2",
+        "SRL-1.7.4.2-DATE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.repayment_free_exit_reasons"
+      ]
+    },
+    {
+      "id": "O6_17-SRL-1.7.4.3-TEMPORARY-CIRCUMSTANCES",
+      "rule_type": "exception",
+      "statement": "Bei vorübergehenden Umständen (z. B. behördlich begleitete Nutzungstäusche, Bodenordnungsverfahren, verordnete Schädlingsbekämpfung) kann von einer Rückforderung abgesehen werden; im Jahr der Nichteinhaltung grundsätzlich keine Prämie, außer alle Bedingungen werden auf den geänderten Flächen eingehalten.",
+      "conditions": [
+        {
+          "expression": "temporary circumstance reported",
+          "description": "Vorübergehender Umstand."
+        }
+      ],
+      "result": {
+        "outcome": "no_recovery",
+        "description": "Keine Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-1.7.4.3"
+      ]
+    },
+    {
+      "id": "O6_17-SRL-1.7.4.4-BML-DETERMINATIONS",
+      "rule_type": "exception",
+      "statement": "Das BML kann bei flächen- oder bewirtschaftungsverändernden Umständen spezielle Festlegungen treffen (z. B. die 2026 veröffentlichten Dürre-Erleichterungen); diese betreffen 2026 nur andere Maßnahmen bzw. Verpflichtungen und enthalten keine Abweichung für o6_17.",
+      "conditions": [
+        {
+          "expression": "BML determination applicable to o6_17",
+          "description": "Festlegung für o6_17.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "special_rules",
+        "description": "Nur bei expliziter Festlegung für o6_17.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-1.7.4.4",
+        "N0805-HG",
+        "N0812-NAT",
+        "N0812-STMK",
+        "N0612-EXIT"
+      ]
+    },
+    {
+      "id": "O6_17-SRL-1.7.5-REVISION-CLAUSE",
+      "rule_type": "exception",
+      "statement": "Erfordern Änderungen des verbindlichen Rechtsrahmens eine Vertragsanpassung, kann die förderwerbende Person die Zustimmung verweigern; der Vertrag endet dann ohne Rückforderung wegen Nichteinhaltung des Vertragszeitraums.",
+      "conditions": [
+        {
+          "expression": "legal framework change and consent refused",
+          "description": "Revisionsklausel.",
+          "input_paths": [
+            "oepul.o6_17.exit_reason"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_ends_without_recovery",
+        "description": "Vertragsende ohne Rückforderung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-1.7.5"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.repayment_free_exit_reasons"
+      ]
+    },
+    {
+      "id": "O6_17-SRL-1.11-CONTROL-DUTIES",
+      "rule_type": "obligation",
+      "statement": "Die förderwerbende Person hat Verwaltungs- und Vor-Ort-Kontrollen zuzulassen, Auskunft zu erteilen, Unterlagen vorzulegen und den Prüforganen Zutritt zu gewähren; bei Verweigerung wird der Antrag abgelehnt und bestehende Verträge werden beendet und rückabgewickelt.",
+      "conditions": [
+        {
+          "expression": "control refused",
+          "description": "Kontrollverweigerung."
+        }
+      ],
+      "result": {
+        "outcome": "rejection_and_termination",
+        "description": "Ablehnung und Rückabwicklung.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-1.11.1.2",
+        "SRL-1.11.1.2-REFUSE",
+        "SRL-1.10.5.1",
+        "GSPAV-17",
+        "AT-8.1"
+      ]
+    },
+    {
+      "id": "O6_17-GSPAV-16-RETENTION",
+      "rule_type": "documentation",
+      "statement": "Antrags- und Nachweisunterlagen (z. B. Kursbestätigungen, Bodenuntersuchungen, Kennarten-Erfassungsbögen, Nachweise zu Schädlingsbefall) sind bei mehrjährigen Invekos-Maßnahmen vier Jahre ab Ende des Vertragszeitraums aufzubewahren.",
+      "conditions": [
+        {
+          "expression": "documents retained until 4 years after contract end",
+          "description": "Aufbewahrungsfrist."
+        }
+      ],
+      "result": {
+        "outcome": "retention_required",
+        "description": "Aufbewahrung bis vier Jahre nach Vertragsende.",
+        "value": {
+          "years_after_contract_end": 4
+        }
+      },
+      "source_reference_ids": [
+        "GSPAV-16",
+        "SRL-1.11.3"
+      ],
+      "rego_symbols": [
+        "data.o6_17.general.retention_years_after_contract_end"
+      ]
+    },
+    {
+      "id": "O6_17-GSPAV-14-NOTIFICATION-DUTIES",
+      "rule_type": "obligation",
+      "statement": "Jede Veränderung, durch die die tatsächlichen oder rechtlichen Verhältnisse nicht mehr mit den Angaben übereinstimmen, ist der AMA unverzüglich anzuzeigen.",
+      "conditions": [
+        {
+          "expression": "relevant change occurred",
+          "description": "Veränderung."
+        }
+      ],
+      "result": {
+        "outcome": "notify_ama",
+        "description": "Anzeigepflicht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "GSPAV-14-1"
+      ]
+    },
+    {
+      "id": "O6_17-GSPAV-5-DEADLINE-SHIFT",
+      "rule_type": "temporal_constraint",
+      "statement": "Fällt das Fristende auf einen Samstag, Sonntag oder Feiertag, gilt grundsätzlich der nächste Arbeitstag; dies gilt jedoch nicht für die Frist des Maßnahmenantrags (31. Dezember, § 33 Abs. 2 Z 1 GSP-AV).",
+      "conditions": [
+        {
+          "expression": "deadline is measure application",
+          "description": "Keine Verschiebung.",
+          "input_paths": [
+            "oepul.o6_17.measure_application_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_shift",
+        "description": "31.12. bleibt Fristende.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "GSPAV-5-1",
+        "GSPAV-5-2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.entry_application_deadline"
+      ]
+    },
+    {
+      "id": "O6_17-GSPAV-33-MFA-DEADLINES",
+      "rule_type": "application",
+      "statement": "Lage, Ausmaß, Schlagnutzung und Codes der Flächen (Feldstücksliste, inkl. Code AGL) sowie die Tierliste sind bis 15. April des Antragsjahres im Mehrfachantrag anzugeben; Flächen sind in ha mit vier Nachkommastellen anzugeben.",
+      "conditions": [
+        {
+          "expression": "MFA submitted by 15 April",
+          "description": "Fristgerechter MFA.",
+          "input_paths": [
+            "land.parcels[].codes",
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "mfa_timely",
+        "description": "Zahlungsantrag für das Antragsjahr.",
+        "value": {
+          "deadline_mmdd": "04-15"
+        }
+      },
+      "source_reference_ids": [
+        "GSPAV-33-2-2",
+        "GSPAV-33-FSL",
+        "GSPAV-34-12",
+        "GSPAV-21-5"
+      ]
+    },
+    {
+      "id": "O6_17-GSPAV-25-GRASSLAND-USE-TYPES",
+      "rule_type": "definition",
+      "statement": "Schlagnutzungsarten Grünland: Einmähdige Wiese (jährlich eine vollflächige Mahd mit Verbringung), Mähwiese/-weide zwei bzw. drei und mehr Nutzungen, Streuwiese (extensiv, Einstreunutzung, jährliche Mahd), Bergmähder (über Dauersiedlungsgrenze, > 1.200 m, Mahd mind. alle 2 Jahre), Hutweide, Dauerweide, Grünlandbrache; Weidenutzungen ab 15. September zählen nicht als Nutzung.",
+      "conditions": [
+        {
+          "expression": "parcel.field_use_type in grassland_field_use_types",
+          "description": "Schlagnutzungsart aus geschlossener Liste.",
+          "input_paths": [
+            "land.parcels[].field_use_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "field_use_classification",
+        "description": "Klassifizierung für Mahd-/AGL-/Förderfähigkeit.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "GSPAV-25-3-BM",
+        "GSPAV-25-3-1M",
+        "GSPAV-25-3-2N",
+        "GSPAV-25-3-STREU",
+        "GSPAV-25-3-BRACHE",
+        "GSPAV-25-3-SEP15",
+        "GSPAV-22"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.field_use_row",
+        "data.oepul.o6_17.field_use_attr",
+        "data.o6_17.lists.grassland_field_use_types"
+      ]
+    },
+    {
+      "id": "O6_17-GSPAV-25-3-GRASSLAND-DEFINITION",
+      "rule_type": "definition",
+      "statement": "Grünland sind Flächen zum Anbau von Gras oder anderen Grünfutterpflanzen, die seit mindestens fünf Jahren nicht Bestandteil der Fruchtfolge sind; Ackerflächen mit fünf Jahren Ackerfutter werden zu Grünland, sofern nicht spätestens im sechsten Jahr eine Fruchtfolgemaßnahme gesetzt wird.",
+      "conditions": [
+        {
+          "expression": "parcel.land_use == 'grassland' (Nutzungsart G)",
+          "description": "Grünland laut MFA.",
+          "input_paths": [
+            "land.parcels[].land_use"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "is_grassland",
+        "description": "Fläche unterliegt dem Umbruchsverzicht.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "GSPAV-25-3",
+        "GSPAV-26",
+        "GSPAV-25-1",
+        "GSPAV-24",
+        "AT-4-LAND"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.is_grassland"
+      ]
+    },
+    {
+      "id": "O6_17-GSPAV-28-ELIGIBLE-AREA",
+      "rule_type": "eligibility",
+      "statement": "Förderfähig sind die dem Landwirt zum Stichtag 1. April zur Verfügung stehenden (Eigentum, Pacht, Nutzungsüberlassung) und landwirtschaftlich genutzten Flächen; nichtlandwirtschaftliche Nutzung während der Vegetationsperiode (1. April bis 30. September) darf höchstens 14 Kalendertage dauern und ist vorab zu melden; jede förderfähige Fläche muss mindestens 50 m² groß sein.",
+      "conditions": [
+        {
+          "expression": "available on 1 April and used agriculturally",
+          "description": "Verfügungsgewalt und Nutzung.",
+          "input_paths": [
+            "land.parcels[].area_ha"
+          ]
+        },
+        {
+          "expression": "non-agricultural use <= 14 days",
+          "description": "Nebennutzung."
+        }
+      ],
+      "result": {
+        "outcome": "area_eligible",
+        "description": "Fläche dem Grunde nach förderfähig.",
+        "value": {
+          "min_area_m2": 50,
+          "max_non_agri_days": 14
+        }
+      },
+      "source_reference_ids": [
+        "GSPAV-28-1",
+        "GSPAV-28-2",
+        "GSPAV-28-3",
+        "GSPAV-27-2",
+        "GSPAV-21-9"
+      ],
+      "rego_symbols": [
+        "data.o6_17.general.minimum_eligible_area_m2"
+      ]
+    },
+    {
+      "id": "O6_17-SRL-1.17-NO-LEGAL-CLAIM",
+      "rule_type": "interpretation",
+      "statement": "Aus der SRL entsteht kein Rechtsanspruch auf Förderung; die SRL samt Anhängen ist Vertragsbestandteil, der Vertrag kommt mit Genehmigung durch die AMA zustande; Gerichtsstand ist Wien.",
+      "conditions": [
+        {
+          "expression": "always",
+          "description": "Allgemeine Vertragsgrundlage."
+        }
+      ],
+      "result": {
+        "outcome": "no_subjective_right",
+        "description": "Förderung auf Vertragsbasis.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "SRL-1.17",
+        "SRL-1.19",
+        "SRL-1.1-INTEGRAL"
+      ]
+    },
+    {
+      "id": "O6_17-N2026-FORCE-MAJEURE-DROUGHT-PROCEDURE",
+      "rule_type": "procedure",
+      "statement": "2026: Sind Förderverpflichtungen aufgrund der Trockenheit nicht einhaltbar, kann ein einzelbetriebliches Ansuchen auf Anerkennung höherer Gewalt über eAMA (Register 'Eingaben') gestellt werden; bei Vor-Ort-Kontrollen wird die Trockenheit berücksichtigt.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026 and drought prevents compliance",
+          "description": "Dürrebedingte Nichteinhaltung.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "force_majeure_application_possible",
+        "description": "Antrag auf höhere Gewalt möglich.",
+        "value": null
+      },
+      "source_reference_ids": [
+        "N0522-HG",
+        "N0522-VOK"
+      ]
+    },
+    {
+      "id": "O6_17-N2026-UBB-BIO-OP-CODES-SCOPE",
+      "rule_type": "interpretation",
+      "statement": "2026 können Biodiversitätsflächen von UBB/BIO bei Dürre vorzeitig genutzt werden, wenn sie mit OPUBB/OPBIO codiert werden (keine UBB/BIO-Prämie auf diesen Flächen); dies hebt die betriebliche UBB/BIO-Teilnahme nicht auf, sodass die o6_17-Kombinationsverpflichtung weiter als erfüllt gilt (Annahme).",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026 and parcel codes contain OPUBB/OPBIO",
+          "description": "Codierung wegen vorzeitiger Nutzung.",
+          "input_paths": [
+            "land.parcels[].codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combination_obligation_unaffected",
+        "description": "Kombinationsverpflichtung bleibt erfüllt (Annahme).",
+        "value": null
+      },
+      "source_reference_ids": [
+        "N0522-OPCODE",
+        "N0522-UBB7"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_17.combination_obligation_met"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,2575 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_4",
+  "rules": [
+    {
+      "id": "O64-SCOPE-001",
+      "rule_type": "scope",
+      "statement": "Die Prämie der Maßnahme „Bewirtschaftung von Bergmähdern“ (SRL-Maßnahme 4, GSP-Intervention 70-05) wird für Bergmähder über der örtlichen Dauersiedlungsgrenze gewährt, die aufgrund Hangneigung, Lage oder Erreichbarkeit schwierig zu bewirtschaften sind; abgegolten werden Kosten und Einkommensverluste der Mahd gegenüber einer Beweidung.",
+      "conditions": [
+        {
+          "expression": "parcel.mountain_meadow.enrolled_in_o6_4 == true",
+          "description": "Schlag ist in die Maßnahme o6_4 eingebracht",
+          "input_paths": [
+            "land.parcels[].mountain_meadow.enrolled_in_o6_4"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "scope_defined",
+        "description": "Anwendungsbereich der Maßnahme; Detailprüfung über O64-ELIG-001..005",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-001",
+        "CIT-MB-002",
+        "CIT-SRL-044",
+        "CIT-GSP-038"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.o6_4_parcels",
+        "data.oepul_data.o6_4.measure"
+      ]
+    },
+    {
+      "id": "O64-ELIG-001",
+      "rule_type": "eligibility",
+      "statement": "Es kann ausschließlich mit Bergmahdflächen teilgenommen werden; diese sind in der Feldstücksliste mit der Schlagnutzungsart „Bergmähder“ zu beantragen.",
+      "conditions": [
+        {
+          "expression": "parcel.mountain_meadow.declared_as_bergmaehder == true",
+          "description": "Schlagnutzungsart „Bergmähder“ im Mehrfachantrag",
+          "input_paths": [
+            "land.parcels[].mountain_meadow.declared_as_bergmaehder"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_not_eligible_if_false",
+        "description": "Schlag ohne Schlagnutzungsart Bergmähder ist nicht teilnahmefähig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-007",
+        "CIT-MB-027"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.parcel_failures",
+        "data.oepul.o6_4.parcel_is_bergmahd",
+        "data.oepul_data.o6_4.eligibility_thresholds"
+      ]
+    },
+    {
+      "id": "O64-ELIG-002",
+      "rule_type": "eligibility",
+      "statement": "Bergmähder sind extensive Mähflächen über der örtlichen Dauersiedlungsgrenze.",
+      "conditions": [
+        {
+          "expression": "parcel.mountain_meadow.above_permanent_settlement_limit == true",
+          "description": "Fläche liegt über der örtlichen Dauersiedlungsgrenze",
+          "input_paths": [
+            "land.parcels[].mountain_meadow.above_permanent_settlement_limit"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_not_eligible_if_false",
+        "description": "Fläche unter der Dauersiedlungsgrenze ist kein Bergmahd",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-008",
+        "CIT-GSP-019",
+        "CIT-SRL-044"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.parcel_failures"
+      ]
+    },
+    {
+      "id": "O64-ELIG-003",
+      "rule_type": "eligibility",
+      "statement": "Mehr als die Hälfte (der überwiegende Teil) der Schlagfläche muss über 1.200 m Seehöhe liegen; dies gilt auch für Almbetriebe.",
+      "conditions": [
+        {
+          "expression": "parcel.mountain_meadow.share_above_1200m_percent > 50",
+          "description": "Anteil der Schlagfläche über 1.200 m Seehöhe größer als 50 %",
+          "input_paths": [
+            "land.parcels[].mountain_meadow.share_above_1200m_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_not_eligible_if_share_le_50",
+        "description": "Bei höchstens 50 % über 1.200 m ist der Schlag nicht teilnahmefähig",
+        "value": {
+          "min_share_above_1200m_percent_exclusive": 50
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-008",
+        "CIT-MB-011",
+        "CIT-SRL-045",
+        "CIT-GSP-020"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.parcel_failures",
+        "data.oepul_data.o6_4.eligibility_thresholds"
+      ]
+    },
+    {
+      "id": "O64-ELIG-004",
+      "rule_type": "eligibility",
+      "statement": "Bergmähder müssen über der Seehöhe des Heimbetriebes (der Heimbetriebsstätte) liegen; bei Almbetrieben kann die Bergmahdfläche auch unter der Almbetriebsstätte liegen.",
+      "conditions": [
+        {
+          "expression": "not farm.is_alm_operation",
+          "description": "Betrieb ist kein Almbetrieb",
+          "input_paths": [
+            "farm.is_alm_operation"
+          ]
+        },
+        {
+          "expression": "parcel.mountain_meadow.above_home_farm_elevation == true",
+          "description": "Fläche liegt über der Seehöhe des Heimbetriebes",
+          "input_paths": [
+            "land.parcels[].mountain_meadow.above_home_farm_elevation"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_not_eligible_if_below_home_farm",
+        "description": "Nicht-Almbetrieb: Fläche unter Heimbetriebsseehöhe ist kein Bergmahd; Almbetrieb: Bedingung entfällt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-010",
+        "CIT-MB-011",
+        "CIT-GSP-019"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.parcel_failures",
+        "data.oepul.o6_4.is_alm_operation",
+        "data.oepul.o6_4.field_exempt"
+      ]
+    },
+    {
+      "id": "O64-ELIG-005",
+      "rule_type": "indicator",
+      "statement": "Bergmähder grenzen in der Regel nicht unmittelbar an die eigenen Heimbetriebsflächen an (Regelfall-Indiz, kein zwingender Ausschluss).",
+      "conditions": [
+        {
+          "expression": "parcel.mountain_meadow.adjacent_to_home_farm_land == true",
+          "description": "Fläche grenzt unmittelbar an Heimbetriebsflächen",
+          "input_paths": [
+            "land.parcels[].mountain_meadow.adjacent_to_home_farm_land"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "warning",
+        "description": "Hinweis zur Prüfung der Einstufung; keine automatische Ablehnung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-010",
+        "CIT-GSP-019"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.parcel_warnings"
+      ]
+    },
+    {
+      "id": "O64-ELIG-006",
+      "rule_type": "eligibility",
+      "statement": "Es besteht keine Kombinationspflicht mit anderen ÖPUL-Maßnahmen.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "gilt für alle Teilnehmer",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "no_combination_obligation",
+        "description": "Teilnahme ohne UBB/BIO oder andere Maßnahmen zulässig",
+        "value": false
+      },
+      "source_reference_ids": [
+        "CIT-MB-012"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.combination_obligation",
+        "data.oepul_data.o6_4.measure"
+      ]
+    },
+    {
+      "id": "O64-ELIG-007",
+      "rule_type": "option",
+      "statement": "Es muss nicht mit allen Bergmahdflächen des Betriebes an der Maßnahme teilgenommen werden (einzelflächenbezogene Teilnahme).",
+      "conditions": [
+        {
+          "expression": "parcel.mountain_meadow.enrolled_in_o6_4 in {true,false}",
+          "description": "Teilnahme je Schlag wählbar",
+          "input_paths": [
+            "land.parcels[].mountain_meadow.enrolled_in_o6_4"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_level_opt_in",
+        "description": "Nur eingebrachte Schläge unterliegen den Auflagen und erhalten Prämie",
+        "value": false
+      },
+      "source_reference_ids": [
+        "CIT-MB-012"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.all_bergmaehder_required",
+        "data.oepul.o6_4.o6_4_parcels",
+        "data.oepul_data.o6_4.measure"
+      ]
+    },
+    {
+      "id": "O64-ELIG-008",
+      "rule_type": "threshold",
+      "statement": "Für die Maßnahme gibt es keine Mindestteilnahmefläche.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "keine Flächenuntergrenze für die Maßnahme",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "no_minimum_area",
+        "description": "Keine maßnahmenspezifische Mindestfläche (Betriebsmindestgröße gemäß O64-GEN-004 bleibt unberührt)",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-012"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.minimum_participation_area_ha",
+        "data.oepul_data.o6_4.measure"
+      ]
+    },
+    {
+      "id": "O64-ELIG-009",
+      "rule_type": "procedural_hint",
+      "statement": "Die Seehöhe über 1.200 m kann im INVEKOS-GIS (Legendeneintrag „Gebietsabgrenzungen/Seehöhe > 1200 m“) eingeblendet und im Register unter „Extras“ gemessen werden.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Hilfsmittel zur Ermittlung von share_above_1200m_percent",
+          "input_paths": [
+            "land.parcels[].mountain_meadow.share_above_1200m_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "information",
+        "description": "Quelle für die Eingabe des Seehöhenanteils",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-009"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O64-ELIG-010",
+      "rule_type": "eligibility",
+      "statement": "Bergmähder sind Grünland (Nutzungsart G) und damit landwirtschaftliche Fläche; jede förderfähige Fläche muss für flächenbezogene Fördermaßnahmen mindestens 50 m² groß sein.",
+      "conditions": [
+        {
+          "expression": "parcel.area_ha >= 0.005",
+          "description": "Mindestgröße 50 m²",
+          "input_paths": [
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_not_eligible_if_below_50m2",
+        "description": "Schläge unter 50 m² sind nicht förderfähig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-018",
+        "CIT-GSP-022"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.parcel_premium_exclusions"
+      ]
+    },
+    {
+      "id": "O64-ELIG-011",
+      "rule_type": "eligibility",
+      "statement": "Förderfähig sind die dem Landwirt zum Stichtag 1. April zur Verfügung stehenden, landwirtschaftlich genutzten Flächen; nicht-landwirtschaftliche Nutzung während der Vegetationsperiode höchstens 14 Kalendertage und vorab zu melden.",
+      "conditions": [
+        {
+          "expression": "parcel at disposal on 1 April",
+          "description": "Verfügungsgewalt zum 1. April",
+          "input_paths": []
+        },
+        {
+          "expression": "non_agricultural_use_days <= 14 and reported",
+          "description": "Nicht-landwirtschaftliche Nutzung ≤ 14 Tage und vorab gemeldet",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "parcel_not_eligible_if_violated",
+        "description": "Fläche nicht förderfähig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-023",
+        "CIT-GSP-024"
+      ],
+      "rego_symbols": [
+        "data.oepul_data.o6_4.deadlines"
+      ]
+    },
+    {
+      "id": "O64-OBL-001",
+      "rule_type": "obligation",
+      "statement": "Zumindest jedes zweite Jahr hat eine vollflächige Mahd inklusive Verbringung des Mähgutes zu erfolgen (Mindestbewirtschaftung Bergmähder: mindestens alle 2 Jahre einmal vollflächige Mahd und Verbringen des Mähgutes).",
+      "conditions": [
+        {
+          "expression": "year > contract_start_year",
+          "description": "Prüfung ab dem zweiten Vertragsjahr (Jahresendbetrachtung)",
+          "input_paths": [
+            "farm.year",
+            "oepul.o6_4.contract_start_date"
+          ]
+        },
+        {
+          "expression": "not (year in mowing_years or year-1 in mowing_years)",
+          "description": "keine vollflächige Mahd mit Verbringung im laufenden und im Vorjahr",
+          "input_paths": [
+            "land.parcels[].mountain_meadow.full_mowing_years",
+            "land.parcels[].operations.mowing_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Förderverpflichtung (Sanktion gemäß O64-GEN-025)",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-013",
+        "CIT-AT-008",
+        "CIT-SRL-008",
+        "CIT-SRL-046",
+        "CIT-GSP-020"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.qualifying_mowing",
+        "data.oepul.o6_4.violations",
+        "data.oepul_data.o6_4.mowing_rules"
+      ]
+    },
+    {
+      "id": "O64-OBL-002",
+      "rule_type": "obligation",
+      "statement": "Es darf maximal eine Mahd pro Jahr durchgeführt werden.",
+      "conditions": [
+        {
+          "expression": "count(mowing_events in year) > 1",
+          "description": "mehr als eine Mahd im Kalenderjahr",
+          "input_paths": [
+            "land.parcels[].operations.mowing_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen Förderverpflichtung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-014",
+        "CIT-SRL-046"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.violations",
+        "data.oepul_data.o6_4.mowing_rules"
+      ]
+    },
+    {
+      "id": "O64-OBL-003",
+      "rule_type": "prohibition",
+      "statement": "Die Fläche zu mähen und das Mähgut liegen zu lassen oder die Fläche zu häckseln ist nicht zulässig; das Mähgut muss jedenfalls von der Fläche verbracht werden.",
+      "conditions": [
+        {
+          "expression": "mowing_event.mulched == true or mowing_event.cut_material_removed == false",
+          "description": "Häckseln oder Liegenlassen des Mähgutes",
+          "input_paths": [
+            "land.parcels[].operations.mowing_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß; die Mahd zählt nicht als Mahd im Sinne von O64-OBL-001",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-015",
+        "CIT-SRL-046"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.violations"
+      ]
+    },
+    {
+      "id": "O64-OBL-004",
+      "rule_type": "prohibition",
+      "statement": "Bergmähder dürfen grundsätzlich nicht beweidet werden; zulässig ist nur eine Nachweide ab dem 16. August (nach dem 15.08.).",
+      "conditions": [
+        {
+          "expression": "grazing_event.start_date month-day < 08-16",
+          "description": "Beweidungsbeginn vor dem 16. August",
+          "input_paths": [
+            "land.parcels[].operations.grazing_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen das Beweidungsverbot",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-016",
+        "CIT-SRL-047"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.violations",
+        "data.oepul_data.o6_4.mowing_rules"
+      ]
+    },
+    {
+      "id": "O64-OBL-005",
+      "rule_type": "permission",
+      "statement": "Die Nachweide ab dem 16. August ist jährlich zulässig, auch in einem Jahr ohne Mahd; eine Weidenutzung nach dem 15. August zählt nicht als Nutzung (ersetzt nicht die Mahd).",
+      "conditions": [
+        {
+          "expression": "grazing_event.start_date month-day >= 08-16",
+          "description": "Nachweide ab 16. August",
+          "input_paths": [
+            "land.parcels[].operations.grazing_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "allowed",
+        "description": "Nachweide zulässig, aber keine Erfüllung der Mahdverpflichtung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-017",
+        "CIT-GSP-021"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.post_grazing_allowed",
+        "data.oepul_data.o6_4.mowing_rules"
+      ]
+    },
+    {
+      "id": "O64-OBL-006",
+      "rule_type": "prohibition",
+      "statement": "Auf den Maßnahmenflächen muss auf die Ausbringung von Düngemitteln sowie von Klärschlamm und kompostiertem Klärschlamm verzichtet werden (sämtliche Düngemittel außer Festmist verboten).",
+      "conditions": [
+        {
+          "expression": "fertilizer_application.type not in allowed_types",
+          "description": "Ausbringung von Gülle, Jauche, Mineraldünger, Kompost, Klärschlamm o. ä.",
+          "input_paths": [
+            "land.parcels[].operations.fertilizer_applications",
+            "land.parcels[].operations.fertilizer.mineral_n_kg_per_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen das Düngeverbot",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-018",
+        "CIT-SRL-048"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.violations",
+        "data.oepul_data.o6_4.fertilizer_types"
+      ]
+    },
+    {
+      "id": "O64-OBL-007",
+      "rule_type": "exception",
+      "statement": "Ausgenommen ist die bedarfsgerechte Ausbringung von Festmist in seiner ursprünglichen Form (nicht in Wasser aufgelöst).",
+      "conditions": [
+        {
+          "expression": "fertilizer_application.type == solid_manure and demand_based",
+          "description": "Festmist in ursprünglicher Form, bedarfsgerecht",
+          "input_paths": [
+            "land.parcels[].operations.fertilizer_applications"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "allowed_else_violation",
+        "description": "Festmist zulässig; aufgelöster oder nicht bedarfsgerechter Festmist ist Verstoß",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-019",
+        "CIT-SRL-048"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.violations",
+        "data.oepul.o6_4.fertilizer_rule_id",
+        "data.oepul_data.o6_4.fertilizer_types"
+      ]
+    },
+    {
+      "id": "O64-OBL-008",
+      "rule_type": "prohibition",
+      "statement": "Da sämtliche Düngemittel außer Festmist verboten sind, ist auch der Einsatz von Kalkdüngern unzulässig.",
+      "conditions": [
+        {
+          "expression": "fertilizer_application.type == lime",
+          "description": "Kalkdüngung",
+          "input_paths": [
+            "land.parcels[].operations.fertilizer_applications"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen das Düngeverbot",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-020"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.fertilizer_rule_id",
+        "data.oepul_data.o6_4.fertilizer_types"
+      ]
+    },
+    {
+      "id": "O64-OBL-009",
+      "rule_type": "exception",
+      "statement": "Die Ausbringung von eigenen häuslichen Abwässern ist zulässig.",
+      "conditions": [
+        {
+          "expression": "fertilizer_application.type == own_household_wastewater",
+          "description": "eigene häusliche Abwässer",
+          "input_paths": [
+            "land.parcels[].operations.fertilizer_applications"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "allowed",
+        "description": "Kein Verstoß",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-021"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.fertilizer_type_allowed",
+        "data.oepul_data.o6_4.fertilizer_types"
+      ]
+    },
+    {
+      "id": "O64-OBL-010",
+      "rule_type": "prohibition",
+      "statement": "Auf allen Maßnahmenflächen ist der Einsatz von Pflanzenschutzmitteln verboten, ausgenommen Mittel, die ausschließlich gemäß VO (EU) 2018/848 zulässige Wirkstoffe enthalten (Abfrage unter www.betriebsmittelbewertung.at).",
+      "conditions": [
+        {
+          "expression": "psm_application.only_eu_2018_848_substances == false",
+          "description": "PSM mit nicht bio-zulässigen Wirkstoffen",
+          "input_paths": [
+            "land.parcels[].operations.psm_applications",
+            "land.parcels[].operations.psm_used"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß gegen das PSM-Verbot",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-022",
+        "CIT-MB-023",
+        "CIT-SRL-049"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.violations",
+        "data.oepul.o6_4.parcel_warnings"
+      ]
+    },
+    {
+      "id": "O64-OBL-011",
+      "rule_type": "obligation",
+      "statement": "Die Verpflichtungsdauer umfasst das gesamte Kalenderjahr (1. Jänner bis 31. Dezember); förderfähig sind nur Flächen, auf denen die Förderverpflichtungen während der gesamten Verpflichtungsdauer eingehalten werden.",
+      "conditions": [
+        {
+          "expression": "obligations met 01-01..12-31",
+          "description": "Einhaltung über das ganze Kalenderjahr",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium_only_if_met_full_year",
+        "description": "Keine Prämie für Flächen mit unterjähriger Nichteinhaltung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-021",
+        "CIT-SRL-009"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.events_in_year"
+      ]
+    },
+    {
+      "id": "O64-OBL-012",
+      "rule_type": "obligation",
+      "statement": "Die nicht die Mahd betreffenden Auflagen (Beweidungs-, Dünge- und PSM-Verbot) sind auch im Jahr der Codierung mit BM0 einzuhalten.",
+      "conditions": [
+        {
+          "expression": "declared_mowing_code == BM0",
+          "description": "Jahr ohne Mahd",
+          "input_paths": [
+            "land.parcels[].mountain_meadow.declared_mowing_code"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligations_apply",
+        "description": "Verstöße werden unabhängig vom Code festgestellt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-031"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.violations"
+      ]
+    },
+    {
+      "id": "O64-OBL-013",
+      "rule_type": "obligation",
+      "statement": "Die eingegangenen Förderverpflichtungen sind auch auf Nationalparkflächen einzuhalten, auch wenn dort keine Prämie gewährt wird.",
+      "conditions": [
+        {
+          "expression": "parcel.oepul.national_park != null",
+          "description": "Fläche im Nationalpark",
+          "input_paths": [
+            "land.parcels[].oepul.national_park"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "obligations_apply",
+        "description": "Auflagen bleiben bestehen",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-012"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.violations"
+      ]
+    },
+    {
+      "id": "O64-COD-001",
+      "rule_type": "procedure",
+      "statement": "Bergmähder sind in der Feldstücksliste des Mehrfachantrages mit der Schlagnutzungsart „Bergmähder“ zu beantragen; die Feldstücksliste samt Codes ist bis 15. April einzureichen.",
+      "conditions": [
+        {
+          "expression": "parcel.mountain_meadow.declared_as_bergmaehder == true",
+          "description": "Schlagnutzungsart angegeben",
+          "input_paths": [
+            "land.parcels[].mountain_meadow.declared_as_bergmaehder"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "required_declaration",
+        "description": "Ohne Schlagnutzungsart keine Teilnahme (siehe O64-ELIG-001)",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-027",
+        "CIT-GSP-027"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.parcel_failures",
+        "data.oepul_data.o6_4.deadlines"
+      ]
+    },
+    {
+      "id": "O64-COD-002",
+      "rule_type": "coding",
+      "statement": "Im Jahr der Mahd ist je nach Mähverfahren der Code BM1 (Traktor oder Mähtrak), BM2 (handbetriebener Motormäher) oder BM3 (Sense oder Motorsense) anzugeben.",
+      "conditions": [
+        {
+          "expression": "qualifying mowing in year",
+          "description": "Mahd im Antragsjahr",
+          "input_paths": [
+            "land.parcels[].operations.mowing_events"
+          ]
+        },
+        {
+          "expression": "declared_mowing_code == method_to_code[method]",
+          "description": "Code entspricht dem Mähverfahren",
+          "input_paths": [
+            "land.parcels[].mountain_meadow.declared_mowing_code",
+            "land.parcels[].operations.mowing_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_if_mismatch",
+        "description": "Falscher Code ist Abweichung; Prämie nach tatsächlichem Verfahren",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-028"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.expected_mowing_code",
+        "data.oepul.o6_4.violations",
+        "data.oepul_data.o6_4.mowing_codes",
+        "data.oepul_data.o6_4.mowing_method_to_code"
+      ]
+    },
+    {
+      "id": "O64-COD-003",
+      "rule_type": "coding",
+      "statement": "Erfolgt keine Mahd, ist die Fläche im jeweiligen Jahr mit BM0 zu codieren.",
+      "conditions": [
+        {
+          "expression": "no qualifying mowing in year",
+          "description": "keine vollflächige Mahd mit Verbringung",
+          "input_paths": [
+            "land.parcels[].operations.mowing_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "expected_code_BM0",
+        "description": "Code BM0; keine Prämie",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-030"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.expected_mowing_code",
+        "data.oepul.o6_4.rule_for_code",
+        "data.oepul_data.o6_4.mowing_codes"
+      ]
+    },
+    {
+      "id": "O64-COD-004",
+      "rule_type": "coding",
+      "statement": "Wird mit dem Motormäher gemäht und werden nur einzelne Bäume und Felsblöcke mit der Sense ausgemäht, ist mit BM2 zu codieren (maßgeblich ist das Hauptmähverfahren).",
+      "conditions": [
+        {
+          "expression": "primary method == hand_motor_mower",
+          "description": "Hauptverfahren Motormäher, Sense nur zum Ausmähen",
+          "input_paths": [
+            "land.parcels[].operations.mowing_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "expected_code_BM2",
+        "description": "BM2",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-032"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.expected_mowing_code",
+        "data.oepul_data.o6_4.mowing_method_rank"
+      ]
+    },
+    {
+      "id": "O64-COD-005",
+      "rule_type": "coding",
+      "statement": "Wird eine Bergmahdfläche mit einem Mähtrak gemäht, ist sie mit BM1 zu codieren.",
+      "conditions": [
+        {
+          "expression": "method == mower_transporter",
+          "description": "Mähtrak",
+          "input_paths": [
+            "land.parcels[].operations.mowing_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "expected_code_BM1",
+        "description": "BM1",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-033",
+        "CIT-MB-028"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.expected_mowing_code",
+        "data.oepul_data.o6_4.mowing_method_to_code"
+      ]
+    },
+    {
+      "id": "O64-COD-006",
+      "rule_type": "coding",
+      "statement": "Eine relativ ebene Bergmahdfläche, die mit der Sense gemäht wird, ist mit BM3 zu codieren (Hangneigung für den Code unerheblich).",
+      "conditions": [
+        {
+          "expression": "method == scythe",
+          "description": "Sense",
+          "input_paths": [
+            "land.parcels[].operations.mowing_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "expected_code_BM3",
+        "description": "BM3",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-034"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.expected_mowing_code",
+        "data.oepul_data.o6_4.mowing_method_to_code"
+      ]
+    },
+    {
+      "id": "O64-CTL-001",
+      "rule_type": "control",
+      "statement": "Die tatsächliche Bewirtschaftung wird im Zuge von Vor-Ort-Kontrollen überprüft; die Einhaltung aller Bedingungen wird über Verwaltungs-, Vor-Ort- und nachgängige Kontrollen geprüft; ab Vertragsbeginn sind Kontrollen zuzulassen.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "laufend",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "control",
+        "description": "Kontrollfeststellungen sind Grundlage für Code-, Flächen- und Sanktionsbeurteilung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-029",
+        "CIT-AT-053",
+        "CIT-SRL-031"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O64-PRM-001",
+      "rule_type": "premium_rate",
+      "statement": "Prämiensätze: BM0 0,0 €/ha; BM1 (Traktor/Mähtrak) 2023 350,0, ab 2024 378,0 €/ha; BM2 (Motormäher) 2023 550,0, ab 2024 594,0 €/ha; BM3 (Sense/Motorsense) 2023 900,0, ab 2024 972,0 €/ha (Anhebung um 8 % ab 01.01.2024).",
+      "conditions": [
+        {
+          "expression": "rate = premium_rates[code][year]",
+          "description": "Satz nach Code und Antragsjahr",
+          "input_paths": [
+            "land.parcels[].mountain_meadow.declared_mowing_code",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rate",
+        "description": "€/ha nach Tabelle",
+        "value": {
+          "BM0": 0.0,
+          "BM1": {
+            "2023": 350.0,
+            "ab_2024": 378.0
+          },
+          "BM2": {
+            "2023": 550.0,
+            "ab_2024": 594.0
+          },
+          "BM3": {
+            "2023": 900.0,
+            "ab_2024": 972.0
+          }
+        }
+      },
+      "source_reference_ids": [
+        "CIT-MB-035",
+        "CIT-MB-036",
+        "CIT-MB-037",
+        "CIT-MB-038",
+        "CIT-MB-039",
+        "CIT-MB-040",
+        "CIT-MB-041",
+        "CIT-SRL-050",
+        "CIT-SRL-051",
+        "CIT-SRL-052",
+        "CIT-SRL-053",
+        "CIT-SRL-001",
+        "CIT-SRL-043"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.premium_rate",
+        "data.oepul_data.o6_4.premium_rates"
+      ]
+    },
+    {
+      "id": "O64-PRM-002",
+      "rule_type": "premium_condition",
+      "statement": "Die Prämienhöhe richtet sich nach dem Mähverfahren; wenn keine Mahd erfolgt, wird keine Prämie gewährt (Prämiengewährung nur im Jahr der Mahd).",
+      "conditions": [
+        {
+          "expression": "effective_code == BM0",
+          "description": "keine Mahd im Antragsjahr",
+          "input_paths": [
+            "land.parcels[].operations.mowing_events",
+            "land.parcels[].mountain_meadow.declared_mowing_code"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "0 € für den Schlag im Antragsjahr",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-042",
+        "CIT-SRL-054"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.premium_blockers",
+        "data.oepul.o6_4.effective_code"
+      ]
+    },
+    {
+      "id": "O64-PRM-003",
+      "rule_type": "combination",
+      "statement": "Bergmähder sind hinsichtlich der Prämie mit keiner anderen ÖPUL-Maßnahme auf der Einzelfläche kombinierbar, ausgenommen die Abgeltung punktförmiger Landschaftselemente im Rahmen von UBB (1A) und BIO (1B) (Anhang L, Zeile 4, Fußnote 1).",
+      "conditions": [
+        {
+          "expression": "parcel.oepul.premium_measures contains m and m != 4",
+          "description": "andere flächenbezogene Maßnahmenprämie auf demselben Schlag",
+          "input_paths": [
+            "land.parcels[].oepul.premium_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "combination_conflict",
+        "description": "Unzulässige Kombination – Korrektur erforderlich; bis dahin keine o6_4-Prämie berechnet",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-043",
+        "CIT-SRL-055",
+        "CIT-SRL-030",
+        "CIT-ANH-001",
+        "CIT-ANH-002"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.combination_conflicts",
+        "data.oepul.o6_4.combinable_area_premium",
+        "data.oepul_data.o6_4.annex_l_combination_row_4"
+      ]
+    },
+    {
+      "id": "O64-PRM-004",
+      "rule_type": "premium_rate",
+      "statement": "Kombinierbare Abgeltung punktförmiger Landschaftselemente (UBB/BIO): Option Streuobstbäume 13,0 € und sonstige 8,6 € je Element (max. 80 Bäume je ha am Feldstück); Landschaftselemente auf Almen und Hutweiden sind nicht anrechenbar.",
+      "conditions": [
+        {
+          "expression": "farm participates in 1A or 1B",
+          "description": "Teilnahme an UBB oder BIO",
+          "input_paths": [
+            "oepul.participating_measures"
+          ]
+        },
+        {
+          "expression": "parcel.oepul.point_landscape_elements",
+          "description": "beantragte punktförmige LSE",
+          "input_paths": [
+            "land.parcels[].oepul.point_landscape_elements"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "le_premium",
+        "description": "LSE-Abgeltung zusätzlich zur Bergmähderprämie (zählt zur Obergrenze O64-GEN-024)",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-059",
+        "CIT-SRL-060",
+        "CIT-SRL-061",
+        "CIT-SRL-065",
+        "CIT-SRL-066"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.le_premium",
+        "data.oepul_data.o6_4.landscape_element_rates_combinable"
+      ]
+    },
+    {
+      "id": "O64-PRM-005",
+      "rule_type": "calculation",
+      "statement": "Die Prämie je Schlag ergibt sich aus Prämiensatz × Fläche; bei Übererklärung ist die ermittelte, bei Untererklärung die angemeldete Fläche maßgeblich.",
+      "conditions": [
+        {
+          "expression": "gross = rate(effective_code, year) * area_ha",
+          "description": "Bruttoprämie je Schlag",
+          "input_paths": [
+            "land.parcels[].area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "gross_premium",
+        "description": "€ je Schlag",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-029",
+        "CIT-MB-042"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.gross_premium"
+      ]
+    },
+    {
+      "id": "O64-PRM-006",
+      "rule_type": "payment",
+      "statement": "Die Förderung wird als jährliche Prämie gewährt; Auszahlung nach dem 1. Dezember des Antragsjahres und bis 30. Juni des Folgejahres; Teilzahlung bis 75 % nach abgeschlossener Verwaltungskontrolle möglich.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "jährliche Auszahlung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "payment_schedule",
+        "description": "Zahlungstermine",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-058",
+        "CIT-AT-059",
+        "CIT-SRL-035",
+        "CIT-GSP-037"
+      ],
+      "rego_symbols": [
+        "data.oepul_data.o6_4.deadlines"
+      ]
+    },
+    {
+      "id": "O64-PRM-007",
+      "rule_type": "threshold",
+      "statement": "Von der Gewährung kann abgesehen werden, wenn der Auszahlungsbetrag (Erstberechnung je Fördermaßnahme) 50 € nicht überschreitet.",
+      "conditions": [
+        {
+          "expression": "net_premium_total <= 50",
+          "description": "Betrag ≤ 50 €",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "payment_may_be_waived",
+        "description": "Ermessen der AMA",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-036",
+        "CIT-GSP-010"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.payment_may_be_waived",
+        "data.oepul_data.o6_4.deadlines"
+      ]
+    },
+    {
+      "id": "O64-APP-001",
+      "rule_type": "deadline",
+      "statement": "Die Maßnahme muss vor Vertragsbeginn im Maßnahmenantrag des Mehrfachantrages bis spätestens 31. Dezember beantragt werden, um einen gültigen Vertrag ab dem Folgejahr zu begründen.",
+      "conditions": [
+        {
+          "expression": "application_date <= (contract_start_year-1)-12-31",
+          "description": "fristgerechter Maßnahmenantrag",
+          "input_paths": [
+            "oepul.o6_4.application_date",
+            "oepul.o6_4.contract_start_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_contract_if_late",
+        "description": "Kein gültiger Vertrag",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-024",
+        "CIT-AT-027",
+        "CIT-SRL-032",
+        "CIT-GSP-026"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.application_deadline",
+        "data.oepul.o6_4.application_timely",
+        "data.oepul_data.o6_4.deadlines"
+      ]
+    },
+    {
+      "id": "O64-APP-002",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg ist mit dem Förderjahr 2025 möglich (Beantragung bis 31. Dezember 2024); zulässige Vertragsbeginne sind 01.01.2023, 01.01.2024 und 01.01.2025.",
+      "conditions": [
+        {
+          "expression": "contract_start_year <= 2025",
+          "description": "Einstieg spätestens 2025",
+          "input_paths": [
+            "oepul.o6_4.contract_start_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_contract_if_later",
+        "description": "Kein Einstieg ab 2026",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-025",
+        "CIT-AT-026"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.contract_failures",
+        "data.oepul_data.o6_4.measure",
+        "data.oepul_data.o6_4.contract_periods"
+      ]
+    },
+    {
+      "id": "O64-CON-001",
+      "rule_type": "contract_period",
+      "statement": "Der Verpflichtungs- und Vertragszeitraum beträgt mindestens 4 Jahre und läuft bis 31.12.2028: Beginn 01.01.2023 6 Jahre, 01.01.2024 5 Jahre, 01.01.2025 4 Jahre.",
+      "conditions": [
+        {
+          "expression": "contract_start_date in contract_periods",
+          "description": "Vertragsbeginn",
+          "input_paths": [
+            "oepul.o6_4.contract_start_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_duration",
+        "description": "Vertragsdauer und -ende",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-003",
+        "CIT-MB-004",
+        "CIT-MB-005",
+        "CIT-MB-006",
+        "CIT-AT-023",
+        "CIT-SRL-011",
+        "CIT-SRL-012"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.contract_period",
+        "data.oepul.o6_4.contract_active",
+        "data.oepul_data.o6_4.contract_periods"
+      ]
+    },
+    {
+      "id": "O64-APP-003",
+      "rule_type": "option",
+      "statement": "Während der Laufzeit kann bis spätestens 31.12.2025 (Vertragswechsel) mit einzelnen oder allen Flächen in die Maßnahmen „Naturschutz“ oder „Ergebnisorientierte Bewirtschaftung“ umgestiegen werden; keine Rückzahlung, die Verpflichtungen der höherwertigen Maßnahme gelten für die Restlaufzeit.",
+      "conditions": [
+        {
+          "expression": "conversion.target_measure_number in {18,19}",
+          "description": "Zielmaßnahme Naturschutz oder EBW",
+          "input_paths": [
+            "oepul.o6_4.conversion"
+          ]
+        },
+        {
+          "expression": "conversion.contract_change_date <= 2025-12-31",
+          "description": "Vertragswechsel bis 31.12.2025",
+          "input_paths": [
+            "oepul.o6_4.conversion"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "conversion_without_repayment",
+        "description": "Umstieg ohne Rückzahlung; ansonsten Ausstieg",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-MB-026",
+        "CIT-AT-034",
+        "CIT-AT-035",
+        "CIT-AT-036",
+        "CIT-SRL-020"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.conversion_valid",
+        "data.oepul.o6_4.converted_parcels",
+        "data.oepul_data.o6_4.conversion_targets"
+      ]
+    },
+    {
+      "id": "O64-GEN-001",
+      "rule_type": "condition",
+      "statement": "Alle Teilnehmer müssen die Konditionalität (Klima/Umwelt, öffentliche Gesundheit, Pflanzengesundheit, Tierwohl) und die soziale Konditionalität einhalten, um die Förderung in voller Höhe zu erhalten.",
+      "conditions": [
+        {
+          "expression": "conditionality complied",
+          "description": "Konditionalität eingehalten",
+          "input_paths": [
+            "documentation.audit_last_year_noncompliance"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_if_violated",
+        "description": "Kürzung nach Art. 83-89 VO (EU) 2021/2116 (letzter Schritt der Kürzungsreihenfolge)",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-002"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O64-GEN-002",
+      "rule_type": "eligibility",
+      "statement": "Förderwerbend sind natürliche Personen, eingetragene Personengesellschaften sowie juristische Personen und Personenvereinigungen mit Gebietskörperschaftsbeteiligung bis 25 %; Gebietskörperschaften und deren Einrichtungen sind bei dieser Maßnahme ausgeschlossen.",
+      "conditions": [
+        {
+          "expression": "applicant.legal_form != public_body",
+          "description": "keine Gebietskörperschaft",
+          "input_paths": [
+            "farm.applicant.legal_form"
+          ]
+        },
+        {
+          "expression": "applicant.public_body_share_percent <= 25",
+          "description": "Beteiligung ≤ 25 % (juristische Personen/Vereinigungen)",
+          "input_paths": [
+            "farm.applicant.public_body_share_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "applicant_not_eligible",
+        "description": "Keine Teilnahme",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-003",
+        "CIT-AT-005",
+        "CIT-SRL-003"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.applicant_failures",
+        "data.oepul_data.o6_4.applicant_types",
+        "data.oepul_data.o6_4.public_body_exception_measures"
+      ]
+    },
+    {
+      "id": "O64-GEN-003",
+      "rule_type": "eligibility",
+      "statement": "Der Betrieb muss im eigenen Namen und auf eigene Rechnung bewirtschaftet werden, die Verfügungsgewalt über die beantragten Flächen muss gegeben sein und die förderwerbende Person muss aktiver Landwirt sein und eine landwirtschaftliche Tätigkeit ausüben.",
+      "conditions": [
+        {
+          "expression": "applicant.manages_in_own_name_and_account and applicant.has_disposal_over_areas and applicant.is_active_farmer",
+          "description": "persönliche Voraussetzungen",
+          "input_paths": [
+            "farm.applicant.manages_in_own_name_and_account",
+            "farm.applicant.has_disposal_over_areas",
+            "farm.applicant.is_active_farmer"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "applicant_not_eligible",
+        "description": "Keine Teilnahme",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-004",
+        "CIT-SRL-002"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.applicant_failures"
+      ]
+    },
+    {
+      "id": "O64-GEN-004",
+      "rule_type": "threshold",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr muss der Betrieb mindestens 0,50 ha Flächen im geschützten Anbau oder 1,50 ha landwirtschaftliche Fläche bewirtschaften; ab dem zweiten Teilnahmejahr ist keine Betriebsmindestgröße erforderlich.",
+      "conditions": [
+        {
+          "expression": "year == oepul.first_participation_year",
+          "description": "erstes Teilnahmejahr",
+          "input_paths": [
+            "oepul.first_participation_year",
+            "farm.year"
+          ]
+        },
+        {
+          "expression": "land.total_area_ha >= 1.5 or land.protected_cultivation_area_ha >= 0.5",
+          "description": "Mindestgröße",
+          "input_paths": [
+            "land.total_area_ha",
+            "land.protected_cultivation_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_contract_if_not_met",
+        "description": "Kein Vertrag",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-006",
+        "CIT-AT-007",
+        "CIT-SRL-005"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.farm_minimum_size_required",
+        "data.oepul.o6_4.applicant_failures",
+        "data.oepul_data.o6_4.farm_minimum_size"
+      ]
+    },
+    {
+      "id": "O64-GEN-005",
+      "rule_type": "condition",
+      "statement": "Die beantragten Flächen müssen aktiv für die landwirtschaftliche Produktion bewirtschaftet werden.",
+      "conditions": [
+        {
+          "expression": "parcel actively managed",
+          "description": "aktive Bewirtschaftung",
+          "input_paths": [
+            "land.parcels[].oepul.non_eligible_reasons"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_not_eligible",
+        "description": "nicht aktiv bewirtschaftete Flächen nicht förderfähig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-009"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.parcel_premium_exclusions",
+        "data.oepul_data.o6_4.non_eligible_areas"
+      ]
+    },
+    {
+      "id": "O64-GEN-006",
+      "rule_type": "exclusion",
+      "statement": "Nicht förderfähig sind u. a. Flächen in Nationalparks (in Neusiedlersee und Donau-Auen keine flächenbezogenen ÖPUL-Prämien außer Maßnahmen 23/24; in anderen Nationalparks Prämie möglich), GLÖZ-Landschaftselemente, nicht hauptsächlich landwirtschaftlich genutzte Flächen, sonstige Flächen und Versuchsflächen mit Code VF (keine Prämie im laufenden Jahr).",
+      "conditions": [
+        {
+          "expression": "parcel.oepul.national_park in {neusiedlersee, donau_auen} or VF in codes or non_eligible_reasons",
+          "description": "Ausschlussgrund",
+          "input_paths": [
+            "land.parcels[].oepul.national_park",
+            "land.parcels[].oepul.codes",
+            "land.parcels[].oepul.non_eligible_reasons"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Keine Prämie für den Schlag",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-010",
+        "CIT-AT-011",
+        "CIT-AT-013",
+        "CIT-AT-014",
+        "CIT-SRL-006",
+        "CIT-SRL-026",
+        "CIT-GSP-025"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.parcel_premium_exclusions",
+        "data.oepul_data.o6_4.non_eligible_areas",
+        "data.oepul_data.o6_4.national_parks"
+      ]
+    },
+    {
+      "id": "O64-GEN-007",
+      "rule_type": "exclusion",
+      "statement": "Für Flächen mit Code OP (oder maßnahmenbezogenem OP-Code) wird im Förderjahr keine ÖPUL-Prämie (bzw. keine Prämie der betroffenen Maßnahme) gewährt; OP ist u. a. bei Leistungsüberschneidung, behördlichen Ausgleichsflächen und nicht ganzjähriger bzw. nicht über den gesamten Vertragszeitraum möglicher Erfüllung verpflichtend.",
+      "conditions": [
+        {
+          "expression": "OP in parcel.oepul.codes or parcel.oepul.measure_specific_op_code_o6_4",
+          "description": "OP-Codierung",
+          "input_paths": [
+            "land.parcels[].oepul.codes",
+            "land.parcels[].oepul.measure_specific_op_code_o6_4"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Keine Prämie",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-015",
+        "CIT-AT-016",
+        "CIT-AT-017"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.parcel_premium_exclusions",
+        "data.oepul_data.o6_4.op_code_mandatory_cases"
+      ]
+    },
+    {
+      "id": "O64-GEN-008",
+      "rule_type": "procedure",
+      "statement": "Bei reinem Fremdverschulden ist das betroffene Flächenausmaß mit dem maßnahmenbezogenen OP-Code zu versehen (Nachweise am Betrieb); ohne Fremdverschulden ist der Code per Korrektur zu löschen oder eine Selbstanzeige zu erstatten, die zu einer geringeren Sanktion führt als eine Feststellung bei der Vor-Ort-Kontrolle.",
+      "conditions": [
+        {
+          "expression": "non-compliance due to third party",
+          "description": "Fremdverschulden",
+          "input_paths": [
+            "land.parcels[].oepul.measure_specific_op_code_o6_4"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "op_code_or_self_report",
+        "description": "OP-Code bzw. Selbstanzeige",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-018",
+        "CIT-AT-019"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O64-GEN-009",
+      "rule_type": "condition",
+      "statement": "Die geförderten Flächen müssen in Österreich liegen.",
+      "conditions": [
+        {
+          "expression": "parcel located in Austria",
+          "description": "Lage in Österreich",
+          "input_paths": [
+            "farm.region.nUTS"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "parcel_not_eligible",
+        "description": "Flächen außerhalb Österreichs nicht förderfähig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-020",
+        "CIT-SRL-004"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O64-GEN-010",
+      "rule_type": "exclusion",
+      "statement": "Wird dieselbe Leistung aus einem anderen Titel der öffentlichen Hand gefördert oder ist sie gesetzlich/behördlich vorgeschrieben, ist sie nicht nach der Sonderrichtlinie förderbar (Code OP).",
+      "conditions": [
+        {
+          "expression": "public_funding_overlap",
+          "description": "Leistungsüberschneidung",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "Keine Prämie (OP)",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-007",
+        "CIT-AT-016"
+      ],
+      "rego_symbols": [
+        "data.oepul_data.o6_4.op_code_mandatory_cases"
+      ]
+    },
+    {
+      "id": "O64-GEN-011",
+      "rule_type": "condition",
+      "statement": "Flächen können unterjährig weitergegeben werden, wenn der übernehmende Betrieb die Auflagen bis zum Ende der Verpflichtungsdauer in der gleichen oder höherwertigen Maßnahme einhält; andernfalls ist der Umstand zu melden (OP-Code) und für das unvollendete Jahr keine Prämie zu gewähren.",
+      "conditions": [
+        {
+          "expression": "parcel transferred during year and successor does not continue",
+          "description": "unterjährige Weitergabe ohne Weiterführung",
+          "input_paths": [
+            "land.parcels[].oepul.codes"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium_for_year",
+        "description": "Keine Prämie im unvollendeten Jahr",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-022",
+        "CIT-SRL-010"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O64-GEN-012",
+      "rule_type": "obligation",
+      "statement": "Die im ersten Vertragsjahr belegten Flächen sowie alle späteren Flächenzugänge sind bis zum Ende des Vertragszeitraumes gemäß den Förderverpflichtungen zu bewirtschaften; Bergmähder zählen nicht zu den Maßnahmen mit jährlich variabler Fläche.",
+      "conditions": [
+        {
+          "expression": "parcel enrolled in any contract year",
+          "description": "belegte Fläche",
+          "input_paths": [
+            "land.parcels[].mountain_meadow.enrolled_in_o6_4"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "bound_until_2028",
+        "description": "Flächenbindung bis 31.12.2028 (Abgänge siehe O64-GEN-019..021)",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-024",
+        "CIT-AT-025",
+        "CIT-AT-023"
+      ],
+      "rego_symbols": [
+        "data.oepul_data.o6_4.annually_variable_area_measures"
+      ]
+    },
+    {
+      "id": "O64-GEN-013",
+      "rule_type": "consequence",
+      "statement": "Wird die Abmeldung im Zeitraum 1. Jänner bis 31. Dezember durchgeführt, ist die Maßnahme im betroffenen Förderjahr nicht mehr gültig.",
+      "conditions": [
+        {
+          "expression": "year(exit_date) == year",
+          "description": "Abmeldung im laufenden Jahr",
+          "input_paths": [
+            "oepul.o6_4.exit_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium_in_year",
+        "description": "Keine Prämie im Abmeldejahr",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-028"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.exit_in_current_year"
+      ]
+    },
+    {
+      "id": "O64-GEN-014",
+      "rule_type": "consequence",
+      "statement": "Ein Ausstieg aus der mehrjährigen Maßnahme vor Ende des Vertragszeitraumes führt zur Rückforderung sämtlicher für die betroffenen Flächen bereits gewährten Prämien (bis Vertragsbeginn), sofern keine Ausnahme (Umstieg, Verlust der Verfügungsgewalt, höhere Gewalt/Umstände, Toleranz) greift.",
+      "conditions": [
+        {
+          "expression": "exit_date set and no exception",
+          "description": "Ausstieg ohne Ausnahmetatbestand",
+          "input_paths": [
+            "oepul.o6_4.exit_date",
+            "oepul.o6_4.exit_without_repayment_recognized"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "repayment",
+        "description": "Rückforderung bereits gewährter Prämien",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-031",
+        "CIT-AT-040",
+        "CIT-SRL-013"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.exit_repayment_required"
+      ]
+    },
+    {
+      "id": "O64-GEN-015",
+      "rule_type": "deadline",
+      "statement": "Bis zum Ausstieg sind die Förderverpflichtungen einzuhalten; ein Ausstieg ist grundsätzlich nur bis zur Durchführung oder Ankündigung einer Vor-Ort-Kontrolle bzw. bis zur Mitteilung des Ergebnisses einer Verwaltungskontrolle möglich.",
+      "conditions": [
+        {
+          "expression": "control_announced_or_notified_date <= exit_date",
+          "description": "Ausstieg nach Kontrollankündigung",
+          "input_paths": [
+            "oepul.o6_4.control_announced_or_notified_date",
+            "oepul.o6_4.exit_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exit_not_effective",
+        "description": "Ausstieg schützt nicht vor Sanktion",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-029",
+        "CIT-AT-030"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.exit_blocked_by_control"
+      ]
+    },
+    {
+      "id": "O64-GEN-016",
+      "rule_type": "procedure",
+      "statement": "Nach einem Ausstieg, Ausschluss oder einer einjährigen Nichtabgabe des Mehrfachantrages ist ein Wiedereinstieg nur mit einem neuerlichen Maßnahmenantrag möglich (bei o6_4 wegen letztem Einstieg 2025 nicht mehr möglich).",
+      "conditions": [
+        {
+          "expression": "exit or exclusion",
+          "description": "Ausstieg/Ausschluss",
+          "input_paths": [
+            "oepul.o6_4.exit_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "new_application_required",
+        "description": "Neuer Maßnahmenantrag erforderlich",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-032",
+        "CIT-MB-025"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O64-GEN-017",
+      "rule_type": "procedure",
+      "statement": "Beantragte unmögliche Maßnahmenkombinationen können bis zum Erhalt der Auszahlungsmitteilung korrigiert werden, sofern keine Beanstandung bei einer Vor-Ort-Kontrolle vorliegt; bis zur Abmeldung sind alle Verpflichtungen einzuhalten.",
+      "conditions": [
+        {
+          "expression": "combination_conflicts non-empty",
+          "description": "unmögliche Kombination",
+          "input_paths": [
+            "land.parcels[].oepul.premium_measures"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "correction_allowed",
+        "description": "Korrektur zulässig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-033"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.combination_conflicts"
+      ]
+    },
+    {
+      "id": "O64-GEN-018",
+      "rule_type": "procedure",
+      "statement": "Mit der Maßnahme belegte Flächen können bis 15. April (2023 und 2028: 17. April) des Übernahmejahres von einem bisher nicht teilnehmenden Betrieb für die Restlaufzeit übernommen werden (auch nach dem letzten Einstiegsjahr); keine Ausweitung auf andere Flächen um mehr als 50 %; Antrag im Mehrfachantrag, Genehmigung durch die AMA; neuer Vertrag bis Ende des ursprünglichen Vertragszeitraumes.",
+      "conditions": [
+        {
+          "expression": "takeover.date <= deadline",
+          "description": "fristgerecht",
+          "input_paths": [
+            "oepul.o6_4.takeover"
+          ]
+        },
+        {
+          "expression": "not takeover.taker_previously_participating",
+          "description": "Übernehmer bisher nicht teilnehmend",
+          "input_paths": [
+            "oepul.o6_4.takeover"
+          ]
+        },
+        {
+          "expression": "takeover.extension_area_ha <= 0.5 * taken_over_area_ha",
+          "description": "Ausweitung ≤ 50 %",
+          "input_paths": [
+            "oepul.o6_4.takeover"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "takeover_not_allowed",
+        "description": "Übernahme unzulässig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-037",
+        "CIT-AT-038",
+        "CIT-AT-039",
+        "CIT-SRL-019"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.takeover_deadline",
+        "data.oepul.o6_4.takeover_failures",
+        "data.oepul_data.o6_4.takeover",
+        "data.oepul_data.o6_4.area_change"
+      ]
+    },
+    {
+      "id": "O64-GEN-019",
+      "rule_type": "exception",
+      "statement": "Der Verlust der Verfügungsgewalt (Übertragung an einen anderen Betrieb bzw. eine andere Person, z. B. Pachtende, Verkauf) hat für den abgebenden Betrieb keine Rückzahlung zur Folge.",
+      "conditions": [
+        {
+          "expression": "area_lost_disposal_ha > 0",
+          "description": "Abgang durch Verlust der Verfügungsgewalt",
+          "input_paths": [
+            "oepul.o6_4.area_lost_disposal_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_repayment",
+        "description": "Abgang wird nicht in die Toleranzprüfung einbezogen",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-041",
+        "CIT-SRL-014"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.area_decrease_ha"
+      ]
+    },
+    {
+      "id": "O64-GEN-020",
+      "rule_type": "threshold",
+      "statement": "Toleranz für die Verringerung der Maßnahmenfläche: jährlich bis zu 5 % der Vorjahresfläche, höchstens 5 ha, jedenfalls 0,50 ha; bei Überschreitung besteht für die gesamte Differenzfläche Rückzahlungspflicht.",
+      "conditions": [
+        {
+          "expression": "decrease = prev - curr - lost_disposal - allowed_conversion",
+          "description": "Flächenverringerung",
+          "input_paths": [
+            "oepul.o6_4.area_previous_year_ha",
+            "oepul.o6_4.area_current_year_ha"
+          ]
+        },
+        {
+          "expression": "decrease > max(0.5, min(0.05*prev, 5))",
+          "description": "Toleranz überschritten",
+          "input_paths": [
+            "oepul.o6_4.area_previous_year_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "repayment_for_difference",
+        "description": "Rückzahlung für die gesamte Differenzfläche",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-043",
+        "CIT-AT-044",
+        "CIT-AT-045",
+        "CIT-AT-046",
+        "CIT-SRL-016"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.area_decrease_tolerance_ha",
+        "data.oepul.o6_4.area_decrease_repayment_ha",
+        "data.oepul_data.o6_4.area_change"
+      ]
+    },
+    {
+      "id": "O64-GEN-021",
+      "rule_type": "exception",
+      "statement": "Zulässig sind Umwandlungen von Acker-, Dauer-/Spezialkultur- und Weinflächen in Grünland/Gemeinschaftsweide, von Grünland/Gemeinschaftsweide in Almweidefläche sowie in LSE Mehrnutzenhecke bzw. Agroforststreifen.",
+      "conditions": [
+        {
+          "expression": "area_allowed_conversion_ha > 0",
+          "description": "zulässige Umwandlung",
+          "input_paths": [
+            "oepul.o6_4.area_allowed_conversion_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_repayment",
+        "description": "nicht als Flächenabgang gewertet",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-047"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.area_decrease_ha",
+        "data.oepul_data.o6_4.area_change_allowed_conversions"
+      ]
+    },
+    {
+      "id": "O64-GEN-022",
+      "rule_type": "procedure",
+      "statement": "Bei Wechsel der bewirtschaftenden Person sind die belegten Flächen weiterzuführen; die nachfolgende Person tritt dem Fördervertrag bei, beide haften solidarisch, Rückforderungen sind gegen beide geltend zu machen; die Übertragung ist binnen vier Wochen anzuzeigen.",
+      "conditions": [
+        {
+          "expression": "operator change",
+          "description": "Bewirtschafterwechsel",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "contract_accession",
+        "description": "Vertragsbeitritt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-042",
+        "CIT-SRL-015",
+        "CIT-GSP-013",
+        "CIT-GSP-015"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O64-GEN-023",
+      "rule_type": "threshold",
+      "statement": "Flächenzugänge sind 2024 und 2025 zur Gänze prämienfähig; in den Folgejahren nur bis max. 50 % Ausweitung auf Basis 2025, wobei eine Vergrößerung um bis zu 5 ha jedenfalls zulässig ist; vorher mit derselben Maßnahme belegte Flächen gelten nicht als Zugang.",
+      "conditions": [
+        {
+          "expression": "year > 2025",
+          "description": "ab Antragsjahr 2026",
+          "input_paths": [
+            "farm.year"
+          ]
+        },
+        {
+          "expression": "premium_area > area_2025 + max(0.5*area_2025, 5) + previously_committed",
+          "description": "Ausweitung über der Grenze",
+          "input_paths": [
+            "oepul.o6_4.area_2025_ha",
+            "oepul.o6_4.area_additions_previously_committed_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "access_reduction",
+        "description": "Prämienfähige Fläche anteilig gekürzt (Zugangskürzung)",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-048",
+        "CIT-AT-049",
+        "CIT-AT-050",
+        "CIT-AT-051",
+        "CIT-AT-052",
+        "CIT-SRL-017",
+        "CIT-SRL-018"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.area_increase_limit_ha",
+        "data.oepul.o6_4.access_factor",
+        "data.oepul_data.o6_4.area_change",
+        "data.oepul_data.o6_4.area_increase_restricted_measures"
+      ]
+    },
+    {
+      "id": "O64-GEN-024",
+      "rule_type": "cap",
+      "statement": "Die Summe der flächenbezogenen Zahlungen je Schlag inkl. umgelegter LSE-Zahlungen ist begrenzt: 2023 1.200 €/ha, 2024 1.300 €/ha (ohne 6, 7, 10), ab 2025 1.300 €/ha (ohne 6, 7, 1C).",
+      "conditions": [
+        {
+          "expression": "(o6_4 + LSE) > cap_rate * area",
+          "description": "Obergrenze überschritten",
+          "input_paths": [
+            "land.parcels[].area_ha",
+            "land.parcels[].oepul.point_landscape_elements"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "cap_reduction",
+        "description": "Kürzung des Überhangs",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-060",
+        "CIT-AT-061",
+        "CIT-SRL-028"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.area_payment_cap_rate",
+        "data.oepul.o6_4.cap_excess",
+        "data.oepul_data.o6_4.area_payment_caps"
+      ]
+    },
+    {
+      "id": "O64-GEN-025",
+      "rule_type": "sanction",
+      "statement": "Inhaltliche Verstöße werden nach Schwere, Ausmaß, Dauer und Häufigkeit maßnahmenbezogen bewertet: Verwarnung (ab 2027 Einbehalt 1 %), Kürzung um 2, 5, 10, 25, 50 oder 100 %; mehrere Verstöße werden addiert (max. 100 %), Wiederholungen derselben Verpflichtung erhöhen um eine Stufe je Wiederholung.",
+      "conditions": [
+        {
+          "expression": "assessed_findings",
+          "description": "bewertete Verstöße",
+          "input_paths": [
+            "oepul.o6_4.assessed_findings"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_percent",
+        "description": "Kürzungsprozentsatz der Jahresprämie",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-054",
+        "CIT-AT-055",
+        "CIT-AT-057",
+        "CIT-GSP-033",
+        "CIT-GSP-034",
+        "CIT-GSP-035",
+        "CIT-SRL-040"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.level_percent",
+        "data.oepul.o6_4.finding_percent",
+        "data.oepul.o6_4.content_reduction_percent",
+        "data.oepul_data.o6_4.sanction_levels",
+        "data.oepul_data.o6_4.sanction_rules"
+      ]
+    },
+    {
+      "id": "O64-GEN-026",
+      "rule_type": "sanction",
+      "statement": "Bei zweimaliger 100 %-Kürzung im Vertragszeitraum erfolgen Ausschluss aus der Maßnahme und Rückforderung der bisher gewährten Maßnahmenprämie.",
+      "conditions": [
+        {
+          "expression": "full_reductions_in_period >= 2",
+          "description": "zweimal 100 %",
+          "input_paths": [
+            "oepul.o6_4.full_reductions_in_period"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exclusion_and_repayment",
+        "description": "Ausschluss",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-056",
+        "CIT-GSP-036"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.excluded_from_measure",
+        "data.oepul_data.o6_4.sanction_rules"
+      ]
+    },
+    {
+      "id": "O64-GEN-028",
+      "rule_type": "calculation",
+      "statement": "Reihenfolge bei Mehrfachkürzungen: Übererklärung, Zugangsvoraussetzungen, Fristversäumnis, Untererklärung, inhaltliche Kürzungen, Förderobergrenze je Maßnahme, Modulation, Obergrenze für Flächenzahlungen, Vertragszeitraumüberprüfung, Zugangskürzung, Konditionalität.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "bei jeder Berechnung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "calculation_order",
+        "description": "Berechnung in dieser Reihenfolge",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-041",
+        "CIT-SRL-042"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.after_content",
+        "data.oepul.o6_4.after_modulation",
+        "data.oepul.o6_4.after_cap",
+        "data.oepul.o6_4.net_premium",
+        "data.oepul_data.o6_4.reduction_order"
+      ]
+    },
+    {
+      "id": "O64-GEN-029",
+      "rule_type": "calculation",
+      "statement": "Betriebsgrößenmodulation nach Gesamtfläche: bis 200 ha 100 %, über 200 bis 300 ha 90 %, über 300 bis 1.000 ha 85 %, über 1.000 ha 75 % (Beispiel 220 ha = 99,09 %); Basis sind die Angaben im Mehrfachantrag.",
+      "conditions": [
+        {
+          "expression": "factor = sum(band portion * pct)/total",
+          "description": "Mischfaktor",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "modulation_factor",
+        "description": "Faktor auf alle Maßnahmenprämien",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-AT-062",
+        "CIT-AT-063",
+        "CIT-AT-064",
+        "CIT-SRL-029"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.modulated_area",
+        "data.oepul.o6_4.modulation_factor",
+        "data.oepul_data.o6_4.modulation_bands"
+      ]
+    },
+    {
+      "id": "O64-GEN-030",
+      "rule_type": "exception",
+      "statement": "Höhere Gewalt/außergewöhnliche Umstände (§ 6 GSP-AV, Art. 3 VO (EU) 2021/2116): Meldung binnen drei Wochen ab Möglichkeit mit Nachweisen (bei betriebsübergreifenden Ereignissen eine Meldung für das Gebiet); der Beihilfeanspruch bleibt für die bei Eintritt förderfähige Fläche erhalten, versäumte Fristen sind unverzüglich nachzuholen.",
+      "conditions": [
+        {
+          "expression": "reported_date <= able_to_report_date + 21 days and documented",
+          "description": "fristgerechte, belegte Meldung",
+          "input_paths": [
+            "oepul.force_majeure_claims"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation_excused",
+        "description": "Keine Sanktion/Rückforderung für betroffene Flächen",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-021",
+        "CIT-GSP-003",
+        "CIT-GSP-004",
+        "CIT-GSP-005",
+        "CIT-GSP-006"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.fm_claim_recognized",
+        "data.oepul.o6_4.excused",
+        "data.oepul.o6_4.effective_violations",
+        "data.oepul_data.o6_4.force_majeure_categories"
+      ]
+    },
+    {
+      "id": "O64-GEN-031",
+      "rule_type": "exception",
+      "statement": "Bei dauerhaften flächen- oder bewirtschaftungsverändernden Umständen ohne Einfluss der förderwerbenden Person kann die AMA die Verpflichtung vorzeitig beenden und von der Rückforderung absehen (Prämie im Eintrittsjahr nur bei Eintritt nach 15.04.); bei vorübergehenden Umständen kann von Rückforderung abgesehen werden; das BML kann spezielle Festlegungen treffen.",
+      "conditions": [
+        {
+          "expression": "permanent or temporary circumstance reported",
+          "description": "gemeldeter Umstand",
+          "input_paths": [
+            "oepul.o6_4.exit_without_repayment_recognized"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_repayment",
+        "description": "Keine Rückforderung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-022",
+        "CIT-SRL-023",
+        "CIT-SRL-024",
+        "CIT-SRL-025"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.exit_repayment_required"
+      ]
+    },
+    {
+      "id": "O64-GEN-032",
+      "rule_type": "consequence",
+      "statement": "Verweigert die förderwerbende Person die Auskunft oder verhindert sie die Vor-Ort-Kontrolle (außer bei höherer Gewalt), ist der Antrag abzulehnen, für das laufende Jahr keine Prämie zu gewähren und die Verträge sind zu beenden und rückabzuwickeln.",
+      "conditions": [
+        {
+          "expression": "on_site_control_refused == true",
+          "description": "Kontrolle verhindert",
+          "input_paths": [
+            "oepul.o6_4.on_site_control_refused"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rejection_and_termination",
+        "description": "Keine Prämie, Vertragsbeendigung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-037",
+        "CIT-GSP-009"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.control_refused"
+      ]
+    },
+    {
+      "id": "O64-GEN-033",
+      "rule_type": "consequence",
+      "statement": "Bei Nichterfüllung von Förder- bzw. Zugangsvoraussetzungen kommt im 1. Jahr keine gültige Verpflichtung zustande; ab dem 2. Verpflichtungsjahr wird im betroffenen Jahr keine Prämie gewährt.",
+      "conditions": [
+        {
+          "expression": "not parcel_is_bergmahd",
+          "description": "Zugangsvoraussetzung nicht erfüllt",
+          "input_paths": [
+            "land.parcels[].mountain_meadow.share_above_1200m_percent"
+          ]
+        },
+        {
+          "expression": "year == contract_start_year",
+          "description": "erstes Jahr",
+          "input_paths": [
+            "oepul.o6_4.contract_start_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_contract_or_no_premium",
+        "description": "1. Jahr: kein Vertrag; danach: keine Prämie im Jahr",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-038",
+        "CIT-SRL-039"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.premium_blockers"
+      ]
+    },
+    {
+      "id": "O64-GEN-034",
+      "rule_type": "consequence",
+      "statement": "Wird in einem weiteren Verpflichtungsjahr die Maßnahme oder Fläche nicht beantragt, bleibt die Verpflichtung bestehen, es erfolgt aber keine Zahlung; wird der Zahlungsantrag nicht binnen 1 Jahr nachgeholt, endet die Verpflichtung und alle bisher gewährten Prämien sind zurückzuzahlen.",
+      "conditions": [
+        {
+          "expression": "payment_claim_submitted == false",
+          "description": "kein Zahlungsantrag",
+          "input_paths": [
+            "oepul.o6_4.payment_claim_submitted"
+          ]
+        },
+        {
+          "expression": "payment_claim_overdue_more_than_one_year",
+          "description": "Frist 1 Jahr überschritten",
+          "input_paths": [
+            "oepul.o6_4.payment_claim_overdue_more_than_one_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_payment_or_termination",
+        "description": "Keine Zahlung bzw. Ende der Verpflichtung mit Rückforderung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-033",
+        "CIT-SRL-034"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.payment_claim_missing",
+        "data.oepul.o6_4.payment_claim_obligation_ended",
+        "data.oepul_data.o6_4.deadlines"
+      ]
+    },
+    {
+      "id": "O64-GEN-035",
+      "rule_type": "sanction",
+      "statement": "Übererklärung: Übersteigt die angemeldete die ermittelte Fläche um mehr als 3 % oder mehr als 2 ha, wird die Beihilfe auf Basis der ermittelten Fläche abzüglich des 1,5-fachen der Differenz berechnet; Untererklärung über 3 %: Kürzung bis 3 %; keine Sanktion für Abweichungen aus Flächenmonitoring/Vorabprüfung bei Korrektur (binnen 14 Kalendertagen).",
+      "conditions": [
+        {
+          "expression": "declared - determined > 3% of determined or > 2 ha",
+          "description": "relevante Übererklärung",
+          "input_paths": [
+            "oepul.o6_4.declared_area_ha",
+            "oepul.o6_4.determined_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "area_sanction",
+        "description": "Abzug 1,5 × Differenz",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-028",
+        "CIT-GSP-029",
+        "CIT-GSP-030",
+        "CIT-GSP-031",
+        "CIT-GSP-032"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.over_declaration_sanction_ha",
+        "data.oepul.o6_4.over_declaration_relevant",
+        "data.oepul_data.o6_4.sanction_rules"
+      ]
+    },
+    {
+      "id": "O64-GEN-036",
+      "rule_type": "deadline",
+      "statement": "Die Frist für den Maßnahmenantrag (31. Dezember des Vorjahres, § 33 Abs. 2 Z 1 GSP-AV) verschiebt sich nicht auf den nächsten Werktag, auch wenn sie auf einen Samstag, Sonntag oder Feiertag fällt.",
+      "conditions": [
+        {
+          "expression": "application_date <= YYYY-12-31",
+          "description": "starres Fristende",
+          "input_paths": [
+            "oepul.o6_4.application_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_deadline_shift",
+        "description": "Spätere Anträge verfristet",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-001",
+        "CIT-GSP-002",
+        "CIT-GSP-026"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.application_deadline",
+        "data.oepul_data.o6_4.deadlines"
+      ]
+    },
+    {
+      "id": "O64-GEN-037",
+      "rule_type": "obligation",
+      "statement": "Jede Veränderung, durch die die tatsächlichen oder rechtlichen Verhältnisse nicht mehr mit den Angaben übereinstimmen, ist der AMA unverzüglich anzuzeigen.",
+      "conditions": [
+        {
+          "expression": "change of circumstances",
+          "description": "Veränderung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "notification_duty",
+        "description": "Meldepflicht",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-014"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O64-GEN-038",
+      "rule_type": "obligation",
+      "statement": "Antrags- und Bewilligungsunterlagen und Belege sind bei mehrjährigen Invekos-Maßnahmen vier Jahre ab Ende des Vertragszeitraums aufzubewahren.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Aufbewahrung",
+          "input_paths": [
+            "documentation.field_records_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "retention_duty",
+        "description": "Aufbewahrung bis 4 Jahre nach 31.12.2028",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-016"
+      ],
+      "rego_symbols": [
+        "data.oepul_data.o6_4.deadlines"
+      ]
+    },
+    {
+      "id": "O64-GEN-039",
+      "rule_type": "procedure",
+      "statement": "Zu Unrecht gewährte Förderungen sind binnen vier Wochen zurückzuzahlen; die AMA kann von der Wiedereinziehung von höchstens 100 € (nur Zinsen: 50 €) absehen.",
+      "conditions": [
+        {
+          "expression": "repayment due",
+          "description": "Rückforderung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "repayment_terms",
+        "description": "Rückzahlungsfrist",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-011",
+        "CIT-GSP-012"
+      ],
+      "rego_symbols": [
+        "data.oepul_data.o6_4.deadlines"
+      ]
+    },
+    {
+      "id": "O64-GEN-040",
+      "rule_type": "exception",
+      "statement": "Revisionsklausel: Erfordern Änderungen des Rechtsrahmens eine Vertragsanpassung, kann die förderwerbende Person die Zustimmung verweigern; der Vertrag endet dann ohne Rückforderung wegen Nichteinhaltung des Vertragszeitraumes.",
+      "conditions": [
+        {
+          "expression": "contract adjustment refused",
+          "description": "Zustimmung verweigert",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "contract_end_without_repayment",
+        "description": "Vertragsende ohne Rückforderung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-027"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O64-GEN-041",
+      "rule_type": "exception",
+      "statement": "Offensichtliche Fehler können berichtigt werden; ist ein Verstoß auf einen Behördenfehler zurückzuführen und für die Person nicht erkennbar, wird keine Verwaltungssanktion angewendet.",
+      "conditions": [
+        {
+          "expression": "obvious error or authority error",
+          "description": "Fehler",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "no_sanction",
+        "description": "Keine Sanktion",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-007",
+        "CIT-GSP-008"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O64-GEN-042",
+      "rule_type": "definition",
+      "statement": "Antragsjahr ist das Kalenderjahr der Umsetzung; mit Beginn des Vertragszeitraumes ist die förderwerbende Person an die Förderbedingungen gebunden; rechtlich verbindlich sind allein die Rechtsgrundlagen (SRL, MOG 2021, GSP-AV), Informationsblätter erläutern.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Definition",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "definition",
+        "description": "Antragsjahr = farm.year",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-017",
+        "CIT-SRL-031",
+        "CIT-AT-001"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.year"
+      ]
+    },
+    {
+      "id": "O64-GEN-043",
+      "rule_type": "conditionality",
+      "statement": "GLÖZ 2: Bergmähder, die im Referenzjahr 2021 beantragt wurden und auf Moor-, Feuchtschwarzerde- oder Auböden liegen, unterliegen u. a. dem Verbot von Umbruch und Umwandlung, Torfabbau, neuen Entwässerungen, geländeverändernden Maßnahmen und Bodenwendungen tiefer als 30 cm.",
+      "conditions": [
+        {
+          "expression": "parcel on GLÖZ 2 wetland/peat and declared as Bergmähder 2021",
+          "description": "GLÖZ-2-Kulisse",
+          "input_paths": [
+            "land.parcels[].soil_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "conditionality_prohibitions",
+        "description": "Konditionalitätsverstoß bei Zuwiderhandlung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-039",
+        "CIT-GSP-040"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O64-GEN-044",
+      "rule_type": "definition",
+      "statement": "Die Maßnahme entspricht der GSP-Intervention 70-05 „Bewirtschaftung von Bergmähdern“ gemäß Art. 70 VO (EU) 2021/2115.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Zuordnung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "definition",
+        "description": "Interventionscode 70-05",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-GSP-038"
+      ],
+      "rego_symbols": [
+        "data.oepul_data.o6_4.measure"
+      ]
+    },
+    {
+      "id": "O64-XM-001",
+      "rule_type": "interaction",
+      "statement": "Bergmähder zählen in UBB und BIO nicht zur gemähten Grünlandfläche für die 7 %-Biodiversitätsflächenpflicht, die 15 a-Regel je Feldstück und die Zuschläge für Grünland-Biodiversitätsflächen; die Variante einmähdige Wiese, die Heuwirtschaft und der Zuschlag artenreiches Grünland (Maßnahme 17) schließen Bergmähder aus.",
+      "conditions": [
+        {
+          "expression": "parcel.mountain_meadow.declared_as_bergmaehder == true",
+          "description": "Bergmahdfläche",
+          "input_paths": [
+            "land.parcels[].mountain_meadow.declared_as_bergmaehder"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "excluded_from_base",
+        "description": "Fläche nicht in Bemessungsgrundlagen anderer Maßnahmen",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-SRL-056",
+        "CIT-SRL-057",
+        "CIT-SRL-058",
+        "CIT-SRL-062",
+        "CIT-SRL-063",
+        "CIT-SRL-064"
+      ],
+      "rego_symbols": [
+        "data.oepul_data.o6_4.cross_measure_bergmaehder_exclusions"
+      ]
+    },
+    {
+      "id": "O64-XM-002",
+      "rule_type": "interaction",
+      "statement": "Nach einem Umstieg in Naturschutz oder Ergebnisorientierte Bewirtschaftung können für Bergmähder Erreichbarkeitszuschläge (GG01–GG04 bzw. EBBA-Begründung Entfernung über 5/10 km) vergeben werden.",
+      "conditions": [
+        {
+          "expression": "conversion_valid",
+          "description": "Umstieg erfolgt",
+          "input_paths": [
+            "oepul.o6_4.conversion"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "information",
+        "description": "Zuschläge in der Zielmaßnahme möglich",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-ANH-003",
+        "CIT-ANH-004"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O64-2026-001",
+      "rule_type": "temporal_exception_check",
+      "statement": "Die AMA-Hinweise 2026 (22.05., 12.06., 05.08., 12.08.2026) enthalten keine Ausnahmeregelung für die Maßnahme Bewirtschaftung von Bergmähdern; sie betreffen Biodiversitätsflächen (UBB/BIO), Insektizidverzicht, Ernteverpflichtung auf Ackerflächen, Begrünungen, Untersaaten, Naturschutz/Natura 2000 und gefährdete Nutztierrassen. Die o6_4-Auflagen gelten 2026 unverändert.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2026",
+          "description": "Antragsjahr 2026",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_derogation",
+        "description": "Keine o6_4-spezifische Erleichterung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-N0522-003",
+        "CIT-N0612-001",
+        "CIT-N0805-001",
+        "CIT-N0812-001"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.notices_2026_o6_4_derogation"
+      ]
+    },
+    {
+      "id": "O64-2026-002",
+      "rule_type": "exception",
+      "statement": "Sind Förderverpflichtungen aufgrund der Trockenheit 2026 nicht einhaltbar (z. B. Mahd), kann ein einzelbetriebliches Ansuchen auf Anerkennung höherer Gewalt über eAMA (Register „Eingaben“) mit Nachweisen gestellt werden; für Bergmähder gibt es keine automatische Anerkennung.",
+      "conditions": [
+        {
+          "expression": "drought prevents compliance",
+          "description": "Trockenheit",
+          "input_paths": [
+            "oepul.force_majeure_claims"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "force_majeure_application",
+        "description": "Anerkennung gemäß O64-GEN-030",
+        "value": null
+      },
+      "source_reference_ids": [
+        "CIT-N0522-001",
+        "CIT-N0522-002",
+        "CIT-N0805-002"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_4.fm_claim_recognized"
+      ]
+    }
+  ]
+}

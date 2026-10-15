@@ -127,6 +127,30 @@ Review-Schritt dieselben Gates wiederholen, ohne Run-Artefakte zu verändern.
 Die Details und Grenzen dieser Härtung stehen in
 [`docs/grounding-validation.md`](docs/grounding-validation.md).
 
+## Run Explorer (GitHub Pages)
+
+Die Seite unter `docs/` (veröffentlicht über GitHub Pages:
+<https://ghinta.github.io/oepul-rule-lab/>) bündelt alle finalisierten Runs:
+Quellenstand, Gates, den Modellvergleich Opus 5.5 gegen Terra, alle
+vorgeschlagenen Profilpfade mit Konzept- und AMA-Zuordnung, offene Punkte aus
+den Coverage-Ledgern und den Plan für den Recommender. Ihre Daten stehen
+ausschließlich in `docs/assets/data.js` und werden deterministisch aus `runs/*`
+erzeugt. Gibt es für eine Maßnahme und ein Modell mehrere finalisierte Runs
+(etwa einen Rerun mit aktualisiertem Quellenpack), zählt nur der neueste; die
+älteren erscheinen unter „Ersetzte Runs“. Nach jedem neu veröffentlichten Run:
+
+```bash
+python3 -m rulelab site           # docs/assets/data.js neu erzeugen
+python3 -m rulelab site --check   # Exit 1, wenn die Seite veraltet ist
+```
+
+Die fachlichen Zuordnungen sind reviewbare Konfiguration:
+`config/analysis/profile-concepts-v1.json` (Pfad → Konzept, Recommender-Klasse
+A/B/C, AMA-Verfügbarkeit) und `config/analysis/rule-categories-v1.json`
+(`rule_type` → Regelkategorie). Die Auswertung steht in
+[`reports/opus-5.5-vs-terra-high-comparison.md`](reports/opus-5.5-vs-terra-high-comparison.md)
+und [`reports/recommender-quality-plan.md`](reports/recommender-quality-plan.md).
+
 ## Verzeichnisstruktur
 
 ```text
@@ -135,7 +159,10 @@ sources/oepul/          aktualisierbare amtliche Quelldokumente und Manifest
 prompts/                modellunabhängiger Generierungsauftrag
 config/models/          austauschbare Modell-/Adapterkonfiguration
 contracts/              JSON-Schemas der Konfiguration und Run-Artefakte
-src/rulelab/            Prepare/Run/Finalize-CLI
+config/analysis/        Konzept- und Kategoriezuordnung für die Auswertung
+docs/                   GitHub-Pages-Seite (Run Explorer)
+reports/                Auswertungen und Pläne zu veröffentlichten Runs
+src/rulelab/            Prepare/Run/Finalize/Site-CLI
 runner/validation/      OPA fmt/check/test und technische Ergebnisse
 runs/                   ignorierte Laufverzeichnisse
 ```

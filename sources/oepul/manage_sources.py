@@ -56,7 +56,35 @@ LEGAL_SOURCES = {
         "source_date": "2024-10-11",
         "version_label": "Zuletzt geändert mit: 2024-0.489.174",
     },
+    "gsp_anwendungsverordnung": {
+        "filename": "gsp-av-fassung-vom-28012026.pdf",
+        "title": "GAP-Strategieplan-Anwendungsverordnung (GSP-AV)",
+        "source_date": "2026-01-28",
+        "version_label": "Fassung vom 28.01.2026",
+    },
+    "napv": {
+        "filename": "napv-fassung-vom-28-10-2024.pdf",
+        "title": "Nitrat-Aktionsprogramm-Verordnung (NAPV)",
+        "source_date": "2024-10-28",
+        "version_label": "Fassung vom 28.10.2024",
+        "applies_to_measures": ["o6_7", "o6_9", "o6_16", "o6_21", "o6_22"],
+    },
+    "grundwasserschutzprogramm_graz_bad_radkersburg_2018": {
+        "filename": "grundwasserschutzprogramm-graz-bis-bad-radkersburg-2018-fassung-vom-01072026.pdf",
+        "title": "Grundwasserschutzprogramm Graz bis Bad Radkersburg 2018",
+        "source_date": "2026-07-01",
+        "version_label": "Fassung vom 01.07.2026",
+        "applies_to_measures": ["o6_24"],
+    },
+    "grundwasserschutzprogramm_graz_bad_radkersburg_2018_anlage3": {
+        "filename": "grundwasserschutzprogramm-graz-bis-bad-radkersburg-2018_anlage3_2026.pdf",
+        "title": "Anlage 3 zum Grundwasserschutzprogramm Graz bis Bad Radkersburg 2018",
+        "source_date": None,
+        "version_label": "Ausgabe 2026 laut Dateiname",
+        "applies_to_measures": ["o6_24"],
+    },
 }
+ANIMAL_MEASURES = ["o6_5", "o6_14", "o6_15", "o6_20", "o6_21", "o6_22"]
 NOTICE_SOURCES = {
     "duerre_2026_foerderungsabwicklung": {
         "published_on": "2026-08-12",
@@ -81,6 +109,27 @@ NOTICE_SOURCES = {
         "slug": "trockenheitsbedingte-ausnahmeregelungen-fuer-oepul-biodiversitaetsflaechen",
         "title": "Trockenheitsbedingte Ausnahmeregelungen für ÖPUL-Biodiversitätsflächen",
         "topic_tags": ["trockenheit", "ausnahmeregelung", "biodiversitaetsflaechen"],
+    },
+    "termine_2026_zwischenfruchtanbau": {
+        "published_on": "2026-07-22",
+        "slug": "terminueberblick-zu-der-oepul-massnahme-begruenung-von-ackerflaechen-zwischenfruchtanbau",
+        "title": "Terminüberblick zu der ÖPUL-Maßnahme „Begrünung von Ackerflächen – Zwischenfruchtanbau“",
+        "topic_tags": ["termine", "o6_6"],
+        "applies_to_measures": ["o6_6"],
+    },
+    "aufzeichnungen_2026_grundwasserschutz_acker": {
+        "published_on": "2026-08-25",
+        "slug": "aufzeichnungsverpflichtungen-bei-der-oepul-massnahme-vorbeugender-grundwasserschutz-acker",
+        "title": "Aufzeichnungsverpflichtungen bei der ÖPUL-Maßnahme „Vorbeugender Grundwasserschutz – Acker“",
+        "topic_tags": ["aufzeichnungen", "o6_16"],
+        "applies_to_measures": ["o6_16"],
+    },
+    "meldepflichten_2026_tierbezogene_massnahmen": {
+        "published_on": "2026-09-02",
+        "slug": "meldeverpflichtungen-zu-tierbezogenen-oepul-massnahmen",
+        "title": "Meldeverpflichtungen zu tierbezogenen ÖPUL-Maßnahmen",
+        "topic_tags": ["meldepflicht", "tiere"],
+        "applies_to_measures": ANIMAL_MEASURES,
     },
 }
 EDITION_RE = re.compile(r"_(20\d{2})_(\d{2})\.pdf$")
@@ -228,6 +277,12 @@ def legal_links(body: bytes) -> dict[str, SourceLink]:
     return {source_id: by_filename[spec["filename"]] for source_id, spec in LEGAL_SOURCES.items()}
 
 
+def scope_fields(spec: dict[str, Any]) -> dict[str, Any]:
+    """Measure scope of a legal basis or notice; absent means all measures."""
+    measures = spec.get("applies_to_measures")
+    return {"applies_to_measures": sorted(measures)} if measures else {}
+
+
 def notice_url(spec: dict[str, Any]) -> str:
     return f"{NOTICES_INDEX_URL}/{spec['slug']}"
 
@@ -295,6 +350,42 @@ def preserve(path: Path, body: bytes) -> None:
         atomic_write(path, body)
 
 
+NOTICE_SIDEBAR_START = '<div class="c-news-page__quicklink-more">'
+DIV_TAG_RE = re.compile(rb"<div\b|</div\s*>", re.IGNORECASE)
+
+
+def notice_content(body: bytes) -> bytes:
+    """Notice page without the "Aktuelle News" sidebar.
+
+    The sidebar links the newest AMA news and changes whenever AMA publishes
+    something else; the notice itself is everything outside it.
+    """
+    start = body.find(NOTICE_SIDEBAR_START.encode())
+    if start < 0:
+        return body
+    depth = 0
+    for match in DIV_TAG_RE.finditer(body, start):
+        depth += -1 if match.group().startswith(b"</") else 1
+        if depth == 0:
+            return body[:start] + body[match.end():]
+    raise SourceError("unbalanced notice sidebar markup")
+
+
+def preserve_notice(path: Path, body: bytes) -> bytes:
+    """Keep an archived notice whose content is unchanged; return stored bytes.
+
+    Only the sidebar may differ. Any other change still aborts, exactly like
+    `preserve()` for PDFs.
+    """
+    if not path.exists():
+        atomic_write(path, body)
+        return body
+    stored = path.read_bytes()
+    if stored != body and notice_content(stored) != notice_content(body):
+        raise SourceError(f"refusing to overwrite changed notice content: {path}")
+    return stored
+
+
 def json_bytes(value: Any) -> bytes:
     return (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode()
 
@@ -340,7 +431,8 @@ def build_legal(source_id: str, link: SourceLink, response: ResponseData, at: st
     return {
         "source_id": source_id, "source_type": "legal_basis_pdf", "title": spec["title"], "source_date": spec["source_date"],
         "current_status": "current_official_target_at_capture", "version_label": spec["version_label"],
-        "version_note": "Official filename dated 2024-10-11; current AMA target at capture, not relabelled as a 2026 edition.",
+        "version_note": f"Official filename {spec['filename']}; current AMA target at capture, not relabelled as a newer edition.",
+        **scope_fields(spec),
         "official_url": link.url, "source_filename": spec["filename"], "local_path": relative_path(target), "retrieved_at": at,
         "sha256": sha256_bytes(response.body), "file_size_bytes": len(response.body), "page_count": pages,
         "pdf_version": pdf_version, "http_provenance": http_record(response),
@@ -351,10 +443,10 @@ def build_notice(source_id: str, response: ResponseData, at: str) -> dict[str, A
     spec = NOTICE_SOURCES[source_id]
     filename = f"{spec['published_on']}__{spec['slug']}.html"
     target = NOTICES_DIR / filename
-    preserve(target, response.body)
-    if b"<html" not in response.body[:10000].lower():
+    body = preserve_notice(target, response.body)
+    if b"<html" not in body[:10000].lower():
         raise SourceError(f"notice is not recognizable HTML: {source_id}")
-    printed_date = notice_publication_date(response.body)
+    printed_date = notice_publication_date(body)
     if printed_date != spec["published_on"]:
         raise SourceError(
             f"notice publication-date mismatch for {source_id}: "
@@ -363,8 +455,9 @@ def build_notice(source_id: str, response: ResponseData, at: str) -> dict[str, A
     return {
         "source_id": source_id, "source_type": "year_specific_notice_html", "publication_year": 2026,
         "published_on": spec["published_on"], "title": spec["title"], "topic_tags": spec["topic_tags"],
+        **scope_fields(spec),
         "official_url": notice_url(spec), "source_filename": filename, "local_path": relative_path(target), "retrieved_at": at,
-        "sha256": sha256_bytes(response.body), "file_size_bytes": len(response.body), "http_provenance": http_record(response),
+        "sha256": sha256_bytes(body), "file_size_bytes": len(body), "http_provenance": http_record(response),
     }
 
 
@@ -439,7 +532,7 @@ def update_sources() -> None:
     atomic_write(run_dir / "manifest.json", manifest_body)
     atomic_write(run_dir / "run.json", json_bytes(run_record))
     atomic_write(MANIFEST_PATH, manifest_body)
-    print(f"PASS: updated 27 core PDFs (2026={count_2026}, official-current 2025={27-count_2026}), 2 legal PDFs and 4 official 2026 notices; run={run_id}")
+    print(f"PASS: updated 27 core PDFs (2026={count_2026}, official-current 2025={27-count_2026}), {len(legal_documents)} legal PDFs and {len(notices)} official 2026 notices; run={run_id}")
 
 
 def require(ok: bool, message: str, errors: list[str]) -> None:
@@ -499,6 +592,7 @@ def validate_manifest(manifest: dict[str, Any], check_files: bool) -> None:
         spec = LEGAL_SOURCES.get(source_id, {})
         require(record.get("source_filename") == spec.get("filename") and record.get("source_date") == spec.get("source_date"), f"{label} identity mismatch", errors)
         require(record.get("version_label") == spec.get("version_label"), f"{label} version label mismatch", errors)
+        require(record.get("applies_to_measures") == scope_fields(spec).get("applies_to_measures"), f"{label} measure scope mismatch", errors)
         if check_files and (path := check_file(record, label, errors)):
             try:
                 require(generic_pdf_metadata(path) == (record.get("page_count"), record.get("pdf_version")), f"{label} PDF metadata mismatch", errors)
@@ -510,6 +604,7 @@ def validate_manifest(manifest: dict[str, Any], check_files: bool) -> None:
         spec = NOTICE_SOURCES.get(source_id, {})
         require(record.get("published_on") == spec.get("published_on") and record.get("publication_year") == 2026, f"{label} date mismatch", errors)
         require(record.get("official_url") == (notice_url(spec) if spec else None), f"{label} URL mismatch", errors)
+        require(record.get("applies_to_measures") == scope_fields(spec).get("applies_to_measures"), f"{label} measure scope mismatch", errors)
         if check_files and (path := check_file(record, label, errors)):
             body = path.read_bytes()
             require(b"<html" in body[:10000].lower(), f"{label} not HTML", errors)
@@ -550,7 +645,8 @@ def validate_sources(check_index: bool) -> None:
         validate_live(manifest)
     summary = manifest["summary"]
     suffix = "; live AMA indexes match" if check_index else ""
-    print(f"PASS: 27/27 core PDFs, 2/2 legal PDFs and 4/4 notices verified; 2026 editions={summary['current_2026_document_count']}, official-current 2025 editions={summary['official_current_2025_document_count']}{suffix}")
+    legal_count, notice_count = len(LEGAL_SOURCES), len(NOTICE_SOURCES)
+    print(f"PASS: 27/27 core PDFs, {legal_count}/{legal_count} legal PDFs and {notice_count}/{notice_count} notices verified; 2026 editions={summary['current_2026_document_count']}, official-current 2025 editions={summary['official_current_2025_document_count']}{suffix}")
 
 
 def main() -> int:

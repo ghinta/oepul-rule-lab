@@ -1,0 +1,3467 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_22",
+  "rules": [
+    {
+      "id": "O622-SCOPE-001",
+      "rule_type": "definition",
+      "statement": "Die Maßnahme 'Tierwohl – Schweinehaltung' (SRL 2.22, GSP-Intervention 70-19) fördert die Stallhaltung von Ferkeln, Jung- und Mastschweinen oder Zuchtsauen und gedeckten Jungsauen in Gruppen auf eingestreuten Liegeflächen mit erhöhtem Platzangebot und/oder die Freilandhaltung; optional Zuschläge unkupiert, GVO-freie europäische Eiweißfuttermittel und (ab 2025) Festmistkompostierung.",
+      "conditions": [
+        {
+          "expression": "true",
+          "description": "Geltungsbereich der Maßnahme",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "scope",
+        "description": "Maßnahmenumfang und Interventionscode 70-19",
+        "value": {
+          "intervention": "70-19",
+          "measure": "o6_22"
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P1-UEBERSICHT",
+        "REF-MS-P1-ZUSCHLAEGE",
+        "REF-SRL-P88-ART",
+        "REF-GSP-P88-INTERVENTION"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.decision"
+      ]
+    },
+    {
+      "id": "O622-CONTRACT-001",
+      "rule_type": "commitment_period",
+      "statement": "Verpflichtungs- und Vertragszeitraum der Maßnahme ist grundsätzlich ein Kalenderjahr (1. Jänner bis 31. Dezember); die Maßnahme ist einjährig.",
+      "conditions": [
+        {
+          "expression": "farm.year == Antragsjahr",
+          "description": "Antragsjahr = Kalenderjahr der Umsetzung",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "commitment_period",
+        "description": "Verpflichtung 01.01.–31.12. des Förderjahres",
+        "value": {
+          "start": "01-01",
+          "end": "12-31"
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P1-VERTRAG",
+        "REF-SRL-P12-VERPFLICHTUNGSDAUER",
+        "REF-SRL-P12-EINJAEHRIG",
+        "REF-GSP-P17-ANTRAGSJAHR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.withdrawn_effective"
+      ]
+    },
+    {
+      "id": "O622-CONTRACT-002",
+      "rule_type": "contract_extension",
+      "statement": "Maßnahme und optional beantragte Zuschläge verlängern sich automatisch um ein weiteres Förderjahr, wenn sie nicht abgemeldet werden; die Weiterführung wird durch Abgabe des Mehrfachantrags mit förderrelevanten Tieren beantragt.",
+      "conditions": [
+        {
+          "expression": "not withdrawn",
+          "description": "keine Abmeldung erfolgt",
+          "input_paths": [
+            "farm.oepul_measures.o6_22.applications[].withdrawn_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "auto_renewal",
+        "description": "Vertrag läuft im Folgejahr weiter",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P1-VERLAENGERUNG",
+        "REF-GC-P13-VERLAENGERUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.application_active"
+      ]
+    },
+    {
+      "id": "O622-CONTRACT-003",
+      "rule_type": "contract_lapse",
+      "statement": "Wird die Mindestteilnahme (2,00 GVE) nicht eingehalten, erlischt der Vertrag für die Maßnahme; es wird keine Prämie gewährt.",
+      "conditions": [
+        {
+          "expression": "participating_gve < 2.0",
+          "description": "Summe der GVE aller beantragten Kategorien unter 2,00",
+          "input_paths": [
+            "livestock.species_groups[].animal_count",
+            "livestock.species_groups[].average_animal_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "contract_lapsed",
+        "description": "Vertrag für die Maßnahme erlischt",
+        "value": {
+          "min_gve": 2.0
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P2-ERLOESCHEN",
+        "REF-SRL-P24-ZUGANG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.measure_contract_lapsed",
+        "data.oepul.o6_22.measure_payable"
+      ]
+    },
+    {
+      "id": "O622-CONTRACT-004",
+      "rule_type": "eligibility_period",
+      "statement": "Die als prämienfähig beantragten Tiere müssen die Vorgaben im gesamten Zeitraum 1. Jänner bis 31. Dezember des Förderjahres erfüllen; förderfähig sind nur Tiere, die während der gesamten Verpflichtungsdauer gemäß den Bestimmungen gehalten werden.",
+      "conditions": [
+        {
+          "expression": "compliant_whole_year == true",
+          "description": "ganzjährige Einhaltung je Tier",
+          "input_paths": [
+            "livestock.species_groups[].pig_welfare.continuous_compliance_from_eligible_weight"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible",
+        "description": "Tier prämienfähig nur bei ganzjähriger Einhaltung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P2-GANZJAEHRIG",
+        "REF-GC-P10-VERPFLICHTUNG",
+        "REF-SRL-P12-TIERE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.non_compliant_count"
+      ]
+    },
+    {
+      "id": "O622-CONTRACT-005",
+      "rule_type": "contract_lapse",
+      "statement": "Wird in einem Förderjahr in einer Schweinekategorie nicht mit mindestens einem prämienfähigen Tier teilgenommen, erlischt der Vertrag für diese Kategorie automatisch; für eine erneute Teilnahme ist ein neuer fristgerechter Maßnahmenantrag nötig, nach Fristablauf eine Korrektur zum Maßnahmenantrag samt schriftlichem Ersuchen an die AMA.",
+      "conditions": [
+        {
+          "expression": "category_gve[c] <= 0",
+          "description": "keine prämienfähigen Tiere in aktiver Kategorie",
+          "input_paths": [
+            "livestock.species_groups[].pig_tierliste_category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "category_lapsed",
+        "description": "Vertrag der Kategorie erlischt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P13-ERLOESCHEN-KAT",
+        "REF-MS-P14-NACHREICHUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.lapsed_categories"
+      ]
+    },
+    {
+      "id": "O622-ELIG-001",
+      "rule_type": "access_condition",
+      "statement": "Der Betrieb muss im jeweiligen Teilnahmejahr mit mindestens 2,00 GVE teilnehmen; der Mindestbestand gilt in Summe über alle beantragten Schweinekategorien.",
+      "conditions": [
+        {
+          "expression": "sum(category_gve) >= 2.0",
+          "description": "Summe prämienfähiger GVE aller aktiven Kategorien",
+          "input_paths": [
+            "livestock.species_groups[].animal_count",
+            "livestock.species_groups[].average_animal_count",
+            "livestock.species_groups[].deregistered_average_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible",
+        "description": "Mindestteilnahme erfüllt",
+        "value": {
+          "min_gve": 2.0
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P2-MINDEST",
+        "REF-MS-P2-MINDEST-SUMME",
+        "REF-SRL-P88-ZUGANG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.min_participation_met",
+        "data.oepul.o6_22.participating_gve"
+      ]
+    },
+    {
+      "id": "O622-ELIG-002",
+      "rule_type": "calculation_basis",
+      "statement": "Der Tierbestand wird zum Stichtag 1. April (Stichtagstierliste) oder bei Abgabe einer Durchschnittstierliste im Jahresdurchschnitt ermittelt.",
+      "conditions": [
+        {
+          "expression": "farm.mfa.uses_average_animal_list",
+          "description": "Durchschnittstierliste vorhanden",
+          "input_paths": [
+            "farm.mfa.uses_average_animal_list",
+            "livestock.species_groups[].average_animal_count",
+            "livestock.species_groups[].animal_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "count_basis",
+        "description": "Jahresdurchschnitt bei Durchschnittstierliste, sonst Stichtag 1. April",
+        "value": {
+          "reference_date": "04-01"
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P2-STICHTAG",
+        "REF-SRL-P10-STICHTAG",
+        "REF-GC-P10-DURCHSCHNITT",
+        "REF-GSP-P25-TIERLISTE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.count_basis",
+        "data.oepul.o6_22.uses_average_list"
+      ]
+    },
+    {
+      "id": "O622-ELIG-003",
+      "rule_type": "eligible_animals",
+      "statement": "Teilnahmefähig sind Ferkel, Mastschweine und Zuchtsauen gemäß dem GVE-Schlüssel der Maßnahme.",
+      "conditions": [
+        {
+          "expression": "pig_tierliste_category in tierliste_categories",
+          "description": "Tierlistenkategorie im GVE-Schlüssel",
+          "input_paths": [
+            "livestock.species_groups[].pig_tierliste_category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible",
+        "description": "Tier teilnahmefähig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P2-TEILNAHMEFAEHIG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.group_eligible"
+      ]
+    },
+    {
+      "id": "O622-CAT-001",
+      "rule_type": "category_definition",
+      "statement": "Teilnahme mit drei Schweinekategorien: Ferkel ab 8 bis 32 kg (Tierliste 8–20 kg, 20–32 kg); Jung- und Mastschweine ab 32 kg (Jungschweine 32–50 kg, Mastschweine 50–80, 80–110, ab 110 kg inkl. ausgemerzter Zuchttiere, nicht gedeckte Jungsauen ab 50 kg); Zucht- und gedeckte Jungsauen ab 50 kg (gedeckte Jungsauen, ältere Sauen gedeckt/nicht gedeckt).",
+      "conditions": [
+        {
+          "expression": "tierliste_category -> measure_category",
+          "description": "Zuordnung laut Datentabelle",
+          "input_paths": [
+            "livestock.species_groups[].pig_tierliste_category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "category_mapping",
+        "description": "Maßnahmenkategorie der Tierlistenposition",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P2-KAT-FERKEL",
+        "REF-MS-P2-KAT-MAST",
+        "REF-MS-P2-KAT-ZUCHT",
+        "REF-SRL-P88-KAT-B",
+        "REF-SRL-P88-KAT-C"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.tierliste_category",
+        "data.oepul.o6_22.group_measure_category"
+      ]
+    },
+    {
+      "id": "O622-CAT-002",
+      "rule_type": "conversion_factor",
+      "statement": "GVE-Schlüssel: Ferkel 8–20 kg und 20–32 kg je 0,07 GVE; Jungschweine 32–50 kg, Mastschweine aller Gewichtsklassen und nicht gedeckte Jungsauen je 0,30 GVE; gedeckte Jungsauen sowie ältere Sauen gedeckt/nicht gedeckt je 0,50 GVE (identisch mit Anhang A SRL).",
+      "conditions": [
+        {
+          "expression": "gve = count * gve_per_head",
+          "description": "Umrechnung je Tierlistenposition",
+          "input_paths": [
+            "livestock.species_groups[].pig_tierliste_category",
+            "livestock.species_groups[].animal_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "gve_factor",
+        "description": "GVE je Stück laut Tabelle",
+        "value": {
+          "ferkel": 0.07,
+          "mastschweine": 0.3,
+          "zuchtsauen": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P16-GVE-SCHLUESSEL",
+        "REF-MS-P16-GVE-FERKEL",
+        "REF-MS-P16-GVE-MAST",
+        "REF-MS-P16-GVE-ZUCHT",
+        "REF-SRL-P10-GVE",
+        "REF-ANH-P3-FERKEL",
+        "REF-ANH-P3-MAST",
+        "REF-ANH-P3-ZUCHT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.group_gve_factor",
+        "data.oepul.o6_22.group_gve_declared"
+      ]
+    },
+    {
+      "id": "O622-CAT-003",
+      "rule_type": "category_assignment",
+      "statement": "Ungedeckte Jungsauen ab 50 kg gehören bis zur Deckung zur Kategorie Jung- und Mastschweine; dies gilt auch für ausgemerzte Zuchttiere.",
+      "conditions": [
+        {
+          "expression": "weight >= 50 and not mated",
+          "description": "nicht gedeckt bzw. ausgemerzt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "mastschweine",
+        "description": "Kategorie Jung- und Mastschweine",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P7-AUSGEMERZT",
+        "REF-SRL-P88-KAT-B"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.gilt_or_culled_measure_category"
+      ]
+    },
+    {
+      "id": "O622-CAT-004",
+      "rule_type": "category_assignment",
+      "statement": "Jungeber zwischen 32 und 50 kg sowie Eber über 50 bzw. 85 kg, die noch nicht im Deckeinsatz sind, sind als Jung- und Mastschweine anzugeben.",
+      "conditions": [
+        {
+          "expression": "boar and (32 <= weight < 50 or not used_for_mating)",
+          "description": "Jungeber bzw. Eber ohne Deckeinsatz",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "mastschweine",
+        "description": "Kategorie Jung- und Mastschweine",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P13-JUNGEBER",
+        "REF-MS-P13-EBER-NICHT-DECKEND"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.boar_measure_category"
+      ]
+    },
+    {
+      "id": "O622-CAT-005",
+      "rule_type": "exclusion",
+      "statement": "Zuchteber ab 50 kg, die zum Decken eingesetzt werden, sind in der Kategorie 'Zuchteber ab 50 kg' anzugeben und in der Maßnahme nicht prämienfähig.",
+      "conditions": [
+        {
+          "expression": "boar and weight >= 50 and used_for_mating",
+          "description": "Zuchteber im Deckeinsatz",
+          "input_paths": [
+            "livestock.species_groups[].pig_tierliste_category"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "keine Prämie",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P13-ZUCHTEBER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.boar_measure_category",
+        "data.oepul.o6_22.non_eligible_tierliste_ids"
+      ]
+    },
+    {
+      "id": "O622-CAT-006",
+      "rule_type": "category_assignment",
+      "statement": "Jungsauen ab 50 kg werden in die Kategorie Zucht- und gedeckte Jungsauen erst ab dem Decken einbezogen.",
+      "conditions": [
+        {
+          "expression": "mated == true",
+          "description": "Jungsau gedeckt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "zuchtsauen",
+        "description": "Kategorie Zucht- und gedeckte Jungsauen ab Deckung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P7-JUNGSAU-DECKEN",
+        "REF-SRL-P88-KAT-C"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.gilt_or_culled_measure_category"
+      ]
+    },
+    {
+      "id": "O622-ALL-001",
+      "rule_type": "obligation",
+      "statement": "Grundsätzlich muss mit allen Tieren der jeweiligen beantragten Schweinekategorie teilgenommen werden; die Verpflichtungen sind bei allen Tieren der Kategorie einzuhalten.",
+      "conditions": [
+        {
+          "expression": "all animals of category compliant or deregistered",
+          "description": "Teilnahme aller Tiere",
+          "input_paths": [
+            "livestock.species_groups[].deregistered_average_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "required",
+        "description": "Teilnahme mit allen Tieren der Kategorie",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P11-ALLE",
+        "REF-SRL-P88-ALLE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.non_compliant_count"
+      ]
+    },
+    {
+      "id": "O622-ALL-002",
+      "rule_type": "exception",
+      "statement": "Ist aufgrund bestehender Stallungen eine Teilnahme aller Tiere nicht möglich, erfüllen nur jene Ferkel bzw. Jung- und Mastschweine die Verpflichtungen, die ab Erreichen des förderfähigen Gewichts (8 kg bzw. 32 kg) bis zum Ferkelaufzuchtendgewicht bzw. zur Schlachtung durchgängig die Haltungsbedingungen einhalten; die übrigen Tiere sind abzumelden (z. B. Tiere auf Vollspalten). Werden Tiere nur in einem Teil der Mast konform gehalten, kann nicht an der Kategorie teilgenommen werden, da 100 % abzumelden wären.",
+      "conditions": [
+        {
+          "expression": "non_compliant_count(g) > deregistered_average_count",
+          "description": "nicht durchgängig konforme Tiere nicht abgemeldet",
+          "input_paths": [
+            "livestock.species_groups[].pig_welfare.non_compliant_average_count",
+            "livestock.species_groups[].pig_welfare.continuous_compliance_from_eligible_weight",
+            "livestock.species_groups[].deregistered_average_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Abmeldung der nicht konformen Tiere erforderlich",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P6-ALLE-TIERE",
+        "REF-MS-P6-DURCHGAENGIG",
+        "REF-MS-P6-BSP-ERWEITERUNG",
+        "REF-MS-P7-BSP-VOLLSPALTEN",
+        "REF-SRL-P88-ALLE",
+        "REF-SRL-P88-MELDUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.non_compliant_count",
+        "data.oepul.o6_22.violations"
+      ]
+    },
+    {
+      "id": "O622-ALL-003",
+      "rule_type": "exception",
+      "statement": "Bei Zucht- und gedeckten Jungsauen in bestehenden Stallungen erfüllen nur jene Sauen die Verpflichtungen, die durchgängig gemäß den Haltungsbedingungen gehalten werden.",
+      "conditions": [
+        {
+          "expression": "sow not continuously compliant",
+          "description": "Sau nicht durchgängig konform",
+          "input_paths": [
+            "livestock.species_groups[].pig_welfare.non_compliant_average_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "deregister",
+        "description": "Abmeldung nicht konformer Sauen",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P8-SAUEN-BESTEHEND"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.non_compliant_count"
+      ]
+    },
+    {
+      "id": "O622-TGD-001",
+      "rule_type": "obligation",
+      "statement": "Werden am Betrieb über 10,00 GVE förderbare Schweine gehalten, muss im Förderjahr von 1. Jänner bis 31. Dezember an einem anerkannten Tiergesundheitsdienst für Schweine teilgenommen werden.",
+      "conditions": [
+        {
+          "expression": "farm_eligible_pig_gve > 10.0",
+          "description": "mehr als 10 GVE förderbare Schweine",
+          "input_paths": [
+            "livestock.species_groups[].animal_count"
+          ]
+        },
+        {
+          "expression": "participation_from <= 01-01 and participation_to >= 12-31",
+          "description": "ganzjährige TGD-Teilnahme",
+          "input_paths": [
+            "livestock.pig_farm.animal_health_service.participates",
+            "livestock.pig_farm.animal_health_service.participation_from",
+            "livestock.pig_farm.animal_health_service.participation_to"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Verstoß bei fehlender TGD-Teilnahme",
+        "value": {
+          "threshold_gve": 10.0
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P3-TGD",
+        "REF-SRL-P88-TGD"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.animal_health_service_required",
+        "data.oepul.o6_22.animal_health_service_ok",
+        "data.oepul.o6_22.farm_eligible_pig_gve"
+      ]
+    },
+    {
+      "id": "O622-TGD-002",
+      "rule_type": "transitional",
+      "statement": "Im Förderjahr 2023 ist abweichend eine TGD-Teilnahme ab 15. April bis 31. Dezember 2023 ausreichend.",
+      "conditions": [
+        {
+          "expression": "farm.year == 2023",
+          "description": "Förderjahr 2023",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "required_start",
+        "description": "TGD ab 15.04.2023 ausreichend",
+        "value": {
+          "start": "2023-04-15"
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P3-TGD-2023"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.ahs_required_start"
+      ]
+    },
+    {
+      "id": "O622-TGD-003",
+      "rule_type": "documentation",
+      "statement": "Ein Nachweis über die TGD-Teilnahme ist nach Aufforderung an die AMA zu übermitteln, sofern die Übermittlung nicht durch den Tiergesundheitsdienst erfolgt; Tiergesundheitsdienste übermitteln Daten an die AMA.",
+      "conditions": [
+        {
+          "expression": "AMA requests proof and TGD did not transmit",
+          "description": "Aufforderung der AMA",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "submit_proof",
+        "description": "Nachweis an die AMA",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P3-TGD-NACHWEIS",
+        "REF-SRL-P26-DATEN"
+      ]
+    },
+    {
+      "id": "O622-STALL-001",
+      "rule_type": "definition",
+      "statement": "Stall: befestigtes Gebäude mit mindestens dreiseitiger Verschalung oder dreiseitigem Behang mit Windfangnetzen gegen Zugluft, Überdachung der Liegeplätze und befestigtem Boden (Schotter oder Lehm gilt nicht als befestigt); flüssiger Kot und Harn müssen in einem Behälter gesammelt werden können.",
+      "conditions": [
+        {
+          "expression": "not open_stall_system",
+          "description": "geschlossenes Stallsystem",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.structure.open_stall_system",
+            "livestock.species_groups[].housing.stall.structure.three_sided_enclosure_or_windbreak",
+            "livestock.species_groups[].housing.stall.structure.lying_area_roofed",
+            "livestock.species_groups[].housing.stall.structure.paved_floor",
+            "livestock.species_groups[].housing.stall.structure.liquid_manure_collectable"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Stalldefinition nicht erfüllt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P3-STALL",
+        "REF-MS-P3-STALL-BODEN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.closed_stall_ok"
+      ]
+    },
+    {
+      "id": "O622-STALL-002",
+      "rule_type": "definition",
+      "statement": "Bei Offenstallhaltungssystemen werden andere bauliche Einrichtungen anerkannt, wenn ein festes Dach über den Liegeflächen besteht, die Stallflächen flüssigkeitsdicht befestigt sind und ein Abfluss der Sickerwässer in eine Sammelgrube gewährleistet ist.",
+      "conditions": [
+        {
+          "expression": "open_stall_system == true",
+          "description": "Offenstall",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.structure.open_stall_system",
+            "livestock.species_groups[].housing.stall.structure.liquid_tight_paved",
+            "livestock.species_groups[].housing.stall.structure.seepage_to_collection_pit"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Offenstallanforderungen nicht erfüllt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P3-OFFENSTALL",
+        "REF-MS-P3-OFFENSTALL-SICKER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.open_stall_ok"
+      ]
+    },
+    {
+      "id": "O622-STALL-003",
+      "rule_type": "obligation",
+      "statement": "Der Stall muss gemäß Mindestplatzbedarf genug Platz für alle Tiere bieten, auch wenn sich diese z. B. während der Weideperiode nicht im Stall befinden.",
+      "conditions": [
+        {
+          "expression": "space_for_all_animals == false",
+          "description": "Stallplatz für alle Tiere fehlt",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.structure.space_for_all_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Stallplatz für alle Tiere erforderlich",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P3-PLATZ-ALLE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.stall_housed",
+        "data.oepul.o6_22.free_range_housed"
+      ]
+    },
+    {
+      "id": "O622-STALL-004",
+      "rule_type": "definition",
+      "statement": "Zur nutzbaren Gesamtfläche im Stallabteil zählen alle befestigten (betonierten oder perforierten) Flächen (Stall plus befestigter Auslauf), zu denen die Tiere ständigen Zugang haben; ein Absperren des Auslaufs ist nur für Routinearbeiten wie Entmisten zulässig.",
+      "conditions": [
+        {
+          "expression": "effective_area = usable_total_area - unpaved_area_included - closed_run_area",
+          "description": "nur befestigte, ständig zugängliche Flächen",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.pens[].usable_total_area_m2",
+            "livestock.species_groups[].housing.stall.pens[].unpaved_area_included_m2",
+            "livestock.species_groups[].housing.stall.pens[].outdoor_run_area_m2",
+            "livestock.species_groups[].housing.stall.pens[].outdoor_run_permanent_access"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "effective_usable_area",
+        "description": "anrechenbare Fläche",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P3-NUTZFLAECHE",
+        "REF-MS-P3-AUSLAUF"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.effective_usable_area",
+        "data.oepul.o6_22.closed_run_area"
+      ]
+    },
+    {
+      "id": "O622-STALL-005",
+      "rule_type": "obligation",
+      "statement": "Bei Stallhaltung hat die Haltung jeder teilnehmenden Schweinekategorie in Gruppen und auf eingestreuten Systemen zu erfolgen.",
+      "conditions": [
+        {
+          "expression": "housing_type in {stall, mixed}",
+          "description": "Stallhaltung",
+          "input_paths": [
+            "livestock.species_groups[].housing.housing_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "required",
+        "description": "Gruppen- und eingestreute Haltung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P4-STALLHALTUNG",
+        "REF-SRL-P88-GRUPPE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.checked_pen"
+      ]
+    },
+    {
+      "id": "O622-LIE-001",
+      "rule_type": "threshold",
+      "statement": "Den in Gruppen gehaltenen Tieren muss eine geschlossene (planbefestigte) Liegefläche zur Verfügung stehen; Flächen mit einem Perforationsanteil von maximal 5 % gelten als planbefestigt.",
+      "conditions": [
+        {
+          "expression": "lying_area_perforation_percent <= 5",
+          "description": "Perforationsanteil der Liegefläche",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.pens[].lying_area_perforation_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Liegefläche nicht planbefestigt",
+        "value": {
+          "max_perforation_percent": 5
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P4-GESCHLOSSEN",
+        "REF-MS-P4-PLANBEFESTIGT",
+        "REF-SRL-P89-SAUEN-GRUPPE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.violations"
+      ]
+    },
+    {
+      "id": "O622-LIE-002",
+      "rule_type": "obligation",
+      "statement": "Der Liegebereich ist so einzustreuen, dass eine trockene Liegefläche gewährleistet ist.",
+      "conditions": [
+        {
+          "expression": "lying_area_littered_and_dry == true",
+          "description": "eingestreut und trocken",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.pens[].lying_area_littered_and_dry"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Liegebereich nicht trocken eingestreut",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P4-EINSTREU",
+        "REF-SRL-P88-40"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.violations"
+      ]
+    },
+    {
+      "id": "O622-LIE-003",
+      "rule_type": "calculation_rule",
+      "statement": "In Schrägbodenbuchten und Kistenställen sind eingestreute Flächen in und außerhalb der Ruhekiste als eingestreute Liegefläche anrechenbar; insgesamt muss die geforderte Mindesteinstreufläche gegeben sein.",
+      "conditions": [
+        {
+          "expression": "littered_lying_area_m2 includes inside and outside resting box",
+          "description": "Summe der eingestreuten Flächen",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.pens[].littered_lying_area_m2"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "countable",
+        "description": "Anrechnung der eingestreuten Fläche",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P4-RUHEKISTE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.required_littered_lying_area_fattening"
+      ]
+    },
+    {
+      "id": "O622-LIE-004",
+      "rule_type": "option",
+      "statement": "Die Art der Einstreu im Liegebereich ist grundsätzlich frei wählbar (saugfähige Materialien wie Stroh, Strohpellets, Heu, Heupellets, Sägespäne, gemahlene Maisspindel, gemahlenes Elefantengras, Steinmehl etc.); es gibt keine Vorgaben zur Aufwandmenge je GVE.",
+      "conditions": [
+        {
+          "expression": "bedding_material absorbent",
+          "description": "saugfähiges Material",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.pens[].bedding_material"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "allowed",
+        "description": "Einstreuart frei wählbar, keine Mengenvorgabe",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P4-EINSTREUART",
+        "REF-MS-P4-AUFWAND"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.bedding_row"
+      ]
+    },
+    {
+      "id": "O622-ENR-001",
+      "rule_type": "obligation",
+      "statement": "Jeder Schweinekategorie muss jederzeit ausreichend Beschäftigungsmaterial in Form von Gras, Stroh oder Heu zur Verfügung stehen; bei mit Stroh oder Heu eingestreuten Systemen gilt dies als erfüllt, bei Minimaleinstreu ist ständig zusätzliches Stroh oder Heu (z. B. Raufe) erforderlich.",
+      "conditions": [
+        {
+          "expression": "straw_or_hay_bedding and not minimal_bedding or enrichment_permanently_available",
+          "description": "Beschäftigungsmaterial",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.pens[].bedding_material",
+            "livestock.species_groups[].housing.stall.pens[].minimal_bedding",
+            "livestock.species_groups[].housing.stall.pens[].enrichment_permanently_available",
+            "livestock.species_groups[].housing.stall.pens[].enrichment_material"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "kein ständig verfügbares Beschäftigungsmaterial",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P4-BESCHAEFTIGUNG",
+        "REF-MS-P4-BESCH-STROH",
+        "REF-MS-P4-MINIMALEINSTREU",
+        "REF-SRL-P88-BESCHAEFTIGUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.enrichment_ok"
+      ]
+    },
+    {
+      "id": "O622-DOC-001",
+      "rule_type": "documentation",
+      "statement": "Bis einschließlich Antragsjahr 2024 müssen eine Stallskizze und ein Belegungsplan (maximal mögliche Belegung) für jede teilnehmende Kategorie und jedes Stallabteil am Betrieb aufliegen; sie werden bei Vor-Ort-Kontrollen geprüft, eine Übermittlung an die AMA ist nicht erforderlich. Anzugeben sind Buchtenmaße, Buchtengröße und ggf. Maßstab; der Belegungsplan ist für alle Abteile mit teilnehmenden Tieren zu führen, eine tagaktuelle Belegung ist nicht erforderlich.",
+      "conditions": [
+        {
+          "expression": "farm.year <= 2024 and stall housing",
+          "description": "Antragsjahr bis 2024",
+          "input_paths": [
+            "farm.year",
+            "livestock.pig_farm.documentation.stall_sketch_and_occupancy_plan"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Stallskizze/Belegungsplan fehlt",
+        "value": {
+          "until_year": 2024
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P4-SKIZZE",
+        "REF-MS-P4-SKIZZE-AUFLIEGEN",
+        "REF-MS-P5-UEBERMITTLUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.stall_sketch_required"
+      ]
+    },
+    {
+      "id": "O622-DOC-002",
+      "rule_type": "calculation_rule",
+      "statement": "Die maximal mögliche Tierzahl je Stallabteil im Belegungsplan ist gemäß Mindestplatzbedarf je Tier zu berechnen (Beispiel 15 m²: 21 Tiere 32–50 kg, 16 Tiere 50–85 kg, 13 Tiere ab 85 kg).",
+      "conditions": [
+        {
+          "expression": "floor(area / total_area_per_animal)",
+          "description": "Abrundung auf ganze Tiere",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.pens[].usable_total_area_m2"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "max_animals",
+        "description": "maximal mögliche Belegung",
+        "value": {
+          "example_15m2": {
+            "32_50": 21,
+            "50_85": 16,
+            "ab_85": 13
+          }
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P4-BELEGUNG",
+        "REF-MS-P5-BELEG-BSP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.max_animals_in_pen",
+        "data.oepul.o6_22.max_sows_in_pen"
+      ]
+    },
+    {
+      "id": "O622-DOC-003",
+      "rule_type": "transitional",
+      "statement": "Ab dem Antragsjahr 2025 entfallen Stallskizze und Belegungsplan.",
+      "conditions": [
+        {
+          "expression": "farm.year >= 2025",
+          "description": "Antragsjahr ab 2025",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_required",
+        "description": "keine Stallskizze/Belegungsplan",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P5-ENTFALL",
+        "REF-SRL-P88-SKIZZE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.stall_sketch_required"
+      ]
+    },
+    {
+      "id": "O622-DOC-004",
+      "rule_type": "measurement_rule",
+      "statement": "Die Buchtenfläche wird bei Seitenwänden aus Metall, Kunststoff oder Holz ab der Mitte der Aufstallung (Achsmaß) vermessen, bei breiten (z. B. gemauerten) Buchtenwänden ist die lichte Weite anzugeben.",
+      "conditions": [
+        {
+          "expression": "wall_type in {metal, plastic, wood} -> axis; broad -> clear width",
+          "description": "Messmethode nach Wandtyp",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.pens[].usable_total_area_m2"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "measurement",
+        "description": "Achsmaß bzw. lichte Weite",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P4-VERMESSUNG"
+      ]
+    },
+    {
+      "id": "O622-GRP-001",
+      "rule_type": "obligation",
+      "statement": "Die Haltung von Ferkeln, Jung- und Mastschweinen bzw. Zuchtsauen und gedeckten Jungsauen hat in Gruppen zu erfolgen.",
+      "conditions": [
+        {
+          "expression": "group_housed == true",
+          "description": "Gruppenhaltung je Bucht",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.pens[].group_housed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "keine Gruppenhaltung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P5-GRUPPE",
+        "REF-SRL-P88-GRUPPE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.violations"
+      ]
+    },
+    {
+      "id": "O622-GRP-002",
+      "rule_type": "exception",
+      "statement": "Ausnahme von der Gruppenhaltung nur für erkrankte oder verletzte Tiere bei Notwendigkeit der Einzeltierhaltung; die Prämienfähigkeit bleibt aufrecht, wenn die Einzeltierhaltung aus gesundheitlichen Gründen erfolgt, maximal 10 Tage dauert und auf eingestreuten Systemen erfolgt; keine gesonderte AMA-Meldung bis 10 Tage.",
+      "conditions": [
+        {
+          "expression": "days <= 10 and health_reason and littered",
+          "description": "kurze, gesundheitlich begründete, eingestreute Einzelhaltung",
+          "input_paths": [
+            "livestock.species_groups[].pig_welfare.single_housing_events[].days",
+            "livestock.species_groups[].pig_welfare.single_housing_events[].health_reason",
+            "livestock.species_groups[].pig_welfare.single_housing_events[].littered"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible",
+        "description": "Prämienfähigkeit bleibt aufrecht",
+        "value": {
+          "max_days": 10
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P5-EINZEL-AUSNAHME",
+        "REF-MS-P5-EINZEL",
+        "REF-MS-P5-EINZEL-HINWEIS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.single_housing_short_ok"
+      ]
+    },
+    {
+      "id": "O622-GRP-003",
+      "rule_type": "obligation",
+      "statement": "Dauert die Einzeltierhaltung mehr als 10 Tage, ist das betroffene Tier von der Kategorie gemäß Kapitel 6.7.1 abzumelden.",
+      "conditions": [
+        {
+          "expression": "days > 10 and not deregistered",
+          "description": "Einzelhaltung über 10 Tage",
+          "input_paths": [
+            "livestock.species_groups[].pig_welfare.single_housing_events[].days",
+            "livestock.species_groups[].pig_welfare.single_housing_events[].deregistered"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Abmeldung erforderlich",
+        "value": {
+          "max_days": 10
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P5-EINZEL-10",
+        "REF-MS-P12-ANLAESSE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.single_housing_events"
+      ]
+    },
+    {
+      "id": "O622-GRP-004",
+      "rule_type": "documentation",
+      "statement": "Krankheit bzw. Verletzung und Dauer der Einzeltierhaltung sind am Betrieb zu dokumentieren und aufzubewahren; sie werden bei Vor-Ort-Kontrollen geprüft, die Notwendigkeit kann z. B. über Tierarztrechnungen belegt werden.",
+      "conditions": [
+        {
+          "expression": "documented == true",
+          "description": "Dokumentation vorhanden",
+          "input_paths": [
+            "livestock.species_groups[].pig_welfare.single_housing_events[].documented"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "fehlende Dokumentation",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P5-EINZEL-DOKU"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.single_housing_events"
+      ]
+    },
+    {
+      "id": "O622-GRP-006",
+      "rule_type": "threshold",
+      "statement": "Zuchtsauen und Jungsauen sind (THVO) für den Zeitraum von 10 Tagen nach dem Decken bis 5 Tage vor dem voraussichtlichen Abferkeltermin in Gruppen zu halten (gilt für Neu- und Umbauten seit 2013 und für Altställe mit ausreichendem Gruppenplatz).",
+      "conditions": [
+        {
+          "expression": "group_from_day_after_mating <= 10 and group_until_days_before_farrowing <= 5",
+          "description": "Gruppenhaltungszeitraum",
+          "input_paths": [
+            "livestock.species_groups[].housing.sow_group_housing.group_from_day_after_mating",
+            "livestock.species_groups[].housing.sow_group_housing.group_until_days_before_farrowing"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Gruppenhaltungszeitraum nicht eingehalten",
+        "value": {
+          "start_days_after_mating": 10,
+          "end_days_before_farrowing": 5
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P5-THVO",
+        "REF-SRL-P89-SAUEN-GRUPPE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.required_group_start_days_after_mating",
+        "data.oepul.o6_22.required_group_end_days_before_farrowing",
+        "data.oepul.o6_22.sow_group_housing_required"
+      ]
+    },
+    {
+      "id": "O622-GRP-007",
+      "rule_type": "transitional",
+      "statement": "Für bestehende Stallungen ohne Neu- oder Umbau nach 2013 gilt bis 2033 die THVO-Übergangsregelung (Gruppenhaltung 4 Wochen nach dem Decken bis 1 Woche vor dem Abferkeltermin); in der Maßnahme nur, wenn die Anforderung nicht ohne bauliche Maßnahmen erfüllbar ist – bei ausreichendem Gruppenplatz gelten die 10 Tage.",
+      "conditions": [
+        {
+          "expression": "not built_since_2013 and not sufficient_group_space and year <= 2033",
+          "description": "Übergangsregelung anwendbar",
+          "input_paths": [
+            "livestock.species_groups[].housing.sow_group_housing.stall_built_or_rebuilt_since_2013",
+            "livestock.species_groups[].housing.sow_group_housing.sufficient_group_space_without_construction",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "transitional_period",
+        "description": "28 Tage nach Decken bis 7 Tage vor Abferkeln",
+        "value": {
+          "start_days_after_mating": 28,
+          "end_days_before_farrowing": 7,
+          "until_year": 2033
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P5-THVO-UEBERGANG",
+        "REF-MS-P6-UEBERGANG-BAULICH"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.sow_transitional_rule_applicable"
+      ]
+    },
+    {
+      "id": "O622-GRP-008",
+      "rule_type": "exception",
+      "statement": "In Zeiten, in denen Zuchtsauen und Jungsauen nicht zur Gruppenhaltung verpflichtet sind, müssen auch die anderen Bedingungen (Einstreu, Platzbedarf) nicht erfüllt werden.",
+      "conditions": [
+        {
+          "expression": "outside_group_housing_obligation == true",
+          "description": "Bucht außerhalb Gruppenhaltungspflicht",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.pens[].outside_group_housing_obligation"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exempt",
+        "description": "keine Prüfung von Einstreu und Platz",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P6-AUSNAHME-EINSTREU",
+        "REF-SRL-P89-SAUEN-GRUPPE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.pen_exempt"
+      ]
+    },
+    {
+      "id": "O622-GRP-009",
+      "rule_type": "clarification",
+      "statement": "Auch Betriebe mit weniger als 10 Sauen können teilnehmen, wenn die Tiere in den Zeiträumen, in denen für größere Betriebe die gesetzliche Gruppenhaltungspflicht besteht, tatsächlich in Gruppen gehalten werden.",
+      "conditions": [
+        {
+          "expression": "sow_count < 10",
+          "description": "kleiner Sauenbestand",
+          "input_paths": [
+            "livestock.species_groups[].animal_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_if_grouped",
+        "description": "Teilnahme bei Gruppenhaltung in den Pflichtzeiträumen",
+        "value": {
+          "threshold_sows": 10
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P6-KLEINBETRIEB"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.sow_group_housing_required"
+      ]
+    },
+    {
+      "id": "O622-SPACE-001",
+      "rule_type": "threshold",
+      "statement": "Bei Ferkeln, Jung- und Mastschweinen muss die eingestreute Liegefläche mindestens 40 % der geforderten nutzbaren Gesamtfläche betragen.",
+      "conditions": [
+        {
+          "expression": "littered_lying_area_m2 >= 0.4 * required_total_area",
+          "description": "Mindestanteil eingestreuter Liegefläche",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.pens[].littered_lying_area_m2",
+            "livestock.species_groups[].housing.stall.pens[].animal_count",
+            "livestock.species_groups[].housing.stall.pens[].average_weight_kg"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "zu wenig eingestreute Liegefläche",
+        "value": {
+          "min_share": 0.4
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P7-40PROZENT",
+        "REF-MS-P7-BSP25",
+        "REF-SRL-P88-40"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.required_littered_lying_area_fattening"
+      ]
+    },
+    {
+      "id": "O622-SPACE-002",
+      "rule_type": "threshold",
+      "statement": "Jedem Ferkel, Jung- und Mastschwein muss mindestens folgende nutzbare Gesamtfläche im Stallabteil zur Verfügung stehen: bis 20 kg 0,30 m², bis 32 kg 0,50 m², bis 50 kg 0,70 m², bis 85 kg 0,90 m², ab 85 kg 1,10 m².",
+      "conditions": [
+        {
+          "expression": "effective_usable_area >= animal_count * total_area_m2(weight_class)",
+          "description": "Mindestgesamtfläche je Bucht",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.pens[].usable_total_area_m2",
+            "livestock.species_groups[].housing.stall.pens[].animal_count",
+            "livestock.species_groups[].housing.stall.pens[].average_weight_kg"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Mindestfläche unterschritten",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P7-TABELLE",
+        "REF-MS-P7-TABELLE-AB85",
+        "REF-SRL-P88-TABELLE",
+        "REF-SRL-P89-TABELLE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.required_total_area_fattening",
+        "data.oepul.o6_22.weight_class"
+      ]
+    },
+    {
+      "id": "O622-SPACE-003",
+      "rule_type": "threshold",
+      "statement": "Liegefläche je Tier für Ferkel, Jung- und Mastschweine: bis 20 kg 0,12 m², bis 32 kg 0,20 m², bis 50 kg 0,28 m², bis 85 kg 0,36 m², ab 85 kg 0,44 m².",
+      "conditions": [
+        {
+          "expression": "littered_lying_area_m2 >= animal_count * lying_area_m2(weight_class)",
+          "description": "Liegefläche je Bucht",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.pens[].littered_lying_area_m2"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Liegefläche unterschritten",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P7-TABELLE",
+        "REF-MS-P7-TABELLE-AB85"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.required_littered_lying_area_fattening"
+      ]
+    },
+    {
+      "id": "O622-SPACE-004",
+      "rule_type": "calculation_rule",
+      "statement": "Der Platzbedarf ist für jedes Tier im jeweiligen Stallabteil einzuhalten und nicht im Durchschnitt der Kategorie; für die Gewichtskategorie ist bei homogenen Gruppen der Durchschnitt der Gruppe heranzuziehen.",
+      "conditions": [
+        {
+          "expression": "per pen; weight class by pen average weight",
+          "description": "Bucht als Prüfeinheit",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.pens[].average_weight_kg"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "per_pen_check",
+        "description": "Prüfung je Stallabteil",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P7-JE-TIER",
+        "REF-MS-P7-HOMOGEN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.weight_class",
+        "data.oepul.o6_22.required_total_area_fattening"
+      ]
+    },
+    {
+      "id": "O622-SPACE-005",
+      "rule_type": "threshold",
+      "statement": "Zucht- und gedeckte Jungsauen: je Zuchtsau 1,30 m² Liegefläche und 3,00 m² Gesamtfläche, je gedeckte Jungsau 0,95 m² Liegefläche und 2,00 m² Gesamtfläche; die Liegefläche ist einzustreuen.",
+      "conditions": [
+        {
+          "expression": "areas >= sum(count * per_animal)",
+          "description": "Sauenbucht",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.pens[].sow_counts",
+            "livestock.species_groups[].housing.stall.pens[].usable_total_area_m2",
+            "livestock.species_groups[].housing.stall.pens[].littered_lying_area_m2"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Mindestflächen Sauen unterschritten",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P8-SAUEN-TABELLE",
+        "REF-MS-P8-JUNGSAUEN-TABELLE",
+        "REF-SRL-P89-SAUEN-LIEGE",
+        "REF-SRL-P89-SAUEN-TABELLE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.required_total_area_sows",
+        "data.oepul.o6_22.required_lying_area_sows"
+      ]
+    },
+    {
+      "id": "O622-SPACE-006",
+      "rule_type": "data_requirement",
+      "statement": "Für die Prüfung des Platzangebots muss das Durchschnittsgewicht der Gruppe je Bucht einer Gewichtsklasse zugeordnet werden können.",
+      "conditions": [
+        {
+          "expression": "weight_class(average_weight_kg) defined",
+          "description": "Gewichtsklasse bestimmbar",
+          "input_paths": [
+            "livestock.species_groups[].housing.stall.pens[].average_weight_kg"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Gewichtsklasse nicht bestimmbar",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P7-HOMOGEN",
+        "REF-MS-P7-TABELLE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.weight_class"
+      ]
+    },
+    {
+      "id": "O622-FREE-001",
+      "rule_type": "threshold",
+      "statement": "Freilandhaltung auf unbefestigten Flächen: Tierbestand gemäß wasserrechtlicher Bewilligung; ohne festgelegten Höchstbesatz maximal 4 GVE je ha unbefestigte Freilandfläche; bei Koppelung kann auf die gesamte im Laufe der Haltedauer verfügbare Fläche gerechnet werden (Beispiel 6 GVE auf 2 ha = 3 GVE/ha).",
+      "conditions": [
+        {
+          "expression": "gve / area <= (water_permit_max_gve_per_ha or 4)",
+          "description": "Besatzdichte",
+          "input_paths": [
+            "livestock.species_groups[].housing.free_range.unpaved_area_ha",
+            "livestock.species_groups[].housing.free_range.rotational_paddocks",
+            "livestock.species_groups[].housing.free_range.rotational_total_area_ha",
+            "livestock.species_groups[].housing.free_range.water_permit_max_gve_per_ha",
+            "livestock.species_groups[].housing.free_range.enclosure_gve"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Besatz überschritten",
+        "value": {
+          "default_max_gve_per_ha": 4.0
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P8-FREILAND",
+        "REF-MS-P8-WASSERRECHT",
+        "REF-MS-P8-4GVE",
+        "REF-MS-P8-KOPPEL",
+        "REF-MS-P8-BSP-3GVE",
+        "REF-SRL-P89-FREILAND"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.free_range_stocking_gve_per_ha",
+        "data.oepul.o6_22.free_range_max_gve_per_ha",
+        "data.oepul.o6_22.free_range_reference_area_ha"
+      ]
+    },
+    {
+      "id": "O622-FREE-002",
+      "rule_type": "threshold",
+      "statement": "Die durchgehende Verwendung einer unbefestigten Freilandfläche als Schweineweide darf höchstens ein Jahr betragen.",
+      "conditions": [
+        {
+          "expression": "continuous_use_months <= 12",
+          "description": "Nutzungsdauer",
+          "input_paths": [
+            "livestock.species_groups[].housing.free_range.continuous_use_months"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Nutzungsdauer überschritten",
+        "value": {
+          "max_months": 12
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P9-EIN-JAHR",
+        "REF-SRL-P89-FREILAND-JAHR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.free_range"
+      ]
+    },
+    {
+      "id": "O622-FREE-003",
+      "rule_type": "obligation",
+      "statement": "Das Gehege muss zur Verhinderung des Kontakts mit Wildschweinen eine doppelte Umzäunung oder eine fundamentierte, dichte Umfriedung aufweisen.",
+      "conditions": [
+        {
+          "expression": "double_fence_or_solid_enclosure == true",
+          "description": "Umzäunung",
+          "input_paths": [
+            "livestock.species_groups[].housing.free_range.double_fence_or_solid_enclosure"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Umzäunung unzureichend",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P8-ZAUN",
+        "REF-SRL-P89-ZAUN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.free_range_flag_rules"
+      ]
+    },
+    {
+      "id": "O622-FREE-004",
+      "rule_type": "obligation",
+      "statement": "Futterplatz und Tränke sind räumlich getrennt aufzustellen und befinden sich auf befestigtem Untergrund oder werden regelmäßig versetzt; die Futterstelle ist zum Schutz vor Niederschlägen zu überdachen.",
+      "conditions": [
+        {
+          "expression": "feed_and_water_separated and paved_or_moved and feeding_place_roofed",
+          "description": "Futter-/Tränkeplatz",
+          "input_paths": [
+            "livestock.species_groups[].housing.free_range.feed_and_water_separated",
+            "livestock.species_groups[].housing.free_range.feed_and_water_paved_or_moved_regularly",
+            "livestock.species_groups[].housing.free_range.feeding_place_roofed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Futterplatzauflagen nicht erfüllt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P8-FUTTERPLATZ",
+        "REF-MS-P8-FUTTERDACH",
+        "REF-SRL-P89-FUTTER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.free_range_flag_rules"
+      ]
+    },
+    {
+      "id": "O622-FREE-005",
+      "rule_type": "obligation",
+      "statement": "Als Unterstand ist ein überdachter, dreiseitig geschlossener, eingestreuter und zugluftgeschützter Liegebereich anzubieten, in dem alle Tiere gleichzeitig liegen können.",
+      "conditions": [
+        {
+          "expression": "shelter_roofed_three_sided_littered and shelter_all_animals_lie_simultaneously",
+          "description": "Unterstand",
+          "input_paths": [
+            "livestock.species_groups[].housing.free_range.shelter_roofed_three_sided_littered",
+            "livestock.species_groups[].housing.free_range.shelter_all_animals_lie_simultaneously"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Unterstand unzureichend",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P8-UNTERSTAND",
+        "REF-MS-P3-FREILAND-DEF",
+        "REF-SRL-P89-LIEGEBEREICH"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.free_range_flag_rules"
+      ]
+    },
+    {
+      "id": "O622-FREE-006",
+      "rule_type": "obligation",
+      "statement": "Für Zuchtsauen in Freilandhaltung müssen Hütten zum Abferkeln und während der Säugephase zur Verfügung stehen; für leere und tragende Zuchtsauen ist ein überdachter, dreiseitig geschlossener Liegebereich ausreichend.",
+      "conditions": [
+        {
+          "expression": "sow group and farrowing_on_range -> farrowing_huts_available",
+          "description": "Abferkelhütten",
+          "input_paths": [
+            "livestock.species_groups[].housing.free_range.farrowing_on_range",
+            "livestock.species_groups[].housing.free_range.farrowing_huts_available"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "keine Abferkelhütten",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P8-HUETTEN",
+        "REF-MS-P3-FREILAND-DEF"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.is_sow_group"
+      ]
+    },
+    {
+      "id": "O622-FREE-007",
+      "rule_type": "option",
+      "statement": "Eine Kombination der Freilandhaltung mit der Stallhaltung ist möglich (z. B. Winter im Strohstall, Vegetationsperiode im Freiland); außerhalb der Freilandhaltungszeit sind die Bedingungen der Stallhaltung zu erfüllen.",
+      "conditions": [
+        {
+          "expression": "housing_type == mixed",
+          "description": "kombinierte Haltung",
+          "input_paths": [
+            "livestock.species_groups[].housing.housing_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "both_rule_sets",
+        "description": "Stall- und Freilandauflagen je nach Zeitraum",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P8-KOMBINATION"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.stall_housed",
+        "data.oepul.o6_22.free_range_housed"
+      ]
+    },
+    {
+      "id": "O622-FREE-008",
+      "rule_type": "documentation",
+      "statement": "Die Freilandhaltung ist laufend zu dokumentieren: Beginn und Ende des Weidezeitraums je Schlag sowie Anzahl der je Schlag gehaltenen Tiere (AMA-Vorlage oder gleichwertige Aufzeichnungen).",
+      "conditions": [
+        {
+          "expression": "records_complete == true",
+          "description": "Freilanddokumentation",
+          "input_paths": [
+            "livestock.species_groups[].housing.free_range.records_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Dokumentation fehlt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P9-DOKU",
+        "REF-SRL-P88-FREILAND-DOKU"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.free_range"
+      ]
+    },
+    {
+      "id": "O622-FREE-009",
+      "rule_type": "exclusion",
+      "statement": "Wildschweine in Freilandhaltung sind nicht förderbar und müssen von der Maßnahme abgemeldet werden.",
+      "conditions": [
+        {
+          "expression": "is_wild_boar == true",
+          "description": "Wildschweine",
+          "input_paths": [
+            "livestock.species_groups[].pig_welfare.is_wild_boar"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "keine Prämie, Abmeldung erforderlich",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P9-WILDSCHWEIN",
+        "REF-SRL-P90-WILD"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.is_wild_boar",
+        "data.oepul.o6_22.group_eligible"
+      ]
+    },
+    {
+      "id": "O622-FREE-010",
+      "rule_type": "obligation",
+      "statement": "Unbefestigte Auslaufflächen der Freilandschweinehaltung sind mit der Schlagnutzungsart 'Sonstige Ackerflächen' oder 'Sonstige Grünlandflächen' zu beantragen und erhalten keine Prämie; im Folgejahr sind Ackerflächen wieder in die Fruchtfolge aufzunehmen bzw. Grünland ohne Freilandschweinehaltung zu bewirtschaften.",
+      "conditions": [
+        {
+          "expression": "pig_free_range_run -> mfa_land_use_type in {Sonstige Ackerflächen, Sonstige Grünlandflächen}",
+          "description": "Schlagnutzungsart",
+          "input_paths": [
+            "land.parcels[].pig_free_range_run",
+            "land.parcels[].mfa_land_use_type"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "falsche Schlagnutzungsart",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P14-AUSLAUF",
+        "REF-MS-P14-FOLGEJAHR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.violations"
+      ]
+    },
+    {
+      "id": "O622-UNK-001",
+      "rule_type": "surcharge_condition",
+      "statement": "Zuschlag 'Haltung von ausschließlich unkupierten Ferkeln, Jung- und Mastschweinen': nur für die Kategorien Ferkel und Jung- und Mastschweine; alle teilnehmenden Tiere der Kategorie müssen im gesamten Antragsjahr unkupiert sein.",
+      "conditions": [
+        {
+          "expression": "all groups of category: participating_animals_all_undocked_full_year",
+          "description": "alle Tiere unkupiert",
+          "input_paths": [
+            "livestock.species_groups[].pig_welfare.participating_animals_all_undocked_full_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Zuschlagsvoraussetzung nicht erfüllt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P2-ZUSCHLAG-UNK",
+        "REF-MS-P9-UNK",
+        "REF-SRL-P89-UNK"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.unkupiert_ok",
+        "data.oepul.o6_22.unkupiert_active_categories"
+      ]
+    },
+    {
+      "id": "O622-UNK-002",
+      "rule_type": "surcharge_condition",
+      "statement": "Der Zuschlag unkupiert kann nicht für Einzeltiere oder Stallabteile beantragt oder abgemeldet werden, sondern gilt für alle in der Kategorie beantragten Tiere.",
+      "conditions": [
+        {
+          "expression": "surcharge scope == category",
+          "description": "Zuschlag auf Kategorieebene",
+          "input_paths": [
+            "farm.oepul_measures.o6_22.applications[].code"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "category_level",
+        "description": "Zuschlag nur kategoriebezogen",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P9-UNK-EINZEL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.unkupiert_active_categories"
+      ]
+    },
+    {
+      "id": "O622-UNK-003",
+      "rule_type": "consequence",
+      "statement": "Werden Tiere abgemeldet, gilt dies für die gesamte Maßnahme inklusive Zuschlägen.",
+      "conditions": [
+        {
+          "expression": "deregistered animals",
+          "description": "Abmeldung",
+          "input_paths": [
+            "livestock.species_groups[].deregistered_average_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium_incl_surcharges",
+        "description": "keine Prämie inkl. Zuschläge für abgemeldete Tiere",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P9-UNK-ABMELDUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.eligible_head_count"
+      ]
+    },
+    {
+      "id": "O622-UNK-004",
+      "rule_type": "surcharge_condition",
+      "statement": "Kann nicht sichergestellt werden, dass alle Tiere im Tierwohlstall über die gesamte Verpflichtungsdauer unkupierte Schwänze haben, darf der Zuschlag nicht beantragt werden; kupierte Tiere in einem nicht teilnehmenden konventionellen Stall schließen den Zuschlag nicht aus.",
+      "conditions": [
+        {
+          "expression": "undocked in Tierwohlstall whole year",
+          "description": "nur teilnehmende Tiere relevant",
+          "input_paths": [
+            "livestock.species_groups[].pig_welfare.participating_animals_all_undocked_full_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_applicable",
+        "description": "Zuschlag nicht beantragen",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P9-UNK-NICHT",
+        "REF-MS-P9-UNK-BSP"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.group_all_undocked"
+      ]
+    },
+    {
+      "id": "O622-GVO-001",
+      "rule_type": "surcharge_condition",
+      "statement": "Zuschlag 'Einsatz von ausschließlich GVO-freien Eiweißfuttermitteln aus europäischer Herkunft': gilt für alle am Betrieb gehaltenen Tiere (alle Tierarten) und im gesamten Kalenderjahr; nicht konforme Eiweißfuttermittel (z. B. GVO-Soja für Mastschweine oder Legehennen) schließen den Zuschlag aus.",
+      "conditions": [
+        {
+          "expression": "every protein feed: gmo_free and origin_continent == europe",
+          "description": "alle Eiweißfuttermittel konform",
+          "input_paths": [
+            "livestock.pig_farm.protein_feed.feeds[].gmo_free",
+            "livestock.pig_farm.protein_feed.feeds[].origin_continent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Zuschlagsvoraussetzung nicht erfüllt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P9-GVO",
+        "REF-MS-P10-GVO-BSP",
+        "REF-SRL-P89-GVO"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.non_compliant_protein_feeds",
+        "data.oepul.o6_22.feed_compliant",
+        "data.oepul.o6_22.gvo_active"
+      ]
+    },
+    {
+      "id": "O622-GVO-002",
+      "rule_type": "prohibition",
+      "statement": "Bei Zuschlag GVO-frei ist eine gleichzeitige Lagerung und Verfütterung nicht konformer Eiweißfuttermittel an andere Tierarten unzulässig; auch alte Restbestände dürfen nicht gelagert oder verfüttert werden.",
+      "conditions": [
+        {
+          "expression": "non_compliant_protein_feed_stored_or_fed == false",
+          "description": "keine nicht konformen Bestände",
+          "input_paths": [
+            "livestock.pig_farm.protein_feed.non_compliant_protein_feed_stored_or_fed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Lagerung/Verfütterung unzulässig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P9-GVO-LAGER",
+        "REF-MS-P9-GVO-REST",
+        "REF-SRL-P89-GVO-LAGER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.protein_feed"
+      ]
+    },
+    {
+      "id": "O622-GVO-003",
+      "rule_type": "definition",
+      "statement": "Eiweißfuttermittel sind alle Mischfuttermittel mit mehr als 20 % Rohprotein in der Trockenmasse sowie Einzelkomponenten mit in der Regel mehr als 20 % Rohprotein (z. B. Sojaextraktionsschrot, Rapsextraktionsschrot, Biertreber, Körnererbsen, Ackerbohnen); Raufuttermittel (z. B. Luzernecobs, Heu/Silage) sind nicht umfasst.",
+      "conditions": [
+        {
+          "expression": "compound: cp_dm > 20; single: typical_cp_dm > 20 and not roughage",
+          "description": "Eiweißfuttermittel-Definition",
+          "input_paths": [
+            "livestock.pig_farm.protein_feed.feeds[].type",
+            "livestock.pig_farm.protein_feed.feeds[].crude_protein_percent_dm",
+            "livestock.pig_farm.protein_feed.feeds[].typical_crude_protein_percent_dm",
+            "livestock.pig_farm.protein_feed.feeds[].is_roughage"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "is_protein_feed",
+        "description": "Klassifikation als Eiweißfuttermittel",
+        "value": {
+          "min_crude_protein_percent_dm_exclusive": 20
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P10-EIWEISS-DEF",
+        "REF-MS-P10-RAUFUTTER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.is_protein_feed"
+      ]
+    },
+    {
+      "id": "O622-GVO-004",
+      "rule_type": "documentation",
+      "statement": "Der Nachweis der europäischen Herkunft und GVO-Freiheit ist bei allen nicht am Betrieb erzeugten Eiweißfuttermitteln über Belege (Lieferscheine, Rechnungen, Futtermittelrezepturen) zu erbringen.",
+      "conditions": [
+        {
+          "expression": "produced_on_farm or proof_documents_available",
+          "description": "Nachweis",
+          "input_paths": [
+            "livestock.pig_farm.protein_feed.feeds[].produced_on_farm",
+            "livestock.pig_farm.protein_feed.feeds[].proof_documents_available"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Nachweis fehlt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P10-NACHWEIS",
+        "REF-SRL-P89-GVO"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.feed_proof_ok"
+      ]
+    },
+    {
+      "id": "O622-GVO-005",
+      "rule_type": "definition",
+      "statement": "Die europäische Herkunft bezieht sich auf alle Länder des Kontinents Europa, auch außerhalb der Europäischen Union.",
+      "conditions": [
+        {
+          "expression": "origin_continent == europe",
+          "description": "Herkunft Kontinent Europa",
+          "input_paths": [
+            "livestock.pig_farm.protein_feed.feeds[].origin_continent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "european_origin",
+        "description": "europäische Herkunft",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P10-EUROPA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.feed_compliant"
+      ]
+    },
+    {
+      "id": "O622-FMK-001",
+      "rule_type": "temporal_scope",
+      "statement": "Der optionale Zuschlag Festmistkompostierung kann ab dem Antragsjahr 2025 beantragt werden.",
+      "conditions": [
+        {
+          "expression": "first_year >= 2025",
+          "description": "Antragsjahr ab 2025",
+          "input_paths": [
+            "farm.oepul_measures.o6_22.applications[].first_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Zuschlag vor 2025 nicht möglich",
+        "value": {
+          "from_year": 2025
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P10-FMK",
+        "REF-MS-P3-ZUSCHLAG-FMK",
+        "REF-SRL-P27-INKRAFT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.application_surcharge_year_allowed",
+        "data.oepul.o6_22.festmist_active"
+      ]
+    },
+    {
+      "id": "O622-FMK-002",
+      "rule_type": "surcharge_condition",
+      "statement": "Beim Zuschlag Festmistkompostierung muss der gesamte am Betrieb anfallende Festmist – unabhängig von der Tierart – zu Kompostmieten am Betrieb aufgesetzt werden.",
+      "conditions": [
+        {
+          "expression": "all_solid_manure_composted_on_farm == true",
+          "description": "gesamter Festmist",
+          "input_paths": [
+            "livestock.pig_farm.manure_composting.all_solid_manure_composted_on_farm"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "nicht gesamter Festmist kompostiert",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P10-FMK-GESAMT",
+        "REF-MS-P10-FMK-TIERART",
+        "REF-SRL-P89-FMK-GESAMT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.composting"
+      ]
+    },
+    {
+      "id": "O622-FMK-003",
+      "rule_type": "surcharge_condition",
+      "statement": "Kompostmieten sind mindestens zweimal im Abstand von mindestens 14 Tagen mittels Kompostwender umzusetzen.",
+      "conditions": [
+        {
+          "expression": "count(turn_dates) >= 2 and every interval >= 14",
+          "description": "Umsetzvorgaben",
+          "input_paths": [
+            "livestock.pig_farm.manure_composting.heaps[].turn_dates"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Umsetzvorgaben nicht erfüllt",
+        "value": {
+          "min_turnings": 2,
+          "min_interval_days": 14
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P10-FMK-UMSETZEN",
+        "REF-SRL-P89-FMK"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.turned_sufficiently",
+        "data.oepul.o6_22.heap_ok",
+        "data.oepul.o6_22.turn_intervals_days"
+      ]
+    },
+    {
+      "id": "O622-FMK-004",
+      "rule_type": "surcharge_condition",
+      "statement": "Der Kompostwender muss am Betrieb vorhanden sein oder bei überbetrieblichem Einsatz durch Unterlagen (z. B. Rechnungen) nachgewiesen werden; das Umsetzen z. B. mittels Frontlader ist nicht förderfähig.",
+      "conditions": [
+        {
+          "expression": "turning_device == compost_turner and device_on_farm_or_use_documented",
+          "description": "Wendegerät",
+          "input_paths": [
+            "livestock.pig_farm.manure_composting.heaps[].turning_device",
+            "livestock.pig_farm.manure_composting.heaps[].device_on_farm_or_use_documented"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "ungeeignetes oder nicht belegtes Gerät",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P10-FMK-WENDER",
+        "REF-MS-P10-FMK-FRONTLADER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.turning_device_ok"
+      ]
+    },
+    {
+      "id": "O622-FMK-005",
+      "rule_type": "option",
+      "statement": "Anstelle eines Kompostwenders können ein Miststreuer oder andere adäquate Geräte eingesetzt werden, wenn sie dem Arbeitsergebnis eines Kompostwenders entsprechen und die Miete vollständig umgesetzt wird.",
+      "conditions": [
+        {
+          "expression": "turning_device in {manure_spreader, equivalent_device} and heap_fully_turned",
+          "description": "gleichwertiges Gerät",
+          "input_paths": [
+            "livestock.pig_farm.manure_composting.heaps[].turning_device",
+            "livestock.pig_farm.manure_composting.heaps[].heap_fully_turned"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "allowed",
+        "description": "Alternative Wendetechnik zulässig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P10-FMK-ALTERNATIV"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.turning_device_ok"
+      ]
+    },
+    {
+      "id": "O622-FMK-006",
+      "rule_type": "option",
+      "statement": "Kompostmieten werden auch anerkannt, wenn es sich um eine aufgesetzte Mischung oder Schichtung von Festmist mit organischem Material der Feldproduktion (Ernterückstände/Stroh/Grünschnitt) oder Strauch-/Astschnitt handelt; diese Mieten müssen nicht umgesetzt werden.",
+      "conditions": [
+        {
+          "expression": "mixed_with_plant_material == true",
+          "description": "Mischmiete",
+          "input_paths": [
+            "livestock.pig_farm.manure_composting.heaps[].mixed_with_plant_material"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "allowed_without_turning",
+        "description": "kein Umsetzen erforderlich",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P11-FMK-MISCHUNG",
+        "REF-MS-P11-FMK-KEIN-UMSETZEN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.mixed_heap_ok"
+      ]
+    },
+    {
+      "id": "O622-FMK-007",
+      "rule_type": "surcharge_condition",
+      "statement": "Kann nicht mit Kompostwender gewendet werden, ist dem Mist jedenfalls weiteres organisches Material (z. B. Grünschnitt) in nennenswertem Ausmaß (z. B. 50:50) beizumengen und ein Kompostierungsverfahren (z. B. Heißrotte, mikrobielle Carbonisierung) anzuwenden; Umsetzen ist dann optional (auch mit Frontlader); strohreicher Mist alleine genügt nicht.",
+      "conditions": [
+        {
+          "expression": "plant_material_noteworthy_share and composting_procedure_applied and not straw_rich_manure_only",
+          "description": "wendefreie Kompostierung",
+          "input_paths": [
+            "livestock.pig_farm.manure_composting.heaps[].plant_material_noteworthy_share",
+            "livestock.pig_farm.manure_composting.heaps[].composting_procedure_applied",
+            "livestock.pig_farm.manure_composting.heaps[].straw_rich_manure_only"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "wendefreie Kompostierung unzureichend",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P11-FMK-OHNE-WENDER",
+        "REF-MS-P11-FMK-VERFAHREN",
+        "REF-MS-P11-FMK-STROHMIST"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.mixed_heap_ok"
+      ]
+    },
+    {
+      "id": "O622-FMK-008",
+      "rule_type": "documentation",
+      "statement": "Anlage und Umsetzen der Kompostmiete sowie das Ausbringen des Komposts oder die Abgabe an Dritte sind vom Betrieb zu dokumentieren.",
+      "conditions": [
+        {
+          "expression": "records_complete == true",
+          "description": "Kompostdokumentation",
+          "input_paths": [
+            "livestock.pig_farm.manure_composting.records_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Dokumentation fehlt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P11-FMK-DOKU",
+        "REF-SRL-P90-FMK-DOKU"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.composting"
+      ]
+    },
+    {
+      "id": "O622-FMK-009",
+      "rule_type": "cross_compliance",
+      "statement": "Bei der Anlage von Kompostmieten sind die Vorgaben der NAPV einzuhalten: Lagerung zur Kompostierung auf unbefestigten Flächen nur bei mind. 25 m Abstand zu Oberflächengewässern auf möglichst flachem, nicht sandigem Boden, ohne Gefahr des Abfließens von Sickersaft, nicht auf staunassen Böden, Grundwasserabstand > 1 m und abgedeckter Miete.",
+      "conditions": [
+        {
+          "expression": "heaps_on_unpaved_ground -> napv conditions",
+          "description": "NAPV § 6 Abs. 1 Z 3 iVm Abs. 7 Z 2, 4, 5, 6",
+          "input_paths": [
+            "livestock.pig_farm.manure_composting.heaps_on_unpaved_ground",
+            "livestock.pig_farm.manure_composting.napv.distance_to_surface_water_m",
+            "livestock.pig_farm.manure_composting.napv.flat_non_sandy_ground",
+            "livestock.pig_farm.manure_composting.napv.no_runoff_risk_to_surface_water",
+            "livestock.pig_farm.manure_composting.napv.not_waterlogged_soil",
+            "livestock.pig_farm.manure_composting.napv.groundwater_distance_m",
+            "livestock.pig_farm.manure_composting.napv.heap_covered"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "NAPV-Vorgaben nicht eingehalten",
+        "value": {
+          "min_distance_surface_water_m": 25,
+          "min_groundwater_distance_m": 1
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P11-FMK-NAPV",
+        "REF-NAPV-P4-KOMPOST",
+        "REF-NAPV-P5-ABSTAND",
+        "REF-NAPV-P5-ABFLUSS",
+        "REF-NAPV-P5-STAUNASS",
+        "REF-NAPV-P5-GRUNDWASSER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.napv_compost_storage_ok"
+      ]
+    },
+    {
+      "id": "O622-FMK-010",
+      "rule_type": "exclusion",
+      "statement": "Für Kompostställe kann der Zuschlag Festmistkompostierung nicht gewährt werden, da die Kompostierungsbedingungen nicht erfüllt werden.",
+      "conditions": [
+        {
+          "expression": "is_compost_barn == true",
+          "description": "Kompoststall",
+          "input_paths": [
+            "livestock.pig_farm.manure_composting.is_compost_barn"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "kein Zuschlag",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P11-FMK-KOMPOSTSTALL"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.violations"
+      ]
+    },
+    {
+      "id": "O622-REP-001",
+      "rule_type": "reporting",
+      "statement": "Ist die Stall- oder Freilandhaltung gemäß den Anforderungen für einzelne oder mehrere Tiere einer Kategorie im Förderjahr nicht einhaltbar, besteht eine gesonderte Meldepflicht; die Abmeldung hat umgehend zu erfolgen, die Stückzahl im Jahresdurchschnitt ist in der Beilage 'Tierwohl – Weide/Stallhaltung' einzutragen.",
+      "conditions": [
+        {
+          "expression": "deregistration.reported_immediately == true",
+          "description": "umgehende Abmeldung",
+          "input_paths": [
+            "livestock.species_groups[].pig_welfare.deregistration.reported_immediately",
+            "livestock.species_groups[].deregistered_average_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Abmeldung nicht umgehend",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P11-MELDEPFLICHT",
+        "REF-MS-P11-UMGEHEND",
+        "REF-MS-P11-BEILAGE",
+        "REF-N0902-ABMELDUNG",
+        "REF-SRL-P88-MELDUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.violations"
+      ]
+    },
+    {
+      "id": "O622-REP-002",
+      "rule_type": "consequence",
+      "statement": "Für abgemeldete Tiere erfolgt keine Prämiengewährung; die Abmeldung gilt für das jeweilige Förderjahr und ist jährlich durchzuführen.",
+      "conditions": [
+        {
+          "expression": "deregistered_average_count > 0",
+          "description": "abgemeldete Tiere",
+          "input_paths": [
+            "livestock.species_groups[].deregistered_average_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_premium",
+        "description": "keine Prämie für abgemeldete Tiere",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P11-KEINE-PRAEMIE",
+        "REF-N0902-ABMELDUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.eligible_head_count"
+      ]
+    },
+    {
+      "id": "O622-REP-003",
+      "rule_type": "reporting",
+      "statement": "Auch laut Tierliste beantragte nicht gedeckte Jungsauen ab 50 kg in der Kategorie Jung- und Mastschweine sind bei Nichteinhaltung abzumelden; denkbare Anlässe sind bauliche oder flächentechnische Gegebenheiten, der Wechsel auf Vollspalten oder eine länger als 10 Tage dauernde krankheitsbedingte Separierung (Beispiel: 24 umgestallte Mastschweine im Jahresdurchschnitt).",
+      "conditions": [
+        {
+          "expression": "trigger in deregistration_trigger_examples",
+          "description": "Abmeldeanlass",
+          "input_paths": [
+            "livestock.species_groups[].pig_welfare.non_compliant_average_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "deregister",
+        "description": "Abmeldung erforderlich",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P12-JUNGSAU-ABM",
+        "REF-MS-P12-ANLAESSE",
+        "REF-MS-P12-BSP24"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.non_compliant_count"
+      ]
+    },
+    {
+      "id": "O622-REP-004",
+      "rule_type": "reporting",
+      "statement": "Alle Personen, die Schweine halten, sind gemäß TKZVO 2009 verpflichtet, Ab- und Zugänge lebender Tiere an das Verbrauchergesundheitsinformationssystem (VIS) zu melden.",
+      "conditions": [
+        {
+          "expression": "vis_reports_complete == true",
+          "description": "VIS-Meldungen",
+          "input_paths": [
+            "livestock.pig_farm.vis_reports_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "VIS-Meldungen unvollständig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P12-VIS",
+        "REF-N0902-VIS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.violations"
+      ]
+    },
+    {
+      "id": "O622-REP-005",
+      "rule_type": "control",
+      "statement": "Die tierhaltende Person ist für die Richtigkeit und Vollständigkeit der an AMA und VIS gemeldeten Tierinformationen verantwortlich; die AMA gleicht die VIS-Daten ab und prüft die Angaben auf Plausibilität.",
+      "conditions": [
+        {
+          "expression": "AMA data vs VIS data",
+          "description": "Abgleich",
+          "input_paths": [
+            "livestock.pig_farm.vis_reports_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "cross_check",
+        "description": "Plausibilisierung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P12-VIS-ABGLEICH",
+        "REF-N0902-VIS-ABGLEICH"
+      ]
+    },
+    {
+      "id": "O622-REP-006",
+      "rule_type": "reporting",
+      "statement": "Ändert sich die Anzahl beantragter Tiere einer Kategorie wegen Verkauf, Verendung oder Schlachtung, ist der Jahresdurchschnitt in der Tierliste mittels Korrektur auf eAMA anzupassen und es sind nachvollziehbare Nachweise hochzuladen; diese sollten Verkaufsdatum, Anzahl und Verkaufsgewicht enthalten (Hinweis 2026).",
+      "conditions": [
+        {
+          "expression": "stock change -> correction with proofs_uploaded",
+          "description": "Tierlistenkorrektur",
+          "input_paths": [
+            "farm.mfa.stock_change_by_sale_death_slaughter",
+            "farm.mfa.average_list_corrections[].proofs_uploaded",
+            "farm.mfa.average_list_corrections[].proof_fields",
+            "farm.mfa.average_list_corrections[].reason"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Korrektur/Nachweis fehlt; Warnung bei unvollständigen Nachweisangaben",
+        "value": {
+          "proof_fields": [
+            "verkaufsdatum",
+            "anzahl",
+            "verkaufsgewicht"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "REF-N0902-ANPASSUNG",
+        "REF-N0902-NACHWEIS-UPLOAD",
+        "REF-N0902-NACHWEIS-INHALT",
+        "REF-MS-P13-KORR-NACHWEIS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.warnings",
+        "data.oepul.o6_22.average_list_corrections"
+      ]
+    },
+    {
+      "id": "O622-REP-007",
+      "rule_type": "consequence",
+      "statement": "Werden Meldungen nicht fristgerecht durchgeführt, kann dies im Rahmen von Vor-Ort-Kontrollen zu Beanstandungen führen.",
+      "conditions": [
+        {
+          "expression": "report late",
+          "description": "verspätete Meldung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "finding",
+        "description": "Beanstandung bei VOK möglich",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-N0902-FRISTGERECHT"
+      ]
+    },
+    {
+      "id": "O622-APP-001",
+      "rule_type": "deadline",
+      "statement": "Die Schweinekategorien und optionalen Zuschläge müssen vor Vertragsbeginn im Maßnahmenantrag des Mehrfachantrags bis spätestens 31. Dezember beantragt werden, um einen gültigen Vertrag ab dem Folgejahr zu begründen.",
+      "conditions": [
+        {
+          "expression": "applied_on <= (first_year - 1)-12-31",
+          "description": "Antragsfrist",
+          "input_paths": [
+            "farm.oepul_measures.o6_22.applications[].applied_on",
+            "farm.oepul_measures.o6_22.applications[].first_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "kein gültiger Vertrag",
+        "value": {
+          "deadline": "12-31"
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P13-ANTRAG",
+        "REF-GC-P12-ANTRAG",
+        "REF-SRL-P21-FRIST",
+        "REF-GSP-P23-MASSNAHMENANTRAG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.application_in_time",
+        "data.oepul.o6_22.application_valid"
+      ]
+    },
+    {
+      "id": "O622-APP-002",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg in Kategorien der Maßnahme ist mit dem Förderjahr 2027 möglich (Beantragung bis 31. Dezember 2026); spätester Vertragsbeginn 01.01.2027.",
+      "conditions": [
+        {
+          "expression": "first_year <= 2027",
+          "description": "letztes Einstiegsjahr Kategorien",
+          "input_paths": [
+            "farm.oepul_measures.o6_22.applications[].first_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Einstieg nicht mehr möglich",
+        "value": {
+          "last_entry_year": 2027
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P13-LETZTER-EINSTIEG",
+        "REF-GC-P12-EINJAEHRIG",
+        "REF-SRL-P12-SPAETESTER-BEGINN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.application_entry_year_allowed"
+      ]
+    },
+    {
+      "id": "O622-APP-003",
+      "rule_type": "deadline",
+      "statement": "Der letzte Einstieg in die optionalen Zuschläge ist mit dem Förderjahr 2028 möglich (Beantragung bis 31. Dezember 2027).",
+      "conditions": [
+        {
+          "expression": "first_year <= 2028",
+          "description": "letztes Einstiegsjahr Zuschläge",
+          "input_paths": [
+            "farm.oepul_measures.o6_22.applications[].first_year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Einstieg nicht mehr möglich",
+        "value": {
+          "last_entry_year": 2028
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P13-LETZTER-ZUSCHLAG",
+        "REF-GC-P12-ZUSCHLAEGE-2028"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.application_entry_year_allowed"
+      ]
+    },
+    {
+      "id": "O622-APP-004",
+      "rule_type": "reporting",
+      "statement": "Die Tierzahl ist in der Tierliste zum Stichtag 1. April anzugeben; bei schwankenden Beständen ist ein Durchschnittsbestand für das Kalenderjahr zu erfassen. Eine Korrektur des Jahresdurchschnitts ist bis zum Ablauf der vierwöchigen Einspruchsfrist nach Erhalt der Auszahlungsmitteilung über eAMA samt Nachweisen (Lieferscheine, Rechnungen, Bestandsverzeichnis) möglich; bis 2024 mit Stallskizze.",
+      "conditions": [
+        {
+          "expression": "stock_fluctuates -> uses_average_animal_list; corrected_on <= payment_notice_received_on + 28 days",
+          "description": "Tierliste und Korrekturfrist",
+          "input_paths": [
+            "farm.mfa.stock_fluctuates",
+            "farm.mfa.uses_average_animal_list",
+            "farm.mfa.payment_notice_received_on",
+            "farm.mfa.average_list_corrections[].corrected_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Durchschnittstierliste fehlt oder Korrektur verspätet",
+        "value": {
+          "correction_period_days": 28
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P13-TIERLISTE",
+        "REF-MS-P13-DURCHSCHNITT",
+        "REF-MS-P13-KORREKTUR",
+        "REF-MS-P13-KORR-NACHWEIS",
+        "REF-GSP-P25-TIERLISTE",
+        "REF-GSP-P24-KORREKTUR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.correction_in_time",
+        "data.oepul.o6_22.uses_average_list"
+      ]
+    },
+    {
+      "id": "O622-APP-005",
+      "rule_type": "deadline",
+      "statement": "Die Tierliste ist bis spätestens 15. April des Antragsjahres einzureichen.",
+      "conditions": [
+        {
+          "expression": "tierliste_submitted_on <= year-04-15",
+          "description": "Frist Tierliste",
+          "input_paths": [
+            "farm.mfa.tierliste_submitted_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Frist versäumt",
+        "value": {
+          "deadline": "04-15"
+        }
+      },
+      "source_reference_ids": [
+        "REF-GSP-P23-TIERLISTE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.violations"
+      ]
+    },
+    {
+      "id": "O622-APP-006",
+      "rule_type": "procedure",
+      "statement": "Soll eine beantragte Tierkategorie durch eine neue ersetzt werden, ist die neue bis 31. Dezember zu beantragen und die ersetzte nach dem 31. Dezember im Mehrfachantrag abzumelden; ansonsten muss die Maßnahme für alle gültigen Kategorien eingehalten werden.",
+      "conditions": [
+        {
+          "expression": "replacement category applied and old not withdrawn",
+          "description": "Ersatz einer Kategorie",
+          "input_paths": [
+            "farm.oepul_measures.o6_22.applications[].code",
+            "farm.oepul_measures.o6_22.applications[].withdrawn_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "all_active_categories_bound",
+        "description": "alle gültigen Kategorien einzuhalten",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P13-ERSATZ",
+        "REF-MS-P13-ERSATZ-PFLICHT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.active_categories"
+      ]
+    },
+    {
+      "id": "O622-APP-007",
+      "rule_type": "procedure",
+      "statement": "Für die optionalen Zuschläge unkupiert, GVO-freie Eiweißfuttermittel und Festmistkompostierung ist ein Maßnahmenantrag erforderlich; durch die erstmalige Beantragung erfolgt eine Vorbeantragung für alle Folgejahre bis Programmende.",
+      "conditions": [
+        {
+          "expression": "surcharge code in applications",
+          "description": "Zuschlag im Maßnahmenantrag",
+          "input_paths": [
+            "farm.oepul_measures.o6_22.applications[].code"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "required",
+        "description": "Maßnahmenantrag für Zuschlag",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-P21-ZUSCHLAEGE-MA",
+        "REF-SRL-P21-FMK-MA"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.active_codes"
+      ]
+    },
+    {
+      "id": "O622-APP-008",
+      "rule_type": "validation",
+      "statement": "Nur die in der Maßnahme vorgesehenen Kategorien und Zuschläge sind beantragbar; insbesondere ist der Zuschlag unkupiert nur für Ferkel und Jung- und Mastschweine vorgesehen.",
+      "conditions": [
+        {
+          "expression": "code in application_codes",
+          "description": "gültiger Antragscode",
+          "input_paths": [
+            "farm.oepul_measures.o6_22.applications[].code"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "unzulässiger Antragscode",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P2-ZUSCHLAG-UNK",
+        "REF-SRL-P89-UNK"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.application_code_row"
+      ]
+    },
+    {
+      "id": "O622-EXIT-001",
+      "rule_type": "option",
+      "statement": "Nach Erfüllung des einjährigen Vertragszeitraums ist ein gänzlicher Ausstieg aus der Maßnahme oder aus einzelnen Kategorien bzw. Zuschlägen möglich; der Ausstieg ist im Rahmen des aktuellen Mehrfachantrags auf eAMA bekannt zu geben.",
+      "conditions": [
+        {
+          "expression": "commitment year fulfilled",
+          "description": "Jahresverpflichtung erfüllt",
+          "input_paths": [
+            "farm.oepul_measures.o6_22.applications[].withdrawn_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exit_allowed",
+        "description": "Ausstieg möglich",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P14-AUSSTIEG",
+        "REF-MS-P14-AUSSTIEG-ZUSCHLAG",
+        "REF-SRL-P21-AUSSTIEG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.withdrawn_effective"
+      ]
+    },
+    {
+      "id": "O622-EXIT-002",
+      "rule_type": "consequence",
+      "statement": "Wird die Abmeldung im Zeitraum 1. Jänner bis 31. Dezember durchgeführt, ist die Maßnahme im betroffenen Antragsjahr nicht mehr gültig; werden die Auflagen bis 31. Dezember erfüllt, darf erst ab 1. Jänner des Folgejahres abgemeldet werden.",
+      "conditions": [
+        {
+          "expression": "withdrawn_on <= year-12-31",
+          "description": "Abmeldung im Förderjahr",
+          "input_paths": [
+            "farm.oepul_measures.o6_22.applications[].withdrawn_on"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "invalid_in_year",
+        "description": "keine Prämie im Abmeldejahr",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P14-ABMELDUNG",
+        "REF-MS-P14-ABMELDUNG-FOLGEJAHR",
+        "REF-GC-P13-ABMELDUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.withdrawn_effective",
+        "data.oepul.o6_22.application_active"
+      ]
+    },
+    {
+      "id": "O622-EXIT-003",
+      "rule_type": "obligation",
+      "statement": "Bis zum Ausstieg aus einer beantragten Maßnahme oder Option sind die Förderverpflichtungen einzuhalten; ein Ausstieg ist grundsätzlich bis zur Durchführung oder Ankündigung einer Vor-Ort-Kontrolle bzw. bis zur Mitteilung des Ergebnisses einer Verwaltungskontrolle möglich.",
+      "conditions": [
+        {
+          "expression": "before control notice",
+          "description": "Ausstiegszeitpunkt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "obligations_until_exit",
+        "description": "Verpflichtungen bis Ausstieg",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-GC-P13-BIS-AUSSTIEG",
+        "REF-GC-P13-AUSSTIEG-VOK"
+      ]
+    },
+    {
+      "id": "O622-EXIT-004",
+      "rule_type": "procedure",
+      "statement": "Nach einem Ausstieg, Ausschluss oder einer einjährigen Nichtabgabe des Mehrfachantrags ist ein Wiedereinstieg nur mit einem neuerlichen Maßnahmenantrag möglich.",
+      "conditions": [
+        {
+          "expression": "previous exit or exclusion",
+          "description": "Wiedereinstieg",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "new_application_required",
+        "description": "neuer Maßnahmenantrag",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-GC-P13-WIEDEREINSTIEG",
+        "REF-SRL-P22-WIEDEREINSTIEG"
+      ]
+    },
+    {
+      "id": "O622-PREM-001",
+      "rule_type": "premium_rate",
+      "statement": "Prämiensätze je GVE: Ferkel 180,0 (2023) / 194,4 € (ab 2024), Zuschlag unkupierte Ferkel 250,0 / 270,0 €, Zuschlag GVO-frei 60,0 / 64,8 €, Festmistkompostierung 21,6 € (ab 2025); Jung- und Mastschweine 65,0 / 70,2 €, Zuschlag unkupiert 60,0 / 64,8 €, GVO-frei 60,0 / 64,8 €, Festmist 21,6 €; Zucht- und gedeckte Jungsauen 80,0 / 86,4 €, GVO-frei 60,0 / 64,8 €, Festmist 21,6 €.",
+      "conditions": [
+        {
+          "expression": "rate(category, surcharge, year)",
+          "description": "Satz laut Prämientabelle",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "premium",
+        "description": "Prämie = GVE x Satz",
+        "value": {
+          "unit": "EUR/GVE"
+        }
+      },
+      "source_reference_ids": [
+        "REF-MS-P15-PRAEMIE-FERKEL",
+        "REF-MS-P15-PRAEMIE-UNK-FERKEL",
+        "REF-MS-P15-PRAEMIE-MAST",
+        "REF-MS-P15-PRAEMIE-ZUCHT",
+        "REF-MS-P15-PRAEMIE-648",
+        "REF-MS-P15-PRAEMIE-FMK",
+        "REF-SRL-P90-SAETZE-TABELLE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.base_rate",
+        "data.oepul.o6_22.surcharge_rate",
+        "data.oepul.o6_22.base_premium",
+        "data.oepul.o6_22.unkupiert_premium",
+        "data.oepul.o6_22.gvo_premium",
+        "data.oepul.o6_22.festmist_premium"
+      ]
+    },
+    {
+      "id": "O622-PREM-002",
+      "rule_type": "calculation_rule",
+      "statement": "Die prämienfähigen GVE ergeben sich aus den beantragten Stückzahlen der Tierliste abzüglich der von der Maßnahme abgemeldeten Tiere.",
+      "conditions": [
+        {
+          "expression": "(count_basis - deregistered) * gve_factor",
+          "description": "prämienfähige GVE",
+          "input_paths": [
+            "livestock.species_groups[].animal_count",
+            "livestock.species_groups[].average_animal_count",
+            "livestock.species_groups[].deregistered_average_count"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "eligible_gve",
+        "description": "prämienfähige GVE je Kategorie",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-MS-P15-GVE-ERMITTLUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.eligible_head_count",
+        "data.oepul.o6_22.group_gve_eligible",
+        "data.oepul.o6_22.category_gve"
+      ]
+    },
+    {
+      "id": "O622-PREM-003",
+      "rule_type": "calculation_rule",
+      "statement": "Die förderfähigen GVE werden gemäß Punkt 1.5.5 SRL (Umrechnungsfaktoren Anhang A) ermittelt.",
+      "conditions": [
+        {
+          "expression": "gve per Anhang A",
+          "description": "GVE-Umrechnung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "gve",
+        "description": "GVE nach Anhang A",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-P90-GVE",
+        "REF-SRL-P10-GVE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.group_gve_factor"
+      ]
+    },
+    {
+      "id": "O622-PREM-004",
+      "rule_type": "temporal_scope",
+      "statement": "Die erhöhten Prämiensätze (1a, +8 %) gelten ab 01.01.2024, die mit 1b gekennzeichneten Sätze (Festmistkompostierung) ab 2025; für 2023 gelten die ursprünglichen Sätze.",
+      "conditions": [
+        {
+          "expression": "year >= 2024",
+          "description": "Satzperiode",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rate_period",
+        "description": "Prämiensatz je Jahr",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-P90-SAETZE",
+        "REF-SRL-P4-1A",
+        "REF-SRL-P27-INKRAFT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.rate_row_matches"
+      ]
+    },
+    {
+      "id": "O622-PREM-005",
+      "rule_type": "calculation_rule",
+      "statement": "Die Gesamtprämie der Maßnahme ist die Summe aus Kategorieprämien und Zuschlägen; sie wird nur gewährt, wenn die Zugangsvoraussetzungen erfüllt sind (Mindestteilnahme, förderwerbende Person, Betriebsmindestgröße, zulässige Übernahme). Die Förderung wird als jährliche Prämie gewährt.",
+      "conditions": [
+        {
+          "expression": "measure_payable",
+          "description": "Zugangsvoraussetzungen erfüllt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "premium_total",
+        "description": "Summe vor Modulation",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-P16-JAEHRLICH",
+        "REF-SRL-P24-ZUGANG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.measure_payable",
+        "data.oepul.o6_22.payable_categories",
+        "data.oepul.o6_22.premium_before_modulation"
+      ]
+    },
+    {
+      "id": "O622-GEN-001",
+      "rule_type": "eligibility",
+      "statement": "Die geförderten Tiere müssen in Österreich gehalten werden; nur im Inland gehaltene Tiere dürfen in der Tierliste angegeben werden.",
+      "conditions": [
+        {
+          "expression": "kept_in_austria == true",
+          "description": "Haltungsort Österreich",
+          "input_paths": [
+            "livestock.species_groups[].pig_welfare.kept_in_austria"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "not_eligible",
+        "description": "Tiere im Ausland nicht förderbar",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-GC-P9-TIERE-AT",
+        "REF-SRL-P9-TIERE-AT"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.kept_in_austria"
+      ]
+    },
+    {
+      "id": "O622-GEN-002",
+      "rule_type": "eligibility",
+      "statement": "Förderwerbend sind natürliche Personen, eingetragene Personengesellschaften sowie juristische Personen und Personenvereinigungen mit höchstens 25 % Beteiligung von Gebietskörperschaften; Gebietskörperschaften und deren Einrichtungen sind bei 'Tierwohl – Schweinehaltung' ausgeschlossen. Der Betrieb ist im eigenen Namen und auf eigene Rechnung zu führen.",
+      "conditions": [
+        {
+          "expression": "applicant.type eligible and public share <= 25",
+          "description": "Förderwerber",
+          "input_paths": [
+            "farm.applicant.type",
+            "farm.applicant.public_authority_share_percent"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "nicht teilnahmeberechtigt",
+        "value": {
+          "max_public_share_percent": 25
+        }
+      },
+      "source_reference_ids": [
+        "REF-GC-P4-FOERDERWERBER",
+        "REF-GC-P4-EIGENE-RECHNUNG",
+        "REF-GC-P5-GEBIETSKOERPERSCHAFT",
+        "REF-SRL-P8-FOERDERWERBER"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.applicant_type_ok"
+      ]
+    },
+    {
+      "id": "O622-GEN-003",
+      "rule_type": "eligibility",
+      "statement": "Die förderwerbende Person muss aktiver Landwirt sein und eine landwirtschaftliche Tätigkeit ausüben.",
+      "conditions": [
+        {
+          "expression": "applicant.is_active_farmer == true",
+          "description": "aktiver Landwirt",
+          "input_paths": [
+            "farm.applicant.is_active_farmer"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "kein aktiver Landwirt",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-GC-P5-AKTIVER-LW"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.applicant_ok"
+      ]
+    },
+    {
+      "id": "O622-GEN-004",
+      "rule_type": "eligibility",
+      "statement": "Im ersten ÖPUL-Teilnahmejahr muss der Betrieb mindestens 0,50 ha Flächen im geschützten Anbau oder 1,50 ha landwirtschaftliche Fläche bewirtschaften; ab dem zweiten Teilnahmejahr gilt keine Betriebsmindestgröße.",
+      "conditions": [
+        {
+          "expression": "first_oepul_participation_year == year -> area thresholds",
+          "description": "Betriebsmindestgröße",
+          "input_paths": [
+            "farm.first_oepul_participation_year",
+            "land.total_area_ha",
+            "land.protected_cultivation_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Mindestgröße nicht erreicht",
+        "value": {
+          "protected_ha": 0.5,
+          "agricultural_ha": 1.5
+        }
+      },
+      "source_reference_ids": [
+        "REF-GC-P5-MINDESTGROESSE",
+        "REF-GC-P5-MINDEST-AB2",
+        "REF-SRL-P10-MINDESTGROESSE"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.farm_min_size_ok"
+      ]
+    },
+    {
+      "id": "O622-GEN-005",
+      "rule_type": "cross_compliance",
+      "statement": "Teilnehmende Betriebe müssen die Konditionalität (Klima/Umwelt, öffentliche Gesundheit, Pflanzengesundheit, Tierwohl) und die soziale Konditionalität einhalten, um die Förderung in voller Höhe zu erhalten; MOG 2021 und GSP-AV sind zusätzlich zur SRL einzuhalten.",
+      "conditions": [
+        {
+          "expression": "conditionality compliant",
+          "description": "Konditionalität",
+          "input_paths": [
+            "documentation.audit_last_year_noncompliance"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_possible",
+        "description": "Kürzung bei Verstößen",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-GC-P4-KONDITIONALITAET",
+        "REF-GC-P2-RECHT"
+      ]
+    },
+    {
+      "id": "O622-GEN-006",
+      "rule_type": "procedure",
+      "statement": "Eine Maßnahmenübernahme von 'Tierwohl – Schweinehaltung' inklusive aller Zuschläge ist nur in Einzelfällen bei Betriebsauflösung, -teilung oder -zusammenlegung möglich; Tiere und Flächen müssen vom selben Vorbetrieb stammen.",
+      "conditions": [
+        {
+          "expression": "takeover.reason in takeover_individual_case_reasons and same predecessor",
+          "description": "Übernahme",
+          "input_paths": [
+            "farm.oepul_measures.o6_22.takeover.is_takeover",
+            "farm.oepul_measures.o6_22.takeover.reason",
+            "farm.oepul_measures.o6_22.takeover.animals_and_areas_from_same_predecessor"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "violation",
+        "description": "Übernahme unzulässig",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-GC-P15-UEBERNAHME",
+        "REF-GC-P15-UEBERNAHME-EINZEL",
+        "REF-GC-P15-UEBERNAHME-VORBETRIEB",
+        "REF-SRL-P14-UEBERNAHME",
+        "REF-SRL-P14-UEBERNAHME-GRUND"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.takeover_ok"
+      ]
+    },
+    {
+      "id": "O622-GEN-007",
+      "rule_type": "combination",
+      "statement": "Eine Teilnahme und Prämiengewährung an mehreren ÖPUL-Maßnahmen ist möglich, sofern eine Kombination nicht ausgeschlossen ist; für 'Tierwohl – Schweinehaltung' ist in den Quellen kein Kombinationsausschluss festgelegt (die Kombinationstabelle Anhang L betrifft nur Einzelflächen). Unmögliche Kombinationen können bis zur Auszahlungsmitteilung korrigiert werden.",
+      "conditions": [
+        {
+          "expression": "no exclusion listed",
+          "description": "keine Ausschlüsse",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "combinable",
+        "description": "kombinierbar",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-GC-P13-KOMBINATION",
+        "REF-GC-P13-KOMBI-KORREKTUR",
+        "REF-SRL-P18-KOMBINATION",
+        "REF-ANH-P103-L"
+      ]
+    },
+    {
+      "id": "O622-GEN-008",
+      "rule_type": "sanction",
+      "statement": "Verstöße gegen Förderverpflichtungen werden maßnahmenbezogen inklusive aller Zuschläge nach Ausmaß, Schwere, Dauer und Häufigkeit in Stufen beurteilt: Verwarnung, Kürzung um 2, 5, 10, 25, 50 oder 100 %; Verstöße aus Vor-Ort-Kontrollen werden höher sanktioniert als aus Verwaltungskontrollen.",
+      "conditions": [
+        {
+          "expression": "sanction_level 1..7",
+          "description": "Sanktionsstufe",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "reduction_percent",
+        "description": "Kürzungssatz",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-GC-P18-STUFEN",
+        "REF-GSP-P31-STUFEN",
+        "REF-GSP-P31-VOK-HOEHER",
+        "REF-SRL-P24-SANKTION"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.sanction_percent",
+        "data.oepul.o6_22.premium_after_sanction"
+      ]
+    },
+    {
+      "id": "O622-GEN-009",
+      "rule_type": "sanction",
+      "statement": "Mehrere Verstöße einer Maßnahme in einem Jahr kumulieren (max. 100 %); wiederholte Verstöße gegen dieselbe Verpflichtung erhöhen die Stufe ab dem zweiten Verstoß um eine Stufe (dritter Verstoß zwei Stufen usw.); bei zweimaliger 100-%-Kürzung in der Periode erfolgen Ausschluss und Rückforderung.",
+      "conditions": [
+        {
+          "expression": "levels, prior_same_obligation, full_reduction_count",
+          "description": "Kumulation und Wiederholung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "cumulated_percent",
+        "description": "Gesamtkürzung bzw. Ausschluss",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-GSP-P31-KUMULATION",
+        "REF-GSP-P31-WIEDERHOLUNG",
+        "REF-GSP-P31-AUSSCHLUSS",
+        "REF-GC-P18-AUSSCHLUSS"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.cumulated_sanction_percent",
+        "data.oepul.o6_22.escalated_level",
+        "data.oepul.o6_22.exclusion_after_two_full_reductions"
+      ]
+    },
+    {
+      "id": "O622-GEN-010",
+      "rule_type": "sanction",
+      "statement": "Ab dem Jahr 2027 wird anstelle einer Verwarnung ein Einbehalt der Förderung von 1 % der Maßnahmenprämie ausgesprochen.",
+      "conditions": [
+        {
+          "expression": "level == 1 and year >= 2027",
+          "description": "Verwarnung ab 2027",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reduction_percent",
+        "description": "1 %",
+        "value": {
+          "percent": 1,
+          "from_year": 2027
+        }
+      },
+      "source_reference_ids": [
+        "REF-GC-P18-2027",
+        "REF-GSP-P31-2027"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.sanction_percent",
+        "data.oepul.o6_22.warning_replaced"
+      ]
+    },
+    {
+      "id": "O622-GEN-011",
+      "rule_type": "calculation_rule",
+      "statement": "Das Prämienausmaß aller Maßnahmen wird nach der Gesamtfläche des Betriebes moduliert: bis 200 ha 100 %, über 200 bis 300 ha 90 %, über 300 bis 1.000 ha 85 %, über 1.000 ha 75 % (Beispiel 220 ha: 99,09 %).",
+      "conditions": [
+        {
+          "expression": "factor = sum(tier_ha * share) / total_area_ha",
+          "description": "Modulationsfaktor",
+          "input_paths": [
+            "land.total_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "modulated_premium",
+        "description": "Prämie x Modulationsfaktor",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-GC-P19-MODULATION",
+        "REF-GC-P19-MODULATION-BSP",
+        "REF-SRL-P17-MODULATION"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.modulation_factor",
+        "data.oepul.o6_22.premium_after_modulation",
+        "data.oepul.o6_22.tier_hectares"
+      ]
+    },
+    {
+      "id": "O622-GEN-012",
+      "rule_type": "payment",
+      "statement": "Die Auszahlung erfolgt bis 30. Juni des Folgejahres (Zahlungen nach dem 1. Dezember des Antragsjahres); nach Verwaltungskontrollen ist eine Teilzahlung von höchstens 75 % möglich.",
+      "conditions": [
+        {
+          "expression": "payment date",
+          "description": "Auszahlung",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "payment_schedule",
+        "description": "Zahlungstermine",
+        "value": {
+          "deadline": "06-30 Folgejahr",
+          "max_advance_share": 0.75
+        }
+      },
+      "source_reference_ids": [
+        "REF-GC-P18-AUSZAHLUNG",
+        "REF-GC-P18-TEILZAHLUNG",
+        "REF-SRL-P22-AUSZAHLUNG",
+        "REF-GSP-P32-ZAHLUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.payment_deadline",
+        "data.oepul.o6_22.max_advance_payment"
+      ]
+    },
+    {
+      "id": "O622-GEN-013",
+      "rule_type": "threshold",
+      "statement": "Die AMA kann von der Gewährung einer Förderung absehen, wenn der Auszahlungsbetrag (Erstberechnung je Fördermaßnahme) 50 Euro nicht überschreitet.",
+      "conditions": [
+        {
+          "expression": "premium_after_modulation <= 50",
+          "description": "Mindestbetrag",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "may_refrain",
+        "description": "AMA kann von Gewährung absehen",
+        "value": {
+          "min_eur": 50
+        }
+      },
+      "source_reference_ids": [
+        "REF-SRL-P22-50EURO",
+        "REF-GSP-P12-MINDESTBETRAG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.below_minimum_payment"
+      ]
+    },
+    {
+      "id": "O622-GEN-014",
+      "rule_type": "force_majeure",
+      "statement": "Fälle höherer Gewalt (u. a. behördliche Anordnungen zur Tierseuchenbekämpfung) sind binnen drei Wochen ab Möglichkeit mit AMA-Vorlage und Unterlagen geltend zu machen (bei betriebsübergreifenden Katastrophen genügt eine einzige Meldung); der Beihilfeanspruch bleibt für Tiere erhalten, die bei Eintritt förderfähig waren. 2026 kann bei trockenheitsbedingter Nichteinhaltbarkeit ein Antrag auf höhere Gewalt über eAMA (Eingaben) gestellt werden.",
+      "conditions": [
+        {
+          "expression": "notified_on - able_from <= 21 days",
+          "description": "Meldefrist höhere Gewalt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "entitlement_kept",
+        "description": "Anspruch für bei Eintritt förderfähige Tiere",
+        "value": {
+          "notification_weeks": 3
+        }
+      },
+      "source_reference_ids": [
+        "REF-SRL-P15-HOEHERE-GEWALT",
+        "REF-GSP-P10-HG-FAELLE",
+        "REF-GSP-P11-HG-FRIST",
+        "REF-GSP-P11-HG-GEBIET",
+        "REF-GSP-P11-HG-FOLGE",
+        "REF-N0522-HOEHERE-GEWALT",
+        "REF-N0522-EINGABEN"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.force_majeure_notification_in_time"
+      ]
+    },
+    {
+      "id": "O622-GEN-015",
+      "rule_type": "exception",
+      "statement": "Kann ein Begünstigter aufgrund natürlicher Umstände (z. B. Tod eines Tieres durch Krankheit oder Unfall) die Auflagen nicht erfüllen, werden keine Verwaltungssanktionen angewendet, wenn die Behörde binnen drei Wochen nach Feststellung der Bestandsreduktion schriftlich informiert wird.",
+      "conditions": [
+        {
+          "expression": "notified within 21 days",
+          "description": "Meldung natürlicher Umstände",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "no_sanction",
+        "description": "keine Verwaltungssanktion",
+        "value": {
+          "notification_weeks": 3
+        }
+      },
+      "source_reference_ids": [
+        "REF-GSP-P11-NATUR"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.natural_circumstance_notification_in_time"
+      ]
+    },
+    {
+      "id": "O622-GEN-016",
+      "rule_type": "documentation",
+      "statement": "Antragsunterlagen, Bestandsverzeichnisse und Belege sind bei einjährigen Invekos-Maßnahmen vier Jahre ab Ende des Kalenderjahres, auf das sich die Zahlungen beziehen, aufzubewahren.",
+      "conditions": [
+        {
+          "expression": "retention until year+4-12-31",
+          "description": "Aufbewahrungsfrist",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "retention",
+        "description": "Aufbewahrung bis Jahr+4",
+        "value": {
+          "years": 4
+        }
+      },
+      "source_reference_ids": [
+        "REF-GSP-P15-AUFBEWAHRUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.document_retention_until"
+      ]
+    },
+    {
+      "id": "O622-GEN-017",
+      "rule_type": "sanction",
+      "statement": "Die Beihilfe wird anhand der bei Kontrollen ermittelten Tiere berechnet; übersteigt die beantragte Prämie die ermittelte um mehr als 3 %, wird die ermittelte Prämie um das 1,5-fache der Differenz gekürzt (höchstens auf 0).",
+      "conditions": [
+        {
+          "expression": "applied - determined > 3 % of determined",
+          "description": "Übererklärung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "reduced_premium",
+        "description": "Prämie minus 1,5 x Differenz",
+        "value": {
+          "tolerance_percent": 3,
+          "factor": 1.5
+        }
+      },
+      "source_reference_ids": [
+        "REF-GSP-P29-ERMITTELT",
+        "REF-GSP-P30-UEBERERKLAERUNG",
+        "REF-GSP-P30-TIERBASIS",
+        "REF-GC-P17-RUECKFORDERUNG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.overdeclaration_adjusted_premium"
+      ]
+    },
+    {
+      "id": "O622-GEN-018",
+      "rule_type": "consequence",
+      "statement": "Bei einjährigen Maßnahmen und im Maßnahmenantrag zu beantragenden Zuschlägen kommt bei Nichterfüllung von Förder- bzw. Zugangsvoraussetzungen keine gültige Verpflichtung (kein Vertrag) zustande.",
+      "conditions": [
+        {
+          "expression": "access conditions not met",
+          "description": "Zugangsvoraussetzung nicht erfüllt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "no_contract",
+        "description": "kein Vertrag, keine Prämie",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-P24-ZUGANG"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_22.measure_payable"
+      ]
+    },
+    {
+      "id": "O622-GEN-019",
+      "rule_type": "control",
+      "statement": "Die Einhaltung wird durch Verwaltungs-, Vor-Ort- und nachgängige Kontrollen geprüft; Vor-Ort-Kontrollen erstrecken sich auf alle beantragten Tiere. Wird die Kontrolle aus Gründen des Förderwerbers verhindert oder die Auskunft verweigert, werden keine Fördermittel gewährt und bestehende Verträge rückabgewickelt.",
+      "conditions": [
+        {
+          "expression": "control refused",
+          "description": "Kontrollverhinderung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "no_payment",
+        "description": "Ablehnung, Rückabwicklung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-GC-P17-KONTROLLEN",
+        "REF-GSP-P28-VOK-TIERE",
+        "REF-GSP-P12-KONTROLLE",
+        "REF-SRL-P23-AUSKUNFT"
+      ]
+    },
+    {
+      "id": "O622-GEN-020",
+      "rule_type": "reporting",
+      "statement": "Jede Veränderung, durch die die tatsächlichen oder rechtlichen Verhältnisse nicht mehr den Angaben entsprechen, ist der AMA unverzüglich anzuzeigen.",
+      "conditions": [
+        {
+          "expression": "change of circumstances",
+          "description": "Veränderung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "notify",
+        "description": "unverzügliche Anzeige",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-GSP-P14-MITTEILUNG"
+      ]
+    },
+    {
+      "id": "O622-GEN-021",
+      "rule_type": "repayment",
+      "statement": "Zu Unrecht gewährte Förderungen sind binnen vier Wochen nach Aufforderung zurückzuzahlen; die AMA kann von der Wiedereinziehung von Beträgen bis 100 € absehen.",
+      "conditions": [
+        {
+          "expression": "undue payment",
+          "description": "Rückforderung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "repay",
+        "description": "Rückzahlung binnen 4 Wochen",
+        "value": {
+          "weeks": 4,
+          "waiver_max_eur": 100
+        }
+      },
+      "source_reference_ids": [
+        "REF-GSP-P13-RUECKZAHLUNG",
+        "REF-GSP-P13-BAGATELLE"
+      ]
+    },
+    {
+      "id": "O622-GEN-022",
+      "rule_type": "calculation_rule",
+      "statement": "Mehrfachkürzungen erfolgen in festgelegter Reihenfolge (Übererklärungen, Zugangsvoraussetzungen, Fristversäumnis, Untererklärungen, inhaltliche Kürzungen, Förderobergrenze, Modulation, Flächenobergrenze, Vertragszeitraum, Zugangskürzung, Konditionalität).",
+      "conditions": [
+        {
+          "expression": "ordered reductions",
+          "description": "Reihenfolge",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "reduction_order",
+        "description": "Reihenfolge laut Datentabelle",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-P25-REIHENFOLGE"
+      ]
+    },
+    {
+      "id": "O622-GEN-023",
+      "rule_type": "contract_clause",
+      "statement": "Bei einer Änderung des verbindlichen Rechtsrahmens, die eine Änderung der Verpflichtungen oder der Prämienhöhe erfordert, kann die förderwerbende Person die Zustimmung zur Vertragsanpassung verweigern; der Vertrag endet dann ohne Rückforderung für die Vergangenheit.",
+      "conditions": [
+        {
+          "expression": "legal framework changed and consent refused",
+          "description": "Revisionsklausel",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "contract_ends",
+        "description": "Vertragsende ohne Rückforderung",
+        "value": null
+      },
+      "source_reference_ids": [
+        "REF-SRL-P16-REVISION"
+      ]
+    }
+  ]
+}

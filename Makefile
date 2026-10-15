@@ -1,4 +1,4 @@
-.PHONY: test source-validate opa-unit opa-smoke
+.PHONY: test source-validate opa-unit opa-smoke site site-check
 
 PYTHON ?= python3
 
@@ -13,3 +13,9 @@ opa-smoke:
 
 source-validate:
 	$(PYTHON) sources/oepul/manage_sources.py validate
+
+site:
+	PYTHONPATH=src $(PYTHON) -m rulelab site
+
+site-check:
+	PYTHONPATH=src $(PYTHON) -m rulelab site --check
