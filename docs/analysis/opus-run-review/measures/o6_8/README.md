@@ -110,3 +110,15 @@ Rechtsfolgen bleiben getrennt. Studienreferenzen, Expertenantworten und Sollwert
 manueller Adaptationstests sind keine Orakel. Originale, Canonical-Profile und
 produktive App bleiben unverändert. Gemeinsame Lösungen werden nach allen 26
 Einzelprüfungen zusammen durchgesehen.
+
+
+Nachträgliche Eingabekorrektur der Root-Kernkontrollen: Nicht zulässige
+Canonical-Enumwerte wurden durch die erlaubte Nutzung `grassland` ersetzt.
+Zusätzlich wurde der nicht zulässige Bodenbearbeitungswert `minimum` bei
+MS als `mulch` präzisiert und bei nicht gewählten Verfahren entfernt; das für
+DS vorgeschlagene `strip_till` bleibt erhalten.
+Quellen, Abfragen, fachliche Erwartungen und beabsichtigte Bewirtschaftungsfälle
+bleiben gleich. Die konstruierten Eingaben und ihre Hashes sind ausdrücklich
+geändert; Sammlung, vollständige Ausführung und unabhängige Qualitätsbindung
+werden deshalb erneut hergestellt. Der Qualitätsbericht dokumentiert die
+Ausgangsbindung und den Vergleich der tatsächlichen Ausgaben.

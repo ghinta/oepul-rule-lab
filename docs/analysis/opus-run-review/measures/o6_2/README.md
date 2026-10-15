@@ -102,3 +102,12 @@ ausgeführt; Quellenurteile, Eingaben und Regelcode bleiben gleich.
 Die getrennte Gegenprüfung steht in [quality.md](quality.md). Historische
 Regeln, Quellen, Profile und die produktive App wurden nicht verändert.
 Gemeinsame Ursachen und Lösungen werden nach dem vollständigen Durchgang besprochen.
+
+
+Nachträgliche Eingabekorrektur der Root-Kernkontrollen: Sieben nicht zulässige
+Canonical-Kategorienamen `grassland`/`forage` wurden durch `other` ersetzt.
+Die tatsächliche Flächennutzung, Quellen-Kulturnamen und Zweitfruchteigenschaft
+bleiben erhalten. Quellen, Queries und fachliche Erwartungen sind unverändert;
+Eingaben und ihre Hashes sind ausdrücklich geändert. Sammlung, vollständige
+Ausführung und unabhängige Qualitätsbindung werden deshalb erneut hergestellt;
+der Qualitätsbericht hält Ausgangsbindung und Ausgabenvergleich fest.

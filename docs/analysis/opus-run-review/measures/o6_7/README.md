@@ -99,3 +99,12 @@ getrennt. Es werden keine öffentlichen oder privaten Studienreferenzen,
 Expertenantworten oder Sollwerte manueller Adaptationstests als Orakel genutzt.
 Originale, Canonical-Profile und produktive App bleiben unverändert. Gemeinsame
 Lösungen werden nach allen 26 Einzelprüfungen zusammen durchgesehen.
+
+
+Nachträgliche Eingabekorrektur der Root-Kernkontrollen: Nicht zulässige
+Canonical-Enumwerte wurden durch die erlaubte Nutzung `grassland` ersetzt.
+Quellen, Abfragen, fachliche Erwartungen und beabsichtigte Bewirtschaftungsfälle
+bleiben gleich. Die konstruierten Eingaben und ihre Hashes sind ausdrücklich
+geändert; Sammlung, vollständige Ausführung und unabhängige Qualitätsbindung
+werden deshalb erneut hergestellt. Der Qualitätsbericht dokumentiert die
+Ausgangsbindung und den Vergleich der tatsächlichen Ausgaben.
