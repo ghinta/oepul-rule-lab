@@ -20,7 +20,7 @@ Erst nach seinem dokumentierten Prüfabschluss wird der nächste Run begonnen.
 Der Abschluss kann erhebliche Blocker ergeben und bedeutet keine automatische
 App-Übernahme oder Abnahme durch GM/Domainexpert:innen.
 
-Aktuell: **10 Einzelprüfungen abgeschlossen und blockiert, 16 ausständig;
+Aktuell: **11 Einzelprüfungen abgeschlossen und blockiert, 15 ausständig;
 keine Expertenfreigabe und keine App-Promotion aus dieser Runde.**
 
 | Reihenfolge | Run / Maßnahme | Status |
@@ -35,8 +35,9 @@ keine Expertenfreigabe und keine App-Promotion aus dieser Runde.**
 | 8 | [o6_6 – Zwischenfruchtanbau](measures/o6_6/README.md) | Alle 111 Regeln, 32 Tabellen, 47 Vorschläge und 391 Entwicklungsfälle geprüft; Übernahme blockiert. |
 | 9 | [o6_7 – System Immergrün](measures/o6_7/README.md) | Alle 107 Regeln, 58 Tabellen, 25 Vorschläge und 318 Entwicklungsfälle geprüft; Übernahme blockiert. |
 | 10 | [o6_8 – Erosionsschutz Acker](measures/o6_8/README.md) | Alle 114 Regeln, 30 Tabellen, 23 Vorschläge und 313 Entwicklungsfälle geprüft; Übernahme blockiert. |
-| 11 | o6_9 | Einzelprüfung in Bearbeitung. |
-| 12–26 | o6_10 bis o6_24, aufsteigend | Jeweilige Einzelprüfung ausständig. |
+| 11 | [o6_9 – Bodennahe Ausbringung und Gülleseparation](measures/o6_9/README.md) | Alle 89 Regeln, 29 Tabellen, 25 Vorschläge und 335 Entwicklungsfälle geprüft; Übernahme blockiert. |
+| 12 | o6_10 | Einzelprüfung in Bearbeitung. |
+| 13–26 | o6_11 bis o6_24, aufsteigend | Jeweilige Einzelprüfung ausständig. |
 
 [queue.json](queue.json) bindet für jede der 26 Positionen die exakte Run-ID und
 den Kandidatencommit. Bestehende Quellenreviews manueller Adaptationen oder
