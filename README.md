@@ -164,6 +164,15 @@ zeigt Eingaben und Ergebnisse. CI wiederholt die Diagnose mit gepinntem OPA.
 Diese Sichtung ist Vorbereitung der Thesis-Auswahl, keine unabhängige
 Genauigkeitsmessung und keine automatische App-Übernahme.
 
+Die [anschließende Opus-Sichtung](docs/analysis/opus-screening-20261011/README.md)
+bindet 26 aktuelle Kandidaten aus 36 finalisierten Veröffentlichungen am festen
+PR-#79-Commit. Sie übersetzt ausschließlich belegbare Fakten derselben Luna-Fälle
+in native Opus-Verträge und dokumentiert nicht abbildbare Fälle als Lücken.
+[Quellen-/Versuchsbedingungen](docs/analysis/opus-screening-20261011/comparison.json)
+und [methodische Grenzen](docs/analysis/opus-screening-20261011/method.md)
+schließen einen isolierten historischen Modelleffekt aus. CI prüft die
+Kandidaten in einem separaten Checkout; ein Merge von #79 ist dafür nicht nötig.
+
 Der [Quellenreview und Variablenvertrag für die o6_3-App-Integration](docs/analysis/o6_3-variable-contract-20261007/README.md)
 verbindet den Adaptationsvertrag mit dem App-Stand nach PR #135 und weist
 die vor einer vollständigen Empfehlung offenen Nachweise ausdrücklich aus.
