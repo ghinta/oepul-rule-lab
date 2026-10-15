@@ -1,0 +1,27 @@
+# Unabhängige Gegenprüfung: roher Nutztierrassen-Run
+
+Die Gegenprüfung des unveränderten Runs `v2-o6_5-opus-5.5-high-20260925` ist abgeschlossen. Im begrenzten unabhängigen Prüfumfang bleibt kein materieller Fehler des Dossiers offen. Der Kandidat bleibt für die native App-Aufnahme blockiert; weder Expertenfreigabe noch Policy-Reparatur folgt daraus.
+
+Alle zehn Seiten des neuen Maßnahmenblatts, alle sieben Produktionsmodule und die Rohannahmen wurden unabhängig vollständig gelesen. SRL 5/52/53, die jährliche Zugangsregel auf SRL 24, Anhang D 9 und der tatsächliche August-Hinweis wurden gezielt erneut verglichen. Sieben gemeinsame vollständige Quellenlektüren werden über identische Hashes wiederverwendet. GSP-AV gehört nicht zu diesen acht Originalen; ihre Detailnormen aus früheren Paketen werden hier nicht nachträglich zum Generationsorakel. Eine zweite vollständige Auslegung aller gemeinsamen Seiten und Katalogbewertungen wird nicht behauptet.
+
+Der eigene vollständige `--verify` endete mit Exitcode 0 und reproduzierte die Beobachtungen bytegenau: **233 Fälle, 315 Erwartungen, 294 erfüllt und 21 nicht erfüllt; 230 definierte Ausgaben und drei Laufzeitfehler, keine undefinierte Ausgabe**. Alle drei Abstürze sind schemawidrige Datumswerte. In den gezielten zulässigen Nullable-Kontrollen wurde kein Absturz beobachtet; das ist kein Totalitätsnachweis. Die Auswahl aus Quellenfällen, positiven Nachweisen, Konsistenz- und Stresstests ergibt keine Modellgenauigkeitsquote.
+
+Exakt abgeglichen sind 97 historische IDs mit 109 erhaltenen Bewertungen, sieben Proposal-Pfade als Multimenge und 13 Tabellenpointer in vier Datendateien. Alle 131 gespeicherten Zeilen/Schlüssel stimmen einschließlich ihrer verschachtelten Werte überein. Alle 42 gebundenen Originaldateien stimmen in Hash und Größe. Die 26 überlappenden Befund-/Informationsgruppen umfassen auch Verbesserungen und die korrekte eG/eGen-Quellenvariante; sie sind keine 26 unabhängigen Modellfehler. 1.111 annotierte Codebereich-/Zeilenstellen und 858 zitierte Zeilenvorkommen sind gültig; Wiederholungen werden mitgezählt.
+
+1.582 gebundene Zitatvorkommen auf 415 eindeutigen Quellen-/Seiten-/Zitatkombinationen wurden gefunden. 1.581 stimmen nach Leerzeichen-/Soft-Hyphen-Normalisierung. Der einzige zusätzliche Fallback ist am Original kontrolliert: pypdf zerlegt auf SRL 24 das Wort „bei“ künstlich in „b ei“; der sichtbare jährliche Zugangsabsatz und pdftotext bestätigen das Zitat. Sieben Summary-Wiederholungen sind exakt durch ihre eigenen belegten Quellkinder gedeckt. Fundstellenkontrolle ist keine automatische Auslegungsfreigabe.
+
+Die Matcherformen sind explizit geprüft. Antragsteller-/Vertragsfehler, Tierfehler und IDs sind Stringkollektionen; interne Fehlersammlungen enthalten Zweierarrays. Nur `findings` besitzt Regelobjekte. Die Proben verwenden ausschließlich `equals` und `status_equals`, darunter numerische Zähler 0/1, echte Booleans und projizierte Stringlisten mit leeren Gegenkontrollen. Kein Objektmatcher wird auf Tupel oder Strings angewandt. Die 48 eingebetteten Eingabebeobachtungen und 48 eingebetteten Maßnahmenresultate stimmen mit den typbewussten zentralen Resultaten überein.
+
+Die fachlichen Grenzen bleiben erhalten:
+
+- Positive Tier-/Aktivitätsnachweise, Rasse-/Kategorie-/Speziesbindung, geschützte Nullable-Felder, ein Förderplatz je Originaltier und die tatsächliche Haltedauerverkürzung 2026 sind vorhandene Verbesserungen.
+- Ersatzalter, Zulassungsjahr beim Januar-Ersatz, dritte Nachbesetzung und abgeschlossene frühere Aufenthalte werden mit eigenen Gegenkontrollen geprüft. Die Stutenprobe betrifft ausschließlich die lokale Folgefrist bei abgeschlossener Jahresbeobachtung. Widerspruch zu umfassendem `confirmed` belegt keine gesichert rechtswidrige Auszahlung.
+- Spätere erste Ankunft als das behauptete Ersatzdatum ist Konsistenzstress. Frühere tatsächliche Ankunft mit späterer Förderplatzübernahme bleibt gültig.
+- GEP-Tarifkontrollen setzen die tatsächliche Jahresumsetzung voraus. Konditionale Annex-D-Pflichten sind keine pauschale Sperre aus fehlenden Detailfeldern. Rasse/GEP-Kennzeichnung allein ist keine umfassende Freigabe.
+- Meldebefunde führen nicht zu erfundenen automatischen Vollkürzungen. Förderplatz, Ersatz-Grundstatus, Gesamtzugang und tatsächliche Auszahlung sind verschiedene Ergebnisscopes.
+- Sauenfolge, erweiterte Minimumprämienkonvention, Folgen fehlender Vorabmeldung, August-Stichtagsmeldung und UELN bei Ersatzkorrektur bleiben offen. Die Kurzaufenthaltskontrollen folgen A16 mit verstrichenen Tagen; sie entscheiden keine andere inklusive Endpunktzählung ohne Uhrzeiten.
+- Fehlende Nachweise beweisen keine realen Verstöße. Undatierte Bestätigung folgt der ausdrücklich offengelegten A32-Konvention. Die gesonderten Eigenheiten der eingefrorenen OPA-Binary werden nicht pauschal Modellen oder allen 26 Runs zugerechnet.
+
+Der zusätzliche SQL-blockierte App-Projektionslauf steht als primärer Integrationsnachweis separat und wurde in dieser QC nicht erneut ausgeführt oder als 234. Quellenfall gezählt. Es wurden keine Studienreferenzen, Experten-/GM-Urteile, Modellselbsttest- oder manuellen Adaptationstestlabels als Orakel gelesen. Originale, Canonical-Profil, Policies, Laufzeit und App blieben unverändert; kein Commit und keine nächste Maßnahme.
+
+[quality.json](quality.json) bindet alle 14 finalen Artefakte, die acht Quellenhashes und den eigenen Reproduktionsbefehl. Der veränderliche Abschlussstatus von `audit.json` ist aus den Artefakthashes ausgenommen.
