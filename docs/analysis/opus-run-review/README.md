@@ -20,15 +20,16 @@ Erst nach seinem dokumentierten Prüfabschluss wird der nächste Run begonnen.
 Der Abschluss kann erhebliche Blocker ergeben und bedeutet keine automatische
 App-Übernahme oder Abnahme durch GM/Domainexpert:innen.
 
-Aktuell: **2 Einzelprüfungen abgeschlossen und blockiert, 24 ausständig;
+Aktuell: **3 Einzelprüfungen abgeschlossen und blockiert, 23 ausständig;
 keine Expertenfreigabe und keine App-Promotion aus dieser Runde.**
 
 | Reihenfolge | Run / Maßnahme | Status |
 |---|---|---|
 | 1 | [o6_1a – UBB](../opus-o6-1a-audit-20261015/README.md) | Quellen-, Regeln-, Tabellen- und Eingabeprüfung dokumentiert; konkrete Fehler, Übernahme blockiert. |
 | 2 | [o6_1b – Biologische Wirtschaftsweise](measures/o6_1b/README.md) | Alle 200 Regeln, 92 Tabellen, 89 Eingabevorschläge und 107 Entwicklungsfälle geprüft; Übernahme blockiert. |
-| 3 | o6_1c – Nichtproduktive Ackerflächen und Agroforststreifen | Einzelprüfung in Bearbeitung. |
-| 4–26 | o6_2 bis o6_24, aufsteigend | Jeweilige Einzelprüfung ausständig. |
+| 3 | [o6_1c – Nichtproduktive Ackerflächen und Agroforststreifen](measures/o6_1c/README.md) | Alle 97 Regeln, 22 Tabellen, 16 Vorschläge und 109 Entwicklungsfälle geprüft; Übernahme blockiert. |
+| 4 | o6_2 | Einzelprüfung in Bearbeitung. |
+| 5–26 | o6_3 bis o6_24, aufsteigend | Jeweilige Einzelprüfung ausständig. |
 
 [queue.json](queue.json) bindet für jede der 26 Positionen die exakte Run-ID und
 den Kandidatencommit. Bestehende Quellenreviews manueller Adaptationen oder
@@ -40,3 +41,9 @@ Ausgabeform, vorhandene App-Abbildung sowie eigens aus Quellen abgeleitete
 Gegen- und Grenzfälle zeigen. Fehlende Nachweise, Fehler, Nullwerte und offene
 Auslegungen bleiben getrennt sichtbar. Private Studienreferenzen werden nicht
 eingesehen; historische Runs, Quellen und Canonical-Profile bleiben unverändert.
+
+Quellen, die erst in anderen Run-Paketen enthalten sind, werden dem ursprünglichen
+Run nicht nachträglich als bereitgestellter Eingabekorpus zugerechnet. Für eine
+spätere App-Aufnahme relevante zusätzliche Rechtsstände bleiben als Quellen-
+oder Paketlücke mit ausdrücklichem Verweis sichtbar. Quellengetreue Extraktion
+und aktuelle fachliche Verwendbarkeit sind getrennte Prüffragen.
