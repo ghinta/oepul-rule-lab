@@ -20,7 +20,7 @@ Erst nach seinem dokumentierten Prüfabschluss wird der nächste Run begonnen.
 Der Abschluss kann erhebliche Blocker ergeben und bedeutet keine automatische
 App-Übernahme oder Abnahme durch GM/Domainexpert:innen.
 
-Aktuell: **16 Einzelprüfungen abgeschlossen und blockiert, 10 ausständig;
+Aktuell: **17 Einzelprüfungen abgeschlossen und blockiert, 9 ausständig;
 keine Expertenfreigabe und keine App-Promotion aus dieser Runde.**
 
 | Reihenfolge | Run / Maßnahme | Status |
@@ -41,8 +41,9 @@ keine Expertenfreigabe und keine App-Promotion aus dieser Runde.**
 | 14 | [o6_12 – Insektizidverzicht Wein, Obst und Hopfen](measures/o6_12/README.md) | Alle 94 Regeln, 32 Tabellen, 24 Vorschläge und 508 Entwicklungsfälle geprüft; Übernahme blockiert. |
 | 15 | [o6_13 – Einsatz von Nützlingen im geschützten Anbau](measures/o6_13/README.md) | Alle 80 Regeln, 31 Tabellen, 23 Vorschläge und 430 Entwicklungsfälle geprüft; Übernahme blockiert. |
 | 16 | [o6_14 – Almbewirtschaftung](measures/o6_14/README.md) | Alle 126 Regeln, 27 Tabellen, vier Vorschläge und 618 Entwicklungsfälle geprüft; Übernahme blockiert. |
-| 17 | o6_15 – Tierwohl Behirtung | Einzelprüfung in Bearbeitung. |
-| 18–26 | o6_16 bis o6_24, aufsteigend | Jeweilige Einzelprüfung ausständig. |
+| 17 | [o6_15 – Tierwohl Behirtung](measures/o6_15/README.md) | Alle 95 Regeln, 20 Tabellen, sieben Vorschläge und 601 Entwicklungsfälle geprüft; Übernahme blockiert. |
+| 18 | o6_16 – Vorbeugender Grundwasserschutz Acker | Einzelprüfung in Bearbeitung. |
+| 19–26 | o6_17 bis o6_24, aufsteigend | Jeweilige Einzelprüfung ausständig. |
 
 [queue.json](queue.json) bindet für jede der 26 Positionen die exakte Run-ID und
 den Kandidatencommit. Bestehende Quellenreviews manueller Adaptationen oder
