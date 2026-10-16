@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from html.parser import HTMLParser
 from pathlib import Path
+import json
 import re
 import subprocess
 from urllib.parse import unquote, urlsplit
@@ -39,6 +40,14 @@ def main() -> int:
     ).splitlines()
     failures = []
     checked = 0
+    published = set(names)
+    for name in ("adaptations/o6_3/lineage.json",
+                 "docs/analysis/o6_3-variable-contract-20261007/baseline.json"):
+        record = json.loads((ROOT / name).read_text())
+        for field in ("files", "upstream_sha256"):
+            for dependency in record.get(field, {}):
+                if dependency not in published or not (ROOT / dependency).is_file():
+                    failures.append(f"{name}: dependency is not published: {dependency}")
     for name in sorted(set(names)):
         path = ROOT / name
         public_metadata = (name.startswith("runs/") and path.name in

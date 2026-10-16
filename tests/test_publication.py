@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import importlib.util
+import io
+from contextlib import redirect_stdout
 from pathlib import Path
 import tempfile
 import unittest
@@ -75,6 +78,30 @@ class PortableMetadataTests(unittest.TestCase):
         self.assertIn('href="https://github.com/ghinta/oepul-rule-lab/blob/main/runs/', html)
         self.assertNotIn('href="../../../runs/', html)
         self.assertEqual(screening.json_bytes(results), before)
+
+    def test_publication_rejects_a_local_log_dependency_missing_from_git(self):
+        repository = Path(__file__).resolve().parents[1]
+        spec = importlib.util.spec_from_file_location(
+            'check_publication', repository / 'tools/check_publication.py')
+        checker = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(checker)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            names = ['adaptations/o6_3/lineage.json',
+                     'docs/analysis/o6_3-variable-contract-20261007/baseline.json']
+            log = 'runs/example/raw/events.jsonl'
+            (root / log).parent.mkdir(parents=True)
+            (root / log).write_text('local-only transcript')
+            for name in names:
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps({'upstream_sha256': {log: 'old-hash'}}))
+            output = io.StringIO()
+            with patch.object(checker, 'ROOT', root), patch.object(checker, 'SITE', root / 'docs'), \
+                    patch.object(checker.subprocess, 'check_output', return_value='\n'.join(names)), \
+                    redirect_stdout(output):
+                self.assertEqual(checker.main(), 1)
+            self.assertIn('dependency is not published', output.getvalue())
 
 
 if __name__ == '__main__':

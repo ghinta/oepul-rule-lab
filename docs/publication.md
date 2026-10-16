@@ -31,6 +31,8 @@ those files are updated to their new hashes and byte sizes. Original source,
 profile, prompt, policy, test, data and per-measure observation bytes stay unchanged.
 Aggregate result files receive the new manifest checksum. The path-only changes
 are recorded in [the migration record](metadata-path-migration.json).
+The withdrawn raw transcript keeps its old checksum there, but is no longer a
+file dependency of the public adaptation or input-review dossier.
 The pinned Opus checkout keeps its original manifest bindings. Its displayed
 historical conditions are cleaned when exported into `comparison.json`.
 A checksum proves file identity, not legal correctness.
