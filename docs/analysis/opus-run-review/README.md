@@ -1,6 +1,6 @@
 # Opus-Runs einzeln prüfen
 
-Stand 15.10.2026. Die bisherige technische
+Stand 16.10.2026. Die bisherige technische
 [Sichtung aller 26 Kandidaten](../opus-screening-20261011/README.md) ist keine
 vollständige fachliche Quellenprüfung aller Runs. Dass die Kandidaten
 kompilieren oder bestimmte Ausgaben reproduzieren, belegt keine Förderfähigkeit.
@@ -20,7 +20,7 @@ Erst nach seinem dokumentierten Prüfabschluss wird der nächste Run begonnen.
 Der Abschluss kann erhebliche Blocker ergeben und bedeutet keine automatische
 App-Übernahme oder Abnahme durch GM/Domainexpert:innen.
 
-Aktuell: **17 Einzelprüfungen abgeschlossen und blockiert, 9 ausständig;
+Aktuell: **18 Einzelprüfungen abgeschlossen und blockiert, 8 ausständig;
 keine Expertenfreigabe und keine App-Promotion aus dieser Runde.**
 
 | Reihenfolge | Run / Maßnahme | Status |
@@ -42,8 +42,9 @@ keine Expertenfreigabe und keine App-Promotion aus dieser Runde.**
 | 15 | [o6_13 – Einsatz von Nützlingen im geschützten Anbau](measures/o6_13/README.md) | Alle 80 Regeln, 31 Tabellen, 23 Vorschläge und 430 Entwicklungsfälle geprüft; Übernahme blockiert. |
 | 16 | [o6_14 – Almbewirtschaftung](measures/o6_14/README.md) | Alle 126 Regeln, 27 Tabellen, vier Vorschläge und 618 Entwicklungsfälle geprüft; Übernahme blockiert. |
 | 17 | [o6_15 – Tierwohl Behirtung](measures/o6_15/README.md) | Alle 95 Regeln, 20 Tabellen, sieben Vorschläge und 601 Entwicklungsfälle geprüft; Übernahme blockiert. |
-| 18 | o6_16 – Vorbeugender Grundwasserschutz Acker | Einzelprüfung in Bearbeitung. |
-| 19–26 | o6_17 bis o6_24, aufsteigend | Jeweilige Einzelprüfung ausständig. |
+| 18 | [o6_16 – Vorbeugender Grundwasserschutz Acker](measures/o6_16/README.md) | Alle 98 Regeln, 33 Tabellen, 34 Vorschläge und 358 Entwicklungsfälle geprüft; Übernahme blockiert. Eigene Gegenkontrolle nach Limitfortsetzung, keine zusätzliche unabhängige Person behauptet. |
+| 19 | o6_17 – Humuserhalt und Bodenschutz auf umbruchsfähigem Grünland | Einzelprüfung in Bearbeitung. |
+| 20–26 | o6_18 bis o6_24, aufsteigend | Jeweilige Einzelprüfung ausständig. |
 
 [queue.json](queue.json) bindet für jede der 26 Positionen die exakte Run-ID und
 den Kandidatencommit. Bestehende Quellenreviews manueller Adaptationen oder
