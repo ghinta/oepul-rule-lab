@@ -1,0 +1,15 @@
+# o6_18 – Bewirtschaftungsauflagen und Ausnahmen
+
+188 öffentliche Entwicklungsfälle, 378 typisierte Vergleiche: 363 erfüllt, 15 abweichend. Native Statuswerte: `{'defined': 188}`. Gezielte Kontrollen sind keine Genauigkeitsquote oder Expertenabnahme.
+
+61 übrige Katalogregeln (28–83 und121–125) wurden einzeln beurteilt. Neues Merkblatt vollständig7Seiten, AnhangI vollständig28Seiten62–89, J90 und die relevanten aktuellen SRL-/ATB-/2026er Abschnitte einschließlich Ausnahmen und Fußnoten gelesen. Alle acht Module mit1573Zeilen und die Annahmen mit5564Bytes wurden vollständig gelesen.
+
+Bekannte unzulässige Düngung beiND01/ND07/ND16/ND18 bleibt unbeanstandet; ND05Wirtschaftsdünger-only lässt auch Kalk durch. Diese Eingaben sind tatsächlich vorhanden und typgerecht; es fehlt der Verbraucher. Ausführliche gespeicherte Quelltexte beheben das nicht. Die allgemeinen Verbote, Festmist-only, September- und erlaubte Düngejahreszweige funktionieren dagegen.
+
+NW05 verlangt gleichzeitigeGVE/ha, wird aber nicht ausgeführt: zwei adulte Rinder an einem Tag auf1ha bei Grenze1 bleibencomplianttrue. DerJahres-RGVE-Wert wäre dabei weit unter1; das ist eine andere Dimension. NW06 verlangtGVE/ha/Jahr, verwendet aber nurRGVE und ignoriert zehn Mastschweine mit insgesamt3GVE auf2ha bei Grenze1. DieWA01/03-RGVE-Grenzen und die23Tabellenwerte funktionieren.
+
+GN03 prüft neunWochen zwischen Mahden, übersieht aber Weide als zweite Nutzung. GN01/02 behandeln ebenfalls nur die zweite Mahd. Die Originalmeldung vom12.08.2026 erlaubt ausdrücklich erste oder zweiteNutzung trotz unverändertem spätem Projekttermin. Bei Mahd funktioniert das, bei ersterWA01-Weide am12.08. vor Projektbeginn01.09. wird fälschlich ein Verstoß gemeldet. 2025 und11.08.2026 sind passende Kontrollen ohne Freigabe.
+
+Die gültigeAA04+NE01-Kontrolle zeigt: zulässige Kartoffel und nicht gelistete Paprika bleiben beidecomplianttrue. Die vollständige28Kulturliste wird nicht verwendet; mehrjährige Mais-/Fruchtfolgepflichten benötigen zusätzlich nicht vorgeschlagene Historien. Ursprünglich hatte Root selbstAA01 als Grundcode angenommen, obwohl dieser nicht existiert. Der positive Kartoffeltest deckte den eigenen Fehler durchELIG014 auf. Beide ursprünglichen Eingaben/Sollwerte/Ausgaben bleiben erhalten und sind als ungültige eigene Konstruktion gekennzeichnet. Sie sind kein Opus-Kulturbefund. Erst das danach vor Ausführung neu gespeicherte gültigeAA04-Paar trägt den fachlichen Gegenbeleg.
+
+Weitere Kontrollen würdigen Schnittanzahlen mit Jahresabschluss,63-Tage-Grenze bei Mahd/Mahd, acht Aktivitätsflags, genehmigte Sanierungsausnahmen, laufendes Weidetagebuch, Schriftänderung, Bewässerungs-/Silage-/Grabenverbote, Nutzungsgrößen undGG/HG-Gates. Ein historischer2025Schnitt zählt trotzdem als2026Nutzung: technischer Zeit-/Caller-Vertrag, keine erfundene Zweijahresverletzung. Bei denDIV-Feldstückpflichten bleibt ein Quellenkonflikt sichtbar: MB5vereinfacht, SRL31nennt≥10ha gemähtes Grünland,>5ha gemähte Feldstückfläche undGLÖZ-LSE-Anrechnung. Kein unbedingter Goldfall wird aus dem isolierten Merkblattbeispiel konstruiert.
