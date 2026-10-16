@@ -4,12 +4,12 @@ Run `v2-o6_16-opus-5.5-high-20261003`, unveränderter Kandidat `e009eed4a83ff076
 
 Gesammelt im vorhandenen [Issue #112](https://github.com/ghinta/oepul-rule-lab/issues/112), Branch codex/opus-o6-1a-source-audit und [PR #111](https://github.com/ghinta/oepul-rule-lab/pull/111). Historische Policy, Daten, Selbsttests, Quellen und Canonical bleiben unverändert. Die gemeinsame Lösungssuche folgt erst nach allen 26 Einzelprüfungen.
 
-98/98 katalogisierte Regeln sind einzeln beurteilt, 34/34 Profilvorschläge mit 142 Blättern und 33/33 Tabellenzeiger geprüft. 358 öffentliche Entwicklungsfälle ergeben 678 typisierte Prüfungen: 648 erfüllt, 30 nicht erfüllt. Native Statuswerte: `{'defined': 351, 'undefined': 1, 'runtime_error': 6}`. Gezielte Entwicklungsfälle und zusammenhängende Fehlerfamilien sind keine unabhängige Genauigkeitsmessung.
+98/98 katalogisierte Regeln sind einzeln beurteilt, 34/34 Profilvorschläge mit 142 Blättern und 33/33 Tabellenzeiger geprüft. 358 öffentliche Entwicklungsfälle ergeben 678 typisierte Prüfungen: 647 erfüllt, 31 nicht erfüllt. Native Statuswerte: `{'defined': 351, 'undefined': 1, 'runtime_error': 6}`. Gezielte Entwicklungsfälle und zusammenhängende Fehlerfamilien sind keine unabhängige Genauigkeitsmessung.
 
 | Prüfteil | Fälle | Prüfungen | erfüllt | nicht erfüllt |
 |---|---:|---:|---:|---:|
 | [Positivkontrollen](core.json) | 3 | 59 | 59 | 0 |
-| [Allgemeine Bedingungen](general.json) | 71 | 158 | 149 | 9 |
+| [Allgemeine Bedingungen](general.json) | 71 | 158 | 148 | 10 |
 | [Fachbedingungen/Optionen](measure.json) | 138 | 286 | 277 | 9 |
 | [Tabellen/Quellenrechnung](tables.json) | 25 | 50 | 48 | 2 |
 | [Eingaben/App](inputs.json) | 121 | 125 | 115 | 10 |
@@ -19,6 +19,7 @@ Gesammelt im vorhandenen [Issue #112](https://github.com/ghinta/oepul-rule-lab/i
 - Nach bekanntem Ausstieg, endgültigem Ausschluss oder außerhalb der Vertragslaufzeit bleiben jeweils 1.140,54 € positiv. Die Hilfsregeln erkennen den Zustand, der Geldzweig nutzt ihn nicht.
 - Zwei bekannte, nicht prämienfähige AG-Nationalpark-Hektar erhalten 1.080 € AG-Prämie. Die normale Komponente berücksichtigt den Ausschluss bereits.
 - Körnermais/Silomais verlieren bei zehn Hektar je 216 € PSM-Zuschlag und erzeugen bei bekanntem verbotenem Wirkstoffeinsatz keine entsprechende Meldung. Mais funktioniert in den Gegenkontrollen.
+- Der separate Fristhelfer berücksichtigt die Verschiebung eines Sonntag-Fristendes auf den nächsten Arbeitstag nicht. Eine eigene zuvor falsche Sollvorgabe wurde mit Verweis auf § 5/§ 6 korrigiert; die nativen Ausgaben bleiben gleich.
 - Sechs formal zulässige null-Konstellationen brechen die native Hauptauswertung ab. Ein Weizen-Helfer bleibt durch die Zahlenschreibweise 14 statt 14.0 undefiniert. Einfache technische Kontrollen grenzen dieses Problem ein.
 - Fehlende Antrags-/Antragsteller- und Proteinbelege können weiterhin positive Ergebnisse ermöglichen. Diese Fälle prüfen ausdrücklich GMs gewünschten Positivnachweisvertrag und beweisen keinen tatsächlich begangenen Verstoß.
 - Reale aktuelle Anträge, Belege, Kulturfolgen, Kontrollentscheidungen und gemeinsame Kombinations-/Zahlungskappung sind nur teilweise abgebildet. Probenidentität und Zeitkonsistenz werden nicht ausreichend geprüft. Der vorhandene App-Adapter erhält keinen der 142 zusätzlichen nativen Pfade.
