@@ -1,0 +1,485 @@
+{
+  "schema_version": 1,
+  "measure_id": "o6_1c",
+  "run_id": "v2-o6_1c-opus-5.5-high-20261009",
+  "candidate_commit": "e009eed4a83ff076b26eba33ac433ac2b0642621",
+  "scope": {
+    "complete_modules": [
+      "workspace/policy/o6_1c/common.rego",
+      "workspace/policy/o6_1c/decision.rego"
+    ],
+    "source_reading": [
+      {
+        "source_path": "sources/oepul/originals/o6_1c_nichtproduktive_ackerflaechen_und_agroforststreifen_2025_10.pdf",
+        "pages_read": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "mode": "full_new_reading"
+      }
+    ],
+    "integration_assessment": "Decision combines access/application/commitment diagnostics and premium band; it has no global compliant field. The union includes farm-level NPA violations in commitment_violations. Premium estimates and the reported sanction percentage are separate components; no undocumented sanction-to-zero rule is inferred."
+  },
+  "rules": [
+    {
+      "rule_id": "O6_1C-CAT-001",
+      "status": "implemented_with_unvalidated_enum_boundary",
+      "assessment": "Set construction accepts either or both valid category names. It does not validate membership before a nonempty category list is allowed to support contract_valid. Historical proposed enum is an external boundary; the diagnostic for an invalid enum value is explicitly outside that declaration.",
+      "code": [
+        {
+          "path": "workspace/policy/o6_1c/common.rego",
+          "lines": "17-20"
+        },
+        {
+          "path": "workspace/policy/o6_1c/decision.rego",
+          "lines": "9-28"
+        },
+        {
+          "path": "workspace/policy/o6_1c/application.rego",
+          "lines": "16-19"
+        }
+      ],
+      "source_evidence": [
+        {
+          "source_path": "sources/oepul/originals/o6_1c_nichtproduktive_ackerflaechen_und_agroforststreifen_2025_10.pdf",
+          "source_sha256": "ec55abec48b67941fbf8a73b7b2d052dea8ec7f2ad26655cf90220c15ab39a9a",
+          "page": 2,
+          "section": "3.1 Maßnahmenkategorien",
+          "quote": "Mit folgenden Maßnahmenkategorien kann teilgenommen werden: • Nichtproduktive Ackerflächen • Agroforststreifen"
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "O61C-CORE-ENUM",
+      "family": "MISSING_EVIDENCE",
+      "severity": "medium",
+      "title": "Allowed category names depend on an external enum validator",
+      "assessment": "An unrecognized nonempty category list can retain contract_valid=true. No rate matches it, so this is an admission/input-boundary finding, not evidence that the invalid category receives a premium. The app must enforce or reject the enum before native invocation.",
+      "source_evidence": [
+        {
+          "source_path": "sources/oepul/originals/o6_1c_nichtproduktive_ackerflaechen_und_agroforststreifen_2025_10.pdf",
+          "source_sha256": "ec55abec48b67941fbf8a73b7b2d052dea8ec7f2ad26655cf90220c15ab39a9a",
+          "page": 2,
+          "section": "3.1 Maßnahmenkategorien",
+          "quote": "Mit folgenden Maßnahmenkategorien kann teilgenommen werden: • Nichtproduktive Ackerflächen • Agroforststreifen"
+        }
+      ],
+      "probes": [
+        "O61C-CORE-unknown-category"
+      ]
+    }
+  ],
+  "probes": [
+    {
+      "case_id": "O61C-CORE-band-0.3",
+      "input": {
+        "farm": {
+          "year": 2026,
+          "applicant": {
+            "type": "natural_person",
+            "public_body_share_percent": 0,
+            "is_active_farmer": true,
+            "carries_out_agricultural_activity": true
+          },
+          "oepul": {
+            "first_participation_year": 2025,
+            "participating_measures": [
+              "o6_1c"
+            ],
+            "o6_1c": {
+              "categories": [
+                "npa"
+              ],
+              "first_contract_year": 2026,
+              "application_date": "2025-12-31",
+              "field_list_submission_date": "2026-04-15",
+              "commitment_year_completed": true
+            }
+          }
+        },
+        "land": {
+          "total_area_ha": 10,
+          "arable_area_ha": 10,
+          "parcels": [
+            {
+              "parcel_id": "N1",
+              "area_ha": 0.3,
+              "field_use_type": "Grünbrache",
+              "oepul_codes": [
+                "NPA"
+              ],
+              "in_austria": true,
+              "correctly_identified": true,
+              "other_oepul_measures": [],
+              "operations": {
+                "psm_used": false,
+                "fertilizer": {
+                  "mineral_n_kg_per_ha": 0,
+                  "organic_n_kg_per_ha": 0
+                }
+              },
+              "o6_1c": {
+                "category": "npa",
+                "npa": {
+                  "establishment": "retained_existing",
+                  "first_application_year": 2025,
+                  "cut_in_previous_year": true,
+                  "cutting_events": [
+                    {
+                      "date": "2026-08-01",
+                      "type": "care_mowing",
+                      "biomass_removed": false
+                    }
+                  ],
+                  "grazed": false,
+                  "fertilizer_applied": false,
+                  "removal_method": "none",
+                  "gloez4_buffer_area_ha": 0
+                }
+              }
+            }
+          ]
+        }
+      },
+      "query": "data.oepul.o6_1c.premium_band",
+      "expectations": [
+        {
+          "operator": "equals",
+          "path": [],
+          "expected": {
+            "min_eur": 105,
+            "max_eur": 135,
+            "guaranteed_eur": 105
+          }
+        }
+      ],
+      "source_evidence": [
+        {
+          "source_path": "sources/oepul/originals/o6_1c_nichtproduktive_ackerflaechen_und_agroforststreifen_2025_10.pdf",
+          "source_sha256": "ec55abec48b67941fbf8a73b7b2d052dea8ec7f2ad26655cf90220c15ab39a9a",
+          "page": 4,
+          "section": "7 Höhe der Prämie",
+          "quote": "350,0 bis 450,0 €/ha"
+        },
+        {
+          "source_path": "sources/oepul/originals/o6_1c_nichtproduktive_ackerflaechen_und_agroforststreifen_2025_10.pdf",
+          "source_sha256": "ec55abec48b67941fbf8a73b7b2d052dea8ec7f2ad26655cf90220c15ab39a9a",
+          "page": 1,
+          "section": "1 Übersicht",
+          "quote": "Die Prämie wird für nichtproduktive Ackerflächen (bis maximal 4 % der Ackerfläche) und"
+        },
+        {
+          "source_path": "sources/oepul/originals/o6_1c_nichtproduktive_ackerflaechen_und_agroforststreifen_2025_10.pdf",
+          "source_sha256": "ec55abec48b67941fbf8a73b7b2d052dea8ec7f2ad26655cf90220c15ab39a9a",
+          "page": 5,
+          "section": "7 Höhe der Prämie",
+          "quote": "Garantiert ist dabei der angegebene Mindestbetrag."
+        }
+      ],
+      "expectation_kind": "source_derived_component",
+      "scope_note": "Component estimate at the stated band, under the explicit synthetic assumptions; no certification of complete-farm payment eligibility."
+    },
+    {
+      "case_id": "O61C-CORE-band-0.5",
+      "input": {
+        "farm": {
+          "year": 2026,
+          "applicant": {
+            "type": "natural_person",
+            "public_body_share_percent": 0,
+            "is_active_farmer": true,
+            "carries_out_agricultural_activity": true
+          },
+          "oepul": {
+            "first_participation_year": 2025,
+            "participating_measures": [
+              "o6_1c"
+            ],
+            "o6_1c": {
+              "categories": [
+                "npa"
+              ],
+              "first_contract_year": 2026,
+              "application_date": "2025-12-31",
+              "field_list_submission_date": "2026-04-15",
+              "commitment_year_completed": true
+            }
+          }
+        },
+        "land": {
+          "total_area_ha": 10,
+          "arable_area_ha": 10,
+          "parcels": [
+            {
+              "parcel_id": "N1",
+              "area_ha": 0.5,
+              "field_use_type": "Grünbrache",
+              "oepul_codes": [
+                "NPA"
+              ],
+              "in_austria": true,
+              "correctly_identified": true,
+              "other_oepul_measures": [],
+              "operations": {
+                "psm_used": false,
+                "fertilizer": {
+                  "mineral_n_kg_per_ha": 0,
+                  "organic_n_kg_per_ha": 0
+                }
+              },
+              "o6_1c": {
+                "category": "npa",
+                "npa": {
+                  "establishment": "retained_existing",
+                  "first_application_year": 2025,
+                  "cut_in_previous_year": true,
+                  "cutting_events": [
+                    {
+                      "date": "2026-08-01",
+                      "type": "care_mowing",
+                      "biomass_removed": false
+                    }
+                  ],
+                  "grazed": false,
+                  "fertilizer_applied": false,
+                  "removal_method": "none",
+                  "gloez4_buffer_area_ha": 0
+                }
+              }
+            }
+          ]
+        }
+      },
+      "query": "data.oepul.o6_1c.premium_band",
+      "expectations": [
+        {
+          "operator": "equals",
+          "path": [],
+          "expected": {
+            "min_eur": 140,
+            "max_eur": 180,
+            "guaranteed_eur": 140
+          }
+        }
+      ],
+      "source_evidence": [
+        {
+          "source_path": "sources/oepul/originals/o6_1c_nichtproduktive_ackerflaechen_und_agroforststreifen_2025_10.pdf",
+          "source_sha256": "ec55abec48b67941fbf8a73b7b2d052dea8ec7f2ad26655cf90220c15ab39a9a",
+          "page": 4,
+          "section": "7 Höhe der Prämie",
+          "quote": "350,0 bis 450,0 €/ha"
+        },
+        {
+          "source_path": "sources/oepul/originals/o6_1c_nichtproduktive_ackerflaechen_und_agroforststreifen_2025_10.pdf",
+          "source_sha256": "ec55abec48b67941fbf8a73b7b2d052dea8ec7f2ad26655cf90220c15ab39a9a",
+          "page": 1,
+          "section": "1 Übersicht",
+          "quote": "Die Prämie wird für nichtproduktive Ackerflächen (bis maximal 4 % der Ackerfläche) und"
+        },
+        {
+          "source_path": "sources/oepul/originals/o6_1c_nichtproduktive_ackerflaechen_und_agroforststreifen_2025_10.pdf",
+          "source_sha256": "ec55abec48b67941fbf8a73b7b2d052dea8ec7f2ad26655cf90220c15ab39a9a",
+          "page": 5,
+          "section": "7 Höhe der Prämie",
+          "quote": "Garantiert ist dabei der angegebene Mindestbetrag."
+        }
+      ],
+      "expectation_kind": "source_derived_component",
+      "scope_note": "Component estimate at the stated band, under the explicit synthetic assumptions; no certification of complete-farm payment eligibility."
+    },
+    {
+      "case_id": "O61C-CORE-both-categories",
+      "input": {
+        "farm": {
+          "year": 2026,
+          "applicant": {
+            "type": "natural_person",
+            "public_body_share_percent": 0,
+            "is_active_farmer": true,
+            "carries_out_agricultural_activity": true
+          },
+          "oepul": {
+            "first_participation_year": 2025,
+            "participating_measures": [
+              "o6_1c"
+            ],
+            "o6_1c": {
+              "categories": [
+                "agroforest",
+                "npa"
+              ],
+              "first_contract_year": 2026,
+              "application_date": "2025-12-31",
+              "field_list_submission_date": "2026-04-15",
+              "commitment_year_completed": true
+            }
+          }
+        },
+        "land": {
+          "total_area_ha": 10,
+          "arable_area_ha": 10,
+          "parcels": [
+            {
+              "parcel_id": "N1",
+              "area_ha": 0.3,
+              "field_use_type": "Grünbrache",
+              "oepul_codes": [
+                "NPA"
+              ],
+              "in_austria": true,
+              "correctly_identified": true,
+              "other_oepul_measures": [],
+              "operations": {
+                "psm_used": false,
+                "fertilizer": {
+                  "mineral_n_kg_per_ha": 0,
+                  "organic_n_kg_per_ha": 0
+                }
+              },
+              "o6_1c": {
+                "category": "npa",
+                "npa": {
+                  "establishment": "retained_existing",
+                  "first_application_year": 2025,
+                  "cut_in_previous_year": true,
+                  "cutting_events": [
+                    {
+                      "date": "2026-08-01",
+                      "type": "care_mowing",
+                      "biomass_removed": false
+                    }
+                  ],
+                  "grazed": false,
+                  "fertilizer_applied": false,
+                  "removal_method": "none",
+                  "gloez4_buffer_area_ha": 0
+                }
+              }
+            }
+          ]
+        }
+      },
+      "query": "count(data.oepul.o6_1c.applied_categories) == 2",
+      "expectations": [
+        {
+          "operator": "equals",
+          "path": [],
+          "expected": true
+        }
+      ],
+      "source_evidence": [
+        {
+          "source_path": "sources/oepul/originals/o6_1c_nichtproduktive_ackerflaechen_und_agroforststreifen_2025_10.pdf",
+          "source_sha256": "ec55abec48b67941fbf8a73b7b2d052dea8ec7f2ad26655cf90220c15ab39a9a",
+          "page": 2,
+          "section": "3.1 Maßnahmenkategorien",
+          "quote": "Mit folgenden Maßnahmenkategorien kann teilgenommen werden: • Nichtproduktive Ackerflächen • Agroforststreifen"
+        }
+      ],
+      "expectation_kind": "source_derived_component",
+      "scope_note": "Tests category set construction only; does not assert that a corresponding agroforest parcel has been supplied."
+    },
+    {
+      "case_id": "O61C-CORE-unknown-category",
+      "input": {
+        "farm": {
+          "year": 2026,
+          "applicant": {
+            "type": "natural_person",
+            "public_body_share_percent": 0,
+            "is_active_farmer": true,
+            "carries_out_agricultural_activity": true
+          },
+          "oepul": {
+            "first_participation_year": 2025,
+            "participating_measures": [
+              "o6_1c"
+            ],
+            "o6_1c": {
+              "categories": [
+                "invalid_category"
+              ],
+              "first_contract_year": 2026,
+              "application_date": "2025-12-31",
+              "field_list_submission_date": "2026-04-15",
+              "commitment_year_completed": true
+            }
+          }
+        },
+        "land": {
+          "total_area_ha": 10,
+          "arable_area_ha": 10,
+          "parcels": [
+            {
+              "parcel_id": "N1",
+              "area_ha": 0.3,
+              "field_use_type": "Grünbrache",
+              "oepul_codes": [
+                "NPA"
+              ],
+              "in_austria": true,
+              "correctly_identified": true,
+              "other_oepul_measures": [],
+              "operations": {
+                "psm_used": false,
+                "fertilizer": {
+                  "mineral_n_kg_per_ha": 0,
+                  "organic_n_kg_per_ha": 0
+                }
+              },
+              "o6_1c": {
+                "category": "npa",
+                "npa": {
+                  "establishment": "retained_existing",
+                  "first_application_year": 2025,
+                  "cut_in_previous_year": true,
+                  "cutting_events": [
+                    {
+                      "date": "2026-08-01",
+                      "type": "care_mowing",
+                      "biomass_removed": false
+                    }
+                  ],
+                  "grazed": false,
+                  "fertilizer_applied": false,
+                  "removal_method": "none",
+                  "gloez4_buffer_area_ha": 0
+                }
+              }
+            }
+          ]
+        }
+      },
+      "query": "data.oepul.o6_1c.decision.contract_valid",
+      "expectations": [
+        {
+          "operator": "equals",
+          "path": [],
+          "expected": false
+        }
+      ],
+      "source_evidence": [
+        {
+          "source_path": "sources/oepul/originals/o6_1c_nichtproduktive_ackerflaechen_und_agroforststreifen_2025_10.pdf",
+          "source_sha256": "ec55abec48b67941fbf8a73b7b2d052dea8ec7f2ad26655cf90220c15ab39a9a",
+          "page": 2,
+          "section": "3.1 Maßnahmenkategorien",
+          "quote": "Mit folgenden Maßnahmenkategorien kann teilgenommen werden: • Nichtproduktive Ackerflächen • Agroforststreifen"
+        }
+      ],
+      "expectation_kind": "input_contract_robustness_outside_declared_enum",
+      "scope_note": "Intentional input-contract stress control: invalid_category is outside the proposed enum. Expected rejection is the desired positive-evidence contract, not a valid real-farm counterexample or a claim that a premium is actually released."
+    }
+  ],
+  "limitations": [
+    "The full new GSP-AV reading is owned and documented by the general/legal part; core does not claim to have reread all94pages.",
+    "Existing seven exact-hash shared sources reuse the earlier full reading; applicability and source-version conflicts remain in the respective authored parts.",
+    "All controls are synthetic public development probes. No model selftest expectations or private study references were used."
+  ]
+}

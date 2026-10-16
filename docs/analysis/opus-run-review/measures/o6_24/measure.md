@@ -1,0 +1,19 @@
+# o6_24 – N-Mengen, Zeiten, Buch und wasserrechtliche Basis
+
+128 öffentliche Entwicklungs-/Technikfälle, 256 typisierte Vergleiche: 251 erfüllt, 5 abweichend. Status: `{'defined': 127, 'runtime_error': 1}`. Keine Genauigkeitsquote oder Expertenabnahme.
+
+41 weitere Regeln einzeln beurteilt; zusammen mit zwei Kernüberlappungen 95 Regeln durch 97 Urteile abgedeckt. Alle zehn Module mit 1.250 Zeilen, 4.980 Bytes Annahmen und 13 JSON-Dateien vollständig gelesen. ÖPUL-Auflagen nach Anlage 3 Punkt 1/2/3 und § 5 werden korrekt von zusätzlichen wasserrechtlichen Pflichten nach Punkten 4/5 und § 6 getrennt. Keine frische Diagnose erzeugt eine erfundene 100%-AMA-Stufe.
+
+Alle sechs Klassen, bekannte tatsächlich unzugeordnete C-Fläche, gewichtete Mengen, alle sechs 10%-Bedingungen, getrennte Teilschläge, zwölf Düngezeiträume und Wintergerstensonderregel sind abgeglichen. 133,2 kg sind die exakte Rechnung des gedruckten 133-kg-Beispiels; die Rundung auf zwei Nachkommastellen ist eine erklärte Interpretation. Die Kernmenge 40 kg liegt sicher unter sämtlichen Varianten. Ein unbekannter GIS-Nachweis ist keine gesetzlich tatsächlich unzugeordnete Fläche.
+
+Die 10%-Option ist nur Ackerbau, winterhart direkt danach, gleiche Fläche, keine Düngung/Leguminosen, Entfernung erst vor Frühjahrsanbau und vorherige schriftliche Meldung. Wintergerste wird mit 30 kg, sechs Tagen, spätestens 25. September, Vorhermeldung, Begrünung und ohne 10%-Option geprüft. Kompost und Huf-/Klauentierfestmist sind allein von Tab. 4 ausgenommen; ohne gelieferte NAPV wird daraus keine uneingeschränkte Düngungserlaubnis.
+
+Bekannte N-Überschreitung und Termine werden diagnostiziert. Der Nmin-Trigger erfasst aber nur 80 Tab.-3-Tarifkulturen: tatsächlich als Gemüse aufgeführte Paprika erhält keinen fehlenden-Nmin-Befund. Die korrekte externe NAPV-Tabellenlückennotiz ersetzt die gelieferte allgemeine Gemüse-Nmin-Pflicht nicht. Bei tatsächlicher Wechselwiese ohne optionalen Override wird außerdem der bekannte eigene Termin bis 15. Oktober nicht zugeordnet; 1. Oktober erhält eine falsche Periodendiagnose.
+
+Alle fünf jährlichen Buchfelder, sieben Jahre, vier PSM-Details und N-Einträge werden kontrolliert. Der für Mineraldünger erforderliche Handelsname wird dagegen nicht geprüft. Wöchentliche Eintragungszeit gibt es nur für N-Gaben; die erforderlichen PSM-/Anbau-/Ernte-Eintragszeiten können im Vertrag nicht vollständig dargestellt werden. Fehlende Eingabebelege werden nicht als nachgewiesene reale Papierverstöße ausgegeben.
+
+Zwei 60-kg-Gaben mit 20/21 Tagen, 10/11 Tage bis Anbau, 175/210 kg feldfallend, neun Familien mit Pausen und Spargelausnahme sowie sieben Schongebietstatbestände sind einzeln geprüft. Die 90-kg-Schwelle betrifft den tatsächlich intensiven Weidezweig; der daneben unbedingte Freilaufstallzweig ist nicht gesondert darstellbar. Die farmweite Tätigkeitsliste heißt bereits ausdrücklich Widmungsgebiet 2; ein ungenutztes Parzellenflag wird nicht als unbedingter Geografieverstoß ausgegeben. Gartenbauausnahme und historische/future Crop-Zuordnung bleiben qualifiziert.
+
+Die Wasserprobenmethode wird geprüft; eine zukünftige 2027-Probe erfüllt jedoch wegen negativem Jahresabstand die 2026-Anforderung. Das ist ein technischer Chronologievertrag und keine behauptete bereits existente Zukunftsprobe. Stichtag versus Kalenderjahre bleibt offen. Alle 2026-Dürre-Qualifier (spät geerntete Kultur, tatsächlicher Dürreausfall, Bezirk) sind vorhanden und werden gewürdigt.
+
+Die neue GWSP-Anlage gilt ab 8. Juni 2026. Vorgängerwerte fehlen tatsächlich. Eine Jun-7-Kontrolle erwartet deshalb einen ausdrücklichen Quellenstandshinweis, keinen erfundenen alten N-Grenzwert. Rohdatenjahr- und kleine Restflächenkontrollen sind ausdrücklich bedingte Input-/Rundungsverträge, keine universellen zusätzlichen Rechtsfehler.

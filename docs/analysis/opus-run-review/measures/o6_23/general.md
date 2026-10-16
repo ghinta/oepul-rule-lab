@@ -1,0 +1,17 @@
+# o6_23 – Antrag, Übernahme, Vertrag und allgemeine Berechnung
+
+70 öffentliche Entwicklungs-/Technikfälle, 161 typisierte Vergleiche: 146 erfüllt, 15 abweichend. Status: `{'defined': 70}`. Keine Genauigkeitsquote oder Expertenabnahme.
+
+60 allgemeine Katalogregeln sind einzeln beurteilt. Alle 88 vollständigen Aussagen, Bedingungen, Ergebnisse, Symbole und Quellenverweise sind gelesen. Acht Originale gehören tatsächlich zum Paket: das neue Merkblatt vollständig auf allen fünf Seiten sowie sieben exakt hashidentische, zuvor vollständig gelesene allgemeine Originale. SRL 91–92, Annex 66–67, 90 und 103 sowie ATB 6–8, 10, 14–15 und 19 wurden frisch vollständig abgeglichen. GSP, NAPV und September-2-Hinweis wurden diesem Run nicht geliefert.
+
+Die drei ganzen MAIN-Positivobjekte bestehen alle neun Vergleiche: zwei Hektar GI07 ergeben 367,20 € in 2025 und 2026. Der dritte Fall mit tatsächlichem GL04/DIVSZ und rechtmäßig erfüllter UBB-1A-Begleitteilnahme ergibt 453,60 € und zwei Hektar potenzielle Biodiversitätsanrechnung. Die tatsächliche UBB-Nichttierhalterbasis von 27 €/ha ist bereits vor der ersten Ausführung als andere Zahlung berücksichtigt; weitere optionale UBB-Zuschläge werden nicht behauptet. Alle Zugangs-, aktuellen Antrags-, Gebiets-, Projekt-, Bewirtschaftungs- und Behördenprämissen sind positiv bekannt. Keine neue vollständige UBB-Prüfung wird behauptet.
+
+Normaler unbekannter Maßnahmenantrag oder Vertragsbeginn führt korrekt zu null. Bekannte öffentliche Antragsteller, unzulässige Beteiligung, falscher Aktivstatus, Kontrolle verweigert, Ausschluss und Vertragsende sperren den Betrag ebenfalls. Zehn fehlende Antragsteller-/Anteil-/relevante Erstjahresnachweise erlauben dagegen weiter positive Berechnung. Die Erstjahresgegenfälle haben tatsächlich nur einen Hektar, sodass die fehlende Information entscheidungsrelevant ist.
+
+Eine tatsächlich fristgerecht genehmigte Übernahme durch einen bisher nicht teilnehmenden Betrieb ist ein eigener Quellenweg. Im ausdrücklich bekannten N/A-Fall des normalen neuen Dezemberantrags erlaubt der Übernahmehelfer 17. April 2023 bzw. 15. April 2026, MAIN fordert trotzdem den normalen Antrag und ergibt null statt 340/367,20 €. Ein Datum oder ein bloß gestelltes Ersuchen wird dabei nicht automatisch als Genehmigung behandelt. Der aktuelle Eingabevertrag drückt die Ausnahme unzureichend aus.
+
+Die Ausnahme nach dem letzten Einstiegsjahr in ATB 6.3 gilt ausdrücklich für mehrjährige Maßnahmen. Natura 2000 ist einjährig, letzter Einstieg 2027. Eine erste eigene, noch unausgeführte positive 2028-Erwartung wurde nach vollständiger Quellenlektüre vor der ersten General-Ausführung korrigiert und erhalten. Der native Helfer erlaubt 2028 weiterhin; MAIN ergibt im geprüften N/A-Fall korrekt null. Die allgemeine 2028-Fristausnahme in der Tabelle ist deshalb kein eigenständiger Quellenfehler.
+
+Ein tatsächlicher alter Ausstieg 2024 blockiert trotz tatsächlich akzeptiertem neuen Antrag für 2025 die einjährige neue Teilnahme. Dies ist ausdrücklich ein qualifizierter Ereignis-/Vertragszuordnungsfall, keine Behauptung einer gültigen aktuellen Abmeldung vor ihrem eigenen Beginn.
+
+Alle vier Modulationsgewichte sind korrekt. Der Verbraucher nimmt jedoch Heim- und Almfläche gemeinsam: 120 ha Heim plus 100 ha Alm reduzieren die Heimplatzprämie auf 363,86 statt 367,20 €. Tatsächliche aktuelle Sanktionsstufen sind im Hauptpfad verbunden. Kampagne 2029 ist korrekt null.

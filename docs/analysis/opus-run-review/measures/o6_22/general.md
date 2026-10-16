@@ -1,0 +1,17 @@
+# o6_22 – Zugang, Vertrag und Fristen
+
+63 öffentliche Entwicklungs-/Technikfälle, 134 typisierte Vergleiche: 122 erfüllt, 12 abweichend. Status: `{'defined': 63}`. Keine Genauigkeitsquote oder Expertenabnahme.
+
+41 Katalogregeln sind einzeln beurteilt. Alle 125 Aussagen einschließlich Bedingungen, Ergebnissen, Symbolen und Quellenreferenzen wurden gelesen. Zehn allgemeine Originale sind exakt hashidentisch mit zuvor vollständig gelesenen Paketen; SRL 88–90 und GSP 10, 23–25, 30 wurden frisch vollständig abgeglichen. GSP und NAPV gehören tatsächlich zum Quellenpaket.
+
+Die drei vollständigen Positivfälle bestehen alle 21 Vergleiche einschließlich ganzer MAIN-Objekte und aller Prämienkomponenten: acht tatsächliche Mastschweine im Jahresdurchschnitt ergeben 2,4 GVE und 168,48 €. Mit drei rechtzeitig beantragten und tatsächlich rechtmäßig erfüllten Zuschlägen sind es 531,36 €. Alle allgemeinen Zugangs-, aktuellen Antrags-, Eigenrechnung-, Bewirtschaftungs- und Kontrolltatsachen sind positive hypothetische Prämissen. Ein Stall mit 10 m² und 4 m² Einstreu genügt für acht 90-kg-Tiere. Es wird keine biologisch unmögliche Behauptung erhoben, dieselben acht Tiere blieben ein Jahr lang bei 90 kg: wechselnde Kohorten erfüllen durchgehend die Pflichten ab 32 kg bis zur Schlachtung.
+
+Vier zulässige Rechtsformen, der öffentliche Ausschluss für Maßnahme 22, bekannte Anteile über 25 %, falscher Aktivstatus, Erstjahresgröße, falsche Übernahme und unterschrittene Mindestteilnahme sperren Geld korrekt. Gewöhnliche Abmeldung im laufenden Jahr ergibt null; erst nächstjährige Abmeldung lässt den laufenden Betrag bestehen. Bekannte positive besondere Übernahmen setzen tatsächliche Genehmigung und gemeinsame Herkunft von Tieren und Flächen voraus. Ein gestelltes Ersuchen allein wird nicht als Genehmigung ausgegeben.
+
+Unbekannte Gesellschaftsanteile und das erste ÖPUL-Jahr lassen weiter 168,48 € zu. Dies sind sechs Gegenfälle zum gewünschten Positivnachweisvertrag. Eine ungefilterte Kampagne 2029 ergibt ebenfalls einen Betrag; der Caller-Vertrag bleibt ausdrücklich bedingt. Aktuelle MFA-Abgabe, Vorjahreserlöschen, Kontrollankündigung vor Ausstieg, rechtliche Vertragsrevision sowie Eigenname/-rechnung sind nicht vollständig als Eingaben und Verbraucher modelliert.
+
+Die Fristen unterscheiden sich: Der Maßnahmenantrag bis 31. Dezember ist von § 5 Abs. 1 GSP-AV ausdrücklich ausgenommen. FM-/Naturmeldungen mit Ende am Sonntag 28. Juni 2026 werden dagegen auf Montag 29. Juni verschoben. Auch die Tierliste nach § 33 Abs. 2 Z 2 fällt nicht unter die Ausnahme: Samstag 15. April 2023 verlängert sich bis Montag 17. April. Native Helfer bzw. Diagnosen behandeln diese rechtzeitigen Meldungen als verspätet. Das Datum beweist noch keine anerkannte höhere Gewalt.
+
+Vier Modulationsgewichte stimmen; 120 ha Heimfläche plus 100 ha Alm reduzieren die Heimtierprämie jedoch auf 166,95 statt 168,48 €. Alle sieben behördlich vorgegebenen Kürzungsstufen, Kumulation, Wiederholung, zweite 100%-Kürzung und Übererklärung rechnen in getrennten Helfern korrekt. MAIN endet nach Modulation und verbindet diese Komponenten nicht zu einer endgültigen Behördenentscheidung. Ein entsprechend benannter Teilbetrag wird deshalb nicht unbesehen als endgültiger Förderbescheid bewertet.
+
+Die Vierwochen-Korrektur aus MB 13 und die aktuelle höhere GSP-Regel § 33 Abs. 3 lit. e unterscheiden sich in Frist-/Kontrollbedingungen. Die beiden 28-Tage-Fälle sind ausdrücklich MB-spezifisch qualifiziert. Es wird daraus kein unbedingtes Urteil über die aktuelle höhere Norm abgeleitet.

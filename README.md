@@ -173,6 +173,13 @@ und [methodische Grenzen](docs/analysis/opus-screening-20261011/method.md)
 schließen einen isolierten historischen Modelleffekt aus. CI prüft die
 Kandidaten in einem separaten Checkout; ein Merge von #79 ist dafür nicht nötig.
 
+Die darauf folgende [fachliche Einzelprüfung der Opus-Runs](docs/analysis/opus-run-review/README.md)
+beginnt mit [UBB/o6_1a](docs/analysis/opus-o6-1a-audit-20261015/README.md).
+Für diesen Run sind konkrete Quellen-/Ausführungs- und Eingabevertragsfehler
+dokumentiert; die Übernahme ist blockiert. Die übrigen 25 Einzelprüfungen stehen
+aus. Die technische Gesamtsichtung wird dadurch nicht rückwirkend zur
+fachlichen Freigabe aller Kandidaten.
+
 Der [Quellenreview und Variablenvertrag für die o6_3-App-Integration](docs/analysis/o6_3-variable-contract-20261007/README.md)
 verbindet den Adaptationsvertrag mit dem App-Stand nach PR #135 und weist
 die vor einer vollständigen Empfehlung offenen Nachweise ausdrücklich aus.
