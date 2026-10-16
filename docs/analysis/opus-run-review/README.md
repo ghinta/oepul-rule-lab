@@ -20,7 +20,7 @@ Erst nach seinem dokumentierten Prüfabschluss wird der nächste Run begonnen.
 Der Abschluss kann erhebliche Blocker ergeben und bedeutet keine automatische
 App-Übernahme oder Abnahme durch GM/Domainexpert:innen.
 
-Aktuell: **25 Einzelprüfungen abgeschlossen und blockiert, 1 ausständig;
+Aktuell: **26 Einzelprüfungen abgeschlossen und blockiert, keine ausständig;
 keine Expertenfreigabe und keine App-Promotion aus dieser Runde.**
 
 | Reihenfolge | Run / Maßnahme | Status |
@@ -50,7 +50,7 @@ keine Expertenfreigabe und keine App-Promotion aus dieser Runde.**
 | 23 | [o6_21 – Tierwohl Stallhaltung Rinder](measures/o6_21/README.md) | Alle 95 Regeln, 36 Tabellen, neun Vorschläge/128 Blätter und 326 Entwicklungs-/Technikfälle geprüft; Übernahme blockiert. Eigene Gegenkontrolle; bekannte Mindestfläche, Fristenden, gültige Nullwerte und qualifizierte Jahresscopes getrennt. |
 | 24 | [o6_22 – Tierwohl Schweinehaltung](measures/o6_22/README.md) | Alle 125 Regeln, 35 Tabellen, 17 Vorschläge/118 Blätter und 350 Entwicklungs-/Technikfälle geprüft; Übernahme blockiert. Eigene Gegenkontrolle; Betragskomponenten, Nachweise und qualifizierte Quellenfragen getrennt. |
 | 25 | [o6_23 – Natura 2000 und andere Schutzgebiete](measures/o6_23/README.md) | Alle 88 Regeln, 20 Tabellen, neun Vorschläge/46 Blätter und 300 Entwicklungs-/Technikfälle geprüft; Übernahme blockiert. Eigene Gegenkontrolle; genehmigte Übernahme, Positivnachweise und qualifizierte Cap-/Vorschussverträge getrennt. |
-| 26 | o6_24 – Wasserrahmenrichtlinie | Einzelprüfung in Bearbeitung. |
+| 26 | [o6_24 – Wasserrahmenrichtlinie](measures/o6_24/README.md) | Alle 95 Regeln, 32 Tabellen, elf Vorschläge/119 Blätter und 537 Entwicklungs-/Technikfälle geprüft; Übernahme blockiert. Eigene Gegenkontrolle; zwei eigene falsche Sollvergleiche sowie zeitlich gemischte 2023-Vorlage ausdrücklich abgegrenzt. |
 
 [queue.json](queue.json) bindet für jede der 26 Positionen die exakte Run-ID und
 den Kandidatencommit. Bestehende Quellenreviews manueller Adaptationen oder
