@@ -1,0 +1,15 @@
+# o6_21 – Rinder, Stall und Kompost
+
+85 öffentliche Entwicklungs-/Technikfälle, 184 typisierte Vergleiche: 178 erfüllt, 6 abweichend. Status: `{'defined': 85}`. Keine Genauigkeitsquote oder Expertenabnahme.
+
+46 übrige Katalogregeln sind einzeln beurteilt. Das neue Merkblatt wurde auf allen zwölf Seiten gelesen, ebenso der ganze neue Artikel vom 2 September einschließlich der anderen Tiermaßnahmen. Alle neun Module mit 1.481 Zeilen, 5.939 Bytes Annahmen, 95 Katalogaussagen, neun vollständigen Vorschlägen und fünf Datendateien wurden vollständig gelesen.
+
+Die Original-Stallbeispiele stimmen: fünf Bullen benötigen 21 m²/8,4 m² Liegen. Zwölf Mutterkühe plus zwölf 300 kg-Jungtiere benötigen 108 m²/43,2 m², bei 351 kg 115,2 m²/46,08 m². Mutterkühe zählen auch ohne Förderung für Kapazität; 12 geförderte Jungtiere ergeben 7,2 RGVE mit tatsächlich durchgehender Qplus-Teilnahme. Die Grenzen 2 RGVE, TGD>10,3 cm harte Einstreu, 5% Perforation, 10 Tage notwendige kranke Einzelhaltung und Kälberalter unter 21 Tagen sind mit geeigneten Kontrollen geprüft.
+
+Zwei Nichtkuh-Rinder mit unbekanntem Gewicht werden in der Flächensumme weggelassen. Die bekannte Box von nur 1 m² genügt aber keiner möglichen Originalklasse: schon 2×1,8=3,6 m² sind zwingend. Trotzdem keine Flächenverletzung und 388,8 €. Eine nichtleere Referenz auf einen gar nicht vorhandenen Stall erlaubt denselben Betrag und verletzt den gewünschten Positivnachweis-/Referenzvertrag.
+
+Drei weitere Gegenfälle bleiben qualifiziert: Eine Dezember-Momentaufnahme kann bekannte frühere Überbelegung verlieren; die eigenen Annahmen verlangen ausdrücklich mehrere Auswertungen. Eine notwendige Krankheitsperiode nach Alterskategorieaustritt zählt nativ insgesamt 20 statt 10 förderrelevante Tage; der Pflicht-/Ausnahmeintervallvertrag ist vor Übernahme zu klären. Bekannte ungeregelte Leckage bei befestigter Kompostlagerung wird vom ausschließlich unbefestigten NAPV-Zweig nicht erfasst; allgemeine Lagergenehmigung/Dichtheit muss mit dem Scope verbunden werden. Daraus wird keine automatische erfundene 100%-Geldsanktion abgeleitet.
+
+Die tatsächliche ganzjährige positive Mischkompostierung besteht in 2025/2026: gesamter jährlicher Festmist, kontinuierlich korrekt 1: 1 Grünschnitt plus geeignetes Heißrotteverfahren auf rechtmäßig dichter entwässerter gedeckter Fläche und vollständige Anlage-/Verwendungsdokumentation. Der Zuschlag 43,2 € ergibt zusammen 432 €. Ein einzelner Juni-Haufen wird nicht als Beweis für erst im Dezember anfallenden Mist ausgegeben. Einzelmieten prüfen außerdem vollständige Geräteumsetzung, mindestens 14 Tage Abstand, dokumentierten externen Wender und die fünf Pflanzenmaterialien. Kompoststall sperrt korrekt nur den Zuschlag.
+
+Offen bleiben die gedruckte Überschneidung bis 500/ab 500 kg, die historische Wendefrei-Zulässigkeit ab 2023 und amtliche Rundungsreihenfolge. Native≤500/>500 und perTier-r4/Geld-r2 sind erklärte Interpretationen; daraus wurden keine unbedingten 500 kg- oder Cent-Rechtsfehler erfunden. Echte RDB-, TGD-, Qplus-, bauliche, zeitliche und behördliche Tatsachen bleiben vorgelagert zu verifizieren.

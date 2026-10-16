@@ -20,7 +20,7 @@ Erst nach seinem dokumentierten Prüfabschluss wird der nächste Run begonnen.
 Der Abschluss kann erhebliche Blocker ergeben und bedeutet keine automatische
 App-Übernahme oder Abnahme durch GM/Domainexpert:innen.
 
-Aktuell: **22 Einzelprüfungen abgeschlossen und blockiert, 4 ausständig;
+Aktuell: **23 Einzelprüfungen abgeschlossen und blockiert, 3 ausständig;
 keine Expertenfreigabe und keine App-Promotion aus dieser Runde.**
 
 | Reihenfolge | Run / Maßnahme | Status |
@@ -47,7 +47,7 @@ keine Expertenfreigabe und keine App-Promotion aus dieser Runde.**
 | 20 | [o6_18 – Naturschutz](measures/o6_18/README.md) | Alle 125 Regeln, 30 Tabellen, 30 Vorschläge/112 Blätter und 529 Entwicklungs-/Technikfälle geprüft; Übernahme blockiert. Eigene Gegenkontrolle und erhaltene eigene Fehlkonstruktionen ausdrücklich abgegrenzt. |
 | 21 | [o6_19 – Ergebnisorientierte Bewirtschaftung](measures/o6_19/README.md) | Alle 102 Regeln, 28 Tabellen, 94 Vorschläge/97 Blätter und 372 Entwicklungs-/Technikfälle geprüft; Übernahme blockiert. Eigene Gegenkontrolle; gewünschter Positivnachweis, tatsächliche Sachverhalte und Strukturstress getrennt. |
 | 22 | [o6_20 – Tierwohl Weide](measures/o6_20/README.md) | Alle 97 Regeln, 23 Tabellen, sechs Vorschläge/93 Blätter und 262 Entwicklungs-/Technikfälle geprüft; Übernahme blockiert. Eigene Gegenkontrolle; aktuelle Tatsachen, Positivnachweis, Doppelrepräsentation und Strukturstress getrennt. |
-| 23 | o6_21 – Tierwohl Stallhaltung Rinder | Einzelprüfung in Bearbeitung. |
+| 23 | [o6_21 – Tierwohl Stallhaltung Rinder](measures/o6_21/README.md) | Alle 95 Regeln, 36 Tabellen, neun Vorschläge/128 Blätter und 326 Entwicklungs-/Technikfälle geprüft; Übernahme blockiert. Eigene Gegenkontrolle; bekannte Mindestfläche, Fristenden, gültige Nullwerte und qualifizierte Jahresscopes getrennt. |
 | 24–26 | o6_22 bis o6_24, aufsteigend | Jeweilige Einzelprüfung ausständig. |
 
 [queue.json](queue.json) bindet für jede der 26 Positionen die exakte Run-ID und
