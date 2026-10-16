@@ -1,42 +1,41 @@
-# Verifikation der Diagnosevorbereitung
+# Verification of diagnostic preparation
 
-Die Prüfungen bestätigen reproduzierbare Entwicklungsbeobachtungen, keine
-unabhängigen fachlichen Sollwerte oder Methodfreigabe.
+These checks establish reproducible development observations. They do not
+supply independent domain labels or approve the study method.
 
-| Prüfung | Beobachtetes Ergebnis |
-|---|---|
-| Unveränderlicher Veröffentlichungsstand | PR #79 `e009eed4a83ff076b26eba33ac433ac2b0642621`; 1.430 relevante Run-/Quellen-/Profildateien gegen veröffentlichte Gitblob-SHAs geprüft |
-| Auswahl | 36 finalisierte Opus-Veröffentlichungen, genau 26 aktuelle Kandidaten und zehn ersetzte; Metadaten aller 36 gebunden |
-| Fixture-/Übersetzungsverträge | 26 gültige Fixtures; alle 78 ursprünglichen Luna-Rollen mit Zuordnungen oder Lücken erfasst |
-| Native isolierte Kompilierung | 26/26 `opa check --strict`, nur Policy und native Datennamespaces geladen |
-| Tatsächliche Teilproben | 59 Ausführungen: 54 definierte Werte, fünf echte Laufzeitfehler; fünf explizite vollständige Fixture-Lücken |
-| Opus bytegenaues Replay | `python -m rulelab.opus_screening verify --candidate-root /absolute/path/candidate-e009eed`: PASS für JSON/CSV/Markdown/HTML und alle Hashbindungen |
-| Unveränderte Luna-Diagnose | Bestehendes Manifest/Fixtures/Reports unverändert; Replay liefert weiterhin 76 defined und zwei undefined aus 78 Fällen |
-| Repository-Regressionen | 136 Tests PASS, einschließlich 18 neuer Integritäts-/Ausführungschecks; diese 18 nach finaler Codeänderung erneut PASS |
-| Technischer Validator | Elf Regressionstests PASS |
-| Quellen-/App-Vertragsdossier o6_3 | Integritätsprüfung PASS; bestehende acht fachliche Promotion-Blocker bleiben offen |
-| Vier vorgeschlagene #56-Originale | Alle vier direkten PDF-Hashbindungen auch in den ausgewählten Opus-Quellensätzen identisch |
-| Unabhängige methodische Prüfung | Alle 26 Übersetzungen geprüft; unbelegte o6_9-Einzelrecords entfernt, o6_12-Query auf belegte Verbots-/Flächenprobe begrenzt; abschließend PASS für Diagnosevorbereitung |
-| Unabhängige Codeprüfung | Keine verbleibenden materiellen Befunde; beide Richtungen überlappender Report-/Kandidatenverzeichnisse werden abgelehnt |
-| Historische Unverändertheit | Kein Diff unter Runs, Quellen, Profilen, Adaptationen oder eingefrorener Luna-Diagnose; Veröffentlichungskandidaten vor/nach hashgleich |
-| Format | `git diff --check`: PASS |
+| Original check | Recorded result |
+| --- | --- |
+| Fixed publication | PR #79 at `e009eed4a83ff076b26eba33ac433ac2b0642621`; 1,430 relevant files checked against published Git blob IDs |
+| Selection | 36 finalized publications, 26 latest candidates, ten superseded; all metadata bound |
+| Translation contracts | 26 valid fixtures accounting for all 78 original Luna roles through mappings or gaps |
+| Isolated strict compilation | 26/26 passed, native policy/data only |
+| Supported partial probes | 59 executed: 54 defined, five runtime errors; five complete fixture gaps |
+| Exact Opus replay | JSON/CSV/Markdown/HTML and all bindings passed |
+| Luna execution | 76 defined, two undefined from the original 78 cases |
+| Repository regressions | 136 tests passed, including 18 new integrity/execution checks |
+| Validator | 11 tests passed |
+| o6_3 source/app contract | Passed; eight promotion blockers stayed open |
+| Four proposed thesis-clause source PDFs | Matching direct PDF hashes in the selected Opus source packs |
+| Review | All 26 translations reviewed; unsupported o6_9 individual records removed and o6_12 query narrowed to supported facts |
+| Formatting | `git diff --check` passed |
 
-Bei der Vorveröffentlichungsprüfung wurde der erste lokale Reportentwurf nach
-der o6_9-Korrektur verworfen und unter `/tmp` als Reviewcheckpoint erhalten.
-Das finale Manifest wurde erst auf den korrigierten Fixtures neu gebunden.
-Keiner der verworfenen Entwurfsstände wurde committed oder veröffentlicht.
-Die Bindungsprüfung lehnte die veränderte Eingabe unter dem alten Entwurf
-erwartungsgemäß ab. Historische Modellartefakte waren davon nicht betroffen.
+Before publication, the first local report draft was discarded after the o6_9
+correction. The final manifest bound the corrected fixture. No discarded draft
+was committed; changed input was correctly rejected against the old draft.
+Historical model rules were unaffected.
 
-Finale SHA-256-Bindungen:
+Repeat from the analysis repository root with a separate pinned candidate checkout:
 
-- Manifest: `575194a57dd09e52b52adc05de229abc7584414b32b5fadef36a9b83d4368f55`
-- Native Matrix: `4d6c4e03254d414221897b80532e3634033d3b723faffd028c263358733e851c`
-- Vergleichsmatrix: `61b7f7caf5b6fb539af4e1a03dc90660f7463ecb60f46f199de0062dda56a9dd`
-- Ergebnisse: `2c300b3e1f614caab18538ab313c58b95d0bcbfee9d7449d9e3263d5b0717ba0`
+```bash
+PYTHONPATH=src OPA_BIN=./tools/opa python -m rulelab.opus_screening verify \
+  --candidate-root ../candidate-e009eed
+```
 
-CI ergänzt einen separaten Checkout des fest gebundenen Kandidatencommits,
-prüft dessen tatsächlichen Git-HEAD und wiederholt denselben Reportvergleich.
-Der konkrete remote CI-Lauf wird auf dem PR dokumentiert, nicht vorab behauptet.
-Die vollständige Interventionsgeschichte, unabhängige Volltext-Coverage und
-fachliche Referenzentscheidungen sind keine geprüften Eigenschaften dieser Diagnose.
+CI checks the candidate Git HEAD and repeats the same comparison. A remote CI
+pass must be tied to its actual commit/run, not assumed from a local pass.
+
+The later path-privacy cleanup updates current metadata bindings, the Luna
+baseline reference and English presentation. Pinned Opus source/rule/data/test
+bytes and original fixtures/observations remain unchanged. Old report hashes
+refer to the original publication, not this updated presentation.
+See [publication rules](../../publication.md).

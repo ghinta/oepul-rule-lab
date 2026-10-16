@@ -1,12 +1,11 @@
-# Änderungsgrund
+# Why this screening exists
 
-Die vorhandenen technischen Inventare und Modellselbsttests zeigten nicht, was
-die nativen Luna-Kandidaten bei konkreten Betriebsfakten ausgeben. Für die
-Thesis-Auswahl und eine begrenzte App-Vorschau fehlten reproduzierbare Beispiele
-für Ergebnisumfang, fehlende Fakten, widersprüchliche Teilurteile und Prämienwerte.
+Technical inventories and model-written tests did not show what the existing
+Luna candidates return for specific farm facts. Reproducible cases were needed
+to choose a thesis scope and design a limited app preview.
 
-Dieser separate Diagnosepfad bindet den vollständigen historischen Luna-Bestand,
-führt 78 synthetische Entwicklungsfälle aus und speichert beobachtete Ausgaben.
-Runner, Fälle und Bericht bleiben außerhalb der historischen Workspaces. Eine
-kontrollierte Studie, normative Reparaturen, Opus-Revisionen und produktive
-App-Anbindung sind getrennte Folgearbeiten; die Grenzen stehen in [method.md](method.md).
+This separate analysis binds all 26 historical candidates, runs 78 synthetic
+development cases and records their outputs. It keeps the runner, cases and
+reports outside historical workspaces. A controlled study, rule repairs,
+Opus revisions and production app integration remain separate tasks.
+See [method.md](method.md) for scope and limits.

@@ -1,36 +1,26 @@
-# Warum diese Adaptation
+# Why this adaptation exists
 
-[Issue #97](https://github.com/ghinta/oepul-rule-lab/issues/97) dokumentiert
-belegte Grenzen des Luna-Kandidaten. Eine eigene Adaptation behebt sie,
-während die ursprünglichen Modell-Runs als Vergleichsgrundlage erhalten bleiben.
+[Issue #97](https://github.com/ghinta/oepul-rule-lab/issues/97) records supported
+limits of the Luna candidate. A separate adaptation repairs them while retaining
+the historical rules for comparison.
 
-Aktueller Tierbesatz bestimmt den aktuellen Prämiensatz; datierte
-Erstjahresnachweise bestimmen den historischen Zugang. Alle 20 RGVE-Kategorien
-werden verwendet, inklusive kleiner Equiden und Neuweltkamele. Bei Rindern
-ist der Durchschnittsbestand erforderlich; bei anderen Kategorien hat eine
-eingereichte Durchschnittstierliste Vorrang vor dem Stichtagsbestand.
+Current stock determines the current rate; dated first-year evidence determines
+historical entry. All 20 RGVE categories are used, including small equids and
+New World camelids. Cattle need average stock. A valid submitted average takes
+priority over reference-date stock for other categories.
 
-Jahr, Snapshot und Stichtag müssen zusammenpassen. Falsche Jahresbasis und
-fehlende Tatsachen ergeben `missing_data`. Nur bestätigte vollständige leere
-Mengen gelten als null. Typprüfung verhindert String-/Boolean-Verwechslungen.
+Year, snapshot and assessment date must agree. Wrong-year or missing facts
+produce `missing_data`. Only confirmed complete empty sets count as zero.
+Types remain distinct. Areas come from land classification and actual cutting
+records. An estimate is suppressed when required conditions are open or failed.
+Normative factors and rates come from bound tables.
 
-Prämienflächen werden aus Flächenart und tatsächlichen Mahddaten abgeleitet.
-Eine rechnerische Indikation wird bei offenen oder verletzten Prüfbedingungen
-unterdrückt. Normative RGVE-Faktoren und Sätze kommen aus gebundenen Tabellen.
+There is no blanket drought or force-majeure exemption. Recognition is scoped
+to obligation, year, period and parcel; experts must review its legal effect.
+“Predominant” is an explicit domain fact, not an invented 92-day rule.
 
-Keine automatische Dürrebefreiung für Ackerfutter und keine pauschale
-Unterdrückung durch höhere Gewalt. Anerkennungen werden nach Pflicht, Jahr,
-Zeitraum und Fläche eingegrenzt; ihre Rechtsfolge bleibt fachlich zu prüfen.
-„Überwiegend“ ist eine explizite fachliche Angabe, keine erfundene 92-Tage-Regel.
-
-Quellenfälle, vollständige Kategorienprüfung, Schema-/Provenienzchecks und
-OPA-Gates laufen lokal und in CI. Diese sichtbaren Entwicklungsfälle sind kein
-Golden-/Held-out-Benchmark. P1/P2 und die tatsächliche App-Promotion folgen;
-dieser begrenzte Kandidat verspricht keine vollständige Förderfähigkeitsprüfung.
-
-Review #99: Unbekannte Kulturcodes bleiben Datenlücken; nur bestätigtes
-`non_fodder` schließt Ackerland aus dem Futterflächen-Nenner aus. Nicht
-endliche Zahlen werden vor OPA abgelehnt. Verpflichtungs-IDs verweisen im
-Ergebnis auf genaue, maschinell geprüfte Quellenbelege. Die `AGENTS.md`
-grenzt Generator-Runs ausdrücklich von beauftragter Repository-Wartung
-und manuellen Adaptationen ab.
+Review #99 added protection for unknown crop codes, nonfinite numbers and exact
+obligation-to-source links. Only confirmed `non_fodder` excludes arable land
+from the forage denominator. Source, schema, provenance and OPA checks run
+locally and in CI. These visible regression cases are not hidden or golden tests.
+App integration and full eligibility checks remain separate work.

@@ -1,141 +1,98 @@
-# Methode und Grenzen der Luna-Sichtung
+# Luna screening: method and limits
 
-Diese Entwicklungssichtung gehört zu [Lab #106](https://github.com/ghinta/oepul-rule-lab/issues/106).
-Sie macht die vorhandenen Kandidaten vor der Auswahl des Thesis-Ausschnitts
-beobachtbar. Sie ist kein kontrollierter Modellvergleich und enthält keine
-unabhängig bestätigten fachlichen Sollurteile.
+This analysis supports [Lab #106](https://github.com/ghinta/oepul-rule-lab/issues/106).
+It makes existing candidates observable before choosing the thesis scope.
+It is not a controlled model comparison and has no independent expert labels.
 
-## Bestand und Bindungen
+## Bound inputs
 
-`manifest.json` bindet genau einen finalisierten `gpt-5.6-luna`-Run für jede
-der 26 Maßnahmen: o6_1a/b/c und o6_2–o6_24. Basis ist Commit
-`7a296d28cb5b92e2758c5a3889c929ea1db60fe5`. SHA-256 und Dateigröße binden
-Originalquellen, Canonical Farm Profile, Run-Metadaten, Modellkonfiguration,
-Prompt, vorgeschlagenes Profil, Policy, Daten, Modelltests, Regelkatalog,
-Annahmen und historische Prüfartefakte. Die Run-ID, Konfiguration, Datierung
-und `generation_attempt` stehen zusätzlich pro Eintrag im Manifest.
+`manifest.json` selects one finalized `gpt-5.6-luna` run for each of 26 measures:
+o6_1a/b/c and o6_2–o6_24. The historical base is
+`7a296d28cb5b92e2758c5a3889c929ea1db60fe5`. Hashes and byte sizes bind sources,
+profile, metadata, configuration, prompts, proposed profile, rules, data,
+model tests, assumptions and validation files. IDs, dates and recorded attempt
+counts identify each run. Query, input/output scope and case origin are in the
+bound fixtures. `load_paths` lists the exact executable files.
 
-Die Query und ihre Eingabe-/Ausgabedeutung stehen im jeweils hashgebundenen
-Fixture. Die exakten Policy-/Datendateien stehen in `load_paths`; deren
-historische Roots sind `runs/<run-id>/workspace/policy` und `workspace/data`.
-Reparaturen sind über die gebundenen `run.json` und `prompt.md` nachvollziehbar.
-`generation_attempt` ist die historische Runner-Metadatenzahl, keine vollständige
-Zählung aller Modellinterventionen oder selbst ausgeführten Reparaturen.
-Raw-Modelltranskripte und damalige lokale OPA-Binaries werden nicht neu veröffentlicht
-oder als Policy geladen. Die vorhandenen Modelltests dienen nur als gebundene
-Entwicklungsherkunft der Fixtures.
+The path-privacy migration updates metadata and its hash references only;
+source documents, profiles, prompts, rule/data/test files, fixtures and observed
+results retain their bytes. See [publication rules](../../publication.md).
+Raw transcripts and old local executables are not loaded or newly exported.
+Recorded attempt counts do not count every internal model repair or tool call.
 
-Die Originale werden gegen die im jeweiligen historischen Run gespeicherten
-Hashes geprüft. Neuere Quellenpakete werden nicht nachträglich zugeordnet.
-Diese Bindung beweist Dateigleichheit; sie beweist weder aktuellen Rechtsstand
-noch vollständige oder korrekte Interpretation der Dokumente. Angaben zur
-Quellendeckung und Regeltypen in der Matrix stammen aus den historischen
-Modellkatalogen und Coverage-Ledgern, nicht aus einer neuen Volltextprüfung.
+Sources are checked against each run's historical hashes, not replaced with
+newer editions. File identity does not prove current law or complete interpretation.
+Coverage and rule types are historical model claims, not a new full-text review.
 
-## Ausführung
+## Execution
 
-OPA (Open Policy Agent) führt die Rego-Regeln aus. Version 1.18.2 und die
-plattformabhängige Binary-Prüfsumme werden gegen den Repository-Pin geprüft.
-Pro Maßnahme kopiert der Runner ausschließlich die gebundenen Policy- und
-Datendateien in ein temporäres Verzeichnis. Er lädt deren **Verzeichnisse**:
-dadurch bleiben insbesondere die Datennamespaces unterhalb verschachtelter
-JSON-Verzeichnisse erhalten. Andere Maßnahmen und Modelltests werden nicht
-mitgeladen. `opa check --strict` prüft den isolierten Kandidaten neu.
+OPA 1.18.2 and its platform checksum must match the repository pins. The runner
+copies only each candidate's bound policy/data files into a temporary bundle
+and loads their directories to preserve native JSON namespaces. Other measures
+and model tests are excluded. `opa check --strict` checks each isolated bundle.
 
-Jeder Fall bekommt seine vollständige JSON-Eingabe über stdin. Es gibt keine
-Umdeutung in einen gemeinsamen Farm-Vertrag und keine implizit ergänzten Fakten.
-Die Query ist ein nativer `data.*`-Pfad oder eine ausdrücklich dokumentierte,
-begrenzte Projektion nativer Ausgaben. Bei einer Projektion kann ein undefiniertes
-Teilurteil das gesamte Objekt undefiniert machen; der Runner ersetzt es nicht.
+Each case sends its full JSON input through stdin. No common farm contract or
+implicit facts are added. Queries are native `data.*` paths or documented,
+limited projections. An undefined component can make a whole projection
+undefined; the runner does not replace it.
 
-Der Lauf verwendet `--strict-builtin-errors`, 10 Sekunden Eval- und 20 Sekunden
-Prozesslimit. Fehler sind technische Befunde. Die Capabilities schließen
-Netzwerkzugriff, aktuelle Zeit, Zufallswerte und Runtime-Umgebungsdaten aus.
-Benötigte solche Builtins würden einen sichtbaren Compile-Fehler ergeben.
-Ein vorheriger historischer Prüferfolg überschreibt keinen aktuellen Fehler.
+Execution uses `--strict-builtin-errors`, a ten-second evaluation limit and a
+20-second process limit. Capabilities exclude network access, current time,
+random values and runtime environment data. A required blocked builtin causes
+a visible compile error. A historical pass never overrides a current error.
+Bound files are checked before and after execution. Writes stay in this report
+folder; there is no model generation, formatting repair or app promotion.
 
-Vor und nach der Ausführung werden die gebundenen Dateien geprüft. Ausgaben
-liegen ausschließlich in diesem Analyseverzeichnis. Der Runner führt keine
-Modellgenerierung, Formatierungsänderung, Finalisierung oder App-Promotion aus.
+## Cases and output meaning
 
-## Fälle und Ausgabebedeutung
+Each measure has a synthetic baseline, one targeted fact change and one fact
+removal: 78 visible development cases. Some are derived from model tests;
+each fixture documents its origin. They cannot later serve as independent
+expert labels or hidden tests.
 
-Je Maßnahme enthält das Fixture eine synthetische Basis, eine einzelne gezielte
-Faktänderung und die Entfernung eines Faktwerts. Diese 78 sichtbaren Fälle
-stammen teilweise aus historischen Modelltests; Herkunft und Änderungen sind
-pro Fixture beschrieben. Sie dürfen später weder als unabhängig bestätigtes
-Gold noch als unbekannte Prüfmenge wiederverwendet werden.
+Cases start with `baseline`, followed by optional `variation` and `missing_fact`
+in that order. Unknown/reordered roles are rejected. Empty cases need an
+explicit gap. Results record full inputs, hashes, JSON-pointer changes, native
+outputs and complete OPA JSON responses. Missing, `null`, `false`, zero and
+empty lists stay distinct. Technical statuses do not imply domain correctness.
+The meaning of `eligible` and payment fields varies by measure.
 
-Ausführbare Fixtures beginnen mit `baseline`; optional folgen `variation`
-und `missing_fact` in dieser Reihenfolge. Unbekannte oder vertauschte Fallnamen
-werden vor der Ausführung abgelehnt, damit ausgeführte Fälle nicht aus den
-festen Berichtsspalten fallen. Ohne ausführbare Fälle ist ein expliziter `gap`
-erforderlich.
+Static input paths are incomplete and are not a trace of all facts read at
+runtime. One unchanged output does not prove that a fact is never used.
+Dynamic input provenance remains a limit of this diagnosis.
+Original German model notes and observed outputs remain identified as evidence
+in the English report; translating them would change the research record.
 
-`results.json` und `results/<measure>.json` enthalten vollständige Eingaben,
-Eingabehashes, JSON-Pointer-Differenzen zur Basis, native Ausgaben und die
-vollständigen OPA-JSON-Antworten. Fehlend, `null`, `false`, `0`
-und leere Listen bleiben unterscheidbar. `defined`, `undefined`, `runtime_error`
-und `compile_error` bezeichnen ausschließlich die technische Ausführung.
-`eligible=true` ist kein einheitliches fachliches Gesamturteil. Die konkrete
-Bedeutung und der Umfang von Prämienwerten stehen je Maßnahme im Fixture.
+## Repeat
 
-Die historischen statischen Eingabepfade sind als solche ausgewiesen; sie sind
-kein vollständiger dynamischer Nachweis aller tatsächlich gelesenen Fakten.
-Insbesondere können dynamische Referenzen und Berechnungen außerhalb der
-gewählten Query fehlen. Jede Variation ändert hier genau einen Fakt. Eine
-veränderte Ausgabe belegt ihre beobachtbare Wirkung in diesem Fall; eine
-unveränderte Ausgabe beweist keine allgemeine Nichtverwendung. Eine lückenlose
-dynamische Eingabeprovenienz bleibt eine konkrete Diagnosegrenze.
-
-## Wiederholung
-
-Vom Repository-Wurzelverzeichnis:
+From the repository root, using the matching local OPA executable:
 
 ```bash
-PYTHONPATH=src OPA_BIN=/absolute/path/opa python -m rulelab.screening verify
+PYTHONPATH=src OPA_BIN=./tools/opa python -m rulelab.screening verify
 ```
 
-`verify` prüft alle Bindungen, führt alle Fälle erneut aus und vergleicht JSON,
-CSV, Markdown und HTML bytegenau mit den eingecheckten Ergebnissen. Es schreibt
-keine Reports. Laufzeiten, temporäre absolute Pfade und Hostdaten werden nicht
-als Ergebnis gespeichert. CI nutzt denselben Befehl und dieselben Pins.
+`verify` checks bindings, repeats execution and compares JSON, CSV, Markdown and
+HTML byte for byte, without writes. Timings, temporary paths and host data are
+excluded from observations. `replay` regenerates outputs from bound inputs.
+`freeze` needs a new report folder and never replaces an existing manifest.
 
-`freeze` ist für eine neue Sichtung mit neuem Analyseverzeichnis gedacht und
-überschreibt kein bestehendes Manifest. `replay` regeneriert die Anzeige auf
-den bereits gebundenen Eingaben. Geänderte Fixtures oder historische Artefakte
-werden abgelehnt; eine neue Diagnose braucht ein neues Manifest.
+## App and thesis limits
 
-## Begrenzter Anschluss an App und Thesis
+A limited [app preview #139](https://github.com/ghinta/oepul-recommender/issues/139)
+needs an explicit bundle/query, input mapping and clause/parcel/farm scope.
+Show missing facts and conflicting partial results separately. Payment values
+remain unconfirmed estimates. This analysis does not implement that integration.
+The separate hay-farming adaptation in
+[App #136](https://github.com/ghinta/oepul-recommender/issues/136) has different
+rules; its output must not be equated with the historical Luna output.
 
-Für [App #139](https://github.com/ghinta/oepul-recommender/issues/139) ist eine
-begrenzte Vorschau möglich: exakt ausgewähltes Bundle und Query laden,
-Eingabevertrag explizit abbilden, Klausel-/Schlag-/Betriebsumfang kennzeichnen,
-fehlende Fakten und widersprüchliche Teilurteile getrennt zeigen. Prämienwerte
-bleiben unbestätigte Indikationen. Ein pauschales `eligible` oder `missing_data`
-reicht dafür nicht. Dieses Issue liefert die Verträge und beobachteten Lücken;
-es implementiert diese App-Verbindungen nicht.
-
-[App #136](https://github.com/ghinta/oepul-recommender/issues/136) kann den
-separaten manuell adaptierten Heuwirtschaft-Klauselbefund anzeigen. Der hier
-untersuchte historische Luna-Run wird dadurch nicht verändert. Seine Ausgabe
-darf nicht mit der Ausgabe der Adaptation gleichgesetzt werden.
-
-Die Auswahl des Thesis-Ausschnitts bleibt offen. Vor dem kontrollierten Versuch
-in [App #56](https://github.com/ghinta/oepul-recommender/issues/56) sind fachliche
-Relevanz, unterschiedliche Regeltypen, unabhängige Referenzfälle, erforderliche
-Fakten und konkret offene Auslegungen festzuhalten. Fehlerhafte Kandidaten
-werden nicht wegen ungünstiger Ausgaben ausgeschlossen. Die Matrix dokumentiert
-die Voraussetzungen; sie schätzt keine unbelegten Expertenstunden und vergibt
-keine Genauigkeitsrangfolge. Neue unabhängige Fälle und Expertenlabels sind
-je ausgewählter Regel separat zu erstellen.
-
-[App #140](https://github.com/ghinta/oepul-recommender/issues/140) blockiert
-fachliche Sollurteile dort, wo eine relevante Auslegung fehlt, und die dort
-beschriebene vollständige Heuwirtschaft-Empfehlung. Es blockiert diese technische
-Diagnose nicht pauschal. Die konkrete Abhängigkeit steht im jeweiligen Fixture.
-[Lab #107](https://github.com/ghinta/oepul-rule-lab/issues/107) folgt für Opus erst
-nach Luna und tatsächlicher Verfügbarkeit der vorgesehenen Revisionen.
-Vollständiger Quellen-/App-Ausbau bleibt in
-[Lab #108](https://github.com/ghinta/oepul-rule-lab/issues/108) und
-[App #148](https://github.com/ghinta/oepul-recommender/issues/148) als Future Work.
+Before the controlled study in
+[App #56](https://github.com/ghinta/oepul-recommender/issues/56), select relevant
+rule types and define independent cases, required facts and open interpretations.
+Keep poor candidates in scope when appropriate; do not select by favorable
+outputs. No accuracy ranking or unsupported expert-hour estimate is given.
+[App #140](https://github.com/ghinta/oepul-recommender/issues/140) blocks only
+domain judgements that need its unresolved interpretations, not all technical
+execution. Opus diagnosis is tracked in
+[Lab #107](https://github.com/ghinta/oepul-rule-lab/issues/107); full expansion
+remains future work in Lab #108 and App #148.

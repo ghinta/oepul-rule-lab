@@ -1,94 +1,55 @@
-# Grounding- und Halluzinationskontrollen
+# Source-evidence checks
 
-Status: implementiert auf dem Feature-Branch `codex/grounding-validation`.
+Rule Lab checks generated files before accepting a run. These checks catch
+invalid structures and unsupported references. They cannot prove that a legal
+sentence has been interpreted correctly.
 
-## Ziel
+## What the finalizer checks
 
-Die Generierung soll neue Regeln und benötigte Eingaben weiterhin entdecken
-können, aber weder freie JSON-Strukturen noch unbelegte Aussagen oder direkte
-Änderungen am Canonical Farm Profile unbemerkt akzeptieren.
+1. **File contracts.** Pydantic v2 models use `extra="forbid"`. Wrong types,
+   unknown fields, duplicate IDs and invalid action combinations fail. JSON
+   schemas are generated from the same models.
+2. **Quoted evidence.** Each citation gives a source hash, page, claim and short
+   exact `evidence_text`. The finalizer checks the hash and searches the
+   normalized quote on that PDF page or in the HTML source. A paraphrase fails.
+3. **Linked IDs.** Rules must reference existing citations. Each citation must
+   be used by a rule. Profile proposals and data tables must link to existing
+   rules or citations. File paths and row boundaries are checked too.
+4. **Profile proposals.** The working `canonical_farm_profile.json` must keep
+   the baseline structure. In `discover`, the model writes proposals to
+   `rules/profile_changes.json`. The finalizer checks whether each `add`,
+   `change` or `remove` fits the baseline, then writes a separate
+   `artifacts/proposed-profile.json` and profile diff. Direct profile edits fail.
+   Input paths used by rules and Rego must exist in the checked proposed profile.
+5. **Coverage and tables.** `rules/coverage.json` maps reviewed sections,
+   paragraphs, tables, footnotes and notices to rules, or explains `not_rule`
+   and `unresolved`. Core sources other than legal foundations require full
+   review, including every PDF page. Legal foundations may use a justified
+   section scope. `rules/data_inventory.json` binds every JSON data file by
+   hash and checks table pointers, row counts and citations. Array elements
+   count as rows; nested lookup tables count scalar entries.
 
-Pydantic verhindert keine fachlich falsche Aussage, wenn sie formal korrekt
-ist. Deshalb kombiniert der Finalizer fünf unterschiedliche Gates.
+OPA also checks formatting, strict compilation and tests.
 
-## Validierungskette
+## Files
 
-1. **Strikte Pydantic-Verträge**
-   
-   Alle Generator-Artefakte werden mit Pydantic v2 und `extra="forbid"`
-   eingelesen. Falsche Typen, unbekannte Felder, doppelte IDs und ungültige
-   Aktionskombinationen werden abgelehnt. Die JSON-Schemas werden direkt aus
-   denselben Modellen erzeugt.
+The model must produce `rules/rules.json`, `rules/citations.json`,
+`rules/profile_changes.json`, `rules/coverage.json`, `rules/data_inventory.json`,
+and the relevant Rego, tests, data and assumptions.
 
-2. **Belegprüfung**
-   
-   Jeder Quellenbeleg enthält `source_sha256`, Seite, Claim und einen kurzen
-   wörtlichen `evidence_text`. Der Finalizer prüft den Hash und sucht den
-   normalisierten Beleg auf genau der angegebenen PDF-Seite beziehungsweise in
-   der HTML-Quelle. Eine bloße Paraphrase besteht dieses Gate nicht.
+The finalizer writes `artifacts/grounding-validation.json`,
+`artifacts/direct-profile-diff.json`, `artifacts/proposed-profile.json`,
+`artifacts/profile-diff.json`, OPA validation results, metrics and an inventory.
 
-3. **Cross-Links**
-   
-   Jede Regel referenziert existierende Quellenbeleg-IDs. Jeder Beleg muss von
-   mindestens einer Regel genutzt werden. Profilvorschläge und Datentabellen
-   referenzieren ebenfalls existierende Regeln bzw. Belege. Artefaktpfade und
-   Zeilengrenzen werden geprüft.
+To repeat the deterministic checks without changing run files:
 
-4. **Profilvorschläge statt Direktänderung**
-   
-   `workspace/canonical_farm_profile.json` muss byteinhaltlich dieselbe Struktur
-   wie der Baseline-Snapshot behalten. Discover-Läufe schreiben ausschließlich
-   `rules/profile_changes.json`. Der Finalizer kontrolliert, ob `add`, `change`
-   oder `remove` zum Ausgangsprofil passt, erzeugt
-   `artifacts/proposed-profile.json` und berechnet daraus den Profil-Diff.
-   Direkte Änderungen lassen den Lauf fehlschlagen.
+```bash
+python3 -m rulelab verify-grounding runs/<run-id>
+```
 
-   Zusätzlich müssen alle in strukturierten Bedingungen und Rego verwendeten
-   `input`-Pfade im validierten vorgeschlagenen Profil existieren. Damit kann
-   ein Modell eine fehlende Variable nicht nur im Code erfinden; es muss sie
-   explizit, belegt und reviewbar vorschlagen.
+## Limits
 
-5. **Coverage und Datentabellen**
-   
-   `rules/coverage.json` weist geprüfte Abschnitte, Absätze, Tabellen, Fußnoten
-   und Hinweise Regeln zu oder dokumentiert `not_rule`/`unresolved` mit Grund.
-   Nicht-rechtliche Kernquellen müssen als vollständig geprüft markiert sein;
-   bei PDFs muss die Seitenmenge vollständig sein. Rechtsgrundlagen dürfen mit
-   begründetem Abschnittsscope geprüft werden.
-
-   `rules/data_inventory.json` bindet jede JSON-Datei unter `data/` per Hash ein
-   und prüft Tabellen über JSON-Pointer, Zeilenzahl und Quellenbelege. Als
-   ausführbare Tabellen gelten sowohl Arrays als auch Lookup-Objekte. Bei
-   Arrays zählen die Elemente; bei verschachtelten Lookup-Objekten werden die
-   skalaren Einträge gezählt.
-
-## Artefakte
-
-Generatorpflichten:
-
-- `rules/rules.json`
-- `rules/citations.json`
-- `rules/profile_changes.json`
-- `rules/coverage.json`
-- `rules/data_inventory.json`
-- Rego, Tests, Daten und Annahmen
-
-Finalizer-Ergebnisse:
-
-- `artifacts/grounding-validation.json`
-- `artifacts/direct-profile-diff.json`
-- `artifacts/proposed-profile.json`
-- `artifacts/profile-diff.json`
-- technische OPA-Prüfung, Metriken und Inventar
-
-Mit `python3 -m rulelab verify-grounding runs/<run-id>` lassen sich die
-deterministischen Gates unabhängig vom mutierenden Finalizer erneut ausführen.
-Der Befehl schreibt keine Run-Dateien.
-
-## Bewusste Grenze
-
-Ein belegter Satz kann falsch interpretiert oder unvollständig operationalisiert
-werden. Deshalb bleiben Cross-Model-Vergleich, unabhängige Verifier-Läufe,
-Hidden Tests und Domainexpert:innen-Review erforderlich. Die neuen Gates
-verwandeln Halluzinationen jedoch von still akzeptierten Ergebnissen in
-sichtbare Vertrags-, Beleg-, Abdeckungs- oder Verknüpfungsfehler.
+A genuine quote can support a wrong or incomplete implementation. Independent
+reference cases, expert review and later hidden tests are still needed.
+The checks make structural, evidence, coverage and linking failures visible;
+they do not certify legal correctness or funding eligibility.

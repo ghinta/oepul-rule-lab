@@ -1,85 +1,39 @@
-# Opus-Befunde und nächste Thesis-Entscheidung
+# Opus findings and next thesis decision
 
-Die 26 veröffentlichten Kandidaten sind diagnostisch gesichtet; eine vollständige
-App-Integration ist für den begrenzten Thesis-Versuch nicht erforderlich.
-[Matrix](matrix.csv), [Vertrags-/Quellenvergleich](comparison.csv) und
-[native Rohoutputs](results.json) binden jeden Befund an exakte Artefakte.
+All 26 selected candidates have been diagnosed. The [matrix](matrix.csv),
+[source/contract comparison](comparison.csv) and [native outputs](results.json)
+link findings to exact files. Full app integration is not required for the
+limited thesis experiment.
 
-Alle 26 isolierten Policy-/Datenbundles kompilieren mit OPA 1.18.2 strikt.
-59 belegbar übersetzte Entwicklungsproben wurden ausgeführt: 54 liefern einen
-definierten nativen Wert, fünf einen Laufzeitfehler. Bei fünf Maßnahmen gibt es
-keine sinnvolle native Probe aus den vorhandenen Luna-Fakten. Diese Zahlen
-sind Ausführungsbefunde mit unterschiedlichen Prüfumfängen, keine Genauigkeitsquote
-und kein Ranking gegenüber den 78 Luna-Entwicklungsfällen.
+All 26 isolated policy/data bundles compile strictly with OPA 1.18.2. Of 59
+supported translated probes, 54 return a value and five produce runtime errors.
+Five measures have no meaningful native probe from the available Luna facts.
+Different scopes make these execution counts unsuitable as an accuracy score
+or ranking against the 78 Luna cases.
 
-## Konkrete Ausführungs- und Vertragsgrenzen
+| Measure | Observation | Meaning |
+| --- | --- | --- |
+| o6_3 | All three probes fail at `general.rego:24`, multiplying by a missing previous-year area | Incomplete facts can cause a strict runtime failure despite historical model-test passes. |
+| o6_14 | Both probes fail at `participation.rego:19`, subtracting one from a missing contract year | A reproducible error; exact dates and animal details are not invented. |
+| o6_1a, o6_1b, o6_2, o6_5 | Variation inputs equal baseline inputs | The original changed fact has no supported native mapping; equal outputs do not prove insensitivity. |
+| o6_12 | Insecticide use with unknown date yields no native violation | No violation is not proof of compliance; the year remains 2024. |
+| o6_13, o6_15 | Missing parcel/alpine-pasture identity suppresses partial results | The broader native contracts need facts absent from the old cases. |
+| o6_16 | Ten aggregate training hours cannot supply individual course records | A default of zero is not a factual training assessment. Variation/removal remain gaps. |
+| o6_20, o6_23 | Missing facts may receive favorable defaults | Missing, false and confirmed compliance do not have a common meaning across models. |
 
-| Bereich | Beobachtung | Bedeutung |
-|---|---|---|
-| o6_3 | Alle drei Proben: `general.rego:24`, Multiplikation mit fehlendem Vorjahresflächenwert | Ein streng ausgeführter Kandidat kann bei unvollständigen Betriebsfakten abbrechen, obwohl historische Modelltests bestanden wurden |
-| o6_14 | Beide belegbar übersetzten Proben: `participation.rego:19`, fehlendes Vertragsjahr minus eins | Reproduzierbarer Laufzeitfehler; Tierzahl/Alter oder exakte Vertragsdaten werden nicht erfunden |
-| o6_1a, o6_1b, o6_2, o6_5 | Native Variationsinputs sind identisch zur Basis | Der ursprüngliche veränderte Luna-Fakt ist nicht belegbar übersetzbar; Outputgleichheit belegt keine fehlende Sensitivität |
-| o6_12 | Insektizidvariation ohne bekanntes Einsatzdatum erzeugt keinen Verstoß im nativen Satz | Das Fehlen eines Verstoßes bestätigt keine regelkonforme Anwendung; Jahr 2024 bleibt unverändert |
-| o6_13, o6_15 | Fehlende Parzellen-/Almidentität unterdrückt Teilbefunde | Breitere native Verträge brauchen Fakten, die die alten Entwicklungsproben nicht liefern |
-| o6_16 | Keine einzelnen Kursnachweise aus zehn aggregierten Stunden ableitbar | Ein nativer Default von null Stunden ist keine Aussage über tatsächliche Weiterbildung; Variation/Auslassung bleiben Lücken |
-| o6_20, o6_23 | Fehlende Angaben können günstige Defaults erhalten und die Ausgabe unverändert lassen | `false`, fehlend und bestätigte Regelkonformität haben keine gemeinsame modellübergreifende Bedeutung |
+Explicit `fixture_gap` records cover o6_17, o6_19, o6_21, o6_22 and o6_24:
+dated laboratory records, individual parcels/indicators, animals/buildings,
+category/count evidence or an equivalent supported input are missing.
 
-Für o6_17, o6_19, o6_21, o6_22 und o6_24 sind ausdrückliche `fixture_gap`-Befunde
-versioniert. Gründe sind fehlende datierte Laborbelege, Einzelparzellen/
-Indikatoren, Tier-/Gebäudeinformationen, Kategorie-/Tierzahlbelege sowie
-datierte N-Gaben und kulturbezogene Grenzwerte. Alle drei ursprünglichen
-Luna-Fälle bleiben im jeweiligen Übersetzungsledger nachvollziehbar.
+Nine source sets differ from Luna; 17 match. The ledgers report 11 unresolved
+coverage points. Original tool, repair and budget conditions also differ.
+These constraints prevent an isolated claim that one model is better.
+Costs in `comparison.json` are reported list-cost equivalents, not invoices;
+last cumulative session values are counted once per publication.
 
-Einige belegbare Einzelvariationen erzeugen sichtbare native Reaktionen:
-Mindestfläche (o6_7), Vierfachflächenhinweis (o6_8), Technik-/Mengenbefunde (o6_9),
-81-cm-Breite (o6_10), Herbizideinsatz (o6_11), Auflagencode (o6_18),
-119 Weidetage (o6_20) und mineralische N-Gabe (o6_23). Sie belegen nur die
-Reaktion dieser Query auf diese Eingabe, nicht deren unabhängige Quellkorrektheit.
-
-## Historische Gegenüberstellung
-
-Neun Opus-Pakete haben zusätzliche Quellen gegenüber Luna; 17 haben identische
-Quellenhash-Sets. Adapter, Werkzeugnutzung, Feedback, Fortsetzungen, Laufzeiten
-und Budgets bleiben verschieden. Die genaue Anbieterrevision fehlt in den
-historischen Metadaten. Es entsteht daher kein kontrollierter Modelleffekt.
-
-Die Modell-Ledger melden insgesamt elf offene Coverage-Punkte. Acht stammen
-aus den neun erneuerten Kandidaten; je ein weiterer aus o6_1a, o6_10 und o6_23.
-Coverage-PASS, Regelzahl und selbst generierte Tests belegen keine unabhängig
-bestätigte Vollständigkeit. Die veröffentlichte v2-Metadatenprüfung darf nicht
-als damaliges Generierungsgate oder Fachfreigabe dargestellt werden.
-
-Kosten aus dem jeweils letzten `generator_result`: 414,68 USD für die aktuellen
-26 Kandidaten und 548,64 USD für alle 36 Veröffentlichungen. Es sind berichtete
-Listenpreisäquivalente; kumulative Sitzungswerte werden nicht nochmals pro
-Fortsetzung summiert. Fehlende Luna-Kosten werden nicht geschätzt.
-
-## Anschluss an #56 ohne Erweiterung des Versuchs
-
-Die vier vorgeschlagenen Originalklauseln und ihre PDF-Hashes bleiben erhalten:
-Insektizidverbot/Bio-Ausnahme, Antragsfrist, Tiergruppenmitgliedschaft und
-erforderliche Bodenprobenzahl. Alle vier direkten Originale sind auch im
-jeweiligen Opus-Quellensatz bytegleich vorhanden. Die breiteren Vertragsprobleme
-sind kein sachlicher Grund, den kontrollierten Versuch auf ganze Maßnahmen
-oder vollständige App-Empfehlungen auszudehnen.
-
-| Vorschlag | Was die aktuelle Diagnose dazu nicht bestätigt |
-|---|---|
-| o6_12 Verbot/Bio-Ausnahme | Fehlendes Einsatzdatum verdeckt den Verbotsbefund; Bio-Ausnahme braucht unabhängige Applicability-/Produktklassifikation |
-| o6_13 Antragsfrist | Die Luna-Variation untersucht Bestäubung, nicht Fristendpunkte |
-| o6_14 Tiergruppen | Die Luna-Variation untersucht Alpungstage, nicht Kategoriezugehörigkeit; Gesamtvertragsarithmetik bleibt außerhalb des Einzelklausel-Tasks |
-| o6_17 erforderliche Proben | Die Luna-Variation verändert vorhandene Proben statt die erforderliche Zahl; datierte Laborbelege gehören nicht zur ausgewählten Rundungsklausel |
-
-Nächster Schritt ist die verbindliche Quellen-/Input-/Output-Abgrenzung der
-vier Einzelklauseln in [App #56](https://github.com/ghinta/oepul-recommender/issues/56).
-Dann werden unabhängige Referenzfälle unter
-[#51](https://github.com/ghinta/oepul-recommender/issues/51) und der Collector unter
-[#52](https://github.com/ghinta/oepul-recommender/issues/52) vorbereitet.
-Die Diagnose ersetzt weder diese Referenzen noch eine Methodfreigabe.
-Die Obergrenze des Entwurfs bleibt 48 initiale Generierungen mit höchstens
-zwei Repair-Aufrufen je Ausgangsartefakt. Diese Diagnose startet keinen davon.
-
-App #140 ist nur dort ein fachlicher Blocker, wo ein konkretes Sollurteil eine
-noch offene Auslegung benötigt. Das verhindert weder diese technische Diagnose
-noch die Abgrenzung direkt belegbarer Einzelklauseln. Allgemeine App-Integration,
-größere Rule-Coverage und zusätzliche Modelle bleiben getrennte Arbeiten.
+For the four proposed #56 clauses, create a neutral common input matrix and
+independent expert-labelled cases. Current probes for o6_13, o6_14 and o6_17
+exercise different facts from those clauses and cannot validate them. Preserve
+the historical 10.4-ha o6_17 basis without inventing a 0.4-ha parcel.
+The diagnosis supplies input/evidence requirements, not study-method approval.
+See [method.md](method.md) for the complete limits and follow-up sequence.

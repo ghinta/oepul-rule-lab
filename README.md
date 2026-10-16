@@ -1,18 +1,21 @@
 # ÖPUL Rule Lab
 
-Eine kleine, reproduzierbare Experimentierumgebung für die quellenbasierte
-Generierung von ÖPUL-Regeln. Der Generator bekommt bewusst nur:
+Rule Lab turns official ÖPUL documents into draft rules that a computer can run.
+ÖPUL is Austria's agri-environmental programme. This lab helps study how models
+extract its rules. Passing the checks does not mean that a rule is legally correct.
 
-1. das Canonical Farm Profile,
-2. die ausgewählten offiziellen ÖPUL-Quellen und
-3. den Generierungsauftrag.
+Each generator receives only the Canonical Farm Profile (the shared input
+structure), the selected official sources, and the generation task.
 
-In `discover`-Läufen darf ein Agent neue Profilfelder vorschlagen und Rego samt
-Tests iterativ reparieren. Das Arbeitsprofil selbst bleibt unverändert:
-Vorschläge werden erst nach Pydantic-, Quellen- und Cross-Link-Prüfung auf eine
-separate Profilkopie angewendet. `conform`-Läufe erlauben keine Vorschläge.
+- `discover` lets a model propose missing input fields and repair its Rego code
+  and tests. Proposals are checked and applied to a separate profile copy.
+- `conform` keeps the existing input structure and does not allow proposals.
 
-## Schnellstart
+The original profile and source documents stay unchanged.
+
+## Quick start
+
+Run these commands from the repository root, on your computer or in a container:
 
 ```bash
 python3 -m pip install -e .
@@ -24,177 +27,149 @@ python3 -m rulelab compare runs/<run-a> runs/<run-b>
 PYTHONPATH=src python3 -m unittest discover -s tests -v
 ```
 
-Alternativ enthält `.devcontainer/` Python und die gepinnte OPA-Version. Ein
-Modellwechsel benötigt beim gleichen Adapter nur eine zweite JSON-Datei unter
-`config/models/` mit einem anderen `model`-Wert. Vorbereitet sind Konfigurationen
-für `gpt-5.5`, `gpt-5.6-luna`, `gpt-5.6-terra`, `gpt-5.6-sol` und
-`gpt-6-astra` (Adapter `codex-cli`) sowie für `claude-opus-5-5` mit Effort
-`high` (Adapter `claude-cli`, `config/models/claude-opus-5.5.json`); ein
-externer Command-Adapter ist ebenfalls dokumentiert.
+Replace `<run-id>` with the ID printed by `prepare`. `verify-grounding` checks
+source evidence and contracts without writing run files. `finalize` writes the
+checks, proposed profile and metrics under `artifacts/`.
 
-Modell, Anbieter, Adapter und Reasoning-Effort stehen in jedem Run in
-`model.json` und `run.json` (`model`) sowie in der tatsächlichen
-`invocation`. Run-IDs benennen Maßnahme, Modell und Effort, z. B.
-`v2-o6_4-opus-5.5-high-20260925`.
+The `.devcontainer/` setup includes Python and the pinned OPA version. OPA
+(Open Policy Agent) is the program that runs the Rego rules. Before generation,
+Rule Lab puts a verified OPA executable in `workspace/tools/opa`. It checks a
+local executable's version or downloads one using the repository's SHA-256 pin.
+The generator can then format, compile and test its own code without Docker.
 
-### Claude-Adapter
+## Models and adapters
 
-`claude-cli` startet Claude Code headless (`claude -p`) im Run-Workspace.
-Dateiänderungen werden nur innerhalb des Workspace automatisch akzeptiert;
-alles, was eine interaktive Freigabe bräuchte, wird verweigert. Web-Zugriff,
-`git`, `gh`, `curl`, `wget` und `docker` sind gesperrt, MCP-Server sowie
-Benutzer- und Projekteinstellungen werden nicht geladen. `CLAUDE*`-Variablen
-einer umgebenden Claude-Code-Sitzung sowie `GH_TOKEN`/`GITHUB_TOKEN` werden
-nicht an den Generator vererbt. Wo der Login der lokalen `claude`-Installation
-für Kindprozesse nicht sichtbar ist, kann `RULELAB_CLAUDE_OAUTH_TOKEN_FILE` auf
-eine Token-Datei zeigen; das Token landet nie in Run-Metadaten.
+Model settings live in `config/models/`. To change the model with the same
+adapter, copy a JSON file and change its `model` value. Configurations are
+included for `gpt-5.5`, `gpt-5.6-luna`, `gpt-5.6-terra`, `gpt-5.6-sol` and
+`gpt-6-astra` using `codex-cli`, and `claude-opus-5-5` with `high` effort using
+`claude-cli`. An external command adapter is described in
+[the contracts guide](contracts/README.md).
 
-`raw/events.jsonl` enthält den `stream-json`-Verlauf, `raw/final-message.md`
-die Abschlussnachricht und `run.json` unter `generator_result` Turns, Dauer,
-Token-Nutzung und Kosten. Die Sitzungs-ID steht in `generator_session_id`.
+Every run records its model, provider, adapter and reasoning effort in
+`model.json`, `run.json` and the recorded invocation. IDs identify the measure,
+model and effort, for example `v2-o6_4-opus-5.5-high-20260925`.
 
-## Nutzungsgrenzen für Codex- und Claude-Läufe
+The Claude adapter starts Claude Code without an interactive UI (`claude -p`).
+Only workspace file changes are accepted automatically. Operations that need
+interactive approval are rejected. Web access, `git`, `gh`, `curl`, `wget` and
+`docker` are blocked. MCP servers and user/project settings are not loaded.
+Ambient `CLAUDE*`, `GH_TOKEN` and `GITHUB_TOKEN` variables are not passed on.
+If child processes cannot use the local Claude login,
+`RULELAB_CLAUDE_OAUTH_TOKEN_FILE` can point to a local token file. Its contents
+are never written to run metadata.
 
-Rule Lab prüft vor jedem `codex-cli`- und `claude-cli`-Run ausschließlich das
-Fünf-Stunden-Fenster des jeweiligen Abos: bei Codex das primäre Fenster des
-Codex App Servers, bei Claude das Fenster `five_hour`, gelesen über einen
-minimalen werkzeuglosen `claude -p`-Aufruf mit einem kleinen Modell. Das
-Wochenfenster ist bei beiden ausdrücklich kein Gate. Ein Run startet nur, wenn
-im Fünf-Stunden-Fenster mindestens **50 %** verfügbar sind. Während eines Runs
-wird dieser verbleibende Wert alle 30 Sekunden geprüft. Bei **5 % oder
-weniger** wird der Generator kontrolliert beendet und der Run als
-`aborted_usage_guard` protokolliert, statt bis zu einem harten Limitfehler zu
-laufen. Meldet Claude für irgendein Fenster den Status `rejected`, gilt das als
-0 % und führt ebenfalls zum kontrollierten Stopp. Sind die Limits nicht lesbar,
-startet der Run aus Sicherheitsgründen nicht.
+`raw/events.jsonl` holds the event log; `raw/final-message.md` holds the final
+message. `run.json` records turns, duration, token use and cost under
+`generator_result`, and the session ID under `generator_session_id`.
+Raw logs can contain private data: keep them out of public exports.
 
-Ein Claude-Run wird dabei mit SIGINT wie eine Benutzerunterbrechung beendet.
-Workspace und Sitzungsverlauf bleiben erhalten; `run.json` nennt unter
-`usage_guard.resume` den Befehl zum Fortsetzen. Danach wird der Run entweder
-später fortgesetzt oder mit dem vorhandenen Stand finalisiert:
+## Usage limits and resuming a run
+
+Codex and Claude runs check only the subscription's five-hour window. The
+weekly window does not gate a run. Codex reads its primary App Server window;
+Claude reads `five_hour` through a small, tool-free `claude -p` request.
+
+A run starts with at least **50%** remaining. Usage is checked every 30 seconds.
+At **5% or less**, the generator stops cleanly and records
+`aborted_usage_guard`. A Claude `rejected` status in any window also triggers
+a stop. If usage cannot be read, the run does not start.
+
+Claude is stopped with SIGINT so that its workspace and session can be resumed.
+The resume command is recorded under `usage_guard.resume`:
 
 ```bash
-python3 -m rulelab run runs/<run-id> --resume   # gleiche Claude-Sitzung fortsetzen
-python3 -m rulelab finalize runs/<run-id>       # oder vorhandenen Stand prüfen
+python3 -m rulelab run runs/<run-id> --resume
+python3 -m rulelab finalize runs/<run-id>
 ```
 
-`--resume` eignet sich auch nach einem fehlgeschlagenen `finalize`: Die
-Fortsetzungsanweisung enthält dann die abgelehnten Grounding-Prüfungen und
-fehlenden Ausgaben aus `artifacts/`, weil der Generator-Workspace diese
-Prüfungen selbst nicht enthält. Jede Fortsetzung zählt als neuer
-`generation_attempt` und steht in `resumed_attempts`.
+After a failed `finalize`, `--resume` also sends the rejected evidence checks
+and missing outputs to the generator. Each restart increases
+`generation_attempt`; resumptions are listed in `resumed_attempts`.
 
-## Quellen aktualisieren
+## Official sources and checks
 
 ```bash
 python3 sources/oepul/manage_sources.py update
 python3 sources/oepul/manage_sources.py validate --check-index
 ```
 
-Der aktuelle Abruf umfasst 27/27 AMA-Kernmerkblätter. Davon tragen elf einen
-echten Stand 2026 (zehnmal April, einmal Juni); bei 16 Dokumenten verlinkt die
-AMA weiterhin Stand Oktober 2025. Zusätzlich enthält der Pack die aktuell
-verlinkte Sonderrichtlinie samt Anhängen und vier amtliche Hinweise zu
-Ausnahmen im Antragsjahr 2026. Die tatsächlichen Dokumentstände bleiben im
-Manifest sichtbar und werden niemals nur zur Vereinheitlichung umbenannt.
+The current source pack contains all 27 AMA core leaflets. Eleven carry a 2026
+revision (ten from April, one from June); AMA still links October 2025 versions
+for the other 16. The pack also includes the linked special directive and
+annexes, plus four official exception notices for 2026. The manifest records
+the real document dates, origins and checksums. Updating the pack may replace
+or add official documents; an experiment can pin a Git commit when needed.
 
-`prepare` legt einen isolierten Arbeitsbereich an und erzeugt für jedes PDF eine
-seitenmarkierte Textfassung, damit der Agent systematisch suchen und trotzdem
-auf PDF-Seiten zitieren kann. Fünf aus Pydantic-Modellen erzeugte Schemas für
-Regeln, Quellenbelege, Profilvorschläge, Quellenabdeckung und Datentabellen
-werden in jeden Workspace kopiert und im Prompt ausdrücklich als verbindlich
-benannt. `run` startet den in der
-Modellkonfiguration gewählten Adapter. `finalize` schreibt Profil-Diff,
-verwendete `input`-Pfade und technische Kennzahlen nach `artifacts/`. Es prüft
-außerdem strikt verbotene Zusatzfelder, Cross-Links, Quellen- und Datenhashes,
-wörtliche Belege auf der zitierten Seite, Abdeckung, Tabellenzeilenzahlen,
-Profiländerungsvoraussetzungen, die Existenz aller Regel- und Rego-Eingabepfade
-im vorgeschlagenen Profil sowie OPA-Formatierung, Strict-Compile und Tests.
-Erfundene oder nur ähnlich strukturierte Angaben lassen den Lauf sichtbar
-fehlschlagen.
+`prepare` creates a separate workspace with page-marked text for each PDF and
+five binding JSON schemas. `finalize` checks types, unknown fields, linked IDs,
+source and data hashes, exact quotes on the cited page, coverage, table row
+counts, profile proposals, input paths, OPA formatting, strict compilation and
+tests. See [source-evidence checks](docs/grounding-validation.md) for limits.
+A correct quote can still be interpreted incorrectly: expert review and
+independent reference cases remain necessary.
 
-Vor dem Modellstart stellt `run` zusätzlich die exakt gepinnte OPA-Binary im
-isolierten Workspace unter `tools/opa` bereit. Vorhandene lokale Binaries werden
-nur bei passender Version übernommen; andernfalls wird ein plattformspezifisches
-Artefakt anhand der eingecheckten SHA-256-Prüfsumme verifiziert und gecacht.
-Damit kann der Generator Formatierung, Strict-Compile und Tests selbst iterativ
-ausführen, ohne Zugriff auf den Docker-Socket oder ein breiteres Sandbox-Profil.
+## Reports and manual adaptations
 
-`verify-grounding` führt die deterministischen Pydantic-, Quellen-, Coverage-,
-Daten- und Profilprüfungen read-only aus. So kann ein zweiter Agent oder ein
-Review-Schritt dieselben Gates wiederholen, ohne Run-Artefakte zu verändern.
+- [Run Explorer](https://ghinta.github.io/oepul-rule-lab/) compares published
+  run metrics. Counts describe outputs, not model quality.
+- [Luna screening](docs/analysis/luna-screening-20261011/README.md) runs 78
+  visible synthetic development cases across 26 historical candidates.
+- [Opus screening](docs/analysis/opus-screening-20261011/README.md) selects 26
+  candidates from 36 finalized publications at the pinned PR #79 commit. It
+  maps only facts that can be supported by the Luna cases. Different source
+  versions, tools and budgets prevent a controlled claim about model quality.
+- [The o6_3 input review](docs/analysis/o6_3-variable-contract-20261007/README.md)
+  lists the evidence and app integration work still needed.
+- [The hay-farming adaptation](adaptations/o6_3/README.md) is a separate,
+  source-backed candidate for [#97](https://github.com/ghinta/oepul-rule-lab/issues/97).
+- Historical drafts: [UBB pilot](reports/draft-pilot-o6_1a-gpt55.md),
+  [groundwater protection](reports/draft-o6_16-gpt-5.6-terra.md) and
+  [Terra overview](reports/terra-high-discover-run-overview.md).
 
-Die Details und Grenzen dieser Härtung stehen in
-[`docs/grounding-validation.md`](docs/grounding-validation.md).
+These reports prepare later research and app work. They do not provide an
+independent accuracy score or permission to approve funding.
 
-## Verzeichnisstruktur
+## Paths, language and privacy
+
+Public run metadata uses paths relative to the repository root. OPA validation
+reports use paths relative to the validated workspace (`.`). Execution still
+resolves the real local paths. This works in local checkouts, development
+containers and cloud checkouts, including those under `/workspace/`.
+External files are recorded as `external/<filename>` provenance labels; select
+the real executable or input file again on another machine.
+
+See [portable paths and public exports](docs/publication.md). Official German
+sources, historical model prompts, fixtures and observed outputs retain their
+original wording. English report controls and guides explain how to read them.
+Personal paths are removed from current metadata; older Git commits may still
+contain them. Git author identities are separate from file contents.
+
+## Repository layout
 
 ```text
-profiles/              Canonical Farm Profile als Ausgangsstand
-sources/oepul/          aktualisierbare amtliche Quelldokumente und Manifest
-prompts/                modellunabhängiger Generierungsauftrag
-config/models/          austauschbare Modell-/Adapterkonfiguration
-contracts/              JSON-Schemas der Konfiguration und Run-Artefakte
-src/rulelab/            Prepare/Run/Finalize-CLI
-runner/validation/      OPA fmt/check/test und technische Ergebnisse
-runs/                   ignorierte Laufverzeichnisse
+profiles/              shared farm input structure
+sources/oepul/          official sources and source manifest
+prompts/                model-independent generation task
+config/models/          model and adapter settings
+contracts/              JSON schemas for settings and run outputs
+src/rulelab/            prepare/run/finalize CLI and analysis tools
+runner/validation/      OPA formatting, compilation and test runner
+runs/                   run folders (new local runs are ignored)
+docs/                   public site and analysis reports
 ```
 
-Die Dokumente in `sources/oepul/` sind kein eingefrorener Benchmark. Das
-Update-Skript darf sie durch neuere amtliche Fassungen ergänzen bzw. ersetzen;
-das Manifest hält Herkunft, Dokumentstand und Prüfsumme fest. Ein späterer
-Benchmark kann einen konkreten Git-Commit referenzieren, ohne die Quelle im Lab
-dauerhaft festzuschreiben.
+## Local verification
 
-Der erste technisch abgeschlossene UBB-Pilot ist bewusst als nicht fachlich
-freigegebener Entwurf dokumentiert:
-[`reports/draft-pilot-o6_1a-gpt55.md`](reports/draft-pilot-o6_1a-gpt55.md).
-Der technisch validierte Terra-Discover-Lauf für den zuvor geparkten
-Grundwasserschutz ist ebenfalls als Draft dokumentiert:
-[`reports/draft-o6_16-gpt-5.6-terra.md`](reports/draft-o6_16-gpt-5.6-terra.md).
-
-## Manuelle Adaptationen
-
-Die [diagnostische Luna-Sichtung aller 26 Maßnahmen](docs/analysis/luna-screening-20261011/README.md)
-führt 78 synthetische Entwicklungsfälle auf den unveränderten historischen
-Kandidaten aus. Das Manifest bindet Runs, Quellen, Profile, Prompts und Fixtures;
-native Ausgaben, undefinierte Ergebnisse und Integrationslücken bleiben sichtbar.
-Eine [aufklappbare Vorschau](docs/analysis/luna-screening-20261011/index.html)
-zeigt Eingaben und Ergebnisse. CI wiederholt die Diagnose mit gepinntem OPA.
-Diese Sichtung ist Vorbereitung der Thesis-Auswahl, keine unabhängige
-Genauigkeitsmessung und keine automatische App-Übernahme.
-
-Die [anschließende Opus-Sichtung](docs/analysis/opus-screening-20261011/README.md)
-bindet 26 aktuelle Kandidaten aus 36 finalisierten Veröffentlichungen am festen
-PR-#79-Commit. Sie übersetzt ausschließlich belegbare Fakten derselben Luna-Fälle
-in native Opus-Verträge und dokumentiert nicht abbildbare Fälle als Lücken.
-[Quellen-/Versuchsbedingungen](docs/analysis/opus-screening-20261011/comparison.json)
-und [methodische Grenzen](docs/analysis/opus-screening-20261011/method.md)
-schließen einen isolierten historischen Modelleffekt aus. CI prüft die
-Kandidaten in einem separaten Checkout; ein Merge von #79 ist dafür nicht nötig.
-
-Der [Quellenreview und Variablenvertrag für die o6_3-App-Integration](docs/analysis/o6_3-variable-contract-20261007/README.md)
-verbindet den Adaptationsvertrag mit dem App-Stand nach PR #135 und weist
-die vor einer vollständigen Empfehlung offenen Nachweise ausdrücklich aus.
-
-`adaptations/o6_3/` enthält den quellengebundenen Heuwirtschaft-Kandidaten
-für [Issue #97](https://github.com/ghinta/oepul-rule-lab/issues/97).
-Die getrennte Lineage erhält die historischen Modell-Runs unverändert.
-Prüfumfang, aktueller Datenvertrag und Grenzen stehen im
-[Adaptations-README](adaptations/o6_3/README.md). Der Kandidat wird über
-`python3 -m rulelab.heuwirtschaft` mit einem expliziten lokalen OPA geprüft;
-eine App-Promotion erfolgt erst nach den dort genannten Abnahmen.
-
-CI führt die Repository-Tests und die OPA-Gates aus. Lokal mit gepinntem OPA:
+Choose an OPA executable that matches `runner/validation/opa-version.txt`:
 
 ```bash
-OPA_BIN=/absolute/path/to/opa PYTHONPATH=src python3 -m unittest discover -s tests -v
+OPA_BIN=./tools/opa PYTHONPATH=src python3 -m unittest discover -s tests -v
 PYTHONPATH=src python3 -m unittest discover -s runner/validation/tests -v
+PYTHONPATH=src python3 tools/check_publication.py
 ```
 
-## Grundsatz
-
-Compile-Erfolg und selbst erzeugte Tests sind technische Signale, keine
-Behauptung fachlicher Korrektheit. Fachliche Bewertung, Hidden Tests und
-Thesis-Konformität sind nachgelagerte Verbraucher der unveränderten
-Run-Artefakte.
+`OPA_BIN` may be a relative or absolute path for execution. Published metadata
+must not include the host path. CI also repeats the frozen analyses and checks
+the manual adaptation. Compiling code and passing model-written tests are
+technical evidence; they do not establish domain correctness.

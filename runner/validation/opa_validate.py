@@ -27,6 +27,30 @@ DEFAULT_VERSION = (RUNNER_DIR / "opa-version.txt").read_text(encoding="utf-8").s
 MAX_CAPTURE_CHARS = 20_000
 
 
+def public_result(value: Any, workspace: Path) -> Any:
+    """Keep standalone reports relative to the validated workspace."""
+    if isinstance(value, dict):
+        return {key: public_result(item, workspace) for key, item in value.items()}
+    if isinstance(value, list):
+        return [public_result(item, workspace) for item in value]
+    if isinstance(value, str):
+        base = str(workspace)
+        value = re.sub(
+            r"(?<![\w/.:])" + re.escape(base) + r"(?=/|[\s\"']|$)"
+            r"(?:/[^\s\"'<>`,;()\[\]{}\\]+)*",
+            lambda match: match.group()[len(base) + 1:] or ".",
+            value,
+        )
+        return re.sub(
+            r"(?<![\w/.:])/(?:Users|home|workspace|workspaces|tmp|private/var|opt|usr|srv|var)"
+            r"(?=/|[\s\"'<>`,;()\[\]{}\\]|$)"
+            r"(?:/[^\s\"'<>`,;()\[\]{}\\]+)*",
+            lambda match: "external/" + Path(match.group()).name,
+            value,
+        )
+    return value
+
+
 class RunnerError(RuntimeError):
     """Raised for runner configuration and workspace errors."""
 
@@ -408,6 +432,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         }
 
     exit_code = {"passed": 0, "failed": 1, "error": 2}[result["status"]]
+    result = public_result(result, workspace)
     result["exit_code"] = exit_code
     if args.result_json:
         try:
@@ -416,6 +441,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             result["status"] = "error"
             result["exit_code"] = 2
             result["error"] = f"could not write result JSON: {exc}"
+    result = public_result(result, workspace)
     print(json.dumps(result, ensure_ascii=False, indent=2 if args.pretty else None, sort_keys=True))
     return result["exit_code"]
 
