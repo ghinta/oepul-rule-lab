@@ -23,6 +23,13 @@ App-Übernahme oder Abnahme durch GM/Domainexpert:innen.
 Aktuell: **26 Einzelprüfungen abgeschlossen und blockiert, keine ausständig;
 keine Expertenfreigabe und keine App-Promotion aus dieser Runde.**
 
+Die [gemeinsame Befundmatrix](cross-run-matrix.md) führt jetzt alle 26 Dossiers
+in acht Problemfamilien zusammen. [Sechs konkrete Lösungspakete](work-packages.md)
+mit Abhängigkeiten, Fallbelegen und Abschlusskriterien stehen für die gemeinsame
+Priorisierung bereit; Umsetzung und fachliche Abnahme folgen getrennt.
+Die [maschinenlesbare Matrix](cross-run-matrix.json) und ihre
+[Dateibindungen](cross-run-matrix-provenance.json) halten die Nachweise fest.
+
 | Reihenfolge | Run / Maßnahme | Status |
 |---|---|---|
 | 1 | [o6_1a – UBB](../opus-o6-1a-audit-20261015/README.md) | Quellen-, Regeln-, Tabellen- und Eingabeprüfung dokumentiert; konkrete Fehler, Übernahme blockiert. |
