@@ -20,7 +20,7 @@ Erst nach seinem dokumentierten Prüfabschluss wird der nächste Run begonnen.
 Der Abschluss kann erhebliche Blocker ergeben und bedeutet keine automatische
 App-Übernahme oder Abnahme durch GM/Domainexpert:innen.
 
-Aktuell: **20 Einzelprüfungen abgeschlossen und blockiert, 6 ausständig;
+Aktuell: **21 Einzelprüfungen abgeschlossen und blockiert, 5 ausständig;
 keine Expertenfreigabe und keine App-Promotion aus dieser Runde.**
 
 | Reihenfolge | Run / Maßnahme | Status |
@@ -45,8 +45,9 @@ keine Expertenfreigabe und keine App-Promotion aus dieser Runde.**
 | 18 | [o6_16 – Vorbeugender Grundwasserschutz Acker](measures/o6_16/README.md) | Alle 98 Regeln, 33 Tabellen, 34 Vorschläge und 358 Entwicklungsfälle geprüft; Übernahme blockiert. Eigene Gegenkontrolle nach Limitfortsetzung, keine zusätzliche unabhängige Person behauptet. |
 | 19 | [o6_17 – Humuserhalt und Bodenschutz auf umbruchsfähigem Grünland](measures/o6_17/README.md) | Alle 133 Regeln, 37 Tabellen, 38 Vorschläge und 326 Entwicklungsfälle geprüft; Übernahme blockiert. Eigene Gegenkontrolle, keine zusätzliche unabhängige Person behauptet. |
 | 20 | [o6_18 – Naturschutz](measures/o6_18/README.md) | Alle 125 Regeln, 30 Tabellen, 30 Vorschläge/112 Blätter und 529 Entwicklungs-/Technikfälle geprüft; Übernahme blockiert. Eigene Gegenkontrolle und erhaltene eigene Fehlkonstruktionen ausdrücklich abgegrenzt. |
-| 21 | o6_19 – Ergebnisorientierte Bewirtschaftung | Einzelprüfung in Bearbeitung. |
-| 22–26 | o6_20 bis o6_24, aufsteigend | Jeweilige Einzelprüfung ausständig. |
+| 21 | [o6_19 – Ergebnisorientierte Bewirtschaftung](measures/o6_19/README.md) | Alle 102 Regeln, 28 Tabellen, 94 Vorschläge/97 Blätter und 372 Entwicklungs-/Technikfälle geprüft; Übernahme blockiert. Eigene Gegenkontrolle; gewünschter Positivnachweis, tatsächliche Sachverhalte und Strukturstress getrennt. |
+| 22 | o6_20 – Tierwohl Weide | Einzelprüfung in Bearbeitung. |
+| 23–26 | o6_21 bis o6_24, aufsteigend | Jeweilige Einzelprüfung ausständig. |
 
 [queue.json](queue.json) bindet für jede der 26 Positionen die exakte Run-ID und
 den Kandidatencommit. Bestehende Quellenreviews manueller Adaptationen oder
@@ -64,3 +65,8 @@ Run nicht nachträglich als bereitgestellter Eingabekorpus zugerechnet. Für ein
 spätere App-Aufnahme relevante zusätzliche Rechtsstände bleiben als Quellen-
 oder Paketlücke mit ausdrücklichem Verweis sichtbar. Quellengetreue Extraktion
 und aktuelle fachliche Verwendbarkeit sind getrennte Prüffragen.
+
+[Eigene Einheitenkorrektur vom 16.10.2026](unit-label-erratum-20261016.md):
+Sechs Beschriftungen in vier älteren Eingabeledgern wurden berichtigt; alle
+951 Fälle vollständig wiederholt. Eingaben, Sollwerte und native Ergebnisse
+bleiben identisch. Alte und neue Abschlussbindungen sind dokumentiert.

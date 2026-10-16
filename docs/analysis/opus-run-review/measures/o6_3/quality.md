@@ -74,3 +74,5 @@ Befehl, Ergebnis- und Dateihashes, konkrete Quellenkontrollen und Grenzen stehen
 in [quality.json](quality.json). Der Sammlungsabschluss bestätigt Abdeckung und
 erzeugt weder Expertenfreigabe noch App-Promotion. Historische Regeln, Quellen,
 Canonical-Profil, Runtime-Pin und produktive App blieben unverändert.
+
+Einheiten-Erratum vom 16.10.2026 (eigene Protokollbeschriftung): land.parcels[].other_capped_oepul_payments_eur_per_ha: EUR/ha. Eingaben, Queries, Quellenbelege, Sollwerte und sämtliche nativen Ausgaben/Status/Checks bleiben exakt gleich. Alle Fälle wurden vollständig neu ausgeführt und exakt wiederholt. Alte und neue Hashbindungen stehen im [gemeinsamen Erratum](../../unit-label-erratum-20261016.json). Die Ergänzung ist Roots eigene Gegenkontrolle; sie behauptet keine neue Experten- oder unabhängige Personenabnahme.

@@ -70,3 +70,5 @@ Reproduktionsbefehl, Ergebnis- und Dateihashes, einzelne Quellenkontrollen und
 verbleibende Grenzen stehen in [quality.json](quality.json). Historische
 Artefakte, Quellen, Canonical-Profil, Binary-Pin und produktive App blieben
 unverändert.
+
+Einheiten-Erratum vom 16.10.2026 (eigene Protokollbeschriftung): land.parcels[].oepul_area_payment_eur_per_ha: EUR/ha; land.parcels[].operations.pheromone_traps.traps_per_ha: traps/ha. Eingaben, Queries, Quellenbelege, Sollwerte und sämtliche nativen Ausgaben/Status/Checks bleiben exakt gleich. Alle Fälle wurden vollständig neu ausgeführt und exakt wiederholt. Alte und neue Hashbindungen stehen im [gemeinsamen Erratum](../../unit-label-erratum-20261016.json). Die Ergänzung ist Roots eigene Gegenkontrolle; sie behauptet keine neue Experten- oder unabhängige Personenabnahme.

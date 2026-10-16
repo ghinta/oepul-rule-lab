@@ -143,3 +143,5 @@ Die Tabelle belegt die Bearbeitung aller Vorschläge. Typen, Einheiten, Quellen 
 | 89 | `oepul.o6_1b` | 38 / 38 | BIO-Maßnahmenvertrag |
 
 Canonical Farm Profile, Originalquellen, historische Run-Artefakte und App bleiben unverändert. Es wurden keine Modellaufrufe gestartet, keine privaten Referenzfälle gelesen und keine Sollwerte aus Modell-Selbsttests übernommen. Die Befunde werden im gemeinsamen Issue und PR gesammelt; dieser Auditteil startet keine Reparatur oder Promotion.
+
+Einheiten-Erratum vom 16.10.2026 (eigene Protokollbeschriftung): land.parcels[].oepul_area_payment_eur_per_ha: EUR/ha; land.parcels[].operations.pheromone_traps.traps_per_ha: traps/ha. Eingaben, Queries, Quellenbelege, Sollwerte und sämtliche nativen Ausgaben/Status/Checks bleiben exakt gleich. Alle Fälle wurden vollständig neu ausgeführt und exakt wiederholt. Alte und neue Hashbindungen stehen im [gemeinsamen Erratum](../../unit-label-erratum-20261016.json). Die Ergänzung ist Roots eigene Gegenkontrolle; sie behauptet keine neue Experten- oder unabhängige Personenabnahme.
