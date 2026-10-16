@@ -20,7 +20,7 @@ Erst nach seinem dokumentierten Prüfabschluss wird der nächste Run begonnen.
 Der Abschluss kann erhebliche Blocker ergeben und bedeutet keine automatische
 App-Übernahme oder Abnahme durch GM/Domainexpert:innen.
 
-Aktuell: **18 Einzelprüfungen abgeschlossen und blockiert, 8 ausständig;
+Aktuell: **19 Einzelprüfungen abgeschlossen und blockiert, 7 ausständig;
 keine Expertenfreigabe und keine App-Promotion aus dieser Runde.**
 
 | Reihenfolge | Run / Maßnahme | Status |
@@ -43,8 +43,9 @@ keine Expertenfreigabe und keine App-Promotion aus dieser Runde.**
 | 16 | [o6_14 – Almbewirtschaftung](measures/o6_14/README.md) | Alle 126 Regeln, 27 Tabellen, vier Vorschläge und 618 Entwicklungsfälle geprüft; Übernahme blockiert. |
 | 17 | [o6_15 – Tierwohl Behirtung](measures/o6_15/README.md) | Alle 95 Regeln, 20 Tabellen, sieben Vorschläge und 601 Entwicklungsfälle geprüft; Übernahme blockiert. |
 | 18 | [o6_16 – Vorbeugender Grundwasserschutz Acker](measures/o6_16/README.md) | Alle 98 Regeln, 33 Tabellen, 34 Vorschläge und 358 Entwicklungsfälle geprüft; Übernahme blockiert. Eigene Gegenkontrolle nach Limitfortsetzung, keine zusätzliche unabhängige Person behauptet. |
-| 19 | o6_17 – Humuserhalt und Bodenschutz auf umbruchsfähigem Grünland | Einzelprüfung in Bearbeitung. |
-| 20–26 | o6_18 bis o6_24, aufsteigend | Jeweilige Einzelprüfung ausständig. |
+| 19 | [o6_17 – Humuserhalt und Bodenschutz auf umbruchsfähigem Grünland](measures/o6_17/README.md) | Alle 133 Regeln, 37 Tabellen, 38 Vorschläge und 326 Entwicklungsfälle geprüft; Übernahme blockiert. Eigene Gegenkontrolle, keine zusätzliche unabhängige Person behauptet. |
+| 20 | o6_18 – Naturschutz | Einzelprüfung in Bearbeitung. |
+| 21–26 | o6_19 bis o6_24, aufsteigend | Jeweilige Einzelprüfung ausständig. |
 
 [queue.json](queue.json) bindet für jede der 26 Positionen die exakte Run-ID und
 den Kandidatencommit. Bestehende Quellenreviews manueller Adaptationen oder
