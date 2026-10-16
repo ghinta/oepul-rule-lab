@@ -1,24 +1,24 @@
-# Opus: diagnostische Sichtung der vorhandenen Regelkandidaten
+# Opus: development screening of existing rule candidates
 
-Synthetische, bereits sichtbare Entwicklungsfälle auf unveränderten historischen Opus-Artefakten. Die Luna-Fakten werden nur bei belegbarer Vertragszuordnung übersetzt; nicht abbildbare Fakten bleiben ausdrücklich offen. Native Ausgaben sind keine unabhängig beurteilten Sollwerte, keine Genauigkeitsmessung und keine Förderfreigabe. Unterschiedliche Quellen, Werkzeuge und Budgets erlauben keine isolierte Aussage über den Modelleffekt.
+These visible synthetic development cases run on unchanged historical Opus rules. Only supported mappings of the same Luna facts are used; unmapped facts remain explicit gaps. Outputs have no independent expert labels and do not measure accuracy or approve funding. Different sources, tools and budgets prevent an isolated claim about model quality.
 
-App-Issue #140 blockiert nur fachliche Sollurteile, die eine noch offene Auslegung benötigen. Technische Ausführung und dokumentierte Ausgabelücken können unabhängig davon untersucht werden.
+App issue #140 blocks domain judgements that need an unresolved interpretation. Technical execution and output gaps can be studied separately.
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-Die native Ausgabe bleibt unverändert. `eligible` und ähnliche Felder haben je Kandidat unterschiedliche Bedeutungen; die Details stehen unten. `undefined` ist ein dokumentierter Befund. Eine definierte Ausgabe kann auch den JSON-Wert `null` enthalten; dieser unterscheidet sich von keinem Wert.
+Original evidence (German) is preserved in the detailed sections: model notes, case descriptions and observed outputs keep their original wording. `eligible` has a different scope in each candidate. `undefined` means no value; a defined JSON `null` remains a separate value.
 
-[Befunde und nächste Entscheidung](findings.md) · [Aufklappbare Vorschau](index.html) · [Manifest](manifest.json) · [Alle Ergebnisse](results.json) · [Matrix als CSV](matrix.csv) · [Fixierung und Wiederholung](method.md)
+[Findings and next decision](findings.md) · [Expandable preview](index.html) · [Manifest](manifest.json) · [All results](results.json) · [CSV matrix](matrix.csv) · [Frozen inputs and replay](method.md)
 
-Basiscommit: `d2b63972c99056fde4e032029e1432639e281fda`. OPA: `1.18.2`. Policy und Daten werden je Run getrennt geladen; es erfolgt keine neue Modellgenerierung.
+Base commit: `d2b63972c99056fde4e032029e1432639e281fda`. OPA: `1.18.2`. Policy and data are loaded separately for each run. No new model generation takes place.
 
-Kandidatencommit: `e009eed4a83ff076b26eba33ac433ac2b0642621` (unveränderlicher PR-#79-Stand). 26 aktuelle Kandidaten aus 36 finalisierten Veröffentlichungen; zehn ersetzte Runs bleiben in der Historie. [Historische Bedingungen und Zuordnung](comparison.json) · [Vergleichsmatrix](comparison.csv).
+Candidate commit: `e009eed4a83ff076b26eba33ac433ac2b0642621` (fixed PR #79 snapshot). 26 selected candidates from 36 finalized publications; ten superseded runs remain in the history. [Historical conditions and mapping](comparison.json) · [Comparison matrix](comparison.csv).
 
-## Ausführungsübersicht
+## Execution overview
 
-| Maßnahme | Run | Kompilierung | Basis | Variation | Fehlende Tatsache |
+| Measure | Run | Compilation | Baseline | Variation | Missing fact |
 |---|---|---|---|---|---|
 | [o6_1a](results/o6_1a.json) | `v2-o6_1a-opus-5.5-high-20260929` | compiled | defined | defined | defined |
 | [o6_1b](results/o6_1b.json) | `v2-o6_1b-opus-5.5-high-20260925` | compiled | defined | defined | defined |
@@ -47,46 +47,46 @@ Kandidatencommit: `e009eed4a83ff076b26eba33ac433ac2b0642621` (unveränderlicher 
 | [o6_23](results/o6_23.json) | `v2-o6_23-opus-5.5-high-20260928` | compiled | defined | defined | defined |
 | [o6_24](results/o6_24.json) | `v2-o6_24-opus-5.5-high-20261003` | compiled | fixture_gap | fixture_gap | fixture_gap |
 
-`defined`: Query liefert einen nativen Wert. `undefined`: kein Wert. `runtime_error` und `compile_error`: technische Fehler mit originaler OPA-Diagnose im Ergebnis-JSON. `fixture_gap`: kein ausführbarer Fall; die konkrete Lücke steht beim Kandidaten. Diese Statuswerte sind keine fachlichen Bewertungen.
+`defined`: the query returns a value. `undefined`: no value. `runtime_error` and `compile_error`: technical errors; the original OPA details are in the result JSON. `fixture_gap`: no executable case; see the candidate's gap description. These statuses are not domain judgements.
 
-## Reproduzieren
+## Reproduce
 
-Vom Repository-Wurzelverzeichnis mit der passenden absoluten OPA-Binary:
+From the repository root, using the matching OPA executable:
 
 ```bash
-PYTHONPATH=src OPA_BIN=/absolute/path/opa python -m rulelab.opus_screening verify --candidate-root /absolute/path/candidate-e009eed
+PYTHONPATH=src OPA_BIN=./tools/opa python -m rulelab.opus_screening verify --candidate-root ../candidate-e009eed
 ```
 
-Die Überprüfung vergleicht den eingefrorenen Bestand und die Ausgaben. Eingabe-, Artefakt- und Quellenhashes stehen im Manifest beziehungsweise Ergebnis-JSON. Die methodischen Grenzen sind in [method.md](method.md) beschrieben.
+Verification compares the bound files and outputs. Input, source and artifact hashes are recorded in the manifest and result JSON. See [method.md](method.md) for the scope and limits.
 
-## Kandidaten und beobachtete Fälle
+## Candidates and observed cases
 
 ### o6_1a
 
-Run: `v2-o6_1a-opus-5.5-high-20260929`. [Fixture](fixtures/o6_1a.json) · [Native Ergebnisse](results/o6_1a.json)
+Run: `v2-o6_1a-opus-5.5-high-20260929`. [Fixture](fixtures/o6_1a.json) · [Native results](results/o6_1a.json)
 
-**Eingaben:** Opus liest /farm/year und parzellenbezogene land_use/area_ha/codes/field_piece_id sowie datierte Bewirtschaftungsereignisse. Die Luna-Basis liefert vor allem Acker-/DIV-Aggregate; diese werden nicht in erfundene Detailparzellen aufgeteilt. Die drei Inputs enthalten nur Jahr und bekannte Parzelleneigung und sind deshalb identisch. Fehlende Felder bleiben fehlend; native Defaultwerte sind keine ergänzten Betriebsfakten.
+**Inputs:** Opus liest /farm/year und parzellenbezogene land_use/area_ha/codes/field_piece_id sowie datierte Bewirtschaftungsereignisse. Die Luna-Basis liefert vor allem Acker-/DIV-Aggregate; diese werden nicht in erfundene Detailparzellen aufgeteilt. Die drei Inputs enthalten nur Jahr und bekannte Parzelleneigung und sind deshalb identisch. Fehlende Felder bleiben fehlend; native Defaultwerte sind keine ergänzten Betriebsfakten.
 
-**Ausgabebedeutung:** Native decision enthält year, access_conditions_met, livestock_farm, aus Parzellen berechnete Flächen, premium-Breakdown, Zuschläge und violations. Eine Ausführung auf der partiellen Übersetzung prüft weder den Luna-7-%-Fall noch einen vollständigen Förderfall; abgeleitete Nullflächen/Verstöße können aus fehlenden Detailangaben und Defaults stammen.
+**Output meaning:** Native decision enthält year, access_conditions_met, livestock_farm, aus Parzellen berechnete Flächen, premium-Breakdown, Zuschläge und violations. Eine Ausführung auf der partiellen Übersetzung prüft weder den Luna-7-%-Fall noch einen vollständigen Förderfall; abgeleitete Nullflächen/Verstöße können aus fehlenden Detailangaben und Defaults stammen.
 
-**Herkunft:** Öffentliche synthetische DEVELOPMENT-ONLY-Diagnose: ausschließlich Übersetzung der bestehenden Luna-Entwicklungsfälle aus docs/analysis/luna-screening-20261011/fixtures/o6_1a.json. Native Opus-Policies und Modelltests wurden zur Feldform gelesen; keine zusätzlichen Jahres-, Flächen-, Vertrags-, Veranstaltungs- oder Genehmigungsfakten werden aus Modelltests übernommen. Kein Golden-/Heldout-Test, keine unabhängigen Expertenlabels, keine erwarteten fachlichen Ergebnisse.
+**Origin:** Öffentliche synthetische DEVELOPMENT-ONLY-Diagnose: ausschließlich Übersetzung der bestehenden Luna-Entwicklungsfälle aus docs/analysis/luna-screening-20261011/fixtures/o6_1a.json. Native Opus-Policies und Modelltests wurden zur Feldform gelesen; keine zusätzlichen Jahres-, Flächen-, Vertrags-, Veranstaltungs- oder Genehmigungsfakten werden aus Modelltests übernommen. Kein Golden-/Heldout-Test, keine unabhängigen Expertenlabels, keine erwarteten fachlichen Ergebnisse.
 
 **Query:** `data.oepul.o6_1a.decision`
 
-**Inventar:** 166 Regelkatalog-Einträge; 8 Quellen; 0 statisch erkannte Eingabepfade; 67 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 166 rule catalog entries; 8 sources; 0 static input paths; 67 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"application": 8, "calculation": 6, "cap": 6, "combination": 7, "deadline": 9, "definition": 14, "documentation": 2, "eligibility": 13, "exception": 14, "exclusion": 7, "information": 2, "obligation": 28, "option": 4, "premium_rate": 16, "procedure": 9, "prohibition": 14, "sanction": 5, "scope": 2}`
+**Rule types:** `{"application": 8, "calculation": 6, "cap": 6, "combination": 7, "deadline": 9, "definition": 14, "documentation": 2, "eligibility": 13, "exception": 14, "exclusion": 7, "information": 2, "obligation": 28, "option": 4, "premium_rate": 16, "procedure": 9, "prohibition": 14, "sanction": 5, "scope": 2}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     []
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_1a | full_document | 64 | {"not_rule": 4, "rules": 60} |
 | o6_general | full_document | 33 | {"not_rule": 9, "rules": 24} |
@@ -99,9 +99,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -155,22 +155,22 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_1a.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Partielle native Übersetzung der bekannten Luna-Fakten; die aggregierten Acker-/DIV-Fakten bleiben als dokumentierte Lücke bestehen. |
-| variation | defined | nein | Luna ändert ausschließlich /documentation/arable_div_ha von 0.70 auf 0.69. Dieser Fakt besitzt keinen nativen Aggregateingang; der Opus-Input bleibt bewusst identisch. |
-| missing_fact | defined | nein | Luna entfernt ausschließlich /documentation/arable_div_ha. Bereits der Basiswert ist nicht nativ übersetzbar; keine künstliche Entfernung einer anderen Opus-Eingabe. |
+| baseline | defined | Baseline | Partielle native Übersetzung der bekannten Luna-Fakten; die aggregierten Acker-/DIV-Fakten bleiben als dokumentierte Lücke bestehen. |
+| variation | defined | no | Luna ändert ausschließlich /documentation/arable_div_ha von 0.70 auf 0.69. Dieser Fakt besitzt keinen nativen Aggregateingang; der Opus-Input bleibt bewusst identisch. |
+| missing_fact | defined | no | Luna entfernt ausschließlich /documentation/arable_div_ha. Bereits der Basiswert ist nicht nativ übersetzbar; keine künstliche Entfernung einer anderen Opus-Eingabe. |
 
-**Fixture-Lücke:** Die drei Luna-Fälle sind nur partiell übersetzbar; der entscheidende DIV-Fakt bleibt unabbildbar, daher identische native Inputs.
+**Fixture gap:** Die drei Luna-Fälle sind nur partiell übersetzbar; der entscheidende DIV-Fakt bleibt unabbildbar, daher identische native Inputs.
 
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Für dieselben DIV-Fälle fehlen belegte Detailparzellen mit Nutzungsart, Fläche, Codes und Feldstückbezug sowie datierte Pflegeereignisse; dies ist eine Eingabevertragslücke vor jeder normativen Prüfung.
 - Native Defaults können fehlende Detaildaten als Nullfläche oder Verletzung behandeln; die Diagnose ist keine vollständige Missing-Fact-Behandlung.
 - Fachliche Anrechenbarkeit von DIV/DIVRS, Feldstückzusätzen und Betriebsoptionen benötigt eine passende Quellen-/Referenzprüfung; nur dafür einschlägige offene Entscheidungen aus App #140 heranziehen.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_1a-opus-5.5-high-20260929/workspace/policy/o6_1a/main.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_1a-opus-5.5-high-20260929/workspace/policy/o6_1a/main.rego): Native decision und begrenzte Felder des zusammenfassenden Ausgabepunkts.
 - [runs/v2-o6_1a-opus-5.5-high-20260929/workspace/policy/o6_1a/common.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_1a-opus-5.5-high-20260929/workspace/policy/o6_1a/common.rego): Parzellen, Flächen und field_piece-Zuordnung statt direkter Ackerflächenaggregate; /farm/year via object.get.
@@ -184,32 +184,32 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_1b
 
-Run: `v2-o6_1b-opus-5.5-high-20260925`. [Fixture](fixtures/o6_1b.json) · [Native Ergebnisse](results/o6_1b.json)
+Run: `v2-o6_1b-opus-5.5-high-20260925`. [Fixture](fixtures/o6_1b.json) · [Native results](results/o6_1b.json)
 
-**Eingaben:** Opus result liest /farm/year, /oepul/o6_1b/contract_start_year, /oepul/first_participation_year, land.total_area_ha und Detailparzellen/Tiergruppen. Die explizite Luna-Angabe has_livestock=false wird als leere Tiergruppenliste wiedergegeben. Crop-/DIV-Anteile und Zertifizierungsstatus werden ohne zusätzliche Kultur- oder Kontrolldaten nicht übersetzt; alle drei nativen Inputs sind identisch.
+**Inputs:** Opus result liest /farm/year, /oepul/o6_1b/contract_start_year, /oepul/first_participation_year, land.total_area_ha und Detailparzellen/Tiergruppen. Die explizite Luna-Angabe has_livestock=false wird als leere Tiergruppenliste wiedergegeben. Crop-/DIV-Anteile und Zertifizierungsstatus werden ohne zusätzliche Kultur- oder Kontrolldaten nicht übersetzt; alle drei nativen Inputs sind identisch.
 
-**Ausgabebedeutung:** Native result enthält compliant/violations, aus Detaildaten berechnete livestock/areas, Prämienkomponenten sowie Modulation und Summen. Es gibt kein eigenständiges insufficient_data. compliant und Nullflächen sind hier von der partiellen Datenlage und nativen Defaults abhängig; result ist keine vollständige fachliche Prüfung des Luna-Falls. Der Kandidat berechnet die Prämien separat vom compliant-Flag; selbst ohne Flächen und mit Verletzungen können Transaktionskosten ausgegeben werden. Eine positive Summe ist deshalb keine Förderfreigabe.
+**Output meaning:** Native result enthält compliant/violations, aus Detaildaten berechnete livestock/areas, Prämienkomponenten sowie Modulation und Summen. Es gibt kein eigenständiges insufficient_data. compliant und Nullflächen sind hier von der partiellen Datenlage und nativen Defaults abhängig; result ist keine vollständige fachliche Prüfung des Luna-Falls. Der Kandidat berechnet die Prämien separat vom compliant-Flag; selbst ohne Flächen und mit Verletzungen können Transaktionskosten ausgegeben werden. Eine positive Summe ist deshalb keine Förderfreigabe.
 
-**Herkunft:** Öffentliche synthetische DEVELOPMENT-ONLY-Diagnose: ausschließlich Übersetzung der bestehenden Luna-Entwicklungsfälle aus docs/analysis/luna-screening-20261011/fixtures/o6_1b.json. Native Opus-Policies und Modelltests wurden zur Feldform gelesen; keine zusätzlichen Jahres-, Flächen-, Vertrags-, Veranstaltungs- oder Genehmigungsfakten werden aus Modelltests übernommen. Kein Golden-/Heldout-Test, keine unabhängigen Expertenlabels, keine erwarteten fachlichen Ergebnisse.
+**Origin:** Öffentliche synthetische DEVELOPMENT-ONLY-Diagnose: ausschließlich Übersetzung der bestehenden Luna-Entwicklungsfälle aus docs/analysis/luna-screening-20261011/fixtures/o6_1b.json. Native Opus-Policies und Modelltests wurden zur Feldform gelesen; keine zusätzlichen Jahres-, Flächen-, Vertrags-, Veranstaltungs- oder Genehmigungsfakten werden aus Modelltests übernommen. Kein Golden-/Heldout-Test, keine unabhängigen Expertenlabels, keine erwarteten fachlichen Ergebnisse.
 
 **Query:** `data.oepul.o6_1b.result`
 
-**Inventar:** 200 Regelkatalog-Einträge; 8 Quellen; 1 statisch erkannte Eingabepfade; 89 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 200 rule catalog entries; 8 sources; 1 static input paths; 89 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"applicability": 1, "calculation": 11, "cap": 2, "classification": 2, "coding": 8, "combination": 6, "consequence": 4, "contract_period": 2, "deadline": 7, "definition": 16, "documentation": 2, "eligibility": 21, "exception": 10, "exclusion": 8, "information": 1, "limit": 3, "notice_2026": 12, "obligation": 35, "option": 4, "premium_rate": 23, "procedure": 11, "prohibition": 5, "reduction": 1, "sanction": 1, "scope": 1, "summary_table": 1, "threshold": 1, "tolerance": 1}`
+**Rule types:** `{"applicability": 1, "calculation": 11, "cap": 2, "classification": 2, "coding": 8, "combination": 6, "consequence": 4, "contract_period": 2, "deadline": 7, "definition": 16, "documentation": 2, "eligibility": 21, "exception": 10, "exclusion": 8, "information": 1, "limit": 3, "notice_2026": 12, "obligation": 35, "option": 4, "premium_rate": 23, "procedure": 11, "prohibition": 5, "reduction": 1, "sanction": 1, "scope": 1, "summary_table": 1, "threshold": 1, "tolerance": 1}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_1b | full_document | 122 | {"not_rule": 7, "rules": 115} |
 | o6_general | full_document | 37 | {"not_rule": 8, "rules": 29} |
@@ -222,9 +222,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -281,22 +281,22 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_1b.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Bekanntes Jahr, Vertragsbeginnjahr, erste Teilnahme, Gesamtfläche und ausdrücklich fehlende Tierhaltung nativ übersetzen; Flächen-/Kontrolldetails bleiben offen. |
-| variation | defined | nein | Luna ändert ausschließlich grain_and_maize_share von 0.70 auf 0.76; ohne Detailkulturen bleibt der native Input identisch und der Diversifizierungsfall untestbar. |
-| missing_fact | defined | nein | Luna entfernt is_certified; da dieses Flag bereits in der Basis keinen nativen Registrierungs-/Vertragsbeleg liefert, bleibt der native Input identisch. |
+| baseline | defined | Baseline | Bekanntes Jahr, Vertragsbeginnjahr, erste Teilnahme, Gesamtfläche und ausdrücklich fehlende Tierhaltung nativ übersetzen; Flächen-/Kontrolldetails bleiben offen. |
+| variation | defined | no | Luna ändert ausschließlich grain_and_maize_share von 0.70 auf 0.76; ohne Detailkulturen bleibt der native Input identisch und der Diversifizierungsfall untestbar. |
+| missing_fact | defined | no | Luna entfernt is_certified; da dieses Flag bereits in der Basis keinen nativen Registrierungs-/Vertragsbeleg liefert, bleibt der native Input identisch. |
 
-**Fixture-Lücke:** Die drei Luna-Fälle besitzen nur eine partielle native Übersetzung; Getreideanteil und Zertifizierungsflag bleiben unabbildbar.
+**Fixture gap:** Die drei Luna-Fälle besitzen nur eine partielle native Übersetzung; Getreideanteil und Zertifizierungsflag bleiben unabbildbar.
 
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Für die identische Diversifizierungsvariation fehlen eine belegte vollständige Kultur-/Flächenaufteilung und für die Zertifizierung Registrierung plus datierter Kontrollvertrag; keine bloße Feldumbenennung genügt.
 - DIV-/Feldstückanrechnung und Bio-Teilbetriebs-/Tierhaltungsabgrenzung bleiben vor normativen Sollwerten quellenbezogen zu prüfen; einschlägige Referenzentscheidungen aus App #140 erst für solche Sollwerte.
 - Fehlende Detaildaten werden von result als Nullaggregate bzw. violations behandelt, ohne eigenständige Datenlückenklassifikation.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_1b-opus-5.5-high-20260925/workspace/policy/o6_1b/main.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_1b-opus-5.5-high-20260925/workspace/policy/o6_1b/main.rego): Native result: vollständiger definierter Ausgabepunkt, compliant/violations, livestock/areas und Prämien.
 - [runs/v2-o6_1b-opus-5.5-high-20260925/workspace/policy/o6_1b/common.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_1b-opus-5.5-high-20260925/workspace/policy/o6_1b/common.rego): Detailparzellen statt Aggregatflächen und Kulturanteilen; share(_,whole) ist bei whole &lt;= 0 nativ 0.
@@ -311,32 +311,32 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_1c
 
-Run: `v2-o6_1c-opus-5.5-high-20261009`. [Fixture](fixtures/o6_1c.json) · [Native Ergebnisse](results/o6_1c.json)
+Run: `v2-o6_1c-opus-5.5-high-20261009`. [Fixture](fixtures/o6_1c.json) · [Native results](results/o6_1c.json)
 
-**Eingaben:** Direkte Übersetzung zu /farm/year, /farm/oepul/o6_1c/first_contract_year, land.arable_area_ha, parcel.o6_1c.category/npa und operations. Die NPA-Parzellenfläche und fehlende Ackerfläche behalten exakt die Luna-Werte. Pflegezählungen, 0.1 ha frühe Pflege und bloß mechanical lassen sich ohne Ereignisse/Unterart nicht vollständig übersetzen; beantragte Codes und Kategorien werden nicht hinzuerfunden.
+**Inputs:** Direkte Übersetzung zu /farm/year, /farm/oepul/o6_1c/first_contract_year, land.arable_area_ha, parcel.o6_1c.category/npa und operations. Die NPA-Parzellenfläche und fehlende Ackerfläche behalten exakt die Luna-Werte. Pflegezählungen, 0.1 ha frühe Pflege und bloß mechanical lassen sich ohne Ereignisse/Unterart nicht vollständig übersetzen; beantragte Codes und Kategorien werden nicht hinzuerfunden.
 
-**Ausgabebedeutung:** Native decision enthält categories, access/application/commitment_violations, contract_valid, parcel_exclusions, npa_eligible_area_ha/npa_area_cap_ha, Prämienband und Modulation. Die 4-%-Flächenkappung ist direkt beobachtbar; fehlende Antrags-/Codes-/Etablierungsangaben begrenzen die Interpretation des übrigen Ergebnisses. Es wird keine vollständige NPA-Konformität zugesprochen.
+**Output meaning:** Native decision enthält categories, access/application/commitment_violations, contract_valid, parcel_exclusions, npa_eligible_area_ha/npa_area_cap_ha, Prämienband und Modulation. Die 4-%-Flächenkappung ist direkt beobachtbar; fehlende Antrags-/Codes-/Etablierungsangaben begrenzen die Interpretation des übrigen Ergebnisses. Es wird keine vollständige NPA-Konformität zugesprochen.
 
-**Herkunft:** Öffentliche synthetische DEVELOPMENT-ONLY-Diagnose: ausschließlich Übersetzung der bestehenden Luna-Entwicklungsfälle aus docs/analysis/luna-screening-20261011/fixtures/o6_1c.json. Native Opus-Policies und Modelltests wurden zur Feldform gelesen; keine zusätzlichen Jahres-, Flächen-, Vertrags-, Veranstaltungs- oder Genehmigungsfakten werden aus Modelltests übernommen. Kein Golden-/Heldout-Test, keine unabhängigen Expertenlabels, keine erwarteten fachlichen Ergebnisse.
+**Origin:** Öffentliche synthetische DEVELOPMENT-ONLY-Diagnose: ausschließlich Übersetzung der bestehenden Luna-Entwicklungsfälle aus docs/analysis/luna-screening-20261011/fixtures/o6_1c.json. Native Opus-Policies und Modelltests wurden zur Feldform gelesen; keine zusätzlichen Jahres-, Flächen-, Vertrags-, Veranstaltungs- oder Genehmigungsfakten werden aus Modelltests übernommen. Kein Golden-/Heldout-Test, keine unabhängigen Expertenlabels, keine erwarteten fachlichen Ergebnisse.
 
 **Query:** `data.oepul.o6_1c.decision`
 
-**Inventar:** 97 Regelkatalog-Einträge; 9 Quellen; 1 statisch erkannte Eingabepfade; 16 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 97 rule catalog entries; 9 sources; 1 static input paths; 16 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"applicability": 1, "application_requirement": 3, "calculation": 4, "combination": 3, "consequence": 3, "contract_period": 2, "correction": 1, "cross_measure_credit": 1, "deadline": 7, "definition": 8, "eligibility": 12, "exception": 2, "exclusion": 1, "exemption": 1, "exit": 2, "force_majeure": 5, "legal_effect": 1, "limit": 3, "obligation": 11, "option": 1, "payment": 1, "permission": 2, "premium_rate": 2, "procedure": 1, "prohibition": 6, "re_entry": 1, "restriction": 1, "sanction": 6, "scope": 1, "takeover": 1, "threshold": 3}`
+**Rule types:** `{"applicability": 1, "application_requirement": 3, "calculation": 4, "combination": 3, "consequence": 3, "contract_period": 2, "correction": 1, "cross_measure_credit": 1, "deadline": 7, "definition": 8, "eligibility": 12, "exception": 2, "exclusion": 1, "exemption": 1, "exit": 2, "force_majeure": 5, "legal_effect": 1, "limit": 3, "obligation": 11, "option": 1, "payment": 1, "permission": 2, "premium_rate": 2, "procedure": 1, "prohibition": 6, "re_entry": 1, "restriction": 1, "sanction": 6, "scope": 1, "takeover": 1, "threshold": 3}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_1c | full_document | 30 | {"not_rule": 3, "rules": 27} |
 | o6_general | full_document | 39 | {"not_rule": 17, "rules": 22} |
@@ -350,9 +350,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -409,19 +409,19 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_1c.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Die vorhandene 0.30-ha-NPA-Fläche auf 10 ha Acker und direkte Managementfakten nativ übersetzen; keine Pflege-/Antragstermine ergänzen. |
-| variation | defined | ja | Ausschließlich dieselbe NPA-Parzellenfläche von 0.30 auf 0.50 ha ändern; alle anderen übersetzbaren Fakten bleiben gleich. |
-| missing_fact | defined | ja | Ausschließlich /land/arable_area_ha entfernen wie im Luna-Fall; native Aggregat-Defaultbehandlung beobachten. |
+| baseline | defined | Baseline | Die vorhandene 0.30-ha-NPA-Fläche auf 10 ha Acker und direkte Managementfakten nativ übersetzen; keine Pflege-/Antragstermine ergänzen. |
+| variation | defined | yes | Ausschließlich dieselbe NPA-Parzellenfläche von 0.30 auf 0.50 ha ändern; alle anderen übersetzbaren Fakten bleiben gleich. |
+| missing_fact | defined | yes | Ausschließlich /land/arable_area_ha entfernen wie im Luna-Fall; native Aggregat-Defaultbehandlung beobachten. |
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Pflegeereignisse, mechanische Beseitigungsunterart, Etablierungsart und tatsächliche Antrags-/Code-Deklarationen fehlen für einen vollständigen vergleichbaren NPA-Fall.
 - NPA-Kategorie ist bekannt, die formale Beantragung der Kategorie ist ein zusätzlicher Fakt; native Antragsverletzungen dürfen deshalb nicht als festgestellte Rechtsverstöße interpretiert werden.
 - Eine normative Prüfung der Kategorie-, Kombinations- und Anrechnungsregeln sowie fehlender Tatsachen braucht Quellen/Referenzentscheidung, gegebenenfalls die dazu passende offene Frage aus App #140.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_1c-opus-5.5-high-20261009/workspace/policy/o6_1c/decision.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_1c-opus-5.5-high-20261009/workspace/policy/o6_1c/decision.rego): Native zusammenfassende decision mit Flächenkap, Prämienband und getrennten Verletzungsgruppen.
 - [runs/v2-o6_1c-opus-5.5-high-20261009/workspace/policy/o6_1c/common.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_1c-opus-5.5-high-20261009/workspace/policy/o6_1c/common.rego): Native category-, Anwendungs- und Farmjahrpfade.
@@ -436,33 +436,33 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_2
 
-Run: `v2-o6_2-opus-5.5-high-20260930`. [Fixture](fixtures/o6_2.json) · [Native Ergebnisse](results/o6_2.json)
+Run: `v2-o6_2-opus-5.5-high-20260930`. [Fixture](fixtures/o6_2.json) · [Native results](results/o6_2.json)
 
-**Eingaben:** Native /farm/year, /farm/oepul, /farm/region, unveränderte Grünlandparzelle und zugeordnete Rinder-Alterskategorie. Antrags-/Kursdatum und Tierzahl bleiben exakt erhalten. Opus benötigt N-Mengen nach Verlusten und Alm-Abzug statt Luna kg/ha, konkrete Betriebsmittel statt Fremd-N-Aggregat sowie Kursthema/Rolle. Diese fehlen; drei partielle native Inputs sind trotz Luna-Variation/Missing-Fact identisch.
+**Inputs:** Native /farm/year, /farm/oepul, /farm/region, unveränderte Grünlandparzelle und zugeordnete Rinder-Alterskategorie. Antrags-/Kursdatum und Tierzahl bleiben exakt erhalten. Opus benötigt N-Mengen nach Verlusten und Alm-Abzug statt Luna kg/ha, konkrete Betriebsmittel statt Fremd-N-Aggregat sowie Kursthema/Rolle. Diese fehlen; drei partielle native Inputs sind trotz Luna-Variation/Missing-Fact identisch.
 
-**Ausgabebedeutung:** Native decision enthält eligible/contract_valid, N- und RGVE-Verhältnisse, violations/review_items sowie Prämienflächen/-summen und Vertragsfolgen. livestock.nitrogen wird bei Fehlen nativ mit N-Mengen 0 gerechnet; dieses Ergebnis ist keine übersetzte Luna-N-Aussage. Kursverstöße können aus fehlendem Thema/Rolle stammen. Kein vollständiger Förder- oder N-Grenzfall. eligible prüft native Zugangs-/Vertragsbedingungen separat von violations; ein Weiterbildungsverstoß kann gleichzeitig mit eligible=true und positiven Prämien auftreten.
+**Output meaning:** Native decision enthält eligible/contract_valid, N- und RGVE-Verhältnisse, violations/review_items sowie Prämienflächen/-summen und Vertragsfolgen. livestock.nitrogen wird bei Fehlen nativ mit N-Mengen 0 gerechnet; dieses Ergebnis ist keine übersetzte Luna-N-Aussage. Kursverstöße können aus fehlendem Thema/Rolle stammen. Kein vollständiger Förder- oder N-Grenzfall. eligible prüft native Zugangs-/Vertragsbedingungen separat von violations; ein Weiterbildungsverstoß kann gleichzeitig mit eligible=true und positiven Prämien auftreten.
 
-**Herkunft:** Öffentliche synthetische DEVELOPMENT-ONLY-Diagnose: ausschließlich Übersetzung der bestehenden Luna-Entwicklungsfälle aus docs/analysis/luna-screening-20261011/fixtures/o6_2.json. Native Opus-Policies und Modelltests wurden zur Feldform gelesen; keine zusätzlichen Jahres-, Flächen-, Vertrags-, Veranstaltungs- oder Genehmigungsfakten werden aus Modelltests übernommen. Kein Golden-/Heldout-Test, keine unabhängigen Expertenlabels, keine erwarteten fachlichen Ergebnisse.
+**Origin:** Öffentliche synthetische DEVELOPMENT-ONLY-Diagnose: ausschließlich Übersetzung der bestehenden Luna-Entwicklungsfälle aus docs/analysis/luna-screening-20261011/fixtures/o6_2.json. Native Opus-Policies und Modelltests wurden zur Feldform gelesen; keine zusätzlichen Jahres-, Flächen-, Vertrags-, Veranstaltungs- oder Genehmigungsfakten werden aus Modelltests übernommen. Kein Golden-/Heldout-Test, keine unabhängigen Expertenlabels, keine erwarteten fachlichen Ergebnisse.
 
 **Query:** `data.oepul.o6_2.decision`
 
-**Inventar:** 82 Regelkatalog-Einträge; 8 Quellen; 2 statisch erkannte Eingabepfade; 26 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 82 rule catalog entries; 8 sources; 2 static input paths; 26 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"access_condition": 3, "aggregation": 1, "calculation": 7, "calculation_note": 1, "classification": 1, "combination_exclusion": 1, "combination_premium_reduction": 1, "combination_table": 2, "consequence": 4, "contract_period": 1, "cross_reference": 2, "deadline": 2, "definition": 5, "documentation_obligation": 3, "eligibility": 3, "exception": 6, "notice": 1, "obligation": 10, "option": 3, "payment": 2, "premium_exclusion": 5, "premium_limit": 2, "premium_rate": 1, "procedure": 6, "prohibition": 1, "restriction": 2, "sanction": 1, "scope": 1, "temporary_exception": 1, "threshold": 1, "tolerance": 1, "transition": 1}`
+**Rule types:** `{"access_condition": 3, "aggregation": 1, "calculation": 7, "calculation_note": 1, "classification": 1, "combination_exclusion": 1, "combination_premium_reduction": 1, "combination_table": 2, "consequence": 4, "contract_period": 1, "cross_reference": 2, "deadline": 2, "definition": 5, "documentation_obligation": 3, "eligibility": 3, "exception": 6, "notice": 1, "obligation": 10, "option": 3, "payment": 2, "premium_exclusion": 5, "premium_limit": 2, "premium_rate": 1, "procedure": 6, "prohibition": 1, "restriction": 2, "sanction": 1, "scope": 1, "temporary_exception": 1, "threshold": 1, "tolerance": 1, "transition": 1}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.year",
       "input.land.total_area_ha"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_2 | full_document | 42 | {"not_rule": 4, "rules": 38} |
 | o6_general | full_document | 39 | {"not_rule": 10, "rules": 29} |
@@ -475,9 +475,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -543,22 +543,22 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_2.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Vorhandene Flächen-, Altersgruppen-, Teilnahme-, Antrags- und Kursfakten nativ übersetzen; N-Mengen, Betriebsmittel, Kursthema und Rolle bleiben offen. |
-| variation | defined | nein | Luna ändert ausschließlich das N-Verhältnis von 170 auf 171; ohne belegte N-Mengen und Nennerauflösung keine neue native N-Menge und deshalb identischer nativer Input. |
-| missing_fact | defined | nein | Luna entfernt ausschließlich external_n_fertilizer_kg; es existiert kein gleichwertiger nativer Aggregateingang, deshalb identischer partieller Input. |
+| baseline | defined | Baseline | Vorhandene Flächen-, Altersgruppen-, Teilnahme-, Antrags- und Kursfakten nativ übersetzen; N-Mengen, Betriebsmittel, Kursthema und Rolle bleiben offen. |
+| variation | defined | no | Luna ändert ausschließlich das N-Verhältnis von 170 auf 171; ohne belegte N-Mengen und Nennerauflösung keine neue native N-Menge und deshalb identischer nativer Input. |
+| missing_fact | defined | no | Luna entfernt ausschließlich external_n_fertilizer_kg; es existiert kein gleichwertiger nativer Aggregateingang, deshalb identischer partieller Input. |
 
-**Fixture-Lücke:** Der entscheidende N-Verhältnis-/Fremd-N-Fakt ist nicht nativ übersetzbar; drei bewusst identische partielle Inputs.
+**Fixture gap:** Der entscheidende N-Verhältnis-/Fremd-N-Fakt ist nicht nativ übersetzbar; drei bewusst identische partielle Inputs.
 
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Für die identische N-Grenzvariation fehlen getrennte N-Mengen nach Stall-/Lagerverlusten, Alm-N sowie belegte vollständige LN-Denominatorflächen. App #140 ist erst für normative N-Ermittlung/Sollwerte relevant; diese Eingabevertragslücke besteht schon vorher.
 - Eine fehlende Fremd-N-Summe kann nicht als fehlende vollständige Betriebsmittelliste ersetzt werden; Detailinputs/-käufe und Lagerdaten wären ein anderer Sachverhalt.
 - Kursteilnehmerrolle und Kursthema fehlen; native defaults erzeugen deshalb ggf. einen Weiterbildungsverstoß trotz der bei Luna direkt angenommenen Weiterbildung.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_2-opus-5.5-high-20260930/workspace/policy/o6_2/decision.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_2-opus-5.5-high-20260930/workspace/policy/o6_2/decision.rego): Native decision mit N-Verhältnis, RGVE, Prüfgruppen, Prämien und Vertragsfolgen.
 - [runs/v2-o6_2-opus-5.5-high-20260930/workspace/policy/o6_2/common.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_2-opus-5.5-high-20260930/workspace/policy/o6_2/common.rego): Farmjahr und Region-/Parzellenvertrag; agricultural_area_ha wird aus Detailparzellen berechnet.
@@ -574,32 +574,32 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_3
 
-Run: `v2-o6_3-opus-5.5-high-20260930`. [Fixture](fixtures/o6_3.json) · [Native Ergebnisse](results/o6_3.json)
+Run: `v2-o6_3-opus-5.5-high-20260930`. [Fixture](fixtures/o6_3.json) · [Native results](results/o6_3.json)
 
-**Eingaben:** Native Vertragspfade /farm/year, /farm/oepul/o6_3, /farm/feeding, /farm/machinery, /land/parcels und RGVE-Kategorien. Das ursprüngliche Jahr bleibt 2025. Silagelagerung wird exakt übersetzt und im Missing-Fact-Fall wirklich entfernt. Erste-Jahr-Aggregate, Grünfütterungsmehrheit und zusammengefasste Schafe/Ziegen sind ohne zusätzliche Detailfakten nur teilweise abbildbar.
+**Inputs:** Native Vertragspfade /farm/year, /farm/oepul/o6_3, /farm/feeding, /farm/machinery, /land/parcels und RGVE-Kategorien. Das ursprüngliche Jahr bleibt 2025. Silagelagerung wird exakt übersetzt und im Missing-Fact-Fall wirklich entfernt. Erste-Jahr-Aggregate, Grünfütterungsmehrheit und zusammengefasste Schafe/Ziegen sind ohne zusätzliche Detailfakten nur teilweise abbildbar.
 
-**Ausgabebedeutung:** Native decision enthält first_contract_year/contract_established, access_requirement_failures, livestock_status, RGVE/Futter-/Mindestflächen, option_application_issues, violations, Prämien und Vertragsfolgen. Fehlende Weide-/Mähdaten, Grünfütterungstage, MFA-Markierung und Schaf-/Ziegenzuordnung beeinflussen zusätzliche Prüfungen. Eine einzelne Silage-Reaktion belegt keine gesamte Heuwirtschaftskonformität; fehlende silage_stored wird nativ wie false behandelt. Beim direkten Aufruf des vollständigen decision mit strict-builtin-errors scheitern alle drei übersetzten Fälle an general.rego:24: allowed_decrease_ha multipliziert den fehlenden Vorjahreswert null. Dieser Runtimefehler bleibt sichtbar; die Query wird nicht auf einen fehlerfreien Hilfsausgang umgestellt.
+**Output meaning:** Native decision enthält first_contract_year/contract_established, access_requirement_failures, livestock_status, RGVE/Futter-/Mindestflächen, option_application_issues, violations, Prämien und Vertragsfolgen. Fehlende Weide-/Mähdaten, Grünfütterungstage, MFA-Markierung und Schaf-/Ziegenzuordnung beeinflussen zusätzliche Prüfungen. Eine einzelne Silage-Reaktion belegt keine gesamte Heuwirtschaftskonformität; fehlende silage_stored wird nativ wie false behandelt. Beim direkten Aufruf des vollständigen decision mit strict-builtin-errors scheitern alle drei übersetzten Fälle an general.rego:24: allowed_decrease_ha multipliziert den fehlenden Vorjahreswert null. Dieser Runtimefehler bleibt sichtbar; die Query wird nicht auf einen fehlerfreien Hilfsausgang umgestellt.
 
-**Herkunft:** Öffentliche synthetische DEVELOPMENT-ONLY-Diagnose: ausschließlich Übersetzung der bestehenden Luna-Entwicklungsfälle aus docs/analysis/luna-screening-20261011/fixtures/o6_3.json. Native Opus-Policies und Modelltests wurden zur Feldform gelesen; keine zusätzlichen Jahres-, Flächen-, Vertrags-, Veranstaltungs- oder Genehmigungsfakten werden aus Modelltests übernommen. Kein Golden-/Heldout-Test, keine unabhängigen Expertenlabels, keine erwarteten fachlichen Ergebnisse.
+**Origin:** Öffentliche synthetische DEVELOPMENT-ONLY-Diagnose: ausschließlich Übersetzung der bestehenden Luna-Entwicklungsfälle aus docs/analysis/luna-screening-20261011/fixtures/o6_3.json. Native Opus-Policies und Modelltests wurden zur Feldform gelesen; keine zusätzlichen Jahres-, Flächen-, Vertrags-, Veranstaltungs- oder Genehmigungsfakten werden aus Modelltests übernommen. Kein Golden-/Heldout-Test, keine unabhängigen Expertenlabels, keine erwarteten fachlichen Ergebnisse.
 
 **Query:** `data.o6_3.decision`
 
-**Inventar:** 74 Regelkatalog-Einträge; 8 Quellen; 1 statisch erkannte Eingabepfade; 34 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 74 rule catalog entries; 8 sources; 1 static input paths; 34 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"access_requirement": 4, "area_change": 2, "calculation": 6, "combination": 2, "consequence": 4, "contract_period": 5, "deadline": 3, "definition": 3, "eligibility": 2, "exception": 9, "exclusion": 3, "interaction": 1, "obligation": 13, "option_obligation": 1, "payment": 2, "premium_cap": 1, "premium_eligibility": 1, "premium_rate": 2, "procedure": 6, "sanction": 2, "scope": 1, "transition": 1}`
+**Rule types:** `{"access_requirement": 4, "area_change": 2, "calculation": 6, "combination": 2, "consequence": 4, "contract_period": 5, "deadline": 3, "definition": 3, "eligibility": 2, "exception": 9, "exclusion": 3, "interaction": 1, "obligation": 13, "option_obligation": 1, "payment": 2, "premium_cap": 1, "premium_eligibility": 1, "premium_rate": 2, "procedure": 6, "sanction": 2, "scope": 1, "transition": 1}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_3 | full_document | 27 | {"not_rule": 3, "rules": 24} |
 | o6_general | full_document | 47 | {"not_rule": 17, "rules": 30} |
@@ -612,9 +612,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -683,20 +683,20 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_3.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | runtime_error | Basis | Die bekannten 2025-Vertrags-, Tier-, Parzellen- und Silagefakten nativ übersetzen; keine neuen Tage/Mähtermine oder Schaf-/Ziegenaufteilung. |
-| variation | runtime_error | nein | Ausschließlich /farm/feeding/silage_stored von false auf true ändern; derselbe Luna-Lagerungsfakt. |
-| missing_fact | runtime_error | nein | Ausschließlich /farm/feeding/silage_stored entfernen; absent bleibt von false im Input unterschieden. |
+| baseline | runtime_error | Baseline | Die bekannten 2025-Vertrags-, Tier-, Parzellen- und Silagefakten nativ übersetzen; keine neuen Tage/Mähtermine oder Schaf-/Ziegenaufteilung. |
+| variation | runtime_error | no | Ausschließlich /farm/feeding/silage_stored von false auf true ändern; derselbe Luna-Lagerungsfakt. |
+| missing_fact | runtime_error | no | Ausschließlich /farm/feeding/silage_stored entfernen; absent bleibt von false im Input unterschieden. |
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Technische Vertragsgrenze: /farm/oepul/o6_3/area_change/previous_year_grassland_measure_area_ha fehlt im Luna-Fall. Der Kandidat setzt ihn auf null und verwendet ihn in general.rego:24 ohne ausreichende Zahlenprüfung; alle drei vollständigen decision-Aufrufe enden unter strict-builtin-errors mit eval_type_error (mul, operand null). Ein Vorjahreswert wird nicht ergänzt und der Fehler nicht durch eine Teilquery verdeckt.
 - Für vollständige Heuwirtschaftsbewertung fehlen grasland_type/Mähereignisse, Grünfütterungstage, MFA-Markierung/Antragsdatum und getrennte Schaf-/Ziegenkategorien; das ist kein Grund, das ursprüngliche Jahr 2025 umzudatieren.
 - Fehlende Silagelagerung wird nativ als false behandelt und nicht als Datenlücke ausgewiesen; der Inputunterschied muss getrennt von der Outputgleichheit erhalten bleiben.
 - Einzelne Fütterungs-/Tierhaltungs- und Erstjahrbedingungen brauchen vor fachlichen Sollwerten eine quellenbezogene Referenzprüfung; gegebenenfalls einschlägige Entscheidungen aus App #140, ohne die Entwicklungsdiagnose zu blockieren.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_3-opus-5.5-high-20260930/workspace/policy/o6_3/decision.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_3-opus-5.5-high-20260930/workspace/policy/o6_3/decision.rego): Native data.o6_3.decision, eigenständiger Namespace und zusammenfassende Vertrags-/Prämien-/Verletzungsfelder.
 - [runs/v2-o6_3-opus-5.5-high-20260930/workspace/policy/o6_3/common.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_3-opus-5.5-high-20260930/workspace/policy/o6_3/common.rego): Native Farmjahr-/Teilnahme-/Parzellenpfade; Vertragserstjahr bleibt 2025.
@@ -713,32 +713,32 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_4
 
-Run: `v2-o6_4-opus-5.5-high-20261009`. [Fixture](fixtures/o6_4.json) · [Native Ergebnisse](results/o6_4.json)
+Run: `v2-o6_4-opus-5.5-high-20261009`. [Fixture](fixtures/o6_4.json) · [Native results](results/o6_4.json)
 
-**Eingaben:** Native /farm/year, /oepul/o6_4/application_date und parcel.mountain_meadow. Der Höhenanteil ist exakt die arithmetische Umrechnung 1.1/2*100=55 Prozent; bei fehlendem Zähler bleibt er fehlend. Der vollständige Mahd-Jahresfakt wird über full_mowing_years abgebildet, ohne Mahddatum oder Verfahren. contract_start_date und Vorjahresflächen fehlen weiterhin; es wird kein 1.-Jänner-Vertragsdatum oder Vorjahreswert erfunden.
+**Inputs:** Native /farm/year, /oepul/o6_4/application_date und parcel.mountain_meadow. Der Höhenanteil ist exakt die arithmetische Umrechnung 1.1/2*100=55 Prozent; bei fehlendem Zähler bleibt er fehlend. Der vollständige Mahd-Jahresfakt wird über full_mowing_years abgebildet, ohne Mahddatum oder Verfahren. contract_start_date und Vorjahresflächen fehlen weiterhin; es wird kein 1.-Jänner-Vertragsdatum oder Vorjahreswert erfunden.
 
-**Ausgabebedeutung:** Native decision enthält contract_missing_inputs/contract_failures, je Parzelle is_bergmahd, missing_inputs/failures/warnings, erwarteten/effektiven Mähcode, premium_blockers, violations und Prämien. Der fehlende Höhenanteil kann eigenständig ausgewiesen werden. Die Mahdjahresliste ersetzt keine Ereignis-/Mähcodeprüfung; ohne Vertragsstartdatum bleibt eine Mahdpflicht-Sensitivität begrenzt und Prämien sind keine vollständige Bewertung.
+**Output meaning:** Native decision enthält contract_missing_inputs/contract_failures, je Parzelle is_bergmahd, missing_inputs/failures/warnings, erwarteten/effektiven Mähcode, premium_blockers, violations und Prämien. Der fehlende Höhenanteil kann eigenständig ausgewiesen werden. Die Mahdjahresliste ersetzt keine Ereignis-/Mähcodeprüfung; ohne Vertragsstartdatum bleibt eine Mahdpflicht-Sensitivität begrenzt und Prämien sind keine vollständige Bewertung.
 
-**Herkunft:** Öffentliche synthetische DEVELOPMENT-ONLY-Diagnose: ausschließlich Übersetzung der bestehenden Luna-Entwicklungsfälle aus docs/analysis/luna-screening-20261011/fixtures/o6_4.json. Native Opus-Policies und Modelltests wurden zur Feldform gelesen; keine zusätzlichen Jahres-, Flächen-, Vertrags-, Veranstaltungs- oder Genehmigungsfakten werden aus Modelltests übernommen. Kein Golden-/Heldout-Test, keine unabhängigen Expertenlabels, keine erwarteten fachlichen Ergebnisse.
+**Origin:** Öffentliche synthetische DEVELOPMENT-ONLY-Diagnose: ausschließlich Übersetzung der bestehenden Luna-Entwicklungsfälle aus docs/analysis/luna-screening-20261011/fixtures/o6_4.json. Native Opus-Policies und Modelltests wurden zur Feldform gelesen; keine zusätzlichen Jahres-, Flächen-, Vertrags-, Veranstaltungs- oder Genehmigungsfakten werden aus Modelltests übernommen. Kein Golden-/Heldout-Test, keine unabhängigen Expertenlabels, keine erwarteten fachlichen Ergebnisse.
 
 **Query:** `data.oepul.o6_4.decision`
 
-**Inventar:** 90 Regelkatalog-Einträge; 9 Quellen; 1 statisch erkannte Eingabepfade; 13 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 90 rule catalog entries; 9 sources; 1 static input paths; 13 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"calculation": 3, "cap": 1, "coding": 5, "combination": 1, "condition": 4, "conditionality": 1, "consequence": 5, "contract_period": 1, "control": 1, "deadline": 4, "definition": 2, "eligibility": 9, "exception": 9, "exclusion": 3, "indicator": 1, "interaction": 2, "obligation": 8, "option": 2, "payment": 1, "permission": 1, "premium_condition": 1, "premium_rate": 2, "procedural_hint": 1, "procedure": 7, "prohibition": 5, "sanction": 3, "scope": 1, "temporal_exception_check": 1, "threshold": 5}`
+**Rule types:** `{"calculation": 3, "cap": 1, "coding": 5, "combination": 1, "condition": 4, "conditionality": 1, "consequence": 5, "contract_period": 1, "control": 1, "deadline": 4, "definition": 2, "eligibility": 9, "exception": 9, "exclusion": 3, "indicator": 1, "interaction": 2, "obligation": 8, "option": 2, "payment": 1, "permission": 1, "premium_condition": 1, "premium_rate": 2, "procedural_hint": 1, "procedure": 7, "prohibition": 5, "sanction": 3, "scope": 1, "temporal_exception_check": 1, "threshold": 5}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_4 | full_document | 23 | {"not_rule": 3, "rules": 20} |
 | o6_general | full_document | 49 | {"not_rule": 12, "rules": 37} |
@@ -752,9 +752,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -820,19 +820,19 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_4.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Die bekannte 2-ha-Bergmahd, 55-%-Höhenanteil und bestätigte vollständige Mahd 2026 nativ übersetzen; Vertragsdatum/Mähdatum/Verfahren bleiben offen. |
-| variation | defined | nein | Dieselbe Luna-Mahd ist full_area=false; daher 2026 aus der Liste bestätigter qualifizierender Mähjahre entfernen. Kein neues Ereignis oder Datum. |
-| missing_fact | defined | ja | Luna entfernt nur elevation_above_1200_area_ha; deshalb ausschließlich den nativen share_above_1200m_percent-Pfad entfernen. |
+| baseline | defined | Baseline | Die bekannte 2-ha-Bergmahd, 55-%-Höhenanteil und bestätigte vollständige Mahd 2026 nativ übersetzen; Vertragsdatum/Mähdatum/Verfahren bleiben offen. |
+| variation | defined | no | Dieselbe Luna-Mahd ist full_area=false; daher 2026 aus der Liste bestätigter qualifizierender Mähjahre entfernen. Kein neues Ereignis oder Datum. |
+| missing_fact | defined | yes | Luna entfernt nur elevation_above_1200_area_ha; deshalb ausschließlich den nativen share_above_1200m_percent-Pfad entfernen. |
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Das genaue Vertragsstartdatum, Mähereignisdatum und Mähverfahren fehlen; vorhandene BM1-Deklaration erlaubt keine Verfahrensinferenz. Zusätzlich ist die Jahresliste nur bekannte Teilhistorie.
 - Die Übersetzung der parzellenbezogenen Almbetriebs-Ausnahme in den nativen Betriebsflag gilt nur für diese einzelne Parzelle; keine allgemeine mehrparzellige App-Adaption.
 - Normative Bergmahd-/BM-Code- und Mahdpflichtbewertung benötigt passende Quellen-/Referenzentscheidungen, gegebenenfalls einschlägige Fragen aus App #140; die native Höhen-Missing-Diagnose ist bereits ohne diese Freigabe beobachtbar.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_4-opus-5.5-high-20261009/workspace/policy/o6_4/decision.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_4-opus-5.5-high-20261009/workspace/policy/o6_4/decision.rego): Native decision mit contract_missing_inputs und je Parzelle missing_inputs/Prämienblockern.
 - [runs/v2-o6_4-opus-5.5-high-20261009/workspace/policy/o6_4/common.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_4-opus-5.5-high-20261009/workspace/policy/o6_4/common.rego): Farmjahr, mountain_meadow-Teilnahme und root oepul.o6_4; Ereignisse benötigen ISO-Datum.
@@ -847,33 +847,33 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_5
 
-Run: `v2-o6_5-opus-5.5-high-20260925`. [Fixture](fixtures/o6_5.json) · [Native Ergebnisse](results/o6_5.json)
+Run: `v2-o6_5-opus-5.5-high-20260925`. [Fixture](fixtures/o6_5.json) · [Native results](results/o6_5.json)
 
-**Eingaben:** farm.year bleibt 2025. Die bekannte Kuh wird unter livestock.endangered_breed_animals mit nativer animal_category=kuh, Rasse, Reinrassigkeit, Zuchtprogramm, Zuchteinsatz, reinrassiger Anpaarung und on_farm_from abgebildet. diagnostic-animal-0 ist allein eine strukturelle Index-ID. Fehlende Erstkalbedaten, Zuchtbuch-/Orts-/Bestätigungs- und Antragsdaten bleiben fehlen.
+**Inputs:** farm.year bleibt 2025. Die bekannte Kuh wird unter livestock.endangered_breed_animals mit nativer animal_category=kuh, Rasse, Reinrassigkeit, Zuchtprogramm, Zuchteinsatz, reinrassiger Anpaarung und on_farm_from abgebildet. diagnostic-animal-0 ist allein eine strukturelle Index-ID. Fehlende Erstkalbedaten, Zuchtbuch-/Orts-/Bestätigungs- und Antragsdaten bleiben fehlen.
 
-**Ausgabebedeutung:** Die native decision enthält getrennte Zugangs-, Vertrags-, Tier- und Prämienbefunde. Aus boolescher Mindestflächen-/Tierprüfung oder Prämienwerten folgt keine unabhängig bestätigte Förderfreigabe. Der Opus-Vertrag prüft zusätzliche Nachweise, die Luna nicht als konkrete Werte geliefert hat.
+**Output meaning:** Die native decision enthält getrennte Zugangs-, Vertrags-, Tier- und Prämienbefunde. Aus boolescher Mindestflächen-/Tierprüfung oder Prämienwerten folgt keine unabhängig bestätigte Förderfreigabe. Der Opus-Vertrag prüft zusätzliche Nachweise, die Luna nicht als konkrete Werte geliefert hat.
 
-**Herkunft:** Öffentliche synthetische Entwicklungsdiagnose: ausschließlich Übersetzung der drei bereits sichtbaren Luna-Fälle aus docs/analysis/luna-screening-20261011/fixtures/o6_5.json. Keine unabhängigen Sollurteile und keine zurückgehaltenen Testfälle. Strukturelle Index-IDs bezeichnen nur synthetische Datensätze; fehlende fachliche Fakten werden nicht ergänzt.
+**Origin:** Öffentliche synthetische Entwicklungsdiagnose: ausschließlich Übersetzung der drei bereits sichtbaren Luna-Fälle aus docs/analysis/luna-screening-20261011/fixtures/o6_5.json. Keine unabhängigen Sollurteile und keine zurückgehaltenen Testfälle. Strukturelle Index-IDs bezeichnen nur synthetische Datensätze; fehlende fachliche Fakten werden nicht ergänzt.
 
 **Query:** `data.oepul.o6_5.decision`
 
-**Inventar:** 97 Regelkatalog-Einträge; 8 Quellen; 2 statisch erkannte Eingabepfade; 7 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 97 rule catalog entries; 8 sources; 2 static input paths; 7 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"access_requirement": 7, "application": 4, "calculation": 11, "combination": 1, "consequence": 3, "contract": 4, "control": 1, "deadline": 3, "definition": 4, "eligibility": 15, "exception": 7, "exit": 3, "information": 1, "legal_basis": 2, "obligation": 13, "procedure": 8, "reporting": 3, "sanction": 5, "scope": 2}`
+**Rule types:** `{"access_requirement": 7, "application": 4, "calculation": 11, "combination": 1, "consequence": 3, "contract": 4, "control": 1, "deadline": 3, "definition": 4, "eligibility": 15, "exception": 7, "exit": 3, "information": 1, "legal_basis": 2, "obligation": 13, "procedure": 8, "reporting": 3, "sanction": 5, "scope": 2}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.documentation.vis_reports_complete",
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_5 | full_document | 24 | {"not_rule": 2, "rules": 22} |
 | o6_general | full_document | 33 | {"not_rule": 15, "rules": 18} |
@@ -886,9 +886,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -945,22 +945,22 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_5.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Einen synthetischen Einzeltiersachverhalt mit dem historischen Kandidaten ausführen. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
-| variation | defined | nein | Das Ende der Haltung um einen Tag vor die in holding_deadline verwendete Jahresendgrenze setzen. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
-| missing_fact | defined | nein | Den konsumierten Nachweis approved_breeding_program entfernen und den nativen Umgang mit unbekannten Fakten beobachten. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
+| baseline | defined | Baseline | Einen synthetischen Einzeltiersachverhalt mit dem historischen Kandidaten ausführen. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
+| variation | defined | no | Das Ende der Haltung um einen Tag vor die in holding_deadline verwendete Jahresendgrenze setzen. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
+| missing_fact | defined | no | Den konsumierten Nachweis approved_breeding_program entfernen und den nativen Umgang mit unbekannten Fakten beobachten. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
 
-**Fixture-Lücke:** Teilübersetzung: Die Jahresend-Haltevariation und der bloße Kalbe-Fristnachweis besitzen keine vollständig belegte native Ereignis-/Datumsabbildung.
+**Fixture gap:** Teilübersetzung: Die Jahresend-Haltevariation und der bloße Kalbe-Fristnachweis besitzen keine vollständig belegte native Ereignis-/Datumsabbildung.
 
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Konkretes Erstkalbedatum und eigenständige Zuchtbuch-/Zuchtorganisations-/Ortsnachweise für den nativen Opus-Vertrag fehlen im sichtbaren Luna-Fall.
 - Die Haltedatum-Variation ist ohne Abgangsereignis und dessen fachliche Ausnahmen nicht verlustfrei abbildbar.
 - Antragsteller- und Vertragsdaten fehlen; native Zugangs-/Prämienausgaben sind kein freigegebener Gesamtbescheid.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_5-opus-5.5-high-20260925/workspace/policy/o6_5/common.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_5-opus-5.5-high-20260925/workspace/policy/o6_5/common.rego): Nativer Eingabe-/Ausgabevertrag; unveränderter, aus dem gepinnten Opus-Bestand gelesener Kandidat.
 - [runs/v2-o6_5-opus-5.5-high-20260925/workspace/policy/o6_5/eligibility.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_5-opus-5.5-high-20260925/workspace/policy/o6_5/eligibility.rego): Nativer Eingabe-/Ausgabevertrag; unveränderter, aus dem gepinnten Opus-Bestand gelesener Kandidat.
@@ -971,26 +971,26 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_6
 
-Run: `v2-o6_6-opus-5.5-high-20260925`. [Fixture](fixtures/o6_6.json) · [Native Ergebnisse](results/o6_6.json)
+Run: `v2-o6_6-opus-5.5-high-20260925`. [Fixture](fixtures/o6_6.json) · [Native results](results/o6_6.json)
 
-**Eingaben:** Nativer Opus-Vertrag mit farm.year=2026, farm.oepul.measures und land.parcels[].operations.cover_crop. Flächen bleiben 2 ha; Saat-/Umbruch-/Antragsdaten und Variante 2 bleiben unverändert. harvested_share=1 wird rein rechnerisch zu 100 Prozent. Die synthetische Parzellen-ID ersetzt keine reale Identität; Mineral-N-Einsatz bekommt kein erfundenes Datum oder konkrete mechanische Methode.
+**Inputs:** Nativer Opus-Vertrag mit farm.year=2026, farm.oepul.measures und land.parcels[].operations.cover_crop. Flächen bleiben 2 ha; Saat-/Umbruch-/Antragsdaten und Variante 2 bleiben unverändert. harvested_share=1 wird rein rechnerisch zu 100 Prozent. Die synthetische Parzellen-ID ersetzt keine reale Identität; Mineral-N-Einsatz bekommt kein erfundenes Datum oder konkrete mechanische Methode.
 
-**Ausgabebedeutung:** decision liefert Betriebs-/Parzellenbefunde, fehlende Eingaben und Prämienbänder. Ein positiver nativer Teilbefund kann trotz fehlender konkreter Ereignis-/Methodennachweise entstehen. Insbesondere die übersetzte N-Variation ist kein datierter Opus-Sollfall; keine fachliche Gleichwertigkeit oder vollständige Förderfreigabe wird behauptet.
+**Output meaning:** decision liefert Betriebs-/Parzellenbefunde, fehlende Eingaben und Prämienbänder. Ein positiver nativer Teilbefund kann trotz fehlender konkreter Ereignis-/Methodennachweise entstehen. Insbesondere die übersetzte N-Variation ist kein datierter Opus-Sollfall; keine fachliche Gleichwertigkeit oder vollständige Förderfreigabe wird behauptet.
 
-**Herkunft:** Öffentliche synthetische Entwicklungsdiagnose: ausschließlich Übersetzung der drei bereits sichtbaren Luna-Fälle aus docs/analysis/luna-screening-20261011/fixtures/o6_6.json. Keine unabhängigen Sollurteile und keine zurückgehaltenen Testfälle. Strukturelle Index-IDs bezeichnen nur synthetische Datensätze; fehlende fachliche Fakten werden nicht ergänzt.
+**Origin:** Öffentliche synthetische Entwicklungsdiagnose: ausschließlich Übersetzung der drei bereits sichtbaren Luna-Fälle aus docs/analysis/luna-screening-20261011/fixtures/o6_6.json. Keine unabhängigen Sollurteile und keine zurückgehaltenen Testfälle. Strukturelle Index-IDs bezeichnen nur synthetische Datensätze; fehlende fachliche Fakten werden nicht ergänzt.
 
 **Query:** `data.oepul.o6_6.decision`
 
-**Inventar:** 111 Regelkatalog-Einträge; 8 Quellen; 10 statisch erkannte Eingabepfade; 47 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 111 rule catalog entries; 8 sources; 10 static input paths; 47 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"calculation": 8, "combination": 5, "consequence": 2, "contract": 2, "deadline": 7, "definition": 11, "eligibility": 21, "exception": 16, "informational": 4, "obligation": 11, "permission": 4, "procedure": 9, "prohibition": 9, "sanction": 2}`
+**Rule types:** `{"calculation": 8, "combination": 5, "consequence": 2, "contract": 2, "deadline": 7, "definition": 11, "eligibility": 21, "exception": 16, "informational": 4, "obligation": 11, "permission": 4, "procedure": 9, "prohibition": 9, "sanction": 2}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.applicant",
@@ -1005,7 +1005,7 @@ Statische Eingabepfade (keine Laufzeitspur):
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_6 | full_document | 46 | {"not_rule": 2, "rules": 44} |
 | o6_general | full_document | 43 | {"not_rule": 14, "rules": 29} |
@@ -1018,9 +1018,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -1087,22 +1087,22 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_6.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Das native Entscheidungsobjekt für einen synthetischen Variante-2-Sachverhalt erfassen. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
-| variation | defined | nein | Nur mineral_n_applied auf true setzen, um eine konkret konsumierte Düngeinformation zu variieren. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
-| missing_fact | defined | nein | mineral_n_applied entfernen und profile_missing gemeinsam mit eligible und violations beobachten. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
+| baseline | defined | Baseline | Das native Entscheidungsobjekt für einen synthetischen Variante-2-Sachverhalt erfassen. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
+| variation | defined | no | Nur mineral_n_applied auf true setzen, um eine konkret konsumierte Düngeinformation zu variieren. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
+| missing_fact | defined | no | mineral_n_applied entfernen und profile_missing gemeinsam mit eligible und violations beobachten. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
 
-**Fixture-Lücke:** Teilübersetzung: N-Einsatz/Unbekanntheit ohne konkretes Ereignisdatum und boolesche mechanische Beseitigung ohne Methoden-Code.
+**Fixture gap:** Teilübersetzung: N-Einsatz/Unbekanntheit ohne konkretes Ereignisdatum und boolesche mechanische Beseitigung ohne Methoden-Code.
 
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Datierte Düngungsereignisse und ein unabhängiger Vollständigkeitsnachweis der Ereignisliste fehlen.
 - Die konkrete mechanische Beseitigungsmethode und Folgekulturinformationen sind im Luna-Fall nicht enthalten.
 - Erstmaliger Vertragsbeginn und weitere allgemeine Antrags-/Betriebsnachweise dürfen nicht aus dem aktuellen Förderjahr abgeleitet werden.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_6-opus-5.5-high-20260925/workspace/policy/o6_6/helpers.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_6-opus-5.5-high-20260925/workspace/policy/o6_6/helpers.rego): Nativer Eingabe-/Ausgabevertrag; unveränderter, aus dem gepinnten Opus-Bestand gelesener Kandidat.
 - [runs/v2-o6_6-opus-5.5-high-20260925/workspace/policy/o6_6/parcel.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_6-opus-5.5-high-20260925/workspace/policy/o6_6/parcel.rego): Nativer Eingabe-/Ausgabevertrag; unveränderter, aus dem gepinnten Opus-Bestand gelesener Kandidat.
@@ -1113,26 +1113,26 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_7
 
-Run: `v2-o6_7-opus-5.5-high-20260925`. [Fixture](fixtures/o6_7.json) · [Native Ergebnisse](results/o6_7.json)
+Run: `v2-o6_7-opus-5.5-high-20260925`. [Fixture](fixtures/o6_7.json) · [Native results](results/o6_7.json)
 
-**Eingaben:** farm.year bleibt 2025; die aggregierte Ackerfläche ist 10 beziehungsweise 1,4 ha. Teilnahme und vorhandener Aufzeichnungsnachweis werden in farm.oepul.participations und documentation übertragen. Ein einziger bekannter Zwischenfruchtbeginn (Tag 250 = 2025-09-07), Partner-/Familienanzahl und Drusch-/PSM-Nichteinsatz werden als Teilsegment dargestellt. Es fehlen explizite Parzellenfläche/land_use und eine vollständige Zeitreihe; diese werden nicht aus der Betriebsfläche erfunden.
+**Inputs:** farm.year bleibt 2025; die aggregierte Ackerfläche ist 10 beziehungsweise 1,4 ha. Teilnahme und vorhandener Aufzeichnungsnachweis werden in farm.oepul.participations und documentation übertragen. Ein einziger bekannter Zwischenfruchtbeginn (Tag 250 = 2025-09-07), Partner-/Familienanzahl und Drusch-/PSM-Nichteinsatz werden als Teilsegment dargestellt. Es fehlen explizite Parzellenfläche/land_use und eine vollständige Zeitreihe; diese werden nicht aus der Betriebsfläche erfunden.
 
-**Ausgabebedeutung:** Die native Gesamtentscheidung trennt access_ok, measure_valid, tägliche coverage und violations. Opus berechnet Begrünung aus nativen Ackerschlägen und datierten Segmenten, statt eine aggregierte Eingangsquote zu prüfen. Mangels belegter Parzellenflächen/Jahresgeschichte ist diese coverage-Ausgabe kein gleichwertiger Test der Luna-Quote und keine vollständige Förderfreigabe.
+**Output meaning:** Die native Gesamtentscheidung trennt access_ok, measure_valid, tägliche coverage und violations. Opus berechnet Begrünung aus nativen Ackerschlägen und datierten Segmenten, statt eine aggregierte Eingangsquote zu prüfen. Mangels belegter Parzellenflächen/Jahresgeschichte ist diese coverage-Ausgabe kein gleichwertiger Test der Luna-Quote und keine vollständige Förderfreigabe.
 
-**Herkunft:** Öffentliche synthetische Entwicklungsdiagnose: ausschließlich Übersetzung der drei bereits sichtbaren Luna-Fälle aus docs/analysis/luna-screening-20261011/fixtures/o6_7.json. Keine unabhängigen Sollurteile und keine zurückgehaltenen Testfälle. Strukturelle Index-IDs bezeichnen nur synthetische Datensätze; fehlende fachliche Fakten werden nicht ergänzt.
+**Origin:** Öffentliche synthetische Entwicklungsdiagnose: ausschließlich Übersetzung der drei bereits sichtbaren Luna-Fälle aus docs/analysis/luna-screening-20261011/fixtures/o6_7.json. Keine unabhängigen Sollurteile und keine zurückgehaltenen Testfälle. Strukturelle Index-IDs bezeichnen nur synthetische Datensätze; fehlende fachliche Fakten werden nicht ergänzt.
 
 **Query:** `data.o6_7.decision`
 
-**Inventar:** 107 Regelkatalog-Einträge; 8 Quellen; 7 statisch erkannte Eingabepfade; 25 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 107 rule catalog entries; 8 sources; 7 static input paths; 25 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"calculation": 8, "combination": 4, "consequence": 6, "context": 1, "contract_period": 2, "cross_reference": 1, "deadline": 3, "definition": 16, "documentation": 2, "eligibility": 6, "exception": 9, "exclusion": 6, "obligation": 12, "payment": 2, "permission": 8, "procedure": 7, "prohibition": 10, "sanction": 2, "scope": 1, "transition": 1}`
+**Rule types:** `{"calculation": 8, "combination": 4, "consequence": 6, "context": 1, "contract_period": 2, "cross_reference": 1, "deadline": 3, "definition": 16, "documentation": 2, "eligibility": 6, "exception": 9, "exclusion": 6, "obligation": 12, "payment": 2, "permission": 8, "procedure": 7, "prohibition": 10, "sanction": 2, "scope": 1, "transition": 1}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.documentation.field_records_complete",
@@ -1144,7 +1144,7 @@ Statische Eingabepfade (keine Laufzeitspur):
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_7 | full_document | 48 | {"not_rule": 5, "rules": 43} |
 | o6_general | full_document | 39 | {"not_rule": 6, "rules": 33} |
@@ -1157,9 +1157,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -1231,22 +1231,22 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_7.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Die native compliance-Ausgabe für einen synthetischen Begrünungssachverhalt aufnehmen. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
-| variation | defined | ja | Nur die Ackerfläche von 10 auf 1,4 ha ändern und die Mindestflächenprüfung beobachten. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
-| missing_fact | defined | nein | cover_share_percent entfernen und prüfen, ob der Kandidat fehlende Quote und festgestellte Erfüllung unterscheidet. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
+| baseline | defined | Baseline | Die native compliance-Ausgabe für einen synthetischen Begrünungssachverhalt aufnehmen. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
+| variation | defined | yes | Nur die Ackerfläche von 10 auf 1,4 ha ändern und die Mindestflächenprüfung beobachten. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
+| missing_fact | defined | no | cover_share_percent entfernen und prüfen, ob der Kandidat fehlende Quote und festgestellte Erfüllung unterscheidet. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
 
-**Fixture-Lücke:** Teilübersetzung: Aggregierte Quote, unbekannte Quote und grobe Dauer-/Tagwerte ersetzen keine vollständige native Parzellen-Zeitreihe.
+**Fixture gap:** Teilübersetzung: Aggregierte Quote, unbekannte Quote und grobe Dauer-/Tagwerte ersetzen keine vollständige native Parzellen-Zeitreihe.
 
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Die konkrete, vollständige Jahresgeschichte und Ackerschlagflächen/-nutzungen fehlen für den nativen täglichen Coverage-Vertrag.
 - Umbruchjahr/-endpunkt sowie konkrete Beseitigungsverfahren und Bewirtschaftungsereignisse sind nicht aus den Luna-Aggregaten ableitbar.
 - Zusätzliche Antrags-/Vertragsbeginnfakten bleiben offen; keine künstliche Positivbasis wird hergestellt.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_7-opus-5.5-high-20260925/workspace/policy/o6_7/lib.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_7-opus-5.5-high-20260925/workspace/policy/o6_7/lib.rego): Nativer Eingabe-/Ausgabevertrag; unveränderter, aus dem gepinnten Opus-Bestand gelesener Kandidat.
 - [runs/v2-o6_7-opus-5.5-high-20260925/workspace/policy/o6_7/main.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_7-opus-5.5-high-20260925/workspace/policy/o6_7/main.rego): Nativer Eingabe-/Ausgabevertrag; unveränderter, aus dem gepinnten Opus-Bestand gelesener Kandidat.
@@ -1258,32 +1258,32 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_8
 
-Run: `v2-o6_8-opus-5.5-high-20261001`. [Fixture](fixtures/o6_8.json) · [Native Ergebnisse](results/o6_8.json)
+Run: `v2-o6_8-opus-5.5-high-20261001`. [Fixture](fixtures/o6_8.json) · [Native results](results/o6_8.json)
 
-**Eingaben:** farm.year bleibt 2026 und Betriebsregion Burgenland/Güssing. Parzelle p1 mit 0,4 ha Acker/Grünbrache; BAW-Code, Ländercode AT und KG-Nummer werden in oepul_o6_8 umbenannt. Erosionspfadanteil bleibt 0,25 (Anteil, keine Prozentzahl), Fläche 0,10 beziehungsweise 0,09 ha. Der Missing-Fact-Fall entfernt auch im nativen Vertrag ausschließlich die KG-Nummer.
+**Inputs:** farm.year bleibt 2026 und Betriebsregion Burgenland/Güssing. Parzelle p1 mit 0,4 ha Acker/Grünbrache; BAW-Code, Ländercode AT und KG-Nummer werden in oepul_o6_8 umbenannt. Erosionspfadanteil bleibt 0,25 (Anteil, keine Prozentzahl), Fläche 0,10 beziehungsweise 0,09 ha. Der Missing-Fact-Fall entfernt auch im nativen Vertrag ausschließlich die KG-Nummer.
 
-**Ausgabebedeutung:** Native decision trennt contract_active/farm_access_ok, compliant_codes, Verstöße, Anwendungshinweise und Prämiensummen. Die Vierfachgrenze erscheint in Opus unter Anwendungshinweisen und Flächenkappung; das entspricht nicht automatisch Lunas Verletzungs-/Gesamtentscheidung. Fehlende Vertragsdaten können Prämienausgabe blockieren, obwohl der BAW-Teilbefund auswertbar bleibt; keine Förderung wird bestätigt.
+**Output meaning:** Native decision trennt contract_active/farm_access_ok, compliant_codes, Verstöße, Anwendungshinweise und Prämiensummen. Die Vierfachgrenze erscheint in Opus unter Anwendungshinweisen und Flächenkappung; das entspricht nicht automatisch Lunas Verletzungs-/Gesamtentscheidung. Fehlende Vertragsdaten können Prämienausgabe blockieren, obwohl der BAW-Teilbefund auswertbar bleibt; keine Förderung wird bestätigt.
 
-**Herkunft:** Öffentliche synthetische Entwicklungsdiagnose: ausschließlich Übersetzung der drei bereits sichtbaren Luna-Fälle aus docs/analysis/luna-screening-20261011/fixtures/o6_8.json. Keine unabhängigen Sollurteile und keine zurückgehaltenen Testfälle. Strukturelle Index-IDs bezeichnen nur synthetische Datensätze; fehlende fachliche Fakten werden nicht ergänzt.
+**Origin:** Öffentliche synthetische Entwicklungsdiagnose: ausschließlich Übersetzung der drei bereits sichtbaren Luna-Fälle aus docs/analysis/luna-screening-20261011/fixtures/o6_8.json. Keine unabhängigen Sollurteile und keine zurückgehaltenen Testfälle. Strukturelle Index-IDs bezeichnen nur synthetische Datensätze; fehlende fachliche Fakten werden nicht ergänzt.
 
 **Query:** `data.oepul.o6_8.decision`
 
-**Inventar:** 114 Regelkatalog-Einträge; 8 Quellen; 1 statisch erkannte Eingabepfade; 23 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 114 rule catalog entries; 8 sources; 1 static input paths; 23 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"access_condition": 4, "combination": 5, "consequence": 8, "contract_period": 1, "cross_measure_effect": 4, "data_table": 4, "deadline": 4, "definition": 7, "documentation": 1, "eligibility": 7, "exception": 10, "exclusion": 8, "interpretation": 2, "obligation": 18, "option": 1, "permission": 4, "premium_calculation": 4, "premium_rate": 6, "procedure": 10, "prohibition": 5, "scope": 1}`
+**Rule types:** `{"access_condition": 4, "combination": 5, "consequence": 8, "contract_period": 1, "cross_measure_effect": 4, "data_table": 4, "deadline": 4, "definition": 7, "documentation": 1, "eligibility": 7, "exception": 10, "exclusion": 8, "interpretation": 2, "obligation": 18, "option": 1, "permission": 4, "premium_calculation": 4, "premium_rate": 6, "procedure": 10, "prohibition": 5, "scope": 1}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_8 | full_document | 59 | {"not_rule": 5, "rules": 54} |
 | o6_general | full_document | 46 | {"not_rule": 13, "rules": 33} |
@@ -1296,9 +1296,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -1350,19 +1350,19 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_8.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Die native Entscheidung mit dem synthetischen BAW- und Vierfachflächenbeispiel erfassen. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
-| variation | defined | ja | Nur die Eintragspfadfläche von 0,10 auf 0,09 ha setzen, sodass der native Vierfachvergleich eine andere Tatsachenbasis erhält. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
-| missing_fact | defined | nein | Die konsumierte KG-Nummer entfernen; getrennt von Flächenbegrenzung und compliant die native Ausgabe beobachten. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
+| baseline | defined | Baseline | Die native Entscheidung mit dem synthetischen BAW- und Vierfachflächenbeispiel erfassen. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
+| variation | defined | yes | Nur die Eintragspfadfläche von 0,10 auf 0,09 ha setzen, sodass der native Vierfachvergleich eine andere Tatsachenbasis erhält. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
+| missing_fact | defined | no | Die konsumierte KG-Nummer entfernen; getrennt von Flächenbegrenzung und compliant die native Ausgabe beobachten. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Antrags- und Vertragsbeginnfakten fehlen; native Gesamtfreigabe und Prämien sind deshalb keine unabhängigen Sollentscheidungen.
 - Die fachliche Abgrenzung Viertelschwelle/teilweise und die maßgebliche GIS-Kulisse benötigen Referenzevidenz, wenn diese Fälle Teil der eigentlichen Studie werden.
 - Pflege-, Anlage- und Flächenhistorie bleiben außerhalb der sichtbaren Luna-Fakten unbekannt.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_8-opus-5.5-high-20261001/workspace/policy/o6_8/common.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_8-opus-5.5-high-20261001/workspace/policy/o6_8/common.rego): Nativer Eingabe-/Ausgabevertrag; unveränderter, aus dem gepinnten Opus-Bestand gelesener Kandidat.
 - [runs/v2-o6_8-opus-5.5-high-20261001/workspace/policy/o6_8/baw.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_8-opus-5.5-high-20261001/workspace/policy/o6_8/baw.rego): Nativer Eingabe-/Ausgabevertrag; unveränderter, aus dem gepinnten Opus-Bestand gelesener Kandidat.
@@ -1373,26 +1373,26 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_9
 
-Run: `v2-o6_9-opus-5.5-high-20261003`. [Fixture](fixtures/o6_9.json) · [Native Ergebnisse](results/o6_9.json)
+Run: `v2-o6_9-opus-5.5-high-20261003`. [Fixture](fixtures/o6_9.json) · [Native results](results/o6_9.json)
 
-**Eingaben:** farm.year bleibt 2026 und Ackerfläche 20 ha. Natives oepul_measures.o6_9 enthält nur bekannte Ausbringungs-/Separationsaggregate 100/40 m³, die unverändert deklarierte Technik, Gülleart, mechanische Trennung, aggregierte 3 Rinder-GVE und ausdrücklich nicht gewählte Schweinefütterung. application.records und separation.records werden vollständig weggelassen: Luna liefert weder konkrete Einzelsätze, noch deren Anzahl, Mengen, Datum oder Parzellenzuordnung. Die fehlenden Felder bedeuten unbekannte Aufzeichnungen, keine bestätigte Abwesenheit von Ereignissen. 2 ha düngungswürdige Aggregatfläche wird nicht durch erfundene N-bedürftige Parzellen ersetzt.
+**Inputs:** farm.year bleibt 2026 und Ackerfläche 20 ha. Natives oepul_measures.o6_9 enthält nur bekannte Ausbringungs-/Separationsaggregate 100/40 m³, die unverändert deklarierte Technik, Gülleart, mechanische Trennung, aggregierte 3 Rinder-GVE und ausdrücklich nicht gewählte Schweinefütterung. application.records und separation.records werden vollständig weggelassen: Luna liefert weder konkrete Einzelsätze, noch deren Anzahl, Mengen, Datum oder Parzellenzuordnung. Die fehlenden Felder bedeuten unbekannte Aufzeichnungen, keine bestätigte Abwesenheit von Ereignissen. 2 ha düngungswürdige Aggregatfläche wird nicht durch erfundene N-bedürftige Parzellen ersetzt.
 
-**Ausgabebedeutung:** decision verbindet eligible mit violations und liefert zusätzlich Prämienkomponenten, Fristen und Warnungen. Der neuere Opus-Kandidat erwartet konkrete Ereignisaufzeichnungen und parzellengestützte N-Bedarfsfläche. Der Kandidat behandelt die bewusst unbekannt gelassenen Aufzeichnungsfelder nativ möglicherweise wie leere Listen; daraus folgende Verletzungen sind diagnostische Vertrags-/Datenlücken, keine bestätigte tatsächliche Aufzeichnungslosigkeit und keine unabhängig gemessene Verschlechterung gegenüber Luna. Chronologie, Einzelmengen und Mengenabgleich sind nicht bestätigt. Prämien und Gesamtflags sind keine bestätigte Auszahlung.
+**Output meaning:** decision verbindet eligible mit violations und liefert zusätzlich Prämienkomponenten, Fristen und Warnungen. Der neuere Opus-Kandidat erwartet konkrete Ereignisaufzeichnungen und parzellengestützte N-Bedarfsfläche. Der Kandidat behandelt die bewusst unbekannt gelassenen Aufzeichnungsfelder nativ möglicherweise wie leere Listen; daraus folgende Verletzungen sind diagnostische Vertrags-/Datenlücken, keine bestätigte tatsächliche Aufzeichnungslosigkeit und keine unabhängig gemessene Verschlechterung gegenüber Luna. Chronologie, Einzelmengen und Mengenabgleich sind nicht bestätigt. Prämien und Gesamtflags sind keine bestätigte Auszahlung.
 
-**Herkunft:** Öffentliche synthetische Entwicklungsdiagnose: ausschließlich Übersetzung der drei bereits sichtbaren Luna-Fälle aus docs/analysis/luna-screening-20261011/fixtures/o6_9.json. Keine unabhängigen Sollurteile und keine zurückgehaltenen Testfälle. Strukturelle Index-IDs bezeichnen nur synthetische Datensätze; fehlende fachliche Fakten werden nicht ergänzt.
+**Origin:** Öffentliche synthetische Entwicklungsdiagnose: ausschließlich Übersetzung der drei bereits sichtbaren Luna-Fälle aus docs/analysis/luna-screening-20261011/fixtures/o6_9.json. Keine unabhängigen Sollurteile und keine zurückgehaltenen Testfälle. Strukturelle Index-IDs bezeichnen nur synthetische Datensätze; fehlende fachliche Fakten werden nicht ergänzt.
 
 **Query:** `data.oepul.o6_9.decision`
 
-**Inventar:** 89 Regelkatalog-Einträge; 10 Quellen; 4 statisch erkannte Eingabepfade; 25 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 89 rule catalog entries; 10 sources; 4 static input paths; 25 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"access_requirement": 2, "application": 2, "calculation": 6, "cap": 3, "combination": 2, "consequence": 1, "contract_period": 2, "contract_termination": 2, "cross_check": 2, "deadline": 7, "definition": 5, "documentation": 10, "eligibility": 8, "exception": 2, "exclusion": 5, "exit": 3, "force_majeure": 2, "minimum_participation": 1, "obligation": 8, "option": 2, "payment": 2, "premium_rate": 2, "procedure": 4, "sanction": 4, "threshold": 2}`
+**Rule types:** `{"access_requirement": 2, "application": 2, "calculation": 6, "cap": 3, "combination": 2, "consequence": 1, "contract_period": 2, "contract_termination": 2, "cross_check": 2, "deadline": 7, "definition": 5, "documentation": 10, "eligibility": 8, "exception": 2, "exclusion": 5, "exit": 3, "force_majeure": 2, "minimum_participation": 1, "obligation": 8, "option": 2, "payment": 2, "premium_rate": 2, "procedure": 4, "sanction": 4, "threshold": 2}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm",
@@ -1401,7 +1401,7 @@ Statische Eingabepfade (keine Laufzeitspur):
       "input.farm.public_body_share_percent"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_9 | full_document | 38 | {"not_rule": 4, "rules": 34} |
 | o6_general | full_document | 34 | {"not_rule": 16, "rules": 18} |
@@ -1416,9 +1416,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -1509,23 +1509,23 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_9.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Native Ausbringungs- und Separationsausgabe auf einer vollständig synthetischen Mengenbasis aufnehmen. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. Einzelaufzeichnungen bleiben unbekannt und fehlen im nativen Input; keine Aggregate werden zu Ereignissätzen umgedeutet. |
-| variation | defined | ja | Nur application.method von trailing_shoe auf broadcast ändern und Teilurteil sowie verbleibende Prämienkomponenten prüfen. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. Einzelaufzeichnungen bleiben unbekannt und fehlen im nativen Input; keine Aggregate werden zu Ereignissätzen umgedeutet. |
-| missing_fact | defined | nein | Nur application.records_include entfernen und violations gemeinsam mit eligible und premium beobachten. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. Einzelaufzeichnungen bleiben unbekannt und fehlen im nativen Input; keine Aggregate werden zu Ereignissätzen umgedeutet. |
+| baseline | defined | Baseline | Native Ausbringungs- und Separationsausgabe auf einer vollständig synthetischen Mengenbasis aufnehmen. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. Einzelaufzeichnungen bleiben unbekannt und fehlen im nativen Input; keine Aggregate werden zu Ereignissätzen umgedeutet. |
+| variation | defined | yes | Nur application.method von trailing_shoe auf broadcast ändern und Teilurteil sowie verbleibende Prämienkomponenten prüfen. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. Einzelaufzeichnungen bleiben unbekannt und fehlen im nativen Input; keine Aggregate werden zu Ereignissätzen umgedeutet. |
+| missing_fact | defined | no | Nur application.records_include entfernen und violations gemeinsam mit eligible und premium beobachten. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. Einzelaufzeichnungen bleiben unbekannt und fehlen im nativen Input; keine Aggregate werden zu Ereignissätzen umgedeutet. |
 
-**Fixture-Lücke:** Teilübersetzung: Aggregatflächen/-mengen, bestätigte Aufzeichnungs-Feldnamen und Frist-Bools liefern keine konkreten Opus-Ereignis-, Parzellen- oder Datumsnachweise; records bleiben als unbekannt vollständig ungesetzt.
+**Fixture gap:** Teilübersetzung: Aggregatflächen/-mengen, bestätigte Aufzeichnungs-Feldnamen und Frist-Bools liefern keine konkreten Opus-Ereignis-, Parzellen- oder Datumsnachweise; records bleiben als unbekannt vollständig ungesetzt.
 
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Native Ausbringungs-/Separationsaufzeichnungen brauchen unabhängig festgelegte konkrete synthetische Einzelsätze mit Datums-, Einzelmengen-, Technik- und Parzellenwerten. Bekannte Aggregate liefern weder Ereigniszahl noch Chronologie oder Mengenabgleich.
 - Parzellengestützter N-Düngebedarf und die 2-ha-Aggregatbasis müssen in einem gemeinsamen Studienvertrag vereinbart werden.
 - Antrags-/Mengenfristen und Jahresmittel-Rinder-GVE sind zwischen Kandidaten nicht allein durch gleichnamige Aggregate äquivalent.
 - Unzulässige broadcast-Technik wird nicht zu einer zugelassenen Methode normalisiert; Mengen- und Fehlermeldungssemantik bleiben getrennt zu beurteilen.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_9-opus-5.5-high-20261003/workspace/policy/o6_9/common.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_9-opus-5.5-high-20261003/workspace/policy/o6_9/common.rego): Nativer Eingabe-/Ausgabevertrag; unveränderter, aus dem gepinnten Opus-Bestand gelesener Kandidat.
 - [runs/v2-o6_9-opus-5.5-high-20261003/workspace/policy/o6_9/application.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_9-opus-5.5-high-20261003/workspace/policy/o6_9/application.rego): Nativer Eingabe-/Ausgabevertrag; unveränderter, aus dem gepinnten Opus-Bestand gelesener Kandidat.
@@ -1538,32 +1538,32 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_10
 
-Run: `v2-o6_10-opus-5.5-high-20260925`. [Fixture](fixtures/o6_10.json) · [Native Ergebnisse](results/o6_10.json)
+Run: `v2-o6_10-opus-5.5-high-20260925`. [Fixture](fixtures/o6_10.json) · [Native results](results/o6_10.json)
 
-**Eingaben:** farm.year bleibt 2025; die bekannte Weinfläche bleibt 1 ha mit 30 Prozent Hangneigung, außer dem unverändert fehlenden Hangwert im Missing-Fact-Fall. Die inter_row_greening-Felder übernehmen volle Fahrgassenbegrünung, drei winterharte Partner, 80/81 cm offene Breite, sown_mixture und mechanical. Der synthetische Parzellenindex ist keine zusätzliche reale Flächenidentität. Keine erfundenen Antragsdaten oder Aufzeichnungspunkte.
+**Inputs:** farm.year bleibt 2025; die bekannte Weinfläche bleibt 1 ha mit 30 Prozent Hangneigung, außer dem unverändert fehlenden Hangwert im Missing-Fact-Fall. Die inter_row_greening-Felder übernehmen volle Fahrgassenbegrünung, drei winterharte Partner, 80/81 cm offene Breite, sown_mixture und mechanical. Der synthetische Parzellenindex ist keine zusätzliche reale Flächenidentität. Keine erfundenen Antragsdaten oder Aufzeichnungspunkte.
 
-**Ausgabebedeutung:** decision trennt contract_status/contract_valid, Zugang, Parzellen-/Betriebsverpflichtungen und Prämienkomponenten. requested=true aus Luna ersetzt im Opus-Vertrag keinen konkreten rechtzeitigen Maßnahmenantrag; no_application oder Aufzeichnungslücken dürfen nicht als fachliche Modellgüte bewertet werden. Die Breiten- und fehlende-Hangneigung-Teilprüfungen bleiben sichtbar; keine Förder-/Auszahlungsfreigabe.
+**Output meaning:** decision trennt contract_status/contract_valid, Zugang, Parzellen-/Betriebsverpflichtungen und Prämienkomponenten. requested=true aus Luna ersetzt im Opus-Vertrag keinen konkreten rechtzeitigen Maßnahmenantrag; no_application oder Aufzeichnungslücken dürfen nicht als fachliche Modellgüte bewertet werden. Die Breiten- und fehlende-Hangneigung-Teilprüfungen bleiben sichtbar; keine Förder-/Auszahlungsfreigabe.
 
-**Herkunft:** Öffentliche synthetische Entwicklungsdiagnose: ausschließlich Übersetzung der drei bereits sichtbaren Luna-Fälle aus docs/analysis/luna-screening-20261011/fixtures/o6_10.json. Keine unabhängigen Sollurteile und keine zurückgehaltenen Testfälle. Strukturelle Index-IDs bezeichnen nur synthetische Datensätze; fehlende fachliche Fakten werden nicht ergänzt.
+**Origin:** Öffentliche synthetische Entwicklungsdiagnose: ausschließlich Übersetzung der drei bereits sichtbaren Luna-Fälle aus docs/analysis/luna-screening-20261011/fixtures/o6_10.json. Keine unabhängigen Sollurteile und keine zurückgehaltenen Testfälle. Strukturelle Index-IDs bezeichnen nur synthetische Datensätze; fehlende fachliche Fakten werden nicht ergänzt.
 
 **Query:** `data.oepul.o6_10.decision`
 
-**Inventar:** 91 Regelkatalog-Einträge; 8 Quellen; 1 statisch erkannte Eingabepfade; 20 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 91 rule catalog entries; 8 sources; 1 static input paths; 20 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"access_condition": 6, "application": 5, "classification": 1, "combination": 2, "consequence": 2, "contract_term": 3, "data_source": 1, "deadline": 3, "definition": 3, "eligibility": 5, "exemption": 7, "exit": 4, "general_condition": 2, "interpretation": 1, "obligation": 13, "payment": 2, "premium_calculation": 8, "premium_exclusion": 7, "procedure": 5, "record_keeping": 3, "sanction": 3, "scope": 2, "scope_exclusion": 1, "supplement_condition": 2}`
+**Rule types:** `{"access_condition": 6, "application": 5, "classification": 1, "combination": 2, "consequence": 2, "contract_term": 3, "data_source": 1, "deadline": 3, "definition": 3, "eligibility": 5, "exemption": 7, "exit": 4, "general_condition": 2, "interpretation": 1, "obligation": 13, "payment": 2, "premium_calculation": 8, "premium_exclusion": 7, "procedure": 5, "record_keeping": 3, "sanction": 3, "scope": 2, "scope_exclusion": 1, "supplement_condition": 2}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_10 | full_document | 28 | {"not_rule": 4, "rules": 24} |
 | o6_general | full_document | 40 | {"not_rule": 13, "rules": 27} |
@@ -1576,9 +1576,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -1636,19 +1636,19 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_10.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Die öffentlichen nativen Teilurteile und Prämienausgaben für das synthetische Weinflächenbeispiel aufnehmen. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
-| variation | defined | ja | Nur open_stem_width_cm von 80 auf 81 cm setzen und die konsumierte Breitenprüfung beobachten. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
-| missing_fact | defined | nein | slope_percent entfernen und den nativen Default bei der für Prämiensätze verwendeten Hangneigung sichtbar machen. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
+| baseline | defined | Baseline | Die öffentlichen nativen Teilurteile und Prämienausgaben für das synthetische Weinflächenbeispiel aufnehmen. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
+| variation | defined | yes | Nur open_stem_width_cm von 80 auf 81 cm setzen und die konsumierte Breitenprüfung beobachten. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
+| missing_fact | defined | no | slope_percent entfernen und den nativen Default bei der für Prämiensätze verwendeten Hangneigung sichtbar machen. Identische Luna-Fakten soweit der native Opus-Vertrag sie ohne Zusatzannahmen darstellen kann; Übersetzungslücken separat dokumentiert. |
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Konkrete Antrags-/Vertrags- und Aufzeichnungsnachweise fehlen für die vollständige native Entscheidung.
 - Pflanzsystem und belastbare GIS-Hangneigung erfordern einen gemeinsamen Eingabevertrag; Defaults werden nicht als echte Farmfakten bestätigt.
 - Die uneindeutige Kombination surcharge_applied=true/surcharge_requested=false wird nicht zu einem erfundenen EOP-Antrag normalisiert.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_10-opus-5.5-high-20260925/workspace/policy/o6_10/helpers.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_10-opus-5.5-high-20260925/workspace/policy/o6_10/helpers.rego): Nativer Eingabe-/Ausgabevertrag; unveränderter, aus dem gepinnten Opus-Bestand gelesener Kandidat.
 - [runs/v2-o6_10-opus-5.5-high-20260925/workspace/policy/o6_10/obligations.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_10-opus-5.5-high-20260925/workspace/policy/o6_10/obligations.rego): Nativer Eingabe-/Ausgabevertrag; unveränderter, aus dem gepinnten Opus-Bestand gelesener Kandidat.
@@ -1660,32 +1660,32 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_11
 
-Run: `v2-o6_11-opus-5.5-high-20261001`. [Fixture](fixtures/o6_11.json) · [Native Ergebnisse](results/o6_11.json)
+Run: `v2-o6_11-opus-5.5-high-20261001`. [Fixture](fixtures/o6_11.json) · [Native results](results/o6_11.json)
 
-**Eingaben:** Jahr 2024, schlagbezogene Fläche in ha, Weinfläche und PSM-Anwendungsliste. Antrags-/Vertragsjahr werden nicht zu erfundenen Antragstagen ergänzt. Die gesamte Anwendungsliste fehlt im missing_fact-Fall; baseline enthält die explizit leere Liste.
+**Inputs:** Jahr 2024, schlagbezogene Fläche in ha, Weinfläche und PSM-Anwendungsliste. Antrags-/Vertragsjahr werden nicht zu erfundenen Antragstagen ergänzt. Die gesamte Anwendungsliste fehlt im missing_fact-Fall; baseline enthält die explizit leere Liste.
 
-**Ausgabebedeutung:** Native Gesamtentscheidung mit participates, contract_valid, compliant, Zugangsausfällen, Verletzungen, schlagbezogenen Ergebnissen und Prämien. False oder leere Verletzungen sind native Beobachtungen und kein Beweis vollständiger Eingaben oder Förderfähigkeit.
+**Output meaning:** Native Gesamtentscheidung mit participates, contract_valid, compliant, Zugangsausfällen, Verletzungen, schlagbezogenen Ergebnissen und Prämien. False oder leere Verletzungen sind native Beobachtungen und kein Beweis vollständiger Eingaben oder Förderfähigkeit.
 
-**Herkunft:** Öffentliche synthetische Entwicklungsfälle der eingefrorenen Luna-Diagnose, durch Codex ausschließlich auf belegte native Opus-Pfade übersetzt. Keine unabhängigen Sollurteile, keine Expertenfreigabe und keine Held-out-Fälle. Fehlende Fachfakten werden nicht aus Opus-Modelltests ergänzt.
+**Origin:** Öffentliche synthetische Entwicklungsfälle der eingefrorenen Luna-Diagnose, durch Codex ausschließlich auf belegte native Opus-Pfade übersetzt. Keine unabhängigen Sollurteile, keine Expertenfreigabe und keine Held-out-Fälle. Fehlende Fachfakten werden nicht aus Opus-Modelltests ergänzt.
 
 **Query:** `data.oepul.o6_11.decision`
 
-**Inventar:** 76 Regelkatalog-Einträge; 8 Quellen; 1 statisch erkannte Eingabepfade; 10 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 76 rule catalog entries; 8 sources; 1 static input paths; 10 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"access_condition": 5, "application": 3, "calculation": 5, "classification": 1, "combination": 2, "consequence": 1, "contract_period": 3, "definition": 4, "documentation_obligation": 5, "eligibility_scope": 1, "exception": 1, "exit": 7, "general_condition": 2, "measure_switch": 1, "obligation": 5, "payment": 2, "premium": 1, "premium_eligibility": 11, "procedure": 12, "sanction": 1, "scope_note": 2, "transition": 1}`
+**Rule types:** `{"access_condition": 5, "application": 3, "calculation": 5, "classification": 1, "combination": 2, "consequence": 1, "contract_period": 3, "definition": 4, "documentation_obligation": 5, "eligibility_scope": 1, "exception": 1, "exit": 7, "general_condition": 2, "measure_switch": 1, "obligation": 5, "payment": 2, "premium": 1, "premium_eligibility": 11, "procedure": 12, "sanction": 1, "scope_note": 2, "transition": 1}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_11 | full_document | 28 | {"not_rule": 4, "rules": 24} |
 | o6_general | full_document | 39 | {"not_rule": 11, "rules": 28} |
@@ -1698,9 +1698,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -1752,20 +1752,20 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_11.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Die native Entscheidung mit synthetischer Weinfläche und expliziter Mindestbetriebsfläche aufnehmen. |
-| variation | defined | ja | Nur eine native Herbizidanwendung hinzufügen und eligible gemeinsam mit herbicide_ban_satisfied, violations und premium_amount_eur beobachten. |
-| missing_fact | defined | nein | Die gesamte PSM-Anwendungsliste entfernen, um fehlende Information gegenüber einer explizit leeren Liste zu untersuchen. |
+| baseline | defined | Baseline | Die native Entscheidung mit synthetischer Weinfläche und expliziter Mindestbetriebsfläche aufnehmen. |
+| variation | defined | yes | Nur eine native Herbizidanwendung hinzufügen und eligible gemeinsam mit herbicide_ban_satisfied, violations und premium_amount_eur beobachten. |
+| missing_fact | defined | no | Die gesamte PSM-Anwendungsliste entfernen, um fehlende Information gegenüber einer explizit leeren Liste zu untersuchen. |
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Lunas oepul_eligible_area_ha=1,5 ist keine belegte Gesamtbetriebsfläche; keine Umdeutung zu land.total_area_ha.
 - Antragsjahr 2024 belegt keinen konkreten Antragstag; applicant- und Zahlungsnachweise fehlen.
 - Opus verwendet bei fehlender PSM-Liste [], und bei fehlendem Einsatzdatum das Betrachtungsjahr; diese Defaults sind Teil der Beobachtung.
 - Beobachtung: fehlende Gesamtbetriebsfläche erzeugt einen Betriebsmindestgrößenbefund in allen drei Fällen. Nur variation ergänzt O611-HERB-BAN; baseline und fehlende Anwendungsliste zeigen denselben Output.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_11-opus-5.5-high-20261001/workspace/policy/o6_11/base.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_11-opus-5.5-high-20261001/workspace/policy/o6_11/base.rego): Native farm.oepul.measures, Weinflächenklassifikation und land.parcels.
 - [runs/v2-o6_11-opus-5.5-high-20261001/workspace/policy/o6_11/obligations.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_11-opus-5.5-high-20261001/workspace/policy/o6_11/obligations.rego): operations.psm_applications und effect_type=herbicide; fehlendes Anwendungsdatum wird nativ als Betrachtungsjahr behandelt.
@@ -1777,26 +1777,26 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_12
 
-Run: `v2-o6_12-opus-5.5-high-20261009`. [Fixture](fixtures/o6_12.json) · [Native Ergebnisse](results/o6_12.json)
+Run: `v2-o6_12-opus-5.5-high-20261009`. [Fixture](fixtures/o6_12.json) · [Native results](results/o6_12.json)
 
-**Eingaben:** Historisches Jahr 2024 und Vertrags-/Erstteilnahmejahr 2024 bleiben erhalten. land.parcels enthält0,6 ha Schnittweingarten. Native Maßnahme liegt unter oepul.o6_12; Einsätze unter parcels[].psm_applications. Luna nennt kein konkretes Einsatzdatum. Der true-Einsatz behält die vorhandenen negativen Flächen-/Chemieflags als flat_application=false und chemical_synthetic=false. Die Listendarstellung ist nur die belegte Insektizidachse, kein ergänzter Nachweis vollständiger anderer PSM-Anwendungen.
+**Inputs:** Historisches Jahr 2024 und Vertrags-/Erstteilnahmejahr 2024 bleiben erhalten. land.parcels enthält0,6 ha Schnittweingarten. Native Maßnahme liegt unter oepul.o6_12; Einsätze unter parcels[].psm_applications. Luna nennt kein konkretes Einsatzdatum. Der true-Einsatz behält die vorhandenen negativen Flächen-/Chemieflags als flat_application=false und chemical_synthetic=false. Die Listendarstellung ist nur die belegte Insektizidachse, kein ergänzter Nachweis vollständiger anderer PSM-Anwendungen.
 
-**Ausgabebedeutung:** Begrenzte native Projektion der Mindestfläche und der Insektizid-Verstoßmenge. Die partielle Einsatzliste beschreibt ausschließlich die belegte Insektizidachse. Andere PSM-Einsätze, Kauf/Lagerung, PSM-Codierungen, Gesamtförderfähigkeit und Prämien liegen außerhalb der Query. Ein leerer Insektizid-Verstoßsatz kann wegen des nicht gelieferten Einsatzdatums entstehen und belegt keine Einhaltung.
+**Output meaning:** Begrenzte native Projektion der Mindestfläche und der Insektizid-Verstoßmenge. Die partielle Einsatzliste beschreibt ausschließlich die belegte Insektizidachse. Andere PSM-Einsätze, Kauf/Lagerung, PSM-Codierungen, Gesamtförderfähigkeit und Prämien liegen außerhalb der Query. Ein leerer Insektizid-Verstoßsatz kann wegen des nicht gelieferten Einsatzdatums entstehen und belegt keine Einhaltung.
 
-**Herkunft:** Öffentliche synthetische Entwicklungsfälle der eingefrorenen Luna-Diagnose, durch Codex ausschließlich auf belegte native Opus-Pfade übersetzt. Keine unabhängigen Sollurteile, keine Expertenfreigabe und keine Held-out-Fälle. Fehlende Fachfakten werden nicht aus Opus-Modelltests ergänzt.
+**Origin:** Öffentliche synthetische Entwicklungsfälle der eingefrorenen Luna-Diagnose, durch Codex ausschließlich auf belegte native Opus-Pfade übersetzt. Keine unabhängigen Sollurteile, keine Expertenfreigabe und keine Held-out-Fälle. Fehlende Fachfakten werden nicht aus Opus-Modelltests ergänzt.
 
 **Query:** `{"first_year_minimum_area_status": data.oepul.o6_12.first_year_minimum_area_status, "wine_fruit_hop_area_ha": data.oepul.o6_12.wine_fruit_hop_area_ha, "prohibited_insecticide_applications": data.oepul.o6_12.prohibited_insecticide_applications}`
 
-**Inventar:** 94 Regelkatalog-Einträge; 9 Quellen; 3 statisch erkannte Eingabepfade; 24 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 94 rule catalog entries; 9 sources; 3 static input paths; 24 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"access_condition": 4, "combination": 3, "consequence": 7, "contract_period": 2, "deadline": 3, "definition": 8, "documentation": 5, "eligibility_condition": 15, "exception": 12, "measure_switch": 1, "obligation": 7, "payment": 2, "premium_calculation": 7, "premium_cap": 1, "premium_rate": 1, "procedure": 5, "sanction": 8, "scope": 2, "tolerance": 1}`
+**Rule types:** `{"access_condition": 4, "combination": 3, "consequence": 7, "contract_period": 2, "deadline": 3, "definition": 8, "documentation": 5, "eligibility_condition": 15, "exception": 12, "measure_switch": 1, "obligation": 7, "payment": 2, "premium_calculation": 7, "premium_cap": 1, "premium_rate": 1, "procedure": 5, "sanction": 8, "scope": 2, "tolerance": 1}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.region.district",
@@ -1804,7 +1804,7 @@ Statische Eingabepfade (keine Laufzeitspur):
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_12 | full_document | 24 | {"not_rule": 3, "rules": 21} |
 | o6_general | full_document | 39 | {"not_rule": 10, "rules": 29} |
@@ -1818,9 +1818,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -1925,13 +1925,13 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_12.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Synthetische Ausgangskonstellation zur Beobachtung der nativen Ausgabe; kein fachlich bestätigter Positivfall. |
-| variation | defined | nein | insecticide_use von false auf true ändern; belegte eingesetzte Kultur und alle übrigen Fakten beibehalten. |
-| missing_fact | defined | nein | insecticide_use entfernen; beobachten, ob ein fehlender Einsatznachweis als unbekannt sichtbar wird oder die Verletzung ausbleibt. |
+| baseline | defined | Baseline | Synthetische Ausgangskonstellation zur Beobachtung der nativen Ausgabe; kein fachlich bestätigter Positivfall. |
+| variation | defined | no | insecticide_use von false auf true ändern; belegte eingesetzte Kultur und alle übrigen Fakten beibehalten. |
+| missing_fact | defined | no | insecticide_use entfernen; beobachten, ob ein fehlender Einsatznachweis als unbekannt sichtbar wird oder die Verletzung ausbleibt. |
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Luna liefert für insecticide_use=true kein Einsatzdatum. Das Datum wird nicht aus Opus-Testbeispielen ergänzt; ein dadurch leerer Verbotssatz ist keine positive Wirkung des Modells.
 - Lunas Boolesche Kauf-/Lager- und Qualitätsaussagen haben keine gleichwertige vollständige native Liste bzw. parcel-spezifischen Beleg; fehlende Zusatznachweise bleiben offen.
@@ -1939,7 +1939,7 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 - Das Jahr 2024 wird ausdrücklich nicht auf2026 verschoben; Quellen- und Jahresunterschiede bleiben getrennte Abhängigkeiten.
 - Beobachtung der engeren Query: alle drei Projektionen sind identisch; Mindestfläche met bei 0,6 ha und leere Insektizid-Verstoßmenge. Der true-Fall kann wegen fehlendem a.date nicht als datierter Verstoß ausgegeben werden. Unbekannte andere PSM und Lagerbestände liegen ausdrücklich außerhalb dieser Query.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_12-opus-5.5-high-20261009/workspace/policy/o6_12/common.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_12-opus-5.5-high-20261009/workspace/policy/o6_12/common.rego): Native Maßnahme oepul.o6_12 und usage_type für Schnittweingarten.
 - [runs/v2-o6_12-opus-5.5-high-20261009/workspace/policy/o6_12/obligations.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_12-opus-5.5-high-20261009/workspace/policy/o6_12/obligations.rego): Insektizid-Einsatzobjekt verlangt action_type und referenziert a.date im Verstoßobjekt; Bio-/Anordnungslogik und PSM-Codierung.
@@ -1951,32 +1951,32 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_13
 
-Run: `v2-o6_13-opus-5.5-high-20260926`. [Fixture](fixtures/o6_13.json) · [Native Ergebnisse](results/o6_13.json)
+Run: `v2-o6_13-opus-5.5-high-20260926`. [Fixture](fixtures/o6_13.json) · [Native results](results/o6_13.json)
 
-**Eingaben:** Jahr 2026, Vertragsantrag31.12.2025,0,6 ha geschützter Anbau auf gewachsenem Boden; Fläche in ha, Ernteanteil100% bleibt unter minimum_management.harvested_share_percent=100 erhalten. Organismenmengen bleiben1000 ohne neu erfundene Einheit. Luna hat keine parcel_id und keine ausdrückliche volle Einsatzabdeckung.
+**Inputs:** Jahr 2026, Vertragsantrag31.12.2025,0,6 ha geschützter Anbau auf gewachsenem Boden; Fläche in ha, Ernteanteil100% bleibt unter minimum_management.harvested_share_percent=100 erhalten. Organismenmengen bleiben1000 ohne neu erfundene Einheit. Luna hat keine parcel_id und keine ausdrückliche volle Einsatzabdeckung.
 
-**Ausgabebedeutung:** Nativer decision-Vertrag mit getrennten Zugangsausfällen, Vertrag, Nichtanrechenbarkeit, Aufzeichnungslücken, Schlagbefunden und Prämie. Positive eligible-/Prämienwerte sind keine unabhängige Gesamtförderfreigabe; fehlende parcel_id kann schlagbezogene Befunde unterdrücken.
+**Output meaning:** Nativer decision-Vertrag mit getrennten Zugangsausfällen, Vertrag, Nichtanrechenbarkeit, Aufzeichnungslücken, Schlagbefunden und Prämie. Positive eligible-/Prämienwerte sind keine unabhängige Gesamtförderfreigabe; fehlende parcel_id kann schlagbezogene Befunde unterdrücken.
 
-**Herkunft:** Öffentliche synthetische Entwicklungsfälle der eingefrorenen Luna-Diagnose, durch Codex ausschließlich auf belegte native Opus-Pfade übersetzt. Keine unabhängigen Sollurteile, keine Expertenfreigabe und keine Held-out-Fälle. Fehlende Fachfakten werden nicht aus Opus-Modelltests ergänzt. Nicht abbildbare Fälle sind bewusst als Lücke statt als zusätzliche Beobachtung erhalten.
+**Origin:** Öffentliche synthetische Entwicklungsfälle der eingefrorenen Luna-Diagnose, durch Codex ausschließlich auf belegte native Opus-Pfade übersetzt. Keine unabhängigen Sollurteile, keine Expertenfreigabe und keine Held-out-Fälle. Fehlende Fachfakten werden nicht aus Opus-Modelltests ergänzt. Nicht abbildbare Fälle sind bewusst als Lücke statt als zusätzliche Beobachtung erhalten.
 
 **Query:** `data.oepul.o6_13.decision`
 
-**Inventar:** 80 Regelkatalog-Einträge; 8 Quellen; 1 statisch erkannte Eingabepfade; 23 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 80 rule catalog entries; 8 sources; 1 static input paths; 23 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"access_requirement": 7, "application_procedure": 10, "calculation": 2, "combination_restriction": 2, "contract_term": 6, "documentation_requirement": 2, "eligibility_condition": 7, "exception": 6, "exclusion": 10, "exit_procedure": 4, "legal_reference": 1, "modulation": 1, "obligation": 7, "payment_cap": 1, "payment_procedure": 3, "premium_rate": 1, "sanction": 7, "scope": 2, "transfer": 1}`
+**Rule types:** `{"access_requirement": 7, "application_procedure": 10, "calculation": 2, "combination_restriction": 2, "contract_term": 6, "documentation_requirement": 2, "eligibility_condition": 7, "exception": 6, "exclusion": 10, "exit_procedure": 4, "legal_reference": 1, "modulation": 1, "obligation": 7, "payment_cap": 1, "payment_procedure": 3, "premium_rate": 1, "sanction": 7, "scope": 2, "transfer": 1}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_13 | full_document | 21 | {"not_rule": 5, "rules": 16} |
 | o6_general | full_document | 42 | {"not_rule": 17, "rules": 25} |
@@ -1989,9 +1989,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -2125,15 +2125,15 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_13.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Synthetische Ausgangskonstellation zur Beobachtung der nativen Ausgabe; kein fachlich bestätigter Positivfall. |
-| missing_fact | defined | nein | purchase_evidence aus organism_application entfernen; untersuchen, ob die fehlende Kaufbelegeingabe getrennt von einer belegten Nichterfüllung erkennbar ist. |
+| baseline | defined | Baseline | Synthetische Ausgangskonstellation zur Beobachtung der nativen Ausgabe; kein fachlich bestätigter Positivfall. |
+| missing_fact | defined | no | purchase_evidence aus organism_application entfernen; untersuchen, ob die fehlende Kaufbelegeingabe getrennt von einer belegten Nichterfüllung erkennbar ist. |
 
-**Fixture-Lücke:** Nicht ausführbar übersetzte Luna-Fälle: variation. Einzelne fehlende Fakten und verlorene Änderungsachsen stehen in luna_translation; keine Ersatzfälle erfunden.
+**Fixture gap:** Nicht ausführbar übersetzte Luna-Fälle: variation. Einzelne fehlende Fakten und verlorene Änderungsachsen stehen in luna_translation; keine Ersatzfälle erfunden.
 
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Luna enthält keine parcel_id; keine neue Schlagidentität eingeführt, auch wenn der native Output sie verlangt.
 - Die Opus-Ausnahme use_type=bumblebee_pollination bezeichnet Hummelvölker. Luna behält in variation predatory_mite und setzt nur is_pollinator_only=true; eine Hummelklassifikation wäre erfunden.
@@ -2141,7 +2141,7 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 - Applicant- und weitere Vertrags-/Dokumentationsinputs fehlen; native Defaults werden nicht als nachgewiesene Fakten ausgegeben.
 - Beobachtung: baseline und fehlender Kaufbeleg haben denselben nativen Output, obligation_violations=[] und parcels=[]; fehlende parcel_id verhindert die schlagbezogenen Befundobjekte. eligible=false, gross1296 Euro und net0Euro sind unterschiedliche native Teilaussagen.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_13-opus-5.5-high-20260926/workspace/policy/o6_13/decision.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_13-opus-5.5-high-20260926/workspace/policy/o6_13/decision.rego): Native aggregierte Entscheidung mit expliziten Default-Outputs.
 - [runs/v2-o6_13-opus-5.5-high-20260926/workspace/policy/o6_13/obligations.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_13-opus-5.5-high-20260926/workspace/policy/o6_13/obligations.rego): beneficial_organism_applications, Kaufbeleg und spezifisch bumblebee_pollination.
@@ -2154,26 +2154,26 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_14
 
-Run: `v2-o6_14-opus-5.5-high-20260926`. [Fixture](fixtures/o6_14.json) · [Native Ergebnisse](results/o6_14.json)
+Run: `v2-o6_14-opus-5.5-high-20260926`. [Fixture](fixtures/o6_14.json) · [Native results](results/o6_14.json)
 
-**Eingaben:** Jahr 2026, Alm A mit3ha und Erschließungsstufe2, synthetisches Rindc1. Luna gibt3RGVE und60/59 Tage aggregiert an; Opus benötigt stattdessen Geburtsdatum/Kategorie/Tierzahl und datierte Aufenthalte/Meldungen. Diese Zusatzdaten werden nicht erfunden.
+**Inputs:** Jahr 2026, Alm A mit3ha und Erschließungsstufe2, synthetisches Rindc1. Luna gibt3RGVE und60/59 Tage aggregiert an; Opus benötigt stattdessen Geburtsdatum/Kategorie/Tierzahl und datierte Aufenthalte/Meldungen. Diese Zusatzdaten werden nicht erfunden.
 
-**Ausgabebedeutung:** Begrenzte native Projektion von Zugang, Tier-/Almtagen, Dichte, Befunden und Prämie. Tage0/RGVE0 aus unvollständigen Listen belegen keine tatsächliche Nichtbeweidung. Keine Gleichsetzung mit Lunas eligible oder dem Quellenurteil.
+**Output meaning:** Begrenzte native Projektion von Zugang, Tier-/Almtagen, Dichte, Befunden und Prämie. Tage0/RGVE0 aus unvollständigen Listen belegen keine tatsächliche Nichtbeweidung. Keine Gleichsetzung mit Lunas eligible oder dem Quellenurteil.
 
-**Herkunft:** Öffentliche synthetische Entwicklungsfälle der eingefrorenen Luna-Diagnose, durch Codex ausschließlich auf belegte native Opus-Pfade übersetzt. Keine unabhängigen Sollurteile, keine Expertenfreigabe und keine Held-out-Fälle. Fehlende Fachfakten werden nicht aus Opus-Modelltests ergänzt. Nicht abbildbare Fälle sind bewusst als Lücke statt als zusätzliche Beobachtung erhalten.
+**Origin:** Öffentliche synthetische Entwicklungsfälle der eingefrorenen Luna-Diagnose, durch Codex ausschließlich auf belegte native Opus-Pfade übersetzt. Keine unabhängigen Sollurteile, keine Expertenfreigabe und keine Held-out-Fälle. Fehlende Fachfakten werden nicht aus Opus-Modelltests ergänzt. Nicht abbildbare Fälle sind bewusst als Lücke statt als zusätzliche Beobachtung erhalten.
 
 **Query:** `{"access_conditions_met": data.oepul.o6_14.access_conditions_met, "access_violations": data.oepul.o6_14.access_violations, "total_actual_days": data.oepul.o6_14.total_actual_days, "total_credited_days": data.oepul.o6_14.total_credited_days, "alm_occupied_days": data.oepul.o6_14.alm_occupied_days, "alm_stocking_density": data.oepul.o6_14.alm_stocking_density, "animal_notices": data.oepul.o6_14.animal_notices, "violations": data.oepul.o6_14.violations, "premium_total": data.oepul.o6_14.premium_total}`
 
-**Inventar:** 126 Regelkatalog-Einträge; 8 Quellen; 15 statisch erkannte Eingabepfade; 4 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 126 rule catalog entries; 8 sources; 15 static input paths; 4 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"access_condition": 4, "calculation": 16, "cap": 1, "code_requirement": 2, "combination": 5, "consequence": 3, "contract_period": 2, "contract_rule": 7, "deadline": 8, "definition": 3, "eligibility": 10, "exception": 13, "general_condition": 2, "obligation": 26, "option": 1, "premium_rate": 4, "procedure": 9, "reporting": 5, "sanction": 2, "scope": 2, "threshold": 1}`
+**Rule types:** `{"access_condition": 4, "calculation": 16, "cap": 1, "code_requirement": 2, "combination": 5, "consequence": 3, "contract_period": 2, "contract_rule": 7, "deadline": 8, "definition": 3, "eligibility": 10, "exception": 13, "general_condition": 2, "obligation": 26, "option": 1, "premium_rate": 4, "procedure": 9, "reporting": 5, "sanction": 2, "scope": 2, "threshold": 1}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.alpine_farming",
@@ -2193,7 +2193,7 @@ Statische Eingabepfade (keine Laufzeitspur):
       "input.land.total_area_ha"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_14 | full_document | 31 | {"not_rule": 5, "rules": 26} |
 | o6_general | full_document | 34 | {"not_rule": 11, "rules": 23} |
@@ -2206,9 +2206,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -2305,15 +2305,15 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_14.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | runtime_error | Basis | Synthetische Ausgangskonstellation zur Beobachtung der nativen Ausgabe; kein fachlich bestätigter Positivfall. |
-| missing_fact | runtime_error | nein | is_in_austria bei der Alm entfernen; prüfen, ob fehlender Standortnachweis die Zulassung verhindert oder wegen negierter Verletzungsprüfung unauffällig bleibt. |
+| baseline | runtime_error | Baseline | Synthetische Ausgangskonstellation zur Beobachtung der nativen Ausgabe; kein fachlich bestätigter Positivfall. |
+| missing_fact | runtime_error | no | is_in_austria bei der Alm entfernen; prüfen, ob fehlender Standortnachweis die Zulassung verhindert oder wegen negierter Verletzungsprüfung unauffällig bleibt. |
 
-**Fixture-Lücke:** Nicht ausführbar übersetzte Luna-Fälle: variation. Einzelne fehlende Fakten und verlorene Änderungsachsen stehen in luna_translation; keine Ersatzfälle erfunden.
+**Fixture gap:** Nicht ausführbar übersetzte Luna-Fälle: variation. Einzelne fehlende Fakten und verlorene Änderungsachsen stehen in luna_translation; keine Ersatzfälle erfunden.
 
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Luna-GVE3 beweist weder3Tiere noch Alter/RGVE-Kategorie. count, birth_date und rgve_category_id bleiben abwesend.
 - Die 60→59-Tage-Änderung kann ohne erfundene Auf-/Abtriebs- und Meldedaten nicht als nativer stays-Zeitraum umgesetzt werden; variation wird ausgelassen.
@@ -2322,7 +2322,7 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 - Meldetage14/7 sind keine konkreten Meldedaten. Zusatzanforderungen und Default-Tierzahl 1 bleiben unbekannte native Annahmen.
 - Beobachtung: beide ausgegebenen Fälle scheitern unter --strict-builtin-errors mit eval_type_error in policy/o6_14/participation.rego:19: nicht gelieferter commitment_start_year wird nativ zu null und anschließend als null minus1 verwendet. Fehler bleibt erhalten; kein günstiges Vertragsjahr ergänzt.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_14-opus-5.5-high-20260926/workspace/policy/o6_14/common.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_14-opus-5.5-high-20260926/workspace/policy/o6_14/common.rego): Native alpine_farming.alms/animals und measures.
 - [runs/v2-o6_14-opus-5.5-high-20260926/workspace/policy/o6_14/animals.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_14-opus-5.5-high-20260926/workspace/policy/o6_14/animals.rego): RGVE aus Kategorie/Alter und count; Alpungstage aus stays mit konkreten Datums-/Meldedaten.
@@ -2336,26 +2336,26 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_15
 
-Run: `v2-o6_15-opus-5.5-high-20260926`. [Fixture](fixtures/o6_15.json) · [Native Ergebnisse](results/o6_15.json)
+Run: `v2-o6_15-opus-5.5-high-20260926`. [Fixture](fixtures/o6_15.json) · [Native results](results/o6_15.json)
 
-**Eingaben:** Jahr 2026, Teilnahme an Almbewirtschaftung und vorhandene Antragsdaten. Die einzelne Luna-Schafgruppe mit3RGVE wird als unquantifizierter nativer Tiergruppenrecord mit species=sheep abgebildet; keine Kopfzahl, Alterskategorie oder individuellen Bewegungsdaten ergänzt. Gruppen-Behirtungstage60/59 werden auf den belegten Gesamtbehirtungsdauerpfad übertragen.
+**Inputs:** Jahr 2026, Teilnahme an Almbewirtschaftung und vorhandene Antragsdaten. Die einzelne Luna-Schafgruppe mit3RGVE wird als unquantifizierter nativer Tiergruppenrecord mit species=sheep abgebildet; keine Kopfzahl, Alterskategorie oder individuellen Bewegungsdaten ergänzt. Gruppen-Behirtungstage60/59 werden auf den belegten Gesamtbehirtungsdauerpfad übertragen.
 
-**Ausgabebedeutung:** Native Entscheidung enthält Vertragsstatus, eligible, Ausfälle, Alm-/Tierbefunde und gross/net/payable premium. Wegen fehlender Alm-ID und individueller RGVE-/Auftriebsdaten können Schaf-/Almbefunde und Prämie ausbleiben; keine positive bzw. negative unabhängige Referenzwertung.
+**Output meaning:** Native Entscheidung enthält Vertragsstatus, eligible, Ausfälle, Alm-/Tierbefunde und gross/net/payable premium. Wegen fehlender Alm-ID und individueller RGVE-/Auftriebsdaten können Schaf-/Almbefunde und Prämie ausbleiben; keine positive bzw. negative unabhängige Referenzwertung.
 
-**Herkunft:** Öffentliche synthetische Entwicklungsfälle der eingefrorenen Luna-Diagnose, durch Codex ausschließlich auf belegte native Opus-Pfade übersetzt. Keine unabhängigen Sollurteile, keine Expertenfreigabe und keine Held-out-Fälle. Fehlende Fachfakten werden nicht aus Opus-Modelltests ergänzt.
+**Origin:** Öffentliche synthetische Entwicklungsfälle der eingefrorenen Luna-Diagnose, durch Codex ausschließlich auf belegte native Opus-Pfade übersetzt. Keine unabhängigen Sollurteile, keine Expertenfreigabe und keine Held-out-Fälle. Fehlende Fachfakten werden nicht aus Opus-Modelltests ergänzt.
 
 **Query:** `data.oepul.o6_15.decision`
 
-**Inventar:** 95 Regelkatalog-Einträge; 8 Quellen; 14 statisch erkannte Eingabepfade; 7 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 95 rule catalog entries; 8 sources; 14 static input paths; 7 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"applicability": 1, "application_requirement": 3, "calculation": 12, "calculation_order": 1, "closed_list": 1, "combination_requirement": 1, "combination_rule": 1, "consequence": 6, "consistency": 1, "contract_term": 3, "cross_reference": 1, "deadline": 8, "definition": 5, "eligibility": 6, "exception": 5, "exit": 1, "information": 2, "interpretation": 1, "limit": 2, "notice_2026": 2, "obligation": 11, "option": 2, "payment": 3, "premium_rate": 4, "procedure": 3, "restriction": 4, "sanction": 4, "scope": 1}`
+**Rule types:** `{"applicability": 1, "application_requirement": 3, "calculation": 12, "calculation_order": 1, "closed_list": 1, "combination_requirement": 1, "combination_rule": 1, "consequence": 6, "consistency": 1, "contract_term": 3, "cross_reference": 1, "deadline": 8, "definition": 5, "eligibility": 6, "exception": 5, "exit": 1, "information": 2, "interpretation": 1, "limit": 2, "notice_2026": 2, "obligation": 11, "option": 2, "payment": 3, "premium_rate": 4, "procedure": 3, "restriction": 4, "sanction": 4, "scope": 1}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.alpine_farming.alms",
@@ -2374,7 +2374,7 @@ Statische Eingabepfade (keine Laufzeitspur):
       "input.oepul_participation.measures"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_15 | full_document | 45 | {"not_rule": 5, "rules": 40} |
 | o6_general | full_document | 30 | {"not_rule": 12, "rules": 18} |
@@ -2387,9 +2387,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -2491,13 +2491,13 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_15.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Synthetische Ausgangskonstellation zur Beobachtung der nativen Ausgabe; kein fachlich bestätigter Positivfall. |
-| variation | defined | nein | herding_days der Schafgruppe von 60 auf 59 ändern; die 60-Tage-Grenze getrennt von Teilnahme und Prämienberechnung beobachten. |
-| missing_fact | defined | nein | herding_days entfernen; untersuchen, ob der Teilcheck zwischen fehlendem Zeitraum und dokumentierter Unterschreitung unterscheidet. |
+| baseline | defined | Baseline | Synthetische Ausgangskonstellation zur Beobachtung der nativen Ausgabe; kein fachlich bestätigter Positivfall. |
+| variation | defined | no | herding_days der Schafgruppe von 60 auf 59 ändern; die 60-Tage-Grenze getrennt von Teilnahme und Prämienberechnung beobachten. |
+| missing_fact | defined | no | herding_days entfernen; untersuchen, ob der Teilcheck zwischen fehlendem Zeitraum und dokumentierter Unterschreitung unterscheidet. |
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Luna enthält keine Alm-ID, Tieridentität, Tierzahl, Geburtsdatum oder RGVE-Kategorie; diese Fakten bleiben offen.3 RGVE werden nicht zu einer Zahl Schafe umgerechnet.
 - Der unquantifizierte Gruppenrecord ersetzt keine vollständig identifizierten Einzeltiere; nativ kann der Default count=1 greifen, ohne dass1Tier bestätigt ist.
@@ -2506,7 +2506,7 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 - Die Zugehörigkeit der einzigen Schafgruppe zur einzigen Alm wird lediglich als synthetische Strukturzuordnung verwendet; keine reale Tierbewegung belegt.
 - Beobachtung: alle drei Entscheidungen identisch, alm_results={}, obligation_violations=[], contract_status=not_concluded und payable_premium_eur=0. Die native Gesamtprojektion zeigt die erhaltene60/59/fehlend-Dauerachse wegen fehlender alm_id und Individualdaten nicht an.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_15-opus-5.5-high-20260926/workspace/policy/o6_15/lib.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_15-opus-5.5-high-20260926/workspace/policy/o6_15/lib.rego): Native alpine_farming.alms; RGVE braucht Kategorie oder Geburtsdatum und count.
 - [runs/v2-o6_15-opus-5.5-high-20260926/workspace/policy/o6_15/animals.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_15-opus-5.5-high-20260926/workspace/policy/o6_15/animals.rego): total_alpine_days_all_herded_alms kann die belegte Gesamtbehirtungsdauer aufnehmen; erkennbare Tage auf dieser Alm brauchen zusätzlich Datumsgrenzen.
@@ -2520,33 +2520,33 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_16
 
-Run: `v2-o6_16-opus-5.5-high-20261003`. [Fixture](fixtures/o6_16.json) · [Native Ergebnisse](results/o6_16.json)
+Run: `v2-o6_16-opus-5.5-high-20261003`. [Fixture](fixtures/o6_16.json) · [Native results](results/o6_16.json)
 
-**Eingaben:** Jahr 2026 und Maßnahmebeginn2024 bleiben erhalten. Katastergemeinde32001 und Schlagfläche0,2 ha bleiben unverändert. Luna enthält aggregierte10/9 Bildungsstunden und ein Abschlussdatum, Opus verlangt datierte einzelne Kurse; keine Kursliste aus der Aggregation erfunden. Bodenprobendaten und akkreditierter Laborflag werden erhalten, fehlende Laborübermittlungs-/Parameterangaben nicht ergänzt.
+**Inputs:** Jahr 2026 und Maßnahmebeginn2024 bleiben erhalten. Katastergemeinde32001 und Schlagfläche0,2 ha bleiben unverändert. Luna enthält aggregierte10/9 Bildungsstunden und ein Abschlussdatum, Opus verlangt datierte einzelne Kurse; keine Kursliste aus der Aggregation erfunden. Bodenprobendaten und akkreditierter Laborflag werden erhalten, fehlende Laborübermittlungs-/Parameterangaben nicht ergänzt.
 
-**Ausgabebedeutung:** Begrenzte Projektion tatsächlicher nativer Bildungsstunden, Bodenproben-/Flächenzahlen und Verstoßmengen. Die native Default-Kursliste[] kann0 anrechenbare Stunden ergeben; das ist ausdrücklich kein Beweis für0tatsächliche Bildungsstunden und keine gleichwertige Bewertung der Luna10/9 Stunden.
+**Output meaning:** Begrenzte Projektion tatsächlicher nativer Bildungsstunden, Bodenproben-/Flächenzahlen und Verstoßmengen. Die native Default-Kursliste[] kann0 anrechenbare Stunden ergeben; das ist ausdrücklich kein Beweis für0tatsächliche Bildungsstunden und keine gleichwertige Bewertung der Luna10/9 Stunden.
 
-**Herkunft:** Öffentliche synthetische Entwicklungsfälle der eingefrorenen Luna-Diagnose, durch Codex ausschließlich auf belegte native Opus-Pfade übersetzt. Keine unabhängigen Sollurteile, keine Expertenfreigabe und keine Held-out-Fälle. Fehlende Fachfakten werden nicht aus Opus-Modelltests ergänzt. Nicht abbildbare Fälle sind bewusst als Lücke statt als zusätzliche Beobachtung erhalten.
+**Origin:** Öffentliche synthetische Entwicklungsfälle der eingefrorenen Luna-Diagnose, durch Codex ausschließlich auf belegte native Opus-Pfade übersetzt. Keine unabhängigen Sollurteile, keine Expertenfreigabe und keine Held-out-Fälle. Fehlende Fachfakten werden nicht aus Opus-Modelltests ergänzt. Nicht abbildbare Fälle sind bewusst als Lücke statt als zusätzliche Beobachtung erhalten.
 
 **Query:** `{"creditable_training_hours": data.oepul.o6_16.creditable_training_hours, "obligation_violations": data.oepul.o6_16.obligation_violations, "access_violations": data.oepul.o6_16.access_violations, "soil_samples_required": data.oepul.o6_16.soil_samples_required, "creditable_soil_samples": data.oepul.o6_16.creditable_soil_samples, "gwa_arable_area_ha": data.oepul.o6_16.gwa_arable_area_ha}`
 
-**Inventar:** 98 Regelkatalog-Einträge; 11 Quellen; 2 statisch erkannte Eingabepfade; 34 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 98 rule catalog entries; 11 sources; 2 static input paths; 34 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"calculation": 12, "combination_rule": 4, "deadline": 7, "definition": 5, "eligibility_condition": 12, "exception": 4, "obligation": 32, "premium_rate": 7, "premium_rule": 1, "procedure": 7, "prohibition": 6, "sanction": 1}`
+**Rule types:** `{"calculation": 12, "combination_rule": 4, "deadline": 7, "definition": 5, "eligibility_condition": 12, "exception": 4, "obligation": 32, "premium_rate": 7, "premium_rule": 1, "procedure": 7, "prohibition": 6, "sanction": 1}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.region.federal_state",
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_16 | full_document | 40 | {"not_rule": 4, "rules": 36} |
 | o6_general | full_document | 30 | {"not_rule": 6, "rules": 24} |
@@ -2562,9 +2562,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -2739,14 +2739,14 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_16.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Synthetische Ausgangskonstellation zur Beobachtung der nativen Ausgabe; kein fachlich bestätigter Positivfall. |
+| baseline | defined | Baseline | Synthetische Ausgangskonstellation zur Beobachtung der nativen Ausgabe; kein fachlich bestätigter Positivfall. |
 
-**Fixture-Lücke:** Nicht ausführbar übersetzte Luna-Fälle: variation, missing_fact. Einzelne fehlende Fakten und verlorene Änderungsachsen stehen in luna_translation; keine Ersatzfälle erfunden.
+**Fixture gap:** Nicht ausführbar übersetzte Luna-Fälle: variation, missing_fact. Einzelne fehlende Fakten und verlorene Änderungsachsen stehen in luna_translation; keine Ersatzfälle erfunden.
 
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Die 10→9-Stunden-Variation und fehlende Stundensumme sind ohne individuelle Kursnachweise nicht nativ abbildbar; beide Zusatzfälle werden bewusst ausgelassen.
 - Ein Abschlussdatum belegt weder ein einzelnes10 Stunden-Seminar noch alle Kursdaten/Anrechnungskriterien; keine Kursanzahl oder Teilnahme-/Doppelanrechnungsflags erfunden.
@@ -2756,7 +2756,7 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 - Boolesche Planungs-/Bilanzierungs-/Konzeptnachweise liefern keine verlangten konkreten Datumsangaben.
 - Beobachtung des partiellen baseline:0 anrechenbare Stunden,0 anrechenbare Proben,1 erforderliche Probe aus0,2 ha. Die bekannte aggregierte Luna-Bildung/Fläche wird dadurch nicht widerlegt; vollständige native Einzelbelege fehlen.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_16-opus-5.5-high-20261003/workspace/policy/o6_16/base.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_16-opus-5.5-high-20261003/workspace/policy/o6_16/base.rego): Native Gebietszuordnung über KG-Liste und Aggregation aus einzelnen Ackerparzellen.
 - [runs/v2-o6_16-opus-5.5-high-20261003/workspace/policy/o6_16/training_soil.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_16-opus-5.5-high-20261003/workspace/policy/o6_16/training_soil.rego): Individuelle datierte Kurse, Soll-/Ist-Bodenproben und zusätzliche Labor-/Parameteranforderungen.
@@ -2769,32 +2769,32 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_17
 
-Run: `v2-o6_17-opus-5.5-high-20261011`. [Fixture](fixtures/o6_17.json) · [Native Ergebnisse](results/o6_17.json)
+Run: `v2-o6_17-opus-5.5-high-20261011`. [Fixture](fixtures/o6_17.json) · [Native results](results/o6_17.json)
 
-**Eingaben:** Nativer Vertrag: farm.year, land.parcels, oepul.participating_measures und oepul.o6_17 mit eligible_grassland_lt18_mfa2025_ha sowie einzelnen soil_samples-Belegen. RGVE werden aus Tierbeständen und Bonität je Schlag berechnet. Luna liefert 2025, 10 ha Grünland, 50 % Grünlandanteil, 100 ha Gesamtfläche, 3 RGVE, drei beziehungsweise zwei Bodenproben und die mittlere Bonität 25. Diese Aggregate werden weder vereinheitlicht noch in erfundene Einzelbelege zerlegt.
+**Inputs:** Nativer Vertrag: farm.year, land.parcels, oepul.participating_measures und oepul.o6_17 mit eligible_grassland_lt18_mfa2025_ha sowie einzelnen soil_samples-Belegen. RGVE werden aus Tierbeständen und Bonität je Schlag berechnet. Luna liefert 2025, 10 ha Grünland, 50 % Grünlandanteil, 100 ha Gesamtfläche, 3 RGVE, drei beziehungsweise zwei Bodenproben und die mittlere Bonität 25. Diese Aggregate werden weder vereinheitlicht noch in erfundene Einzelbelege zerlegt.
 
-**Ausgabebedeutung:** decision kombiniert Zugangs-, Verpflichtungs- und Prämienbefunde des aktuellen ausgewählten historischen Kandidaten. Hier keine gleichartige Ausführung: fixture_gap dokumentiert die unterschiedlichen Aggregate-/Belegverträge und ist keine fachliche Ablehnung oder Genauigkeitsmessung.
+**Output meaning:** decision kombiniert Zugangs-, Verpflichtungs- und Prämienbefunde des aktuellen ausgewählten historischen Kandidaten. Hier keine gleichartige Ausführung: fixture_gap dokumentiert die unterschiedlichen Aggregate-/Belegverträge und ist keine fachliche Ablehnung oder Genauigkeitsmessung.
 
-**Herkunft:** Öffentliche synthetische DEVELOPMENT-Diagnose: ausschließlich die drei bereits veröffentlichten Luna-Entwicklungsfälle in den nativen Opus-Vertrag übersetzt bzw. als nicht übersetzbar dokumentiert. Keine neuen Betriebsfakten, keine Modellgenerierung, keine unabhängig adjudizierten Sollwerte, kein Gold-/Heldout-Test.
+**Origin:** Öffentliche synthetische DEVELOPMENT-Diagnose: ausschließlich die drei bereits veröffentlichten Luna-Entwicklungsfälle in den nativen Opus-Vertrag übersetzt bzw. als nicht übersetzbar dokumentiert. Keine neuen Betriebsfakten, keine Modellgenerierung, keine unabhängig adjudizierten Sollwerte, kein Gold-/Heldout-Test.
 
 **Query:** `data.oepul.o6_17.decision`
 
-**Inventar:** 133 Regelkatalog-Einträge; 9 Quellen; 1 statisch erkannte Eingabepfade; 38 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 133 rule catalog entries; 9 sources; 1 static input paths; 38 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"access_condition": 8, "application": 4, "calculation": 13, "combination_constraint": 2, "consequence": 6, "constraint": 2, "cross_reference": 1, "definition": 10, "documentation": 6, "eligibility": 11, "exception": 17, "interpretation": 3, "method": 3, "obligation": 17, "procedure": 7, "prohibition": 4, "reference_list": 1, "sanction": 6, "temporal_constraint": 12}`
+**Rule types:** `{"access_condition": 8, "application": 4, "calculation": 13, "combination_constraint": 2, "consequence": 6, "constraint": 2, "cross_reference": 1, "definition": 10, "documentation": 6, "eligibility": 11, "exception": 17, "interpretation": 3, "method": 3, "obligation": 17, "procedure": 7, "prohibition": 4, "reference_list": 1, "sanction": 6, "temporal_constraint": 12}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_17 | full_document | 34 | {"not_rule": 3, "rules": 31} |
 | o6_general | full_document | 41 | {"not_rule": 11, "rules": 30} |
@@ -2808,9 +2808,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -2855,19 +2855,19 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_17.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| — | fixture_gap | fixture_gap | Keine ausführbaren Fälle |
+| — | fixture_gap | fixture_gap | No executable cases |
 
-**Fixture-Lücke:** Luna liefert die Bodenprobenzahl 3 → 2, die mittlere Bonität 25 und 3 RGVE als Aggregate. Opus verlangt konkrete gültige Bodenproben, schlagbezogene Bonität und Tierbestände. Die Probenvariation und Bonitätsauslassung lassen sich ohne neue Labor-, Datums-, Schlag- oder Tierfakten nicht gleich übersetzen. Die vorhandene MFA-2025-Probenbasis von 10,4 ha hat dagegen einen direkten nativen Aggregatpfad und bleibt 10,4 ha; sie erzeugt keinen zusätzlichen Schlag von 0,4 ha.
+**Fixture gap:** Luna liefert die Bodenprobenzahl 3 → 2, die mittlere Bonität 25 und 3 RGVE als Aggregate. Opus verlangt konkrete gültige Bodenproben, schlagbezogene Bonität und Tierbestände. Die Probenvariation und Bonitätsauslassung lassen sich ohne neue Labor-, Datums-, Schlag- oder Tierfakten nicht gleich übersetzen. Die vorhandene MFA-2025-Probenbasis von 10,4 ha hat dagegen einen direkten nativen Aggregatpfad und bleibt 10,4 ha; sie erzeugt keinen zusätzlichen Schlag von 0,4 ha.
 
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Luna liefert die Bodenprobenzahl 3 → 2, die mittlere Bonität 25 und 3 RGVE als Aggregate. Opus verlangt konkrete gültige Bodenproben, schlagbezogene Bonität und Tierbestände. Die Probenvariation und Bonitätsauslassung lassen sich ohne neue Labor-, Datums-, Schlag- oder Tierfakten nicht gleich übersetzen. Die vorhandene MFA-2025-Probenbasis von 10,4 ha hat dagegen einen direkten nativen Aggregatpfad und bleibt 10,4 ha; sie erzeugt keinen zusätzlichen Schlag von 0,4 ha.
 - Für eigenständige neue Opus-Entwicklungsfälle wären zusätzliche ausdrücklich synthetische Belege separat zu erstellen; sie wären keine Übersetzung der eingefrorenen Luna-Fälle.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_17-opus-5.5-high-20261011/workspace/policy/o6_17/common.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_17-opus-5.5-high-20261011/workspace/policy/o6_17/common.rego): Nativer Opus-Eingabe-/Ausgabevertrag, konsumierte Pfade oder Modelltest; keine neue normative Regel.
 - [runs/v2-o6_17-opus-5.5-high-20261011/workspace/policy/o6_17/contract.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_17-opus-5.5-high-20261011/workspace/policy/o6_17/contract.rego): Nativer Opus-Eingabe-/Ausgabevertrag, konsumierte Pfade oder Modelltest; keine neue normative Regel.
@@ -2882,32 +2882,32 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_18
 
-Run: `v2-o6_18-opus-5.5-high-20260927`. [Fixture](fixtures/o6_18.json) · [Native Ergebnisse](results/o6_18.json)
+Run: `v2-o6_18-opus-5.5-high-20260927`. [Fixture](fixtures/o6_18.json) · [Native results](results/o6_18.json)
 
-**Eingaben:** Native Teilübersetzung: farm.year = 2026, land.total_area_ha = 20, vorhandener Grünlandschlag und Projektbestätigung mit Auflagencode GA09 beziehungsweise GL06; NAT-Marker unter oepul.codes. Der technische Identifier luna-parcel-0 bezeichnet nur das vorhandene Arrayelement. Keine Schlagfläche, Antrags- oder Vertragsdaten, Nutzungsereignisse oder Referenzflächenzuordnung werden ergänzt.
+**Inputs:** Native Teilübersetzung: farm.year = 2026, land.total_area_ha = 20, vorhandener Grünlandschlag und Projektbestätigung mit Auflagencode GA09 beziehungsweise GL06; NAT-Marker unter oepul.codes. Der technische Identifier luna-parcel-0 bezeichnet nur das vorhandene Arrayelement. Keine Schlagfläche, Antrags- oder Vertragsdaten, Nutzungsereignisse oder Referenzflächenzuordnung werden ergänzt.
 
-**Ausgabebedeutung:** decision bündelt compliant, Verstöße, Befunde und Prämienarithmetik. Die vorhandenen Projekt-/Auflagencodeproben werden sichtbar; unbekannte Schlagfläche, Referenzzuordnung oder Fristbelege dürfen nicht als bestätigt gelten. Ein nativer Null-/Nullbetragswert ist aufgrund der unvollständigen Eingabe kein Qualitätsvergleich oder bewilligter Zahlbetrag.
+**Output meaning:** decision bündelt compliant, Verstöße, Befunde und Prämienarithmetik. Die vorhandenen Projekt-/Auflagencodeproben werden sichtbar; unbekannte Schlagfläche, Referenzzuordnung oder Fristbelege dürfen nicht als bestätigt gelten. Ein nativer Null-/Nullbetragswert ist aufgrund der unvollständigen Eingabe kein Qualitätsvergleich oder bewilligter Zahlbetrag.
 
-**Herkunft:** Öffentliche synthetische DEVELOPMENT-Diagnose: ausschließlich die drei bereits veröffentlichten Luna-Entwicklungsfälle in den nativen Opus-Vertrag übersetzt bzw. als nicht übersetzbar dokumentiert. Keine neuen Betriebsfakten, keine Modellgenerierung, keine unabhängig adjudizierten Sollwerte, kein Gold-/Heldout-Test.
+**Origin:** Öffentliche synthetische DEVELOPMENT-Diagnose: ausschließlich die drei bereits veröffentlichten Luna-Entwicklungsfälle in den nativen Opus-Vertrag übersetzt bzw. als nicht übersetzbar dokumentiert. Keine neuen Betriebsfakten, keine Modellgenerierung, keine unabhängig adjudizierten Sollwerte, kein Gold-/Heldout-Test.
 
 **Query:** `data.oepul.o6_18.decision`
 
-**Inventar:** 125 Regelkatalog-Einträge; 8 Quellen; 1 statisch erkannte Eingabepfade; 30 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 125 rule catalog entries; 8 sources; 1 static input paths; 30 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"administrative_consequence": 6, "combination": 12, "deadline": 5, "definition": 5, "documentation": 2, "eligibility": 13, "exception": 9, "information": 4, "obligation": 19, "premium_calculation": 14, "procedure": 18, "prohibition": 17, "sanction": 1}`
+**Rule types:** `{"administrative_consequence": 6, "combination": 12, "deadline": 5, "definition": 5, "documentation": 2, "eligibility": 13, "exception": 9, "information": 4, "obligation": 19, "premium_calculation": 14, "procedure": 18, "prohibition": 17, "sanction": 1}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_18 | full_document | 23 | {"not_rule": 2, "rules": 21} |
 | o6_general | full_document | 39 | {"not_rule": 9, "rules": 30} |
@@ -2920,9 +2920,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -2976,19 +2976,19 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_18.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Die unveränderten öffentlichen Luna-Basisfakten im belegbaren nativen Opus-Teilvertrag ausführen; keine unabhängige Sollentscheidung und keine direkte Wiederverwendung eines Opus-Testbetriebs. |
-| variation | defined | ja | Den einzelnen Code GA09 durch den im Modelltest belegten Code GL06 ersetzen; beobachten, ob ein zusätzlicher Monitoringnachweis als Verletzung erscheint. Gleiche Auflagencode-/Projektfaktprobe auf dem nativen Teilvertrag. |
-| missing_fact | defined | ja | project_confirmation aus dem Schlag entfernen; den fehlenden Projektbestätigungsnachweis mit dem Basisfall vergleichen. Gleiche Auflagencode-/Projektfaktprobe auf dem nativen Teilvertrag. |
+| baseline | defined | Baseline | Die unveränderten öffentlichen Luna-Basisfakten im belegbaren nativen Opus-Teilvertrag ausführen; keine unabhängige Sollentscheidung und keine direkte Wiederverwendung eines Opus-Testbetriebs. |
+| variation | defined | yes | Den einzelnen Code GA09 durch den im Modelltest belegten Code GL06 ersetzen; beobachten, ob ein zusätzlicher Monitoringnachweis als Verletzung erscheint. Gleiche Auflagencode-/Projektfaktprobe auf dem nativen Teilvertrag. |
+| missing_fact | defined | yes | project_confirmation aus dem Schlag entfernen; den fehlenden Projektbestätigungsnachweis mit dem Basisfall vergleichen. Gleiche Auflagencode-/Projektfaktprobe auf dem nativen Teilvertrag. |
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Unabhängige fachliche Sollurteile und vollständige tatsächliche Belege fehlen; diese Fälle bleiben öffentliche Entwicklungsdiagnosen.
 - Unterschiedliche native Vertrags-/Prämienumfänge und günstige Defaults dürfen nicht als fachliche Korrektheit oder Genauigkeitsvergleich ausgegeben werden.
 - Auflagencode-/Projektbestätigungsprobe fachlich gleich übertragen; unbekannte Schlagfläche/Referenzzuordnung und Datierungen begrenzen Gesamt-/Prämienvergleich.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_18-opus-5.5-high-20260927/workspace/policy/o6_18/main.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_18-opus-5.5-high-20260927/workspace/policy/o6_18/main.rego): Nativer Opus-Eingabe-/Ausgabevertrag, konsumierte Pfade oder Modelltest; keine neue normative Regel.
 - [runs/v2-o6_18-opus-5.5-high-20260927/workspace/policy/o6_18/lib.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_18-opus-5.5-high-20260927/workspace/policy/o6_18/lib.rego): Nativer Opus-Eingabe-/Ausgabevertrag, konsumierte Pfade oder Modelltest; keine neue normative Regel.
@@ -3002,26 +3002,26 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_19
 
-Run: `v2-o6_19-opus-5.5-high-20260927`. [Fixture](fixtures/o6_19.json) · [Native Ergebnisse](results/o6_19.json)
+Run: `v2-o6_19-opus-5.5-high-20260927`. [Fixture](fixtures/o6_19.json) · [Native results](results/o6_19.json)
 
-**Eingaben:** Nativer Vertrag: farm.year, land mit einzelnen EBW-Parzellen, oepul.o6_19 sowie einzelne Projekt-, Schulungs- und Planbelege. Luna measure liefert das Jahr 2025 und Zugangs- beziehungsweise Prämienaggregate. Die Fläche 1,2 ha und mandatory_indicators_met werden nicht in erfundene Schläge oder Indikatorcodes zerlegt.
+**Inputs:** Nativer Vertrag: farm.year, land mit einzelnen EBW-Parzellen, oepul.o6_19 sowie einzelne Projekt-, Schulungs- und Planbelege. Luna measure liefert das Jahr 2025 und Zugangs- beziehungsweise Prämienaggregate. Die Fläche 1,2 ha und mandatory_indicators_met werden nicht in erfundene Schläge oder Indikatorcodes zerlegt.
 
-**Ausgabebedeutung:** decision aggregiert Zugangs-/Projekt-/Indikator-/Verpflichtungsbefunde und Prämienrechnung. Hier keine Ausführung wegen nicht übersetzbarer Aggregatproben; fixture_gap ist weder fachliche Ablehnung noch ein Beweis für mehr/weniger Modellqualität.
+**Output meaning:** decision aggregiert Zugangs-/Projekt-/Indikator-/Verpflichtungsbefunde und Prämienrechnung. Hier keine Ausführung wegen nicht übersetzbarer Aggregatproben; fixture_gap ist weder fachliche Ablehnung noch ein Beweis für mehr/weniger Modellqualität.
 
-**Herkunft:** Öffentliche synthetische DEVELOPMENT-Diagnose: ausschließlich die drei bereits veröffentlichten Luna-Entwicklungsfälle in den nativen Opus-Vertrag übersetzt bzw. als nicht übersetzbar dokumentiert. Keine neuen Betriebsfakten, keine Modellgenerierung, keine unabhängig adjudizierten Sollwerte, kein Gold-/Heldout-Test.
+**Origin:** Öffentliche synthetische DEVELOPMENT-Diagnose: ausschließlich die drei bereits veröffentlichten Luna-Entwicklungsfälle in den nativen Opus-Vertrag übersetzt bzw. als nicht übersetzbar dokumentiert. Keine neuen Betriebsfakten, keine Modellgenerierung, keine unabhängig adjudizierten Sollwerte, kein Gold-/Heldout-Test.
 
 **Query:** `data.oepul.o6_19.decision`
 
-**Inventar:** 102 Regelkatalog-Einträge; 8 Quellen; 12 statisch erkannte Eingabepfade; 94 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 102 rule catalog entries; 8 sources; 12 static input paths; 94 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"cap": 4, "combination": 3, "crediting": 3, "deadline": 3, "definition": 6, "eligibility": 13, "exception": 9, "exclusion": 7, "information_requirement": 1, "obligation": 11, "option": 4, "premium_calculation": 13, "procedure": 17, "sanction": 7, "scope": 1}`
+**Rule types:** `{"cap": 4, "combination": 3, "crediting": 3, "deadline": 3, "definition": 6, "eligibility": 13, "exception": 9, "exclusion": 7, "information_requirement": 1, "obligation": 11, "option": 4, "premium_calculation": 13, "procedure": 17, "sanction": 7, "scope": 1}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.year",
@@ -3038,7 +3038,7 @@ Statische Eingabepfade (keine Laufzeitspur):
       "input.oepul.protected_cultivation_area_ha"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_19 | full_document | 44 | {"not_rule": 5, "rules": 39} |
 | o6_general | full_document | 37 | {"not_rule": 12, "rules": 25} |
@@ -3051,9 +3051,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -3098,19 +3098,19 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_19.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| — | fixture_gap | fixture_gap | Keine ausführbaren Fälle |
+| — | fixture_gap | fixture_gap | No executable cases |
 
-**Fixture-Lücke:** Luna variiert eligible_area_ha von 1,2 auf 0,99 ha und entfernt mandatory_indicators_met. Opus leitet förderfähige Fläche aus tatsächlich bestimmten EBW-Schlägen und Erfüllung aus konkreten verpflichtenden Indikatoren ab. Luna enthält keine physische Schlagfläche, Nutzungsart, Indikatorcodes oder Bindungsdetails. Eine Parzelle von 1,2 ha oder eine willkürliche Indikatorliste würde neue fachliche Fakten hinzufügen.
+**Fixture gap:** Luna variiert eligible_area_ha von 1,2 auf 0,99 ha und entfernt mandatory_indicators_met. Opus leitet förderfähige Fläche aus tatsächlich bestimmten EBW-Schlägen und Erfüllung aus konkreten verpflichtenden Indikatoren ab. Luna enthält keine physische Schlagfläche, Nutzungsart, Indikatorcodes oder Bindungsdetails. Eine Parzelle von 1,2 ha oder eine willkürliche Indikatorliste würde neue fachliche Fakten hinzufügen.
 
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Luna variiert eligible_area_ha von 1,2 auf 0,99 ha und entfernt mandatory_indicators_met. Opus leitet förderfähige Fläche aus tatsächlich bestimmten EBW-Schlägen und Erfüllung aus konkreten verpflichtenden Indikatoren ab. Luna enthält keine physische Schlagfläche, Nutzungsart, Indikatorcodes oder Bindungsdetails. Eine Parzelle von 1,2 ha oder eine willkürliche Indikatorliste würde neue fachliche Fakten hinzufügen.
 - Für eigenständige neue Opus-Entwicklungsfälle wären zusätzliche ausdrücklich synthetische Belege separat zu erstellen; sie wären keine Übersetzung der eingefrorenen Luna-Fälle.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_19-opus-5.5-high-20260927/workspace/policy/o6_19/decision.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_19-opus-5.5-high-20260927/workspace/policy/o6_19/decision.rego): Nativer Opus-Eingabe-/Ausgabevertrag, konsumierte Pfade oder Modelltest; keine neue normative Regel.
 - [runs/v2-o6_19-opus-5.5-high-20260927/workspace/policy/o6_19/common.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_19-opus-5.5-high-20260927/workspace/policy/o6_19/common.rego): Nativer Opus-Eingabe-/Ausgabevertrag, konsumierte Pfade oder Modelltest; keine neue normative Regel.
@@ -3124,32 +3124,32 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_20
 
-Run: `v2-o6_20-opus-5.5-high-20260928`. [Fixture](fixtures/o6_20.json) · [Native Ergebnisse](results/o6_20.json)
+Run: `v2-o6_20-opus-5.5-high-20260928`. [Fixture](fixtures/o6_20.json) · [Native results](results/o6_20.json)
 
-**Eingaben:** Native Teilübersetzung unter oepul_measures.tierwohl_weide.categories: dieselbe Rinder- und Schafkategorie, 1,2 beziehungsweise 0,9 durchschnittliche RGVE, 120 beziehungsweise 150 Weidetage sowie Infrastruktur- und Grundfutterflags. farm.year = 2026 bleibt unverändert; category_code wird anhand der vorhandenen Opus-Liste umcodiert. Keine Tiere, Geburts-, Antrags- oder Zuschlagsdaten sowie Tagebuch-Einzelbelege werden ergänzt.
+**Inputs:** Native Teilübersetzung unter oepul_measures.tierwohl_weide.categories: dieselbe Rinder- und Schafkategorie, 1,2 beziehungsweise 0,9 durchschnittliche RGVE, 120 beziehungsweise 150 Weidetage sowie Infrastruktur- und Grundfutterflags. farm.year = 2026 bleibt unverändert; category_code wird anhand der vorhandenen Opus-Liste umcodiert. Keine Tiere, Geburts-, Antrags- oder Zuschlagsdaten sowie Tagebuch-Einzelbelege werden ergänzt.
 
-**Ausgabebedeutung:** Native result bündelt contract_valid, Prämienzusammenfassung, violations, review_items und missing_inputs. Nicht übersetzte Zeit-/Tagebuchbelege bleiben fehlend und können den Vertrag unabhängig von den Primärproben sperren. Fehlendes water_access hat einen günstigen nativen Default; dies ist keine bestätigte Tränkenversorgung.
+**Output meaning:** Native result bündelt contract_valid, Prämienzusammenfassung, violations, review_items und missing_inputs. Nicht übersetzte Zeit-/Tagebuchbelege bleiben fehlend und können den Vertrag unabhängig von den Primärproben sperren. Fehlendes water_access hat einen günstigen nativen Default; dies ist keine bestätigte Tränkenversorgung.
 
-**Herkunft:** Öffentliche synthetische DEVELOPMENT-Diagnose: ausschließlich die drei bereits veröffentlichten Luna-Entwicklungsfälle in den nativen Opus-Vertrag übersetzt bzw. als nicht übersetzbar dokumentiert. Keine neuen Betriebsfakten, keine Modellgenerierung, keine unabhängig adjudizierten Sollwerte, kein Gold-/Heldout-Test.
+**Origin:** Öffentliche synthetische DEVELOPMENT-Diagnose: ausschließlich die drei bereits veröffentlichten Luna-Entwicklungsfälle in den nativen Opus-Vertrag übersetzt bzw. als nicht übersetzbar dokumentiert. Keine neuen Betriebsfakten, keine Modellgenerierung, keine unabhängig adjudizierten Sollwerte, kein Gold-/Heldout-Test.
 
 **Query:** `data.oepul.o6_20.decision.result`
 
-**Inventar:** 97 Regelkatalog-Einträge; 8 Quellen; 1 statisch erkannte Eingabepfade; 6 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 97 rule catalog entries; 8 sources; 1 static input paths; 6 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"calculation": 15, "combination": 2, "consequence": 8, "deadline": 5, "definition": 5, "eligibility": 8, "exception": 11, "exclusion": 1, "interpretation": 4, "legal_obligation": 1, "obligation": 13, "option": 4, "procedure": 11, "reporting_obligation": 4, "sanction": 3, "table": 2}`
+**Rule types:** `{"calculation": 15, "combination": 2, "consequence": 8, "deadline": 5, "definition": 5, "eligibility": 8, "exception": 11, "exclusion": 1, "interpretation": 4, "legal_obligation": 1, "obligation": 13, "option": 4, "procedure": 11, "reporting_obligation": 4, "sanction": 3, "table": 2}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_20 | full_document | 78 | {"not_rule": 5, "rules": 73} |
 | o6_general | full_document | 48 | {"not_rule": 22, "rules": 26} |
@@ -3162,9 +3162,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -3227,19 +3227,19 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_20.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Die unveränderten öffentlichen Luna-Basisfakten im belegbaren nativen Opus-Teilvertrag ausführen; keine unabhängige Sollentscheidung und keine direkte Wiederverwendung eines Opus-Testbetriebs. |
-| variation | defined | ja | Einzige Änderung: Weidetage der Rinderkategorie von 120 auf 119 Tage; Reaktion an der im Kandidaten konsumierten Schwelle beobachten. Gleiche Tages-/Tränkenprobe im nativen Kategorienvertrag. |
-| missing_fact | defined | nein | Einzige Auslassung: water_access der Rinderkategorie; prüfen, ob fehlende Evidenz von einer tatsächlich fehlenden Tränke unterschieden wird. Gleiche Tages-/Tränkenprobe im nativen Kategorienvertrag. |
+| baseline | defined | Baseline | Die unveränderten öffentlichen Luna-Basisfakten im belegbaren nativen Opus-Teilvertrag ausführen; keine unabhängige Sollentscheidung und keine direkte Wiederverwendung eines Opus-Testbetriebs. |
+| variation | defined | yes | Einzige Änderung: Weidetage der Rinderkategorie von 120 auf 119 Tage; Reaktion an der im Kandidaten konsumierten Schwelle beobachten. Gleiche Tages-/Tränkenprobe im nativen Kategorienvertrag. |
+| missing_fact | defined | no | Einzige Auslassung: water_access der Rinderkategorie; prüfen, ob fehlende Evidenz von einer tatsächlich fehlenden Tränke unterschieden wird. Gleiche Tages-/Tränkenprobe im nativen Kategorienvertrag. |
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Unabhängige fachliche Sollurteile und vollständige tatsächliche Belege fehlen; diese Fälle bleiben öffentliche Entwicklungsdiagnosen.
 - Unterschiedliche native Vertrags-/Prämienumfänge und günstige Defaults dürfen nicht als fachliche Korrektheit oder Genauigkeitsvergleich ausgegeben werden.
 - Tages- und Tränkenproben sind identisch übertragen; exakte Datierungen, Anwesenheits-/Melde-/Tagebuchbelege fehlen und dürfen Unterschiede von Gesamtvertrag/Prämie nicht als Modellqualität erscheinen lassen.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_20-opus-5.5-high-20260928/workspace/policy/o6_20/decision.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_20-opus-5.5-high-20260928/workspace/policy/o6_20/decision.rego): Nativer Opus-Eingabe-/Ausgabevertrag, konsumierte Pfade oder Modelltest; keine neue normative Regel.
 - [runs/v2-o6_20-opus-5.5-high-20260928/workspace/policy/o6_20/common.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_20-opus-5.5-high-20260928/workspace/policy/o6_20/common.rego): Nativer Opus-Eingabe-/Ausgabevertrag, konsumierte Pfade oder Modelltest; keine neue normative Regel.
@@ -3254,32 +3254,32 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_21
 
-Run: `v2-o6_21-opus-5.5-high-20261004`. [Fixture](fixtures/o6_21.json) · [Native Ergebnisse](results/o6_21.json)
+Run: `v2-o6_21-opus-5.5-high-20261004`. [Fixture](fixtures/o6_21.json) · [Native results](results/o6_21.json)
 
-**Eingaben:** Nativer Vertrag: farm.year, oepul_measures.o6_21, livestock.cattle_animals[] mit Ohrmarke, Geburts- und Anwesenheitsdaten sowie livestock.stall_compartments[] mit Fläche in m² und einzelnen Gebäudemerkmalen. Luna liefert stattdessen farm.o6_21, 5 RGVE, 501 kg, 4,2 m² je Tier und boolesche Sammelnachweise. Kein zusätzlicher Tierbestand, Stall oder Gebäudebeleg wird ergänzt.
+**Inputs:** Nativer Vertrag: farm.year, oepul_measures.o6_21, livestock.cattle_animals[] mit Ohrmarke, Geburts- und Anwesenheitsdaten sowie livestock.stall_compartments[] mit Fläche in m² und einzelnen Gebäudemerkmalen. Luna liefert stattdessen farm.o6_21, 5 RGVE, 501 kg, 4,2 m² je Tier und boolesche Sammelnachweise. Kein zusätzlicher Tierbestand, Stall oder Gebäudebeleg wird ergänzt.
 
-**Ausgabebedeutung:** main.decision enthält Zugangsurteil, Kategorien-/RGVE-Aggregate, Abteilverletzungen und Prämienzusammenfassung; eligible aggregiert access_issues und ist keine automatische Bestätigung aller allgemeinen Pflichten. Hier keine Ausführung: fixture_gap dokumentiert den nicht abbildbaren Eingabevertrag und ist weder fachliche Ablehnung noch Genauigkeitsbefund.
+**Output meaning:** main.decision enthält Zugangsurteil, Kategorien-/RGVE-Aggregate, Abteilverletzungen und Prämienzusammenfassung; eligible aggregiert access_issues und ist keine automatische Bestätigung aller allgemeinen Pflichten. Hier keine Ausführung: fixture_gap dokumentiert den nicht abbildbaren Eingabevertrag und ist weder fachliche Ablehnung noch Genauigkeitsbefund.
 
-**Herkunft:** Öffentliche synthetische DEVELOPMENT-Diagnose: ausschließlich die drei bereits veröffentlichten Luna-Entwicklungsfälle in den nativen Opus-Vertrag übersetzt bzw. als nicht übersetzbar dokumentiert. Keine neuen Betriebsfakten, keine Modellgenerierung, keine unabhängig adjudizierten Sollwerte, kein Gold-/Heldout-Test.
+**Origin:** Öffentliche synthetische DEVELOPMENT-Diagnose: ausschließlich die drei bereits veröffentlichten Luna-Entwicklungsfälle in den nativen Opus-Vertrag übersetzt bzw. als nicht übersetzbar dokumentiert. Keine neuen Betriebsfakten, keine Modellgenerierung, keine unabhängig adjudizierten Sollwerte, kein Gold-/Heldout-Test.
 
 **Query:** `data.oepul.o6_21.main.decision`
 
-**Inventar:** 95 Regelkatalog-Einträge; 11 Quellen; 1 statisch erkannte Eingabepfade; 9 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 95 rule catalog entries; 11 sources; 1 static input paths; 9 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"access_condition": 2, "calculation": 6, "calculation_input": 1, "combination": 1, "condition": 1, "consequence": 7, "contract_period": 1, "deadline": 5, "definition": 4, "documentation": 5, "eligibility": 4, "exception": 6, "exclusion": 6, "obligation": 12, "option": 5, "premium_rate": 3, "procedure": 5, "renewal": 1, "reporting": 4, "restriction": 4, "sanction": 4, "threshold": 8}`
+**Rule types:** `{"access_condition": 2, "calculation": 6, "calculation_input": 1, "combination": 1, "condition": 1, "consequence": 7, "contract_period": 1, "deadline": 5, "definition": 4, "documentation": 5, "eligibility": 4, "exception": 6, "exclusion": 6, "obligation": 12, "option": 5, "premium_rate": 3, "procedure": 5, "renewal": 1, "reporting": 4, "restriction": 4, "sanction": 4, "threshold": 8}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_21 | full_document | 55 | {"not_rule": 3, "rules": 52} |
 | o6_general | full_document | 32 | {"not_rule": 16, "rules": 16} |
@@ -3295,9 +3295,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -3342,19 +3342,19 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_21.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| — | fixture_gap | fixture_gap | Keine ausführbaren Fälle |
+| — | fixture_gap | fixture_gap | No executable cases |
 
-**Fixture-Lücke:** Die Luna-Basis enthält RGVE-Aggregate, einen Tierbeispielfakt mit 501 kg, Flächen je Tier und zusammengefasste Stallnachweise. Opus benötigt taggenaue Einzeltiere und Stallabteile. Ohne ergänzte Geburts- und Anwesenheitsdaten, vollständige Abteilbelegung und Gebäudemerkmale sind weder dieselbe RGVE-Basis noch die Probe 4,20 → 4,19 m² je Tier oder die Auslassung structural_requirements_met sinnvoll ausführbar.
+**Fixture gap:** Die Luna-Basis enthält RGVE-Aggregate, einen Tierbeispielfakt mit 501 kg, Flächen je Tier und zusammengefasste Stallnachweise. Opus benötigt taggenaue Einzeltiere und Stallabteile. Ohne ergänzte Geburts- und Anwesenheitsdaten, vollständige Abteilbelegung und Gebäudemerkmale sind weder dieselbe RGVE-Basis noch die Probe 4,20 → 4,19 m² je Tier oder die Auslassung structural_requirements_met sinnvoll ausführbar.
 
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Die Luna-Basis enthält RGVE-Aggregate, einen Tierbeispielfakt mit 501 kg, Flächen je Tier und zusammengefasste Stallnachweise. Opus benötigt taggenaue Einzeltiere und Stallabteile. Ohne ergänzte Geburts- und Anwesenheitsdaten, vollständige Abteilbelegung und Gebäudemerkmale sind weder dieselbe RGVE-Basis noch die Probe 4,20 → 4,19 m² je Tier oder die Auslassung structural_requirements_met sinnvoll ausführbar.
 - Für eine spätere eigenständige Opus-Entwicklungsprobe können neue ausdrücklich synthetische Fälle erstellt werden; sie wären dann keine Übersetzung dieser Luna-Fälle.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_21-opus-5.5-high-20261004/workspace/policy/o6_21/main.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_21-opus-5.5-high-20261004/workspace/policy/o6_21/main.rego): Nativer Opus-Eingabe-/Ausgabevertrag, konsumierte Pfade oder geschlossene Tabelle; keine neue normative Regel.
 - [runs/v2-o6_21-opus-5.5-high-20261004/workspace/policy/o6_21/lib.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_21-opus-5.5-high-20261004/workspace/policy/o6_21/lib.rego): Nativer Opus-Eingabe-/Ausgabevertrag, konsumierte Pfade oder geschlossene Tabelle; keine neue normative Regel.
@@ -3367,32 +3367,32 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_22
 
-Run: `v2-o6_22-opus-5.5-high-20261004`. [Fixture](fixtures/o6_22.json) · [Native Ergebnisse](results/o6_22.json)
+Run: `v2-o6_22-opus-5.5-high-20261004`. [Fixture](fixtures/o6_22.json) · [Native results](results/o6_22.json)
 
-**Eingaben:** Nativer Vertrag: farm.year, farm.oepul_measures.o6_22.applications[] und livestock.species_groups[] mit Tierlistenkategorie und Stückzahl beziehungsweise Durchschnittsbestand. GVE werden daraus berechnet. Lunas participation_gve bleibt ein vorgegebenes Aggregat ohne Zerlegung. Das bei Luna fehlende Förderjahr bleibt fehlend.
+**Inputs:** Nativer Vertrag: farm.year, farm.oepul_measures.o6_22.applications[] und livestock.species_groups[] mit Tierlistenkategorie und Stückzahl beziehungsweise Durchschnittsbestand. GVE werden daraus berechnet. Lunas participation_gve bleibt ein vorgegebenes Aggregat ohne Zerlegung. Das bei Luna fehlende Förderjahr bleibt fehlend.
 
-**Ausgabebedeutung:** decision enthält min_participation_met, participating_gve, compliant, violations und Prämienrechnung. Der native Gesamtausschnitt unterscheidet sich von Lunas reinem Scope-/2-GVE-Boolean. Hier keine Ausführung wegen nicht abbildbarer Aggregate/fehlendem Jahr; fixture_gap ist keine negative fachliche Entscheidung.
+**Output meaning:** decision enthält min_participation_met, participating_gve, compliant, violations und Prämienrechnung. Der native Gesamtausschnitt unterscheidet sich von Lunas reinem Scope-/2-GVE-Boolean. Hier keine Ausführung wegen nicht abbildbarer Aggregate/fehlendem Jahr; fixture_gap ist keine negative fachliche Entscheidung.
 
-**Herkunft:** Öffentliche synthetische DEVELOPMENT-Diagnose: ausschließlich die drei bereits veröffentlichten Luna-Entwicklungsfälle in den nativen Opus-Vertrag übersetzt bzw. als nicht übersetzbar dokumentiert. Keine neuen Betriebsfakten, keine Modellgenerierung, keine unabhängig adjudizierten Sollwerte, kein Gold-/Heldout-Test.
+**Origin:** Öffentliche synthetische DEVELOPMENT-Diagnose: ausschließlich die drei bereits veröffentlichten Luna-Entwicklungsfälle in den nativen Opus-Vertrag übersetzt bzw. als nicht übersetzbar dokumentiert. Keine neuen Betriebsfakten, keine Modellgenerierung, keine unabhängig adjudizierten Sollwerte, kein Gold-/Heldout-Test.
 
 **Query:** `data.oepul.o6_22.decision`
 
-**Inventar:** 125 Regelkatalog-Einträge; 11 Quellen; 1 statisch erkannte Eingabepfade; 17 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 125 rule catalog entries; 11 sources; 1 static input paths; 17 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"access_condition": 1, "calculation_basis": 1, "calculation_rule": 8, "category_assignment": 3, "category_definition": 1, "clarification": 1, "combination": 1, "commitment_period": 1, "consequence": 5, "contract_clause": 1, "contract_extension": 1, "contract_lapse": 2, "control": 2, "conversion_factor": 1, "cross_compliance": 2, "data_requirement": 1, "deadline": 4, "definition": 6, "documentation": 7, "eligibility": 4, "eligibility_period": 1, "eligible_animals": 1, "exception": 5, "exclusion": 3, "force_majeure": 1, "measurement_rule": 1, "obligation": 14, "option": 5, "payment": 1, "premium_rate": 1, "procedure": 4, "prohibition": 1, "repayment": 1, "reporting": 6, "sanction": 4, "surcharge_condition": 8, "temporal_scope": 2, "threshold": 9, "transitional": 3, "validation": 1}`
+**Rule types:** `{"access_condition": 1, "calculation_basis": 1, "calculation_rule": 8, "category_assignment": 3, "category_definition": 1, "clarification": 1, "combination": 1, "commitment_period": 1, "consequence": 5, "contract_clause": 1, "contract_extension": 1, "contract_lapse": 2, "control": 2, "conversion_factor": 1, "cross_compliance": 2, "data_requirement": 1, "deadline": 4, "definition": 6, "documentation": 7, "eligibility": 4, "eligibility_period": 1, "eligible_animals": 1, "exception": 5, "exclusion": 3, "force_majeure": 1, "measurement_rule": 1, "obligation": 14, "option": 5, "payment": 1, "premium_rate": 1, "procedure": 4, "prohibition": 1, "repayment": 1, "reporting": 6, "sanction": 4, "surcharge_condition": 8, "temporal_scope": 2, "threshold": 9, "transitional": 3, "validation": 1}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_22 | full_document | 44 | {"not_rule": 3, "rules": 41} |
 | o6_general | full_document | 28 | {"not_rule": 12, "rules": 16} |
@@ -3408,9 +3408,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -3449,19 +3449,19 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_22.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| — | fixture_gap | fixture_gap | Keine ausführbaren Fälle |
+| — | fixture_gap | fixture_gap | No executable cases |
 
-**Fixture-Lücke:** Luna liefert nur die Maßnahmenkennung und participation_gve = 2 beziehungsweise 1,99, jedoch kein Förderjahr, keine Tierlistenkategorien, Tierzahlen oder datierten Anträge. Opus berechnet participating_gve aus beantragten Kategorien und Schweinegruppen; es gibt keinen Eingabepfad für dieses Aggregat. Drei native Entscheidungen wären nur mit zusätzlichen unbelegten Fakten möglich.
+**Fixture gap:** Luna liefert nur die Maßnahmenkennung und participation_gve = 2 beziehungsweise 1,99, jedoch kein Förderjahr, keine Tierlistenkategorien, Tierzahlen oder datierten Anträge. Opus berechnet participating_gve aus beantragten Kategorien und Schweinegruppen; es gibt keinen Eingabepfad für dieses Aggregat. Drei native Entscheidungen wären nur mit zusätzlichen unbelegten Fakten möglich.
 
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Luna liefert nur die Maßnahmenkennung und participation_gve = 2 beziehungsweise 1,99, jedoch kein Förderjahr, keine Tierlistenkategorien, Tierzahlen oder datierten Anträge. Opus berechnet participating_gve aus beantragten Kategorien und Schweinegruppen; es gibt keinen Eingabepfad für dieses Aggregat. Drei native Entscheidungen wären nur mit zusätzlichen unbelegten Fakten möglich.
 - Für eine spätere eigenständige Opus-Entwicklungsprobe können neue ausdrücklich synthetische Fälle erstellt werden; sie wären dann keine Übersetzung dieser Luna-Fälle.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_22-opus-5.5-high-20261004/workspace/policy/o6_22/decision.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_22-opus-5.5-high-20261004/workspace/policy/o6_22/decision.rego): Nativer Opus-Eingabe-/Ausgabevertrag, konsumierte Pfade oder geschlossene Tabelle; keine neue normative Regel.
 - [runs/v2-o6_22-opus-5.5-high-20261004/workspace/policy/o6_22/common.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_22-opus-5.5-high-20261004/workspace/policy/o6_22/common.rego): Nativer Opus-Eingabe-/Ausgabevertrag, konsumierte Pfade oder geschlossene Tabelle; keine neue normative Regel.
@@ -3474,32 +3474,32 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_23
 
-Run: `v2-o6_23-opus-5.5-high-20260928`. [Fixture](fixtures/o6_23.json) · [Native Ergebnisse](results/o6_23.json)
+Run: `v2-o6_23-opus-5.5-high-20260928`. [Fixture](fixtures/o6_23.json) · [Native results](results/o6_23.json)
 
-**Eingaben:** Teilübersetzung der unveränderten Luna-Fakten: farm.year = 2026 und land.total_area_ha = 100 bleiben gleich. Der vorhandene Schlag P1, 2 ha, grassland, AT, N2, N2GI05 und die Projektbestätigung werden in constraints.natura2000 beziehungsweise eligibility eingeordnet. Mineralische und organische N-Gaben in kg N/ha sowie cutting_dates bleiben auf den nativen operations-Pfaden. Kein Grünland-Untertyp, Vertragsbeginn, Mähgutabtransport oder Beweidungsereignis wird ergänzt.
+**Inputs:** Teilübersetzung der unveränderten Luna-Fakten: farm.year = 2026 und land.total_area_ha = 100 bleiben gleich. Der vorhandene Schlag P1, 2 ha, grassland, AT, N2, N2GI05 und die Projektbestätigung werden in constraints.natura2000 beziehungsweise eligibility eingeordnet. Mineralische und organische N-Gaben in kg N/ha sowie cutting_dates bleiben auf den nativen operations-Pfaden. Kein Grünland-Untertyp, Vertragsbeginn, Mähgutabtransport oder Beweidungsereignis wird ergänzt.
 
-**Ausgabebedeutung:** decision enthält contract_valid, farm_failures, schlagbezogene Zugangs-/Auflagenbefunde und Prämienarithmetik. Nicht übersetzbare Eingaben bleiben unbekannt; daraus resultierende Zugangsdefizite sind Vertragsunterschiede und kein Beweis für Modellqualität. Die direkte N-Mengenvariation kann unabhängig davon als Auflagenbefund sichtbar werden. Günstige native Defaults und fehlende Verletzungen ersetzen keine vollständige Datenprüfung.
+**Output meaning:** decision enthält contract_valid, farm_failures, schlagbezogene Zugangs-/Auflagenbefunde und Prämienarithmetik. Nicht übersetzbare Eingaben bleiben unbekannt; daraus resultierende Zugangsdefizite sind Vertragsunterschiede und kein Beweis für Modellqualität. Die direkte N-Mengenvariation kann unabhängig davon als Auflagenbefund sichtbar werden. Günstige native Defaults und fehlende Verletzungen ersetzen keine vollständige Datenprüfung.
 
-**Herkunft:** Öffentliche synthetische DEVELOPMENT-Diagnose: ausschließlich die drei bereits veröffentlichten Luna-Entwicklungsfälle in den nativen Opus-Vertrag übersetzt bzw. als nicht übersetzbar dokumentiert. Keine neuen Betriebsfakten, keine Modellgenerierung, keine unabhängig adjudizierten Sollwerte, kein Gold-/Heldout-Test.
+**Origin:** Öffentliche synthetische DEVELOPMENT-Diagnose: ausschließlich die drei bereits veröffentlichten Luna-Entwicklungsfälle in den nativen Opus-Vertrag übersetzt bzw. als nicht übersetzbar dokumentiert. Keine neuen Betriebsfakten, keine Modellgenerierung, keine unabhängig adjudizierten Sollwerte, kein Gold-/Heldout-Test.
 
 **Query:** `data.oepul.o6_23.decision`
 
-**Inventar:** 88 Regelkatalog-Einträge; 8 Quellen; 1 statisch erkannte Eingabepfade; 9 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 88 rule catalog entries; 8 sources; 1 static input paths; 9 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"access_condition": 4, "calculation_order": 1, "cap": 1, "classification": 1, "closed_list": 3, "combination": 4, "contract": 6, "crediting": 1, "deadline": 5, "definition": 3, "eligibility": 7, "exception": 13, "financing": 1, "information": 1, "interpretation": 1, "legal_basis": 2, "limit": 1, "modulation": 1, "obligation": 9, "payment": 4, "premium_calculation": 1, "premium_rate_table": 1, "procedure": 11, "sanction": 6}`
+**Rule types:** `{"access_condition": 4, "calculation_order": 1, "cap": 1, "classification": 1, "closed_list": 3, "combination": 4, "contract": 6, "crediting": 1, "deadline": 5, "definition": 3, "eligibility": 7, "exception": 13, "financing": 1, "information": 1, "interpretation": 1, "legal_basis": 2, "limit": 1, "modulation": 1, "obligation": 9, "payment": 4, "premium_calculation": 1, "premium_rate_table": 1, "procedure": 11, "sanction": 6}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.farm.year"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_23 | full_document | 21 | {"not_rule": 3, "rules": 18} |
 | o6_general | full_document | 43 | {"not_rule": 19, "rules": 24} |
@@ -3512,9 +3512,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -3574,19 +3574,19 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_23.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| baseline | defined | Basis | Die unveränderten öffentlichen Luna-Basisfakten im belegbaren nativen Opus-Teilvertrag ausführen; keine unabhängige Sollentscheidung und keine direkte Wiederverwendung eines Opus-Testbetriebs. |
-| variation | defined | ja | Einzige Änderung: mineralische N-Gabe von 0 auf 1 kg N/ha bei N2GI05; Düngungs- und Gesamtteilbefund beobachten. Dieselbe Einzeländerung auf dem nativen Mengenpfad; sonstige Übersetzungslücken bleiben unverändert. |
-| missing_fact | defined | nein | Einzige Auslassung: mineral_n_kg_per_ha bei weiterhin 0 organischem N; prüfen, ob eine unbekannte mineralische Gabe als fehlende Evidenz sichtbar wird. Dieselbe Einzeländerung auf dem nativen Mengenpfad; sonstige Übersetzungslücken bleiben unverändert. |
+| baseline | defined | Baseline | Die unveränderten öffentlichen Luna-Basisfakten im belegbaren nativen Opus-Teilvertrag ausführen; keine unabhängige Sollentscheidung und keine direkte Wiederverwendung eines Opus-Testbetriebs. |
+| variation | defined | yes | Einzige Änderung: mineralische N-Gabe von 0 auf 1 kg N/ha bei N2GI05; Düngungs- und Gesamtteilbefund beobachten. Dieselbe Einzeländerung auf dem nativen Mengenpfad; sonstige Übersetzungslücken bleiben unverändert. |
+| missing_fact | defined | no | Einzige Auslassung: mineral_n_kg_per_ha bei weiterhin 0 organischem N; prüfen, ob eine unbekannte mineralische Gabe als fehlende Evidenz sichtbar wird. Dieselbe Einzeländerung auf dem nativen Mengenpfad; sonstige Übersetzungslücken bleiben unverändert. |
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Grünland-Untertyp, Vertragsbeginn und konkrete Mahd-/Beweidungsevidenz sind im Luna-Ausgangsfall nicht bestimmt und werden nicht ergänzt.
 - Die native Prämien-/Vertragsentscheidung enthält allgemeinere Prüfungen als Lunas measure-spezifisches compliant; ihre Gesamtausgaben sind nicht direkt vergleichbar.
 - Die Düngeverbot-Teilbefunde sind beobachtbare Entwicklungsdiagnosen; fehlende N-Menge darf nicht als bestätigte Nullgabe gelten.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_23-opus-5.5-high-20260928/workspace/policy/o6_23/decision.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_23-opus-5.5-high-20260928/workspace/policy/o6_23/decision.rego): Nativer Opus-Eingabe-/Ausgabevertrag, konsumierte Pfade oder geschlossene Tabelle; keine neue normative Regel.
 - [runs/v2-o6_23-opus-5.5-high-20260928/workspace/policy/o6_23/common.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_23-opus-5.5-high-20260928/workspace/policy/o6_23/common.rego): Nativer Opus-Eingabe-/Ausgabevertrag, konsumierte Pfade oder geschlossene Tabelle; keine neue normative Regel.
@@ -3600,33 +3600,33 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
 
 ### o6_24
 
-Run: `v2-o6_24-opus-5.5-high-20261003`. [Fixture](fixtures/o6_24.json) · [Native Ergebnisse](results/o6_24.json)
+Run: `v2-o6_24-opus-5.5-high-20261003`. [Fixture](fixtures/o6_24.json) · [Native results](results/o6_24.json)
 
-**Eingaben:** Nativer Vertrag: farm.year, land.parcels[].parcel_id und wrrl mit Kultur, Düngeklassen und datierten n_applications sowie documentation.wrrl_records. Luna hat das Jahr 2026, Steiermark/Graz, 2,5 ha Ackerfläche, einen Gebietsflag, keine erhöhte Bewilligung, 120 kg N/ha, den Grenzwert 130, einen Fristflag und einen Betriebsbuchflag. Die Jahresmenge wird nicht in ein erfundenes Düngeereignis zerlegt.
+**Inputs:** Nativer Vertrag: farm.year, land.parcels[].parcel_id und wrrl mit Kultur, Düngeklassen und datierten n_applications sowie documentation.wrrl_records. Luna hat das Jahr 2026, Steiermark/Graz, 2,5 ha Ackerfläche, einen Gebietsflag, keine erhöhte Bewilligung, 120 kg N/ha, den Grenzwert 130, einen Fristflag und einen Betriebsbuchflag. Die Jahresmenge wird nicht in ein erfundenes Düngeereignis zerlegt.
 
-**Ausgabebedeutung:** decision trennt participation_eligible, Verpflichtungsverletzungen, wasserrechtliche Basisbefunde, Hinweise, N-Grenzwerte und Prämienrechnung. Hier wegen nicht übersetzbarer Jahresaggregate/Tabellenbasis keine Ausführung. Die dokumentierte fixture_gap ist ein Eingabevertragsbefund, keine WRRL-Ablehnung oder fachliche Qualitätsbewertung.
+**Output meaning:** decision trennt participation_eligible, Verpflichtungsverletzungen, wasserrechtliche Basisbefunde, Hinweise, N-Grenzwerte und Prämienrechnung. Hier wegen nicht übersetzbarer Jahresaggregate/Tabellenbasis keine Ausführung. Die dokumentierte fixture_gap ist ein Eingabevertragsbefund, keine WRRL-Ablehnung oder fachliche Qualitätsbewertung.
 
-**Herkunft:** Öffentliche synthetische DEVELOPMENT-Diagnose: ausschließlich die drei bereits veröffentlichten Luna-Entwicklungsfälle in den nativen Opus-Vertrag übersetzt bzw. als nicht übersetzbar dokumentiert. Keine neuen Betriebsfakten, keine Modellgenerierung, keine unabhängig adjudizierten Sollwerte, kein Gold-/Heldout-Test.
+**Origin:** Öffentliche synthetische DEVELOPMENT-Diagnose: ausschließlich die drei bereits veröffentlichten Luna-Entwicklungsfälle in den nativen Opus-Vertrag übersetzt bzw. als nicht übersetzbar dokumentiert. Keine neuen Betriebsfakten, keine Modellgenerierung, keine unabhängig adjudizierten Sollwerte, kein Gold-/Heldout-Test.
 
 **Query:** `data.oepul.o6_24.decision`
 
-**Inventar:** 95 Regelkatalog-Einträge; 11 Quellen; 2 statisch erkannte Eingabepfade; 11 Profilvorschläge. Unabhängige Referenzfälle: `not_adjudicated`.
+**Inventory:** 95 rule catalog entries; 11 sources; 2 static input paths; 11 profile proposals. Independent reference cases: `not_adjudicated`.
 
-**Regeltypen:** `{"access_condition": 2, "application": 1, "calculation": 6, "classification": 2, "combination": 1, "commitment": 11, "consequence": 2, "contract_period": 3, "control": 2, "data_source": 1, "deadline": 2, "default": 1, "eligibility": 15, "exception": 9, "exit": 2, "external_reference": 1, "legal_baseline": 11, "option": 1, "payment": 3, "premium": 2, "procedure": 9, "sanction": 5, "scope": 1, "temporal": 1, "transitional": 1}`
+**Rule types:** `{"access_condition": 2, "application": 1, "calculation": 6, "classification": 2, "combination": 1, "commitment": 11, "consequence": 2, "contract_period": 3, "control": 2, "data_source": 1, "deadline": 2, "default": 1, "eligibility": 15, "exception": 9, "exit": 2, "external_reference": 1, "legal_baseline": 11, "option": 1, "payment": 3, "premium": 2, "procedure": 9, "sanction": 5, "scope": 1, "temporal": 1, "transitional": 1}`
 
 <details>
-<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>
+<summary>Static input paths and model-reported source coverage</summary>
 
-Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind unvollständig, erfassen dynamische Referenzen nicht vollständig und sind kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten.
+Rule counts and reported source coverage come from historical model outputs. They do not prove completeness. Static input paths may miss dynamic references; they do not show every fact read during execution.
 
-Statische Eingabepfade (keine Laufzeitspur):
+Static input paths (not an execution trace):
 
     [
       "input.land.parcels",
       "input.land.total_area_ha"
     ]
 
-| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |
+| Source ID | Reported review scope | Entries | Classification |
 |---|---|---|---|
 | o6_24 | full_document | 25 | {"not_rule": 4, "rules": 21} |
 | o6_general | full_document | 41 | {"not_rule": 17, "rules": 24} |
@@ -3642,9 +3642,9 @@ Statische Eingabepfade (keine Laufzeitspur):
 
 </details>
 
-Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen Testfälle und dürfen nicht nachträglich dazu umetikettiert werden.
+Rule types, sources, required facts and open questions help choose the study scope. No estimate of expert hours is made. not_adjudicated means that independent cases and expert-confirmed expected decisions are still needed. These visible development cases must not later be described as hidden test cases.
 
-**Zuordnung der Luna-Fakten und Vergleichslücken:**
+**Luna fact mapping and comparison gaps:**
 
     {
       "cases": [
@@ -3686,19 +3686,19 @@ Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten hel
       "fixture_path": "docs/analysis/luna-screening-20261011/fixtures/o6_24.json"
     }
 
-| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |
+| Case | Observed status | Output changed from baseline | Purpose |
 |---|---|---|---|
-| — | fixture_gap | fixture_gap | Keine ausführbaren Fälle |
+| — | fixture_gap | fixture_gap | No executable cases |
 
-**Fixture-Lücke:** Luna liefert eine Jahressumme von 120 → 131 kg N/ha, den vorgegebenen Grenzwert 130 und einen booleschen Fristbefund. Opus berechnet die Menge aus Einzelgaben und den Grenzwert aus Kultur und Düngeklasse. Ohne Parzellenkennung, Kultur, Klasse, Gabenzeitpunkte und -typen sowie Buchführungsdetails lassen sich die drei N-Proben nicht fachlich gleich übersetzen.
+**Fixture gap:** Luna liefert eine Jahressumme von 120 → 131 kg N/ha, den vorgegebenen Grenzwert 130 und einen booleschen Fristbefund. Opus berechnet die Menge aus Einzelgaben und den Grenzwert aus Kultur und Düngeklasse. Ohne Parzellenkennung, Kultur, Klasse, Gabenzeitpunkte und -typen sowie Buchführungsdetails lassen sich die drei N-Proben nicht fachlich gleich übersetzen.
 
 
-**Offene Abhängigkeiten:**
+**Open dependencies:**
 
 - Luna liefert eine Jahressumme von 120 → 131 kg N/ha, den vorgegebenen Grenzwert 130 und einen booleschen Fristbefund. Opus berechnet die Menge aus Einzelgaben und den Grenzwert aus Kultur und Düngeklasse. Ohne Parzellenkennung, Kultur, Klasse, Gabenzeitpunkte und -typen sowie Buchführungsdetails lassen sich die drei N-Proben nicht fachlich gleich übersetzen.
 - Für eine spätere eigenständige Opus-Entwicklungsprobe können neue ausdrücklich synthetische Fälle erstellt werden; sie wären dann keine Übersetzung dieser Luna-Fälle.
 
-**Belege:**
+**Evidence:**
 
 - [runs/v2-o6_24-opus-5.5-high-20261003/workspace/policy/o6_24/decision.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_24-opus-5.5-high-20261003/workspace/policy/o6_24/decision.rego): Nativer Opus-Eingabe-/Ausgabevertrag, konsumierte Pfade oder geschlossene Tabelle; keine neue normative Regel.
 - [runs/v2-o6_24-opus-5.5-high-20261003/workspace/policy/o6_24/lib.rego](https://github.com/ghinta/oepul-rule-lab/blob/e009eed4a83ff076b26eba33ac433ac2b0642621/runs/v2-o6_24-opus-5.5-high-20261003/workspace/policy/o6_24/lib.rego): Nativer Opus-Eingabe-/Ausgabevertrag, konsumierte Pfade oder geschlossene Tabelle; keine neue normative Regel.

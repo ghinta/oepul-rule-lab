@@ -1,139 +1,106 @@
-# Heuwirtschaft: Quellenreview und Variablenvertrag
+# Hay farming: source review and input contract
 
-Stand: 07.10.2026, Schritt 1 von [App-Issue #136](https://github.com/ghinta/oepul-recommender/issues/136),
-fachliche Klammer [Lab-Issue #97](https://github.com/ghinta/oepul-rule-lab/issues/97).
-Lab-Basis: `0760684b5029d65feeca984bf627a3c6269a9955` (PR #99).
-App-Basis: `14e5422b9977f78eb2f7edfb99313e4aac39f9a7` (PR #135).
+Historical review date: 7 October 2026. Step 1 of
+[App #136](https://github.com/ghinta/oepul-recommender/issues/136), linked to
+[Lab #97](https://github.com/ghinta/oepul-rule-lab/issues/97).
+Lab base: `0760684b5029d65feeca984bf627a3c6269a9955` (PR #99).
+App base: `14e5422b9977f78eb2f7edfb99313e4aac39f9a7` (PR #135).
 
-## Ergebnis und Entscheidung
+## Result
 
-Die gebundene Adaptation hat 46 typisierte Eingabepfade, 17 dokumentierte
-Regel-/Berechnungsgruppen und alle 20 RGVE-Kategorien. Quellen, Typen,
-Regelkonsum und bestehende App-Registries sind pfadweise verbunden.
-Der Vertragsentwurf ist eine Implementierungsgrundlage, keine App-Promotion.
-Die regelbezogenen offenen Punkte bleiben in `source-review.json` sichtbar.
+The bound adaptation has 46 typed input paths, 17 rule/calculation groups and
+20 RGVE categories. Sources, types, rule consumers and existing app registries
+are linked per path. This is an implementation draft, not approval for app use.
+Rule-specific open questions remain in `source-review.json`.
 
-Vier registrierte Eingaben können wiederverwendet werden: Schlagfläche,
-Nutzungsart, Tierzahl und Mahddaten. Davon konsumiert die heutige o6_3-Policy
-nur Mahddaten. Zusätzlich konsumiert sie Bewirtschaftungsereignisse; diese
-sind kein fertiger Ersatz für die neuen vollflächigen Bewirtschaftungsnachweise.
-Der App-PR #135 löst Zeit-/Snapshot-/Szenariotrennung, nicht diese Datenlücken.
+Four registered fields can be reused: parcel area, land use, animal count and
+cutting dates. Only cutting dates are currently consumed by the app's o6_3
+policy. Existing management events do not prove full-area management. App #135
+separates time, snapshot and scenarios; it does not fill these data gaps.
 
-Der native Lab-Kandidat liest `input.farm/land/livestock/exceptions/context`.
-Die aktuelle App-Policy liest dagegen `input.payload` und erhält den
-vertrauenswürdigen Kontext separat als `input.evaluation_context`. Der neue
-Maßnahmenadapter muss diese Formen ausdrücklich übersetzen: ausschließlich
-`current_year`, `snapshot_year`, `as_of` in den strikten Lab-`context` kopieren,
-die benötigten geprüften effektiven Betriebsfelder an die nativen Zielpfade
-binden und Snapshot-ID/Digest sowie Quellen im App-Provenienzvertrag behalten.
-Den alten Category-C-Präsenzcheck nicht als neue Förderentscheidung weiterführen.
-Das Mapping ist hier definiert, noch nicht implementiert.
+The lab reads `input.farm/land/livestock/exceptions/context`. The app reads
+`input.payload` with trusted `input.evaluation_context`. A new measure adapter
+must copy only `current_year`, `snapshot_year`, `as_of` into the strict lab
+context, map checked effective facts to native paths, and retain snapshot
+ID/digest and sources in app provenance. The old Category-C presence check is
+not a complete funding decision. This mapping is defined, not implemented here.
 
-`purpose`/`app.evidence_purpose` in der Variablenmatrix unterscheiden Host-/
-Identitätswerte und `current_fact`; sie führen keinen neuen DB-Purpose ein.
-Historische Erstjahresbelege werden als aktuelle, snapshotgebundene Deklaration
-erfasst und tragen `evidence_time_role: historical_first_year` sowie ihr echtes
-Nachweisjahr. Vertragsbeginn darf nicht aus dem frühesten Beginn irgendeiner
-anderen Maßnahme abgeleitet werden.
+`purpose` / `app.evidence_purpose` describe host identity and `current_fact`;
+they do not add a database purpose. Historical first-year evidence is captured
+as a current snapshot-bound declaration with `evidence_time_role:
+historical_first_year` and its real evidence year. Contract start cannot be
+inferred from the earliest date of an unrelated measure.
 
-**Die maßgebliche neue Strukturfrage ist die Tiergruppenidentität:** Die App
-fasst heute Tiere nach Art zusammen und verwendet die Art als Gruppen-ID.
-Die 20 RGVE-Kategorien brauchen getrennte Alters-/Rassen-/Größenkohorten.
-Eine Artgruppe mit einer Kategorie zu überschreiben würde belegte Information
-verlieren. Der nächste Backend-PR muss stabile Kohorten und die Weiterführung
-der vorhandenen IDs/Provenienz planen. Vorhandenes `gve` ist kein RGVE-Nachweis.
+Animal identity needs special care: the app groups animals by species, whereas
+RGVE needs stable age/breed/size cohorts. Overwriting a species group with one
+category would lose evidence. Plan stable cohorts while retaining old IDs and
+provenance. Existing `gve` is not proof of RGVE.
 
-## Quellenprüfung
+## Source review
 
-Das Heuwirtschaft-Merkblatt (6 Seiten) und die allgemeinen Bedingungen
-(21 Seiten) wurden einschließlich Tabellen, Ausnahmen und Aktualisierungen
-gelesen. Im SRL-Dokument wurden der relevante allgemeine Teil, die
-Heuwirtschaft-Regel auf PDF-Seite 50 und der RGVE-Schlüssel samt Fußnoten
-in Anhang A/PDF-Seite 3 abgeglichen. Die Dürre-Mitteilungen vom 05.08. und
-12.08.2026 wurden im jeweiligen Anwendungsscope geprüft. Das ist keine
-Vollständigkeitsprüfung aller Maßnahmen oder aller 103 Anhangseiten.
+The six-page hay-farming leaflet and 21-page general conditions were reviewed,
+including tables and exceptions. The relevant directive sections, hay-farming
+rule on PDF page 50, Annex A RGVE key on PDF page 3 and scoped drought notices
+of 5/12 August 2026 were cross-checked. This is not a full review of all measures
+or all 103 annex pages. `citations.json` contains 46 exact page/section quotes.
+All 20 coefficients are checked against source table blocks. Payment rates
+135/155 EUR for 2023 and 145.8/167.4 EUR from 2024, including the zero tier,
+remain normative data. The directive/annexes are legally authoritative;
+leaflets are explanatory. Hash identity alone does not establish current law.
 
-46 Belegstellen mit PDF-Seite/Abschnitt/wörtlichem Zitat stehen in
-`citations.json`. Die 20 Koeffizienten werden zusätzlich gegen die vollständigen
-Quellentabellen-Blöcke geprüft. Die Sätze 135/155 EUR für 2023 und 145,8/167,4
-EUR ab 2024 sowie die 0-EUR-Stufe bleiben normative Daten, keine Betriebsfelder.
-SRL und Anhänge sind rechtlich maßgeblich; Merkblätter sind erläuternd und
-rechtlich unverbindlich. Ein Hash beweist die Dokumentidentität, nicht die
-Abwesenheit späterer Rechtsänderungen. Quellenaktualität bleibt ein Gate.
-
-| Regelgruppe | Quellen und Review-Ergebnis |
+| Rule group | Source and review result |
 | --- | --- |
-| CURRENT_BASIS | Technischer Hostvertrag aus App #135; kein Fördergesetz. |
-| CONTRACT / COMBINATION | Merkblatt 3.1/3.2/6: Beginn 2023–2025, Ende 2028; zeitgleiche UBB/BIO/BIO-Teilbetrieb-Kombination. Gültigkeit ist durch Vertrags-/Antragsunterlagen zu belegen. |
-| FIRST_YEAR_AREA / FIRST_YEAR_RGVE | Merkblatt 3.3/3.4/4: 2 ha und 0,30 RGVE/ha im Erstjahr. Folgejahre brauchen datierte Erstjahresbelege, nicht heutige RGVE als Ersatz. |
-| CURRENT_RGVE | Merkblatt 8 und Anhang A: alle Kategorien, kleine Equiden mit 0,50 statt 1,00; Zwerg-Rassen und Wildhaltungs-Fußnote beachten. Taggenauer Rinderdatenbank-Durchschnitt, sonst Stichtags-/eingereichte Durchschnittstierliste. |
-| FORAGE_AREA | Gesamte beantragte Grünland-/Ackerfutterfläche, einschließlich Ackerweide; Zweitkultur ausschließen. Prämienausschluss allein verkleinert den Nenner nicht. |
-| PREMIUM_AREA / PREMIUM_RATE | Gemähte Mähwiesen/Mähweiden und geeignete Ackerfutterflächen. Ackerweide ist Nennerfläche, keine Prämienfläche. Allgemeine Flächenausschlüsse/Kombinationen/Zugang und Abrechnung fehlen im Slice. |
-| SILAGE / FERMENTATION / STORAGE | Merkblatt 5.1/5.3: gesamter Betrieb, alle Tierarten, Gebäude und Altvorräte; Nebenprodukte/Heulage nicht pauschal als zulässig behandeln. |
-| GREEN_FEEDING | Merkblatt 5.2: überwiegender Teil 01.04.–30.09. für alle Raufutterverzehrer; Gemeinschaftsweide/Alm anrechenbar. Keine quellenbestätigte 92-Tage- oder Additionsmethode. |
-| HAY_TRANSFER | Merkblatt 5.4: nur trockenes Heu an Dritte. Auch kein Grünfutter zwischen zwei Heuwirtschaftsbetrieben. Vollständige bestätigte Nichtabgabe kann die Bedingung erfüllen; fehlende Daten nicht. |
-| MOWER_CONDITIONER | Merkblatt 5.5: bei gültiger Jahresoption weder Einsatz auf irgendeiner Betriebsfläche noch entsprechendes Gerät am Betrieb. |
-| MINIMUM_MANAGEMENT | SRL 1.6.3.3: vollflächige Mahd UND Abfuhr oder Beweidung. Einzelnes Schnittdatum reicht nicht. Bergmähder und spezielle Ausnahmen brauchen gesonderten Vertrag. |
-| RECOGNITION | SRL 1.7.4.1 verweist auf § 6 GSP-AV: betroffene Pflicht, Fläche, Zeit und Rechtsfolge sind fachlich zu prüfen; kein globaler Dürre-/Anerkennungs-Wahrheitswert. |
+| CURRENT_BASIS | Technical host contract from App #135, not a funding law. |
+| CONTRACT / COMBINATION | Leaflet 3.1/3.2/6: start 2023–2025, end 2028, concurrent UBB/BIO/partial-farm BIO combination. Require actual contract/application evidence. |
+| FIRST_YEAR_AREA / FIRST_YEAR_RGVE | Leaflet 3.3/3.4/4: 2 ha and 0.30 RGVE/ha in the first year. Later years need historical evidence, not current stock as a substitute. |
+| CURRENT_RGVE | Leaflet 8 / Annex A: all categories; small equids 0.50, not 1.00; consider dwarf breeds/deer footnote. Cattle use day-based database averages; others use the required reference-date/submitted average list. |
+| FORAGE_AREA | All applied grassland/arable forage, including arable pasture; exclude second crops. Payment exclusion alone does not reduce this denominator. |
+| PREMIUM_AREA / PREMIUM_RATE | Mown meadows/meadow pastures and eligible arable forage. Arable pasture counts in the denominator, not the payment area. Shared exclusions, combinations, new land and settlement remain incomplete. |
+| SILAGE / FERMENTATION / STORAGE | Leaflet 5.1/5.3: whole farm, all species/buildings/old stocks; do not assume byproducts or haylage are allowed. |
+| GREEN_FEEDING | Leaflet 5.2: predominant share from 1 April–30 September for all roughage eaters; shared/alpine pasture may count. No source-confirmed 92-day or addition method. |
+| HAY_TRANSFER | Leaflet 5.4: dry hay only, including transfers between hay farms. Explicit complete confirmation of no transfer can support compliance; missing data cannot. |
+| MOWER_CONDITIONER | Leaflet 5.5: valid annual option excludes use on all farm land and presence of relevant equipment. |
+| MINIMUM_MANAGEMENT | Directive 1.6.3.3: full-area mowing AND removal, or grazing. One date is insufficient. Mountain meadows and special exceptions need separate handling. |
+| RECOGNITION | Directive 1.7.4.1 / section 6 GSP-AV: review affected obligation, land, time and legal effect. No blanket drought/recognition flag. |
 
-## Vor voller Empfehlung offene Punkte
+## Open before a full recommendation
 
-1. **GROUP_IDENTITY:** stabile RGVE-Kohorten statt einer einzigen Artgruppe.
-2. **COUNT_BASIS:** Zahl plus Bezugsjahr, Stichtag/Zeitraum, Quelle und tatsächlicher
-   Durchschnittstierlistenstatus. Ein optionaler Durchschnittswert allein genügt nicht.
-3. **GREEN_FEEDING_HISTORY:** heutiger Nullbestand beweist keinen Nullbestand
-   in der vergangenen Vegetationsperiode. Saisonhistorie und Ermittlungsmethode fehlen.
-4. **RECOGNITION_TIME:** Kandidat verlangt derzeit, dass `as_of` innerhalb des
-   Anerkennungszeitraums liegt. Ein früherer betroffener Vorfall kann dadurch nicht
-   zur Rechtsfolgenprüfung gelangen. Vorfalls-/Pflichtzeitraum gesondert modellieren.
-5. **GENERAL_FUNDING:** Antragsteller-/Flächenfähigkeit, OP-Codes, Kombinationen,
-   Flächenzugang, Bergmähder, Modulation/Obergrenzen/Sanktionen fehlen ganz oder
-   teilweise. Integrationsvertrag oder ausdrücklicher Blocker vor Gesamtfreigabe.
-6. **ANNUAL_EVIDENCE:** Beobachtungsstand ist keine abgeschlossene Jahrespflicht
-   oder finale Jahresdurchschnittszahl. Offene Pflichten/Zeiträume anzeigen; Zukunft
-   nur als getrennte begründete Notiz behandeln.
-7. **SOURCE_CURRENTNESS:** Anwendbarkeit des gebundenen Dokumentstands vor
-   Promotion überprüfen; keine automatische Aktualitätsbehauptung aus Jahreszahl.
-8. **OPUS_REVISION:** angekündigte Vervollständigung am 08.10.2026 steht aus.
-   Der gebundene September-Run ist nur eine Referenz. Neue Revisionen später
-   mit Hash binden und relevante Deltas prüfen.
+1. **GROUP_IDENTITY:** stable RGVE cohorts, not one species group.
+2. **COUNT_BASIS:** count plus year, reference date/period, source and actual
+   average-list status. An optional number alone is insufficient.
+3. **GREEN_FEEDING_HISTORY:** zero animals today does not prove zero through the
+   past season. Seasonal history and the assessment method are missing.
+4. **RECOGNITION_TIME:** the candidate currently requires `as_of` inside the
+   recognition period, potentially missing earlier incidents. Model incident
+   and obligation periods separately.
+5. **GENERAL_FUNDING:** applicant/parcel eligibility, OP codes, combinations,
+   new land, mountain meadows, modulation, caps and sanctions are incomplete.
+6. **ANNUAL_EVIDENCE:** observations are not final annual compliance or annual
+   averages. Show open obligations/periods; separate reasoned future notes.
+7. **SOURCE_CURRENTNESS:** check applicable law before app use; a year label is
+   not proof of currentness.
+8. **OPUS_REVISION:** compare the revisions announced for 8 October 2026.
+   The bound September run is a reference only.
 
-Die ersten sechs Punkte erfordern konkrete Daten-/Adapter-/Fachentscheidungen,
-nicht weitere frei erfundene Defaults. Geplante zusätzliche Nachweismetadaten
-stehen in `variables.json` unter `proposed_evidence_extensions`. Sie werden vom
-aktuellen strikten Lab-Schema noch nicht akzeptiert. Dieser PR verändert weder
-Kandidatenregeln noch App-Speicher oder Canonical Farm Profile.
+`proposed_evidence_extensions` in `variables.json` records planned metadata.
+The strict current schema does not accept those proposed fields yet.
 
-## Entwicklungsfälle und methodische Grenze
+## Development observations and next work
 
-Die sieben bekannten Quellenfälle sind mit dem Adaptationsvertrag erneut
-ausgeführt: Merkblatt-Beispiel, Folgejahr ohne Tiere, Neuweltkamel-Grenzwert,
-kleiner adulter Equide, Vertragsende, unbekannte Silagelagerung und Ackerfutter
-ohne Mindestbewirtschaftung. Die ausdrücklich simulierte Prüfung 2030 und der
-Jahresendfall sind Entwicklungsinputs, keine aktuell freigegebenen Empfehlungen.
+`development-probes.json` contains ten synthetic inputs and observed outputs:
+seven source cases (leaflet example, later year without animals, camelid/equid
+boundaries, contract end, unknown storage and unmown arable forage) plus three
+remaining-risk probes. These show that zero current animals with unknown green
+feeding can produce `eligible`/EUR 0; an unsupported average can be preferred;
+and a May–June recognition assessed in October can miss legal-effect review.
+These problematic outputs are observations, not approved expected decisions.
 
-Drei weitere Beobachtungen reproduzieren verbleibende Risiken:
+The next app step must address the structure/data-flow gaps and connect only
+supported clauses. Later work connects UI, DecisionTrace and stored runs.
+#97/#136 stay open. This review changes no candidate rules, app storage or farm
+profile and supplies no model ranking, hidden tests or independent accuracy score.
 
-| Beobachtung am gebundenen Kandidaten | Konsequenz für die Integration |
-| --- | --- |
-| Aktuell keine Tiere + Grünfütterung unbekannt ergibt Slice-`eligible`/0 EUR. | Saisonhistorie nicht bewiesen; nicht als bestätigte Jahreserfüllung ausgeben. |
-| Durchschnittszahl ohne Listen-/Periodenbeleg wird bevorzugt und ergibt Slice-`eligible`. | Der Adapter muss Zahl und maßgeblichen Nachweis zusammen validieren. |
-| Anerkennung Mai–Juni bei Prüfung im Oktober erreicht keine Ausnahme-Rechtsfolgenprüfung. | Belegter Vorfall und Anerkennung dürfen nicht allein am heutigen Datum verloren gehen. |
-
-`development-probes.json` enthält zehn synthetische Inputs und die beobachteten
-Outputs. Die problematischen Outputs werden **nicht** als normative Sollwerte
-freigegeben. Die Tests reproduzieren die Review-Aussagen; sie behaupten keine
-Korrektheit der offenen Rechtsfolgen. Historische Runs bleiben unverändert.
-Keine Golden-/Held-out-Tests, Modellrangliste oder unabhängige Qualitätsquote.
-
-## Weiterarbeit nach Merge dieses PRs
-
-App-Schritt 2 aus #136 nutzt die Matrix als Vertragsentwurf, behebt die genannten
-Struktur-/Datenflusslücken und bindet nur belegte Klauseln an. Offene fachliche
-oder allgemeine Förderfragen liefern gesonderte Blocker. Schritt 3 verbindet
-Oberfläche, DecisionTrace und persistierte Runs. #97/#136 bleiben offen.
-
-Dateien: `baseline.json` (Artefakt-/Quellenbindung), `app-inventory.json`
-(versionierte App-Referenz), `source-review.json` (Regeln, Tabellen, Blocker),
-`variables.json`/`variables.md` (vollständiger Vertrag), `citations.json`,
-`development-probes.json`, `verification.md` und kurze `reasons.md`.
+Files: `baseline.json`, `app-inventory.json`, `source-review.json`,
+[variables](variables.md) / `variables.json`, `citations.json`,
+`development-probes.json`, [verification](verification.md), [reasons](reasons.md).
+Original machine-readable evidence keeps its wording.

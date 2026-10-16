@@ -1,100 +1,55 @@
-# Draft: Pilot `o6_1a` mit `gpt-5.5`
+# Draft: o6_1a pilot with GPT-5.5
 
-Status: **DRAFT – technisch reproduzierbarer Kandidat, nicht fachlich freigegeben**
+**Historical draft: technically reproducible, not domain-approved.**
+This pilot predates the v2 source-evidence contracts. Its contract check is not
+equivalent to today's exact-quote, coverage, table and profile-proposal checks.
+A controlled comparison needs a new run under the current common contract.
 
-Hinweis: Dieser historische Pilot entstand vor den Grounding-Verträgen v2.
-Seine damalige Vertragsprüfung ist deshalb nicht mit der heutigen Prüfung von
-wörtlichen Belegen, Coverage, Datentabellen und validierten Profilvorschlägen
-gleichzusetzen. Für Modellvergleiche muss die Maßnahme mit den aktuellen
-Verträgen neu erzeugt werden.
+Run `pilot2-o6_1a-gpt55` used `discover`, GPT-5.5, high reasoning, the April 2026
+UBB leaflet and general conditions, the special directive/annexes and four
+2026 notices. OPA reference: 1.18.2. The goal was to see whether a model could
+produce a broad executable candidate from the shared profile and official sources.
 
-Dieser Pilot prüft, ob ein Modell aus dem Canonical Farm Profile und den
-amtlichen Quellen einen möglichst vollständigen, ausführbaren Regelkandidaten
-erzeugen kann. Er ist kein Nachweis fachlicher Vollständigkeit oder
-Rechtsverbindlichkeit.
+## Recorded results
 
-## Lauf
-
-- Run-ID: `pilot2-o6_1a-gpt55`
-- Maßnahme: `o6_1a` – Umweltgerechte und biodiversitätsfördernde Bewirtschaftung
-- Modus: `discover`
-- Modell: `gpt-5.5`, Reasoning `high`
-- Quellen: Maßnahmenblatt Stand April 2026, allgemeine
-  Teilnahmebedingungen Stand April 2026, Sonderrichtlinie samt Anhängen und
-  vier amtliche Hinweise für 2026
-- Technische Referenz: OPA `1.18.2`
-
-## Ergebnis
-
-| Signal | Ergebnis |
+| Metric | Result |
 |---|---:|
-| Strukturierte Regeln | 70 |
-| Quellenbelege | 63 |
-| Rego-Dateien inklusive Tests | 2 / 1.008 Zeilen |
-| Erkannte verwendete Profilpfade | 141 |
-| Profilpfade hinzugefügt | 194 |
-| Profilpfade entfernt | 28 |
-| Profilpfade geändert | 5 |
-| Ausgelagerte Datendateien | 1 / 27.038 Bytes |
-| Generierte OPA-Tests | 7 |
-| OPA Strict-Compile | bestanden |
-| OPA Tests | 7/7 bestanden |
-| Regelkatalog-Vertrag | bestanden |
-| Quellenbeleg-Vertrag inkl. Hash-/Pfadprüfung | bestanden |
+| Structured rules | 70 |
+| Source citations | 63 |
+| Rego files including tests | 2 / 1,008 lines |
+| Detected input profile paths | 141 |
+| Profile paths added | 194 |
+| Profile paths removed | 28 |
+| Profile paths changed | 5 |
+| Separate data files | 1 / 27,038 bytes |
+| Generated OPA tests | 7 |
+| OPA Strict-Compile | passed |
+| OPA Tests | 7/7 passed |
+| Rule catalog contract | passed |
+| Citation contract with hash/path check | passed |
 
-Die Datendatei enthält unter anderem 20 RGVE-Faktoren, 85 seltene
-Kulturpflanzen, 53 Blüh-/Heil-/Gewürzpflanzen, 74 autochthone Ackerarten und 68
-autochthone Grünlandarten. Die Streuobstliste ist ebenfalls strukturiert
-enthalten. Damit bleiben lange geschlossene Listen ausführbar, statt nur als
-Textzusammenfassung im Regelkatalog zu stehen.
+The data file includes 20 RGVE factors, 85 rare crops, 53 flowering/medicinal/
+spice plants, 74 native arable species, 68 native grassland species and a
+structured orchard list. Long lists remain executable data.
 
-## Was der Pilot bereits zeigt
+The initial profile was too small for broad extraction. Discovery made missing
+inputs visible. A repair fixed Rego syntax; another exposed outputs that looked
+like the JSON contracts but did not match them. Finalization therefore checks
+fields, source hashes and resolvable paths rather than counts alone. The first
+scanner missed `object.get`; nested access, aliases and collections now reveal
+141 input paths in this pilot.
 
-1. Das Ausgangsprofil war für eine breite UBB-Extraktion deutlich zu klein.
-   Der Discover-Lauf konnte fehlende Eingaben sichtbar ergänzen, statt Regeln
-   wegen fehlender Variablen wegzulassen.
-2. Das Modell erzeugte einen großen Regelkandidaten mit Quellenbindung und
-   ausführbarem Rego. Ein zunächst vorhandener Rego-Fehler wurde in einer
-   Reparaturrunde gefunden und behoben.
-3. Ein zweiter Fehler lag nicht in Rego, sondern im Experiment-Framework: Die
-   JSON-Ausgaben ähnelten den Verträgen, hielten sie aber nicht exakt ein. Der
-   Finalizer prüft deshalb nun nicht mehr nur Zähler, sondern Vertragsfelder,
-   Quellenhashes und auflösbare Artefaktpfade.
-4. Der erste Eingabepfad-Scanner übersah Zugriffe über `object.get` und meldete
-   fälschlich null Pfade. Der Scanner verfolgt nun auch verschachtelte
-   `object.get`-, Alias- und Collection-Zugriffe; im Pilot werden 141 Pfade
-   erkannt.
+## Limits and next step
 
-## Offene Risiken
+Seventy rules do not prove completeness. Seven model-written tests cover only
+a small share of rules/exceptions. Added, removed and changed profile paths
+need review, especially the 28 removals and five changes. Quotes locate claims
+but cannot settle interpretation or source precedence. The third model call
+hit a usage limit after contract repair; later independent finalization, with
+empty error lists and passing OPA tests, is the recorded technical acceptance.
 
-- 70 Regeln sind ein Umfangssignal, kein Vollständigkeitsbeweis. Es wurde noch
-  kein unabhängiger Absatz-für-Absatz-Abgleich durch eine zweite Extraktion oder
-  eine Fachperson durchgeführt.
-- Sieben Modelltests decken nur einen kleinen Teil der 70 Regeln und der vielen
-  Ausnahmen ab. Sie beweisen technische Ausführbarkeit, nicht fachliche
-  Richtigkeit.
-- Die große Profiländerung (194 hinzugefügt, 28 entfernt, 5 geändert) ist
-  wertvoll für die Entdeckung, aber zu groß für ein sofortiges Einfrieren ohne
-  Review. Entfernte und geänderte Pfade müssen besonders geprüft werden.
-- Quellenbelege lokalisieren Aussagen, ersetzen aber keine fachliche Prüfung
-  von Definitionen, Wechselwirkungen und Prioritäten zwischen Merkblatt,
-  Sonderrichtlinie und jahresspezifischen Ausnahmen.
-- Der dritte Modellaufruf endete nach erfolgreicher Vertragsumstellung am
-  Nutzungslimit. Maßgeblich ist daher nicht sein Exit-Code, sondern die danach
-  unabhängig erfolgreiche Finalisierung mit leeren Vertragsfehlerlisten und
-  grünem OPA-Lauf.
-
-## Empfehlung vor dem Einfrieren
-
-Den Experimentvertrag jetzt versionieren, aber das entdeckte Farm Profile noch
-nicht als fachlich endgültig einfrieren. Als nächstes sollte dieselbe Maßnahme
-mit mindestens einem zweiten Modell im identischen `discover`-Setup laufen.
-Danach lassen sich Regelmenge, Quellenabdeckung, Profil-Diff, Datenlisten,
-Compile-Erfolg und Tests direkt vergleichen. Erst die gemeinsam gestützten
-Profiländerungen werden in einen überprüften Profilstand übernommen; darauf
-folgen `conform`-Läufe, Hidden Tests und Domainexpert:innen-Tests.
-
-Die vollständigen Pilot-Artefakte bleiben bewusst unter `runs/` und werden
-nicht eingecheckt, weil sie Modell-Rohlogs und duplizierte Quellen enthalten.
-Dieser Draft hält die prüfbaren Resultate fest; die Quellen, Verträge, Runner
-und Reproduktionsschritte sind versioniert.
+Version the experiment contract, compare the same measure with another model
+under the same setup, then review common profile changes before `conform`,
+hidden tests and domain review. The original draft kept full pilot logs and
+duplicated sources local. This report records the measurements; it does not
+publish private raw logs or certify legal correctness.

@@ -329,7 +329,7 @@ class FrozenOpusContractTests(unittest.TestCase):
         rows = list(csv.DictReader(io.StringIO(files["comparison.csv"].decode("utf-8"))))
         self.assertEqual(26, len(rows))
         self.assertTrue(all(row["executed_cases"] == "3" and row["semantic_judgement"] == "not_adjudicated" for row in rows))
-        self.assertIn("keine Genauigkeitsmessung", files["README.md"].decode("utf-8"))
+        self.assertIn("do not measure accuracy", files["README.md"].decode("utf-8"))
         opus.verify_manifest(self.root, self.candidate, self.report, self.manifest)
 
 

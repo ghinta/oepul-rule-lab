@@ -105,6 +105,9 @@ class OpaValidateTests(unittest.TestCase):
         self.assertEqual(0, result["exit_code"])
         self.assertEqual({"version", "fmt", "check", "test"}, set(result["stages"]))
         self.assertEqual(result, json.loads(result_path.read_text(encoding="utf-8")))
+        self.assertEqual(".", result["workspace"])
+        self.assertEqual("external/opa", result["opa"]["binary"])
+        self.assertNotIn(str(self.root), json.dumps(result))
 
     def test_auto_runtime_prefers_workspace_opa(self) -> None:
         self.write_rego("policy.rego", "package generated\n")
@@ -140,7 +143,7 @@ class OpaValidateTests(unittest.TestCase):
         self.assertEqual(0, completed.returncode)
         self.assertEqual("passed", result["status"])
         self.assertEqual("local", result["opa"]["runtime"])
-        self.assertEqual(str(workspace_opa.resolve()), result["opa"]["binary"])
+        self.assertEqual("tools/opa", result["opa"]["binary"])
 
     def test_environment_can_force_local_runtime(self) -> None:
         self.write_rego("policy.rego", "package generated\n")
@@ -171,7 +174,7 @@ class OpaValidateTests(unittest.TestCase):
 
         self.assertEqual(0, completed.returncode)
         self.assertEqual("local", result["opa"]["runtime"])
-        self.assertEqual(str(workspace_opa.resolve()), result["opa"]["binary"])
+        self.assertEqual("tools/opa", result["opa"]["binary"])
 
     def test_unformatted_file_fails_without_mutating_workspace(self) -> None:
         path = self.write_rego("policy.rego", "package  generated\n")

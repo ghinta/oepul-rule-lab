@@ -15,6 +15,7 @@ from pathlib import Path
 
 from rulelab import screening as core
 from rulelab.screening_report import render_report
+from rulelab.publication import public_metadata
 
 ROOT = core.ROOT
 REPORT = Path("docs/analysis/opus-screening-20261011")
@@ -24,16 +25,15 @@ CANDIDATE_COMMIT = "e009eed4a83ff076b26eba33ac433ac2b0642621"
 LUNA_COMMIT = "d2b63972c99056fde4e032029e1432639e281fda"
 SELECTION = "latest finalized candidate per measure by max(finalized_at, run_id); no success filter"
 REPLAY = (
-    "PYTHONPATH=src OPA_BIN=/absolute/path/opa python -m rulelab.opus_screening verify "
-    "--candidate-root /absolute/path/candidate-e009eed"
+    "PYTHONPATH=src OPA_BIN=./tools/opa python -m rulelab.opus_screening verify "
+    "--candidate-root ../candidate-e009eed"
 )
 DISCLAIMER = (
-    "Synthetische, bereits sichtbare Entwicklungsfälle auf unveränderten historischen "
-    "Opus-Artefakten. Die Luna-Fakten werden nur bei belegbarer Vertragszuordnung "
-    "übersetzt; nicht abbildbare Fakten bleiben ausdrücklich offen. Native Ausgaben "
-    "sind keine unabhängig beurteilten Sollwerte, keine Genauigkeitsmessung und "
-    "keine Förderfreigabe. Unterschiedliche Quellen, Werkzeuge und Budgets erlauben "
-    "keine isolierte Aussage über den Modelleffekt."
+    "These visible synthetic development cases run on unchanged historical Opus rules. "
+    "Only supported mappings of the same Luna facts are used; unmapped facts remain "
+    "explicit gaps. Outputs have no independent expert labels and do not measure "
+    "accuracy or approve funding. Different sources, tools and budgets prevent an "
+    "isolated claim about model quality."
 )
 
 
@@ -111,7 +111,7 @@ def verify_manifest(root: Path, candidate_root: Path, report: Path, manifest: di
 def historical_conditions(root: Path, run: dict) -> dict:
     run_dir = root / "runs" / run["run_id"]
     prompts = [core.record(root, p) for p in sorted(run_dir.glob("*prompt*")) if p.is_file()]
-    return {"run_id": run["run_id"], "model": run["model"],
+    return public_metadata({"run_id": run["run_id"], "model": run["model"],
             "provider_revision": "not_recorded_in_historical_run_metadata",
             "created_at": run["created_at"], "finalized_at": run["finalized_at"],
             "generation_attempt": run.get("generation_attempt"),
@@ -123,7 +123,7 @@ def historical_conditions(root: Path, run: dict) -> dict:
             "source_records": run["sources"], "opa_runtime_recorded": run.get("opa_runtime"),
             "generator_result": run.get("generator_result"),
             "generator_exit_code": run.get("generator_exit_code"),
-            "budget_note": "Historical CLI sessions/continuations and tool use are not a shared controlled budget. Missing Luna usage stays missing."}
+            "budget_note": "Historical CLI sessions/continuations and tool use are not a shared controlled budget. Missing Luna usage stays missing."}, root)
 
 
 def comparison(root: Path, candidate_root: Path, manifest: dict, results: dict) -> dict:
@@ -169,13 +169,13 @@ def report_files(root: Path, candidate_root: Path, manifest: dict, results: dict
     files.update({f"results/{m['measure_id']}.json": core.json_bytes(m) for m in results["measures"]})
     rendered = render_report(manifest, results, label="Opus", replay_command=REPLAY, disclaimer=DISCLAIMER,
                              artifact_base_url=f"https://github.com/ghinta/oepul-rule-lab/blob/{CANDIDATE_COMMIT}/")
-    intro = (f"Kandidatencommit: `{CANDIDATE_COMMIT}` (unveränderlicher PR-#79-Stand). "
-             "26 aktuelle Kandidaten aus 36 finalisierten Veröffentlichungen; zehn ersetzte Runs bleiben in der Historie. "
-             "[Historische Bedingungen und Zuordnung](comparison.json) · [Vergleichsmatrix](comparison.csv).\n\n")
-    rendered["README.md"] = rendered["README.md"].replace("## Ausführungsübersicht", intro + "## Ausführungsübersicht", 1)
+    intro = (f"Candidate commit: `{CANDIDATE_COMMIT}` (fixed PR #79 snapshot). "
+             "26 selected candidates from 36 finalized publications; ten superseded runs remain in the history. "
+             "[Historical conditions and mapping](comparison.json) · [Comparison matrix](comparison.csv).\n\n")
+    rendered["README.md"] = rendered["README.md"].replace("## Execution overview", intro + "## Execution overview", 1)
     rendered["index.html"] = rendered["index.html"].replace('<a href="matrix.csv">CSV</a>',
-        '<a href="matrix.csv">CSV</a><a href="comparison.json">Historische Bedingungen</a>'
-        '<a href="comparison.csv">Vergleichsmatrix</a><span>Kandidatencommit: ' + CANDIDATE_COMMIT + '</span>', 1)
+        '<a href="matrix.csv">CSV</a><a href="comparison.json">Historical conditions</a>'
+        '<a href="comparison.csv">Comparison matrix</a><span>Candidate commit: ' + CANDIDATE_COMMIT + '</span>', 1)
     files.update({name: value.encode() for name, value in rendered.items()})
     compared = comparison(root, candidate_root, manifest, results)
     files["comparison.json"] = core.json_bytes(compared)

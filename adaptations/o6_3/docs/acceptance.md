@@ -1,29 +1,24 @@
-# Abnahmegrenze für #97
+# Acceptance limits for #97
 
-Der lokale Quellen-/Vertragsreview erlaubt den begrenzten Kandidaten als
-Entwicklungsgrundlage. Die ursprünglichen Run-Ergebnisse bleiben erhalten.
-Die Gegenprobe gegen die gebundenen Quellen zeigt die dokumentierten
-Reparaturen; eine vollständige Förderung wird damit nicht freigegeben.
+The source and contract review supports this limited candidate as a development
+basis. It does not approve a complete funding decision.
 
-Vor App-Promotion offen:
+Before app use, complete these steps:
 
-1. P1/P2: tatsächlich aktueller Snapshot, gültige tatsächliche Ergänzungen,
-   Scenario-Isolation und Herkunft im Bewertungsauftrag verbindlich verdrahten.
-2. Pro konsumiertem Pfad Registry, Dependency, Adapter und DecisionTrace
-   implementieren; Fallbearbeitung über den realen Browser-/Backend-/OPA-Pfad prüfen.
-3. Allgemeine Förderregeln und im Ergebnis ausgeschlossene Klauseln mit
-   der Runtime zusammenführen, statt den Slice als Gesamtprüfung auszugeben.
-4. Fachperson bestätigt Ermittlung der Grünfütterungsangabe und Rechtsfolge
-   konkreter höherer-Gewalt-Anerkennungen. Der Kandidat entscheidet diese
-   offenen Rechtsfolgen nicht durch einen pauschalen Wahrheitswert.
-5. Neue Opus-Überarbeitungen erneut binden und relevante Deltas prüfen.
+1. Connect the current snapshot, valid factual additions, scenario separation
+   and provenance through P1/P2.
+2. Implement a registry mapping, dependency, adapter and DecisionTrace for every
+   consumed path. Check the full browser/backend/OPA flow.
+3. Combine shared funding conditions and excluded clauses with the runtime.
+   Present the limited clause result with its actual scope.
+4. Obtain expert decisions on predominant green feeding and the legal effects
+   of specific force-majeure recognitions. Do not replace these with a blanket flag.
+5. Bind the new Opus revisions and review relevant differences.
 
-Eine passende Anerkennung ist ein gesonderter Review-Blocker. Der derzeitige
-Slice-Status `missing_data` signalisiert dann eine nicht abschließbare
-Entscheidung; `exceptions.review[...]` ist ein Review-Auftrag und kein frei
-editierbares Betriebsfeld. Die spätere App muss diesen Grund getrennt von
-fehlenden Betriebsangaben anzeigen. Daraus darf keine automatische
-Förderfähigkeit oder Ablehnung abgeleitet werden.
+A matching recognition creates a separate review requirement. Here,
+`missing_data` can signal that the decision cannot be completed;
+`exceptions.review[...]` is a review task, not a freely editable farm field.
+The app must distinguish it from missing farm facts and must not infer automatic
+eligibility or rejection.
 
-#97 bleibt für die genannten fachlichen und App-Abnahmen offen. Ein Merge
-dieser Adaptation ist kein Promotion-Schritt und keine Golden-Test-Freigabe.
+#97 stays open. Merging the adaptation does not approve app use or golden tests.

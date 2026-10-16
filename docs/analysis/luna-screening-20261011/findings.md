@@ -1,29 +1,24 @@
-# Befunde für die nächste Entscheidung
+# Findings and next decision
 
-Alle 26 Kandidaten kompilieren isoliert. Von 78 synthetischen Entwicklungsfällen
-liefern 76 einen nativen Wert; zwei liefern keinen Wert. Das ist eine technische
-Bestandsaufnahme, keine Genauigkeitsquote. Vollständige Ergebnisse und Grenzen
-stehen in [README.md](README.md), [Vorschau](index.html) und [method.md](method.md).
+All 26 candidates compile in isolation. Of 78 synthetic development cases,
+76 return a native value and two return no value. These are execution counts,
+not an accuracy score. See the [full report](README.md), [preview](index.html)
+and [method](method.md).
 
-| Beobachtung | Konkrete Entwicklungsfälle | Folge für eine begrenzte App-Anbindung |
-|---|---|---|
-| Gesamte Query wird undefiniert | [o6_8 variation](results/o6_8.json), [o6_17 missing_fact](results/o6_17.json) | Fehlende Ausgabe als Diagnose anzeigen; weder Zustimmung noch Ablehnung daraus erzeugen. |
-| Positives Teilurteil steht neben Verstoß | [o6_9 missing_fact](results/o6_9.json), [o6_11 variation](results/o6_11.json), [o6_17 variation](results/o6_17.json) | Teilurteile, Umfang und Verstöße getrennt darstellen; `eligible` nicht allein als Freigabe nutzen. |
-| Fehlender Fakt lässt positives Urteil stehen | [o6_6](results/o6_6.json), [o6_7](results/o6_7.json), [o6_12](results/o6_12.json), [o6_14](results/o6_14.json), [o6_16](results/o6_16.json), [o6_19](results/o6_19.json), [o6_23](results/o6_23.json), [o6_24](results/o6_24.json): jeweils missing_fact | Datenvollständigkeit separat prüfen. Die Beobachtung legt noch kein fachliches Sollurteil für jeden fehlenden Fakt fest. |
-| Ablehnung ohne passenden Fehlendaten-Grund | [o6_3 missing_fact](results/o6_3.json): `eligible=false`, `violations=[]` | Fehlende Eingabe und belegte Nichterfüllung unterscheidbar halten. |
-| Prämienarithmetik läuft bei Verstößen weiter | [o6_3 variation](results/o6_3.json): 1.674 Euro; [o6_11 variation](results/o6_11.json): 162 Euro; [o6_15 variation](results/o6_15.json): 243 Euro; [o6_21 variation](results/o6_21.json): 972 Euro | Beträge als native Rechenwerte kennzeichnen; sie sind keine bewilligten Zahlbeträge. |
-| Fehlender Fakt ändert unbemerkt die Rate | [o6_10 missing_fact](results/o6_10.json): fehlende Hangneigung, 324 → 216 Euro | Keine stillschweigende fachliche Ergänzung aus Standardwerten ableiten. |
-| Datenreferenz liefert leere Prämienmap | [o6_14 baseline](results/o6_14.json): `premium_base={}` | Namespace-/Datentabellenanbindung vor einer Prämienanzeige klären. |
-| Native Ausgabe ist nur ein Boolean | [o6_1b](results/o6_1b.json), [o6_22](results/o6_22.json) | Fehlende Begründungs-/Gesamtentscheidung ausdrücklich als Integrationslücke führen. |
+| Observation | Development cases | Consequence for a limited app preview |
+| --- | --- | --- |
+| Whole query is undefined | [o6_8 variation](results/o6_8.json), [o6_17 missing_fact](results/o6_17.json) | Show the missing output; infer neither approval nor rejection. |
+| Positive partial result coexists with a violation | [o6_9 missing_fact](results/o6_9.json), [o6_11 variation](results/o6_11.json), [o6_17 variation](results/o6_17.json) | Show scope, partial results and violations separately. Do not use `eligible` alone. |
+| A positive result survives a missing fact | missing_fact in [o6_6](results/o6_6.json), [o6_7](results/o6_7.json), [o6_12](results/o6_12.json), [o6_14](results/o6_14.json), [o6_16](results/o6_16.json), [o6_19](results/o6_19.json), [o6_23](results/o6_23.json), [o6_24](results/o6_24.json) | Check input completeness separately; this observation alone gives no expert judgement. |
+| Negative result has no matching missing-data reason | [o6_3 missing_fact](results/o6_3.json): `eligible=false`, `violations=[]` | Keep unknown facts separate from known failure. |
+| Payment arithmetic continues despite violations | variation in [o6_3](results/o6_3.json): EUR 1,674; [o6_11](results/o6_11.json): EUR 162; [o6_15](results/o6_15.json): EUR 243; [o6_21](results/o6_21.json): EUR 972 | Label these as native calculated values, not approved payments. |
+| Missing input silently changes a rate | [o6_10 missing_fact](results/o6_10.json): missing slope, EUR 324 → 216 | Do not treat a default as confirmed domain evidence. |
+| Data reference gives an empty payment map | [o6_14 baseline](results/o6_14.json): `premium_base={}` | Resolve data namespaces before displaying a payment. |
+| Native output is only a Boolean | [o6_1b](results/o6_1b.json), [o6_22](results/o6_22.json) | Record missing reasons/overall decision as integration gaps. |
 
-Für die Thesis lohnt als nächster Schritt die Auswahl einiger fachlich relevanter
-Regeln mit unterschiedlichen Formen: Grenzwert, zeitlicher Tatbestand, Liste bzw.
-Zuordnung, Aggregation und Ausnahme. Die Katalogtypen und offenen Abhängigkeiten
-aller 26 Maßnahmen bleiben in der Matrix sichtbar. Diese Auswahl wird nicht aus
-einer Rangfolge der besten Luna-Ausgaben abgeleitet. Erst anschließend entstehen
-unabhängige Referenzfälle und bestätigte Sollurteile für den kontrollierten Versuch.
-
-Der vollständige App-Ausbau ist dafür nicht nötig. Bereits die dokumentierten
-Ausgabelücken erklären, warum einheitliche Förderaussagen aus den heutigen
-Kandidaten noch nicht belastbar sind. Die nächste Modellphase ist getrennt in
-[Opus #107](https://github.com/ghinta/oepul-rule-lab/issues/107) erfasst.
+Next, choose a small set of relevant rule forms: threshold, time condition,
+closed list/mapping, aggregation and exception. Keep all 26 measures' catalog
+types and dependencies visible; do not select by a ranking of favorable outputs.
+Then create independent cases and expert-confirmed expected decisions.
+A full app is not needed for this step. Opus follow-up is tracked in
+[Lab #107](https://github.com/ghinta/oepul-rule-lab/issues/107).

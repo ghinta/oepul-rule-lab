@@ -1,113 +1,61 @@
-# Draft: `o6_16` mit `gpt-5.6-terra`
+# Draft: o6_16 with GPT-5.6 Terra
 
-Status: **DRAFT – technisch validierter Kandidat, nicht fachlich freigegeben**
+**Historical draft: technically checked, not domain-approved.**
+Run `v2-o6_16-terra-20260919` used `discover`, GPT-5.6 Terra, high reasoning
+and OPA 1.18.2. Sources were the April 2026 groundwater-protection leaflet and
+general conditions, the special directive/annexes and four 2026 notices.
+It studies whether discovery can recover rules and input fields for a measure
+previously parked because required facts were missing.
 
-Dieser Lauf untersucht, ob ein Discover-Agent bei einer bisher wegen fehlender
-Eingaben weitgehend geparkten Maßnahme mehr quellengebundene Regeln und
-Profilvariablen erschließen kann. Regelanzahl und technische Tests sind keine
-Behauptung fachlicher Vollständigkeit oder Rechtsverbindlichkeit.
+## Recorded results
 
-## Lauf
-
-- Run-ID: `v2-o6_16-terra-20260919`
-- Maßnahme: `o6_16` – Vorbeugender Grundwasserschutz – Acker
-- Modus: `discover`
-- Modell: `gpt-5.6-terra`, Reasoning `high`
-- Maßnahmenspezifische Quelle: Stand April 2026
-- Weitere Quellen: Allgemeine Teilnahmebedingungen April 2026,
-  Sonderrichtlinie samt Anhängen und vier amtliche Hinweise für 2026
-- Technische Referenz: OPA `1.18.2`
-
-## Ergebnis
-
-| Signal | Ergebnis |
+| Metric | Result |
 |---|---:|
-| Strukturierte Regeln | 34 |
-| Davon mit explizitem Rego-Symbol | 21 |
-| Quellenbelege | 30 |
-| Coverage-Einträge | 40 |
-| Vorgeschlagene Profil-Blattpfade | 94 |
-| Davon im repräsentativen Parcel-Objekt | 47 |
-| Von Rego direkt verwendete Eingabepfade | 21 |
-| Unbekannte Rego-Eingabepfade | 0 |
-| Datentabellen | 4 |
-| Datendatei | 210.643 Bytes |
-| Generierte OPA-Tests | 9 |
-| OPA Formatierung | bestanden |
-| OPA Strict-Compile | bestanden |
-| OPA Tests | 9/9 bestanden |
-| Grounding-Verträge und Crosslinks | bestanden, keine Fehler |
-| Canonical Farm Profile direkt verändert | nein |
+| Structured rules | 34 |
+| With explicit Rego symbol | 21 |
+| Source citations | 30 |
+| Coverage entries | 40 |
+| Proposed profile leaf paths | 94 |
+| In the representative parcel object | 47 |
+| Input paths directly used by Rego | 21 |
+| Unknown Rego input paths | 0 |
+| Data tables | 4 |
+| Data file | 210,643 bytes |
+| Generated OPA tests | 9 |
+| OPA formatting | passed |
+| OPA Strict-Compile | passed |
+| OPA Tests | 9/9 passed |
+| Source-evidence contracts and cross-links | passed, no errors |
+| Direct shared-profile change | no |
 
-Die 94 Blattpfade sind in einem einzigen nicht überlappenden
-`add oepul.o6_16`-Blueprint gebündelt. Die Zahl der Vorschlagsobjekte ist daher
-nicht mit der Anzahl entdeckter Variablen gleichzusetzen. Erfasst wurden unter
-anderem Teilnahme und Vertragsfristen, Flächenhistorie, betriebliche
-Düngeplanung und -bilanz, Weiterbildung, Gewässerschutzkonzept, Bodenproben,
-Wiener Humusoption, Schweinefütterung, Cultan sowie detaillierte Schlagattribute
-für N-Saldo, Wirkstoffe, Sperrzeiträume und AG-Flächen.
+The 94 leaf paths belong to one non-overlapping `add oepul.o6_16` proposal.
+Proposal-object count therefore differs from variable count. Topics include
+participation, deadlines, area history, nutrient planning/balance, training,
+water protection, soil samples, the Vienna humus option, pig feeding, Cultan
+and parcel-level nitrogen, substances and restricted periods.
 
-## Vollständige Daten statt Textverkürzung
+The data file includes all 1,566 Annex G geographic entries, with cadastral
+code, state, page and raw table text; pig-feed crude-protein limits; rates;
+and the 2026 drought area list. The stable cadastral code is used because text
+extraction cannot always separate political and cadastral municipality names.
 
-Die erzeugte Datendatei enthält:
+The older GPT-5.5 run used the October 2025 leaflet, ten required input paths,
+ten rule/error codes and five tests, including pre-evaluated facts such as
+`soil_samples.requirement_met`, without the full executable Annex G list.
+Terra's broader output is not an isolated model improvement: source edition,
+contract, profile-discovery policy and validator also changed.
 
-- 1.566 Einträge der Anhang-G-Gebietskulisse mit KG-Nummer, Bundesland,
-  Quellseite und Tabellenrohtext,
-- Rohprotein-Grenzen für die Schweinefütterungsoption,
-- Prämiensätze und
-- die 2026-Dürre-Ausnahmekulisse.
+## Repair history and limits
 
-Die Katastralgemeinden werden über die stabile KG-Nummer ausgewertet. Die
-Textextraktion trennt politische Gemeinde und Katastralgemeinde nicht in jeder
-Zeile zuverlässig; diese verbleibende Einschränkung ist ausdrücklich im Run
-dokumentiert.
+Five attempts were recorded: a usage-limit interruption during an initial
+multi-measure run; complete extraction; evidence/profile/inventory repairs;
+a Rego inline-condition repair; and a namespace correction from nonexistent
+filename namespaces to loaded `data.*` roots. Final host checks passed the
+source-evidence, formatting, strict-compilation and nine-test checks.
 
-## Vergleich mit dem bisherigen Stand
-
-Das bestehende Rule-Gap-Audit führte `o6_16` als `C / park`, mit keiner
-fachlichen Abdeckung und fehlenden N-/Nährstoffbilanzdaten. Der ältere
-GPT-5.5-Zero-Shot-Lauf auf dem Merkblatt Stand Oktober 2025 enthielt zehn
-Required-Input-Pfade, zehn eindeutige Regel-/Fehlercodes und fünf Tests. Er
-verwendete mehrere vorbewertete Fakten, etwa
-`soil_samples.requirement_met`, und enthielt keine vollständige ausführbare
-Anhang-G-Gebietsliste.
-
-Der Terra-Lauf ist mit 34 strukturierten Regeln, 94 neuen Profil-Blattpfaden,
-vier Datentabellen und neun Tests deutlich breiter. Das ist jedoch **kein
-isolierter Modellvergleich**: Neben dem Modell unterscheiden sich Quelle
-(April 2026 statt Oktober 2025), Experimentvertrag, Discover-Profilpolitik und
-Grounding-Validator. Für einen belastbaren Modellvergleich muss dieselbe
-Maßnahme anschließend mit einem zweiten Modell im identischen v2-Setup laufen.
-
-## Reparaturhistorie
-
-Der Run benötigte fünf getrennt protokollierte Versuche:
-
-1. Abbruch durch das gemeinsame Nutzungslimit während eines zunächst parallel
-   gestarteten Mehrmaßnahmenversuchs.
-2. Vollständige Terra-Extraktion.
-3. Reparatur der deterministisch gefundenen Beleg-, Profil- und
-   Dateninventarfehler; danach bestand Grounding vollständig.
-4. Reparatur einer Python-artigen, in Rego v1 ungültigen Inline-Bedingung.
-5. Korrektur der OPA-Datenpfade vom nicht vorhandenen Dateinamens-Namespace auf
-   die tatsächlich geladenen `data.*`-Rootfelder.
-
-Die letzte Host-Abnahme bestand Grounding, Formatierung, Strict-Compile und
-alle neun Tests.
-
-## Offene Risiken
-
-- Neun selbst erzeugte Tests decken 34 Regeln und zahlreiche Grenzfälle nicht
-  ausreichend ab.
-- 13 Katalogregeln sind noch nicht explizit mit einem Rego-Symbol verknüpft.
-- Externe Rechtsstände, auf die das Merkblatt verweist, wurden nicht erfunden;
-  insbesondere bleibt der Zulassungsstatus einzelner Wirkstoffe ein externer
-  Parameter.
-- Die 94 Profilpfade sind ein wertvoller Discover-Kandidat, aber noch kein
-  freigegebenes Canonical Farm Profile.
-- Domainexpert:innen- und unabhängige Golden-/Negativtests stehen aus.
-
-Die vollständigen Laufartefakte bleiben bewusst unter `runs/` und werden wegen
-Rohlogs und duplizierter Quellen nicht eingecheckt. Dieser Draft hält die
-prüfbaren Kennzahlen, Einschränkungen und Reparaturhistorie fest; Quellen,
-Verträge, Modellkonfiguration und Validator sind versioniert.
+Nine model tests cannot establish correctness of 34 rules. Thirteen catalog
+rules lack an explicit Rego-symbol link. Referenced external legal facts, such
+as substance authorization, remain external parameters. The 94 proposed paths
+are not an approved shared profile. Expert and independent negative/reference
+tests remain outstanding. This draft records technical results and limits,
+without publishing private raw logs or claiming legal completeness.

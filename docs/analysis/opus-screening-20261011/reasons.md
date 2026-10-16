@@ -1,24 +1,17 @@
-# Anlass und Änderungsgründe
+# Why this Opus diagnosis exists
 
-[Lab #107](https://github.com/ghinta/oepul-rule-lab/issues/107) wurde nach der
-abgeschlossenen Luna-Sichtung und dem Opus-Übergabeprotokoll freigegeben.
-Die vorgesehenen neuen Opus-Veröffentlichungen sind jetzt verfügbar. Die
-Sichtung soll vor dem begrenzten Thesis-Versuch tatsächliche Ausgaben und
-Vertrags-/Quellenlücken sichtbar machen.
+[Lab #107](https://github.com/ghinta/oepul-rule-lab/issues/107) follows the frozen
+Luna screening. The new Opus publications are now available. This diagnosis
+makes actual outputs and input/source gaps visible before a small thesis study.
 
-- Der feste PR-#79-Stand kann in einem separaten Checkout diagnostiziert werden;
-  die Diagnose braucht weder dessen Merge noch den neuen Generierungsgate-Branch.
-- Auswahl und Herkunft aller 36 Opus-Veröffentlichungen sind gebunden; genau
-  26 aktuelle Kandidaten werden untersucht, zehn ersetzte bleiben historisch.
-- Die bestehenden Luna-Fakten werden nur durch belegte Vertragszuordnung
-  übersetzt. Explizite Lücken schützen vor erfundenen Erfolgsfällen.
-- Ein gemeinsamer, begrenzter OPA-Runner lädt pro Run nur native Policy/Daten.
-  Die bestehenden Luna-Ausgaben bleiben bytegleich reproduzierbar.
-- Die Vergleichsmatrix trennt Quellen, Profil, Prompt, Modell/Adapter, Budget,
-  Reparaturgeschichte, technische Statuswerte und offene Referenzarbeit.
-- Der Anschluss an App #56 bleibt bei vier Einzelklauseln und unabhängigen
-  Referenzen; die Diagnose fordert keinen vollständigen App-Ausbau.
+It binds all 36 Opus publications at the fixed PR #79 commit, selects the latest
+26 candidates and keeps ten superseded runs in history. A separate checkout
+avoids merging the candidate branch. Only supported mappings of the original
+Luna facts are allowed. Explicit gaps prevent invented success cases.
 
-Historische Runs, Quellen, Profile, Modelltests und App-Regeln wurden nicht
-geändert. Es wurden keine neuen Modellaufrufe ausgeführt und keine fachlichen
-Sollwerte aus selbst generierten Modelltests übernommen.
+A shared OPA runner loads only each candidate's native policy and data. The
+comparison records sources, profile, prompts, model/adapter, budget, repair
+history and technical statuses separately. The thesis follow-up remains four
+specific clauses with independent reference work; it does not need a full app.
+No new model calls or expert labels are produced. Original rule, source,
+profile and test bytes remain bound. See [method.md](method.md).

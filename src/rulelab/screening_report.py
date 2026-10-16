@@ -15,42 +15,36 @@ from urllib.parse import quote
 
 
 REPLAY_COMMAND = (
-    "PYTHONPATH=src OPA_BIN=/absolute/path/opa python -m rulelab.screening verify "
+    "PYTHONPATH=src OPA_BIN=./tools/opa python -m rulelab.screening verify "
     "--report-dir docs/analysis/luna-screening-20261011"
 )
 STATUS_LABELS = {
-    "defined": "Wert definiert",
-    "undefined": "Kein Wert (undefiniert)",
-    "runtime_error": "Ausführungsfehler",
-    "compile_error": "Kompilierfehler",
-    "compiled": "Kompiliert",
-    "fixture_gap": "Keine ausführbaren Fälle (fixture_gap)",
+    "defined": "Value returned",
+    "undefined": "No value (undefined)",
+    "runtime_error": "Runtime error",
+    "compile_error": "Compile error",
+    "compiled": "Compiled",
+    "fixture_gap": "No executable cases (fixture_gap)",
 }
 DISCLAIMER = (
-    "Synthetische Entwicklungsfälle auf unveränderten historischen Luna-Artefakten. "
-    "Die beobachteten Ausgaben sind keine unabhängig beurteilten Sollwerte, keine "
-    "Genauigkeitsmessung und kein Nachweis der Quellkorrektheit. Es erfolgt keine "
-    "Übernahme oder Förderfreigabe in der App."
+    "These visible synthetic development cases run on unchanged historical Luna rules. "
+    "Observed outputs have no independent expert labels. They do not measure accuracy "
+    "or approve funding or app use."
 )
 EXPERT_NOTE = (
-    "App-Issue #140 blockiert nur fachliche Sollurteile, die eine noch offene "
-    "Auslegung benötigen. Technische Ausführung und dokumentierte Ausgabelücken "
-    "können unabhängig davon untersucht werden."
+    "App issue #140 blocks domain judgements that need an unresolved interpretation. "
+    "Technical execution and output gaps can be studied separately."
 )
 INVENTORY_NOTE = (
-    "Inventar und Quellen-Coverage stammen aus historischen Modellartefakten. "
-    "Modellkataloge und selbst berichtete Quellen-Coverage sind kein Nachweis "
-    "unabhängig bestätigter Vollständigkeit. Statisch erkannte Eingabepfade sind "
-    "unvollständig, erfassen dynamische Referenzen nicht vollständig und sind "
-    "kein Nachweis tatsächlich zur Laufzeit konsumierter Fakten."
+    "Rule counts and reported source coverage come from historical model outputs. "
+    "They do not prove completeness. Static input paths may miss dynamic references; "
+    "they do not show every fact read during execution."
 )
 REFERENCE_NOTE = (
-    "Regeltypen, Quellen, Datenanforderungen und offene fachliche Abhängigkeiten "
-    "helfen bei der Auswahl des Versuchsausschnitts und der nötigen Referenzarbeit; "
-    "ein Aufwand in Stunden wird nicht geschätzt. not_adjudicated bedeutet, dass "
-    "unabhängige Referenzfälle und fachlich bestätigte Sollentscheidungen benötigt "
-    "werden. Bereits sichtbare Entwicklungsfixtures sind keine zurückgehaltenen "
-    "Testfälle und dürfen nicht nachträglich dazu umetikettiert werden."
+    "Rule types, sources, required facts and open questions help choose the study scope. "
+    "No estimate of expert hours is made. not_adjudicated means that independent cases "
+    "and expert-confirmed expected decisions are still needed. These visible development "
+    "cases must not later be described as hidden test cases."
 )
 
 
@@ -69,7 +63,9 @@ def _markdown(value: Any) -> str:
 
 
 def _repo_href(path: str, artifact_base_url: str | None = None) -> str:
-    return (artifact_base_url or "../../../") + quote(path, safe="/._-")
+    # Pages serves docs/ only. A relative ../../../runs link escapes that site.
+    base = artifact_base_url or "https://github.com/ghinta/oepul-rule-lab/blob/main/"
+    return base + quote(path, safe="/._-")
 
 
 def _fixture_href(measure: dict[str, Any]) -> str:
@@ -91,8 +87,8 @@ def _status(case: dict[str, Any] | None) -> str:
 
 def _changed(case: dict[str, Any]) -> str:
     if case["case_id"] == "baseline":
-        return "Basis"
-    return "ja" if case["output_changed_from_baseline"] else "nein"
+        return "Baseline"
+    return "yes" if case["output_changed_from_baseline"] else "no"
 
 
 def _csv_changed(case: dict[str, Any] | None) -> str:
@@ -107,7 +103,7 @@ def _case_map(measure: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 def _fact_state(state: dict[str, Any]) -> str:
     # A present JSON null is distinct from a removed member.
-    return _json(state["value"]) if state["present"] else "Nicht vorhanden"
+    return _json(state["value"]) if state["present"] else "Absent"
 
 
 def _pre(value: Any) -> str:
@@ -125,14 +121,14 @@ def _compact_json(value: Any) -> str:
 def _html_inventory(measure: dict[str, Any]) -> str:
     inventory = measure.get("inventory")
     if inventory is None:
-        return "<p class=empty>Kein zusätzliches Kandidateninventar erfasst.</p>"
+        return "<p class=empty>No additional candidate inventory recorded.</p>"
     items = (
-        ("Regelkatalog-Einträge", inventory["rule_count"]),
-        ("Regeltypen", _compact_json(inventory["rule_type_counts"])),
-        ("Quellen", inventory["source_count"]),
-        ("Statisch erkannte Eingabepfade", len(inventory["static_policy_input_paths"])),
-        ("Profilvorschläge", inventory["profile_proposal_count"]),
-        ("Unabhängige Referenzfälle", inventory["independent_reference_case_status"]),
+        ("rule catalog entries", inventory["rule_count"]),
+        ("Rule types", _compact_json(inventory["rule_type_counts"])),
+        ("Sources", inventory["source_count"]),
+        ("Static input paths", len(inventory["static_policy_input_paths"])),
+        ("Profile proposals", inventory["profile_proposal_count"]),
+        ("Independent reference cases", inventory["independent_reference_case_status"]),
     )
     descriptions = "".join(
         "<dt>" + _escape(label) + "</dt><dd>" + _escape(value) + "</dd>"
@@ -146,17 +142,17 @@ def _html_inventory(measure: dict[str, Any]) -> str:
         for claim in inventory["source_coverage_claims"]
     )
     sources = (
-        "<div class=table-wrap><table><thead><tr><th>Quellen-ID</th>"
-        "<th>Berichteter Prüfbereich</th><th>Einträge</th><th>Einordnung</th>"
+        "<div class=table-wrap><table><thead><tr><th>Source ID</th>"
+        "<th>Reported review scope</th><th>Entries</th><th>Classification</th>"
         "</tr></thead><tbody>" + source_rows + "</tbody></table></div>"
-        if source_rows else "<p>Keine Quellen-Coverage-Angabe im Inventar.</p>"
+        if source_rows else "<p>No source coverage recorded in the inventory.</p>"
     )
     return (
-        "<details><summary>Kandidateninventar und Referenzbedarf</summary><dl>"
+        "<details><summary>Candidate inventory and reference work needed</summary><dl>"
         + descriptions + "</dl><p>" + _escape(INVENTORY_NOTE) + "</p><p>"
-        + _escape(REFERENCE_NOTE) + "</p><details><summary>Statisch erkannte Eingabepfade</summary>"
+        + _escape(REFERENCE_NOTE) + "</p><details><summary>Static input paths</summary>"
         + _pre(inventory["static_policy_input_paths"]) + "</details>"
-        + "<details><summary>Vom Modell berichtete Quellen-Coverage</summary>"
+        + "<details><summary>Model-reported source coverage</summary>"
         + sources + "</details></details>"
     )
 
@@ -164,24 +160,24 @@ def _html_inventory(measure: dict[str, Any]) -> str:
 def _markdown_inventory(measure: dict[str, Any]) -> list[str]:
     inventory = measure.get("inventory")
     if inventory is None:
-        return ["**Inventar:** Kein zusätzliches Kandidateninventar erfasst.\n"]
+        return ["**Inventory:** No additional candidate inventory recorded.\n"]
     lines = [
-        "**Inventar:** " + str(inventory["rule_count"]) + " Regelkatalog-Einträge; "
-        + str(inventory["source_count"]) + " Quellen; "
-        + str(len(inventory["static_policy_input_paths"])) + " statisch erkannte Eingabepfade; "
-        + str(inventory["profile_proposal_count"]) + " Profilvorschläge. "
-        + "Unabhängige Referenzfälle: `"
+        "**Inventory:** " + str(inventory["rule_count"]) + " rule catalog entries; "
+        + str(inventory["source_count"]) + " sources; "
+        + str(len(inventory["static_policy_input_paths"])) + " static input paths; "
+        + str(inventory["profile_proposal_count"]) + " profile proposals. "
+        + "Independent reference cases: `"
         + _markdown(inventory["independent_reference_case_status"]) + "`.\n",
-        "**Regeltypen:** `" + _markdown(_compact_json(inventory["rule_type_counts"])) + "`\n",
-        "<details>\n<summary>Statische Eingabepfade und vom Modell berichtete Quellen-Coverage</summary>\n",
+        "**Rule types:** `" + _markdown(_compact_json(inventory["rule_type_counts"])) + "`\n",
+        "<details>\n<summary>Static input paths and model-reported source coverage</summary>\n",
         INVENTORY_NOTE + "\n",
-        "Statische Eingabepfade (keine Laufzeitspur):\n"
+        "Static input paths (not an execution trace):\n"
         + _markdown_code(_json(inventory["static_policy_input_paths"])),
     ]
     claims = inventory["source_coverage_claims"]
     if claims:
         lines.append(
-            "| Quellen-ID | Berichteter Prüfbereich | Einträge | Einordnung |\n"
+            "| Source ID | Reported review scope | Entries | Classification |\n"
             "|---|---|---|---|"
         )
         lines.extend(
@@ -191,7 +187,7 @@ def _markdown_inventory(measure: dict[str, Any]) -> list[str]:
             for claim in claims
         )
     else:
-        lines.append("Keine Quellen-Coverage-Angabe im Inventar.")
+        lines.append("No source coverage recorded in the inventory.")
     lines.extend(["\n</details>\n", REFERENCE_NOTE + "\n"])
     return lines
 
@@ -201,16 +197,16 @@ def _html_case(case: dict[str, Any]) -> str:
     observed = (
         _pre(case["output"])
         if status == "defined"
-        else "<p class=empty>Keine definierte native Ausgabe. Ein fehlender Wert "
-        "wird weder durch null ersetzt noch als fachliche Ablehnung gewertet.</p>"
+        else "<p class=empty>No native output. A missing value "
+        "is not replaced with null or treated as a funding rejection.</p>"
     )
     changes = case["changes_from_baseline"]
     error = (
-        "<details><summary>Originaler OPA-Fehlertext</summary><pre>"
+        "<details><summary>Original OPA error text</summary><pre>"
         + _escape(case["error"]) + "</pre></details>"
         if "error" in case else ""
     )
-    diff = "<p>Keine Eingabeänderung gegenüber der Basis.</p>"
+    diff = "<p>No input change from the baseline.</p>"
     if changes:
         rows = "".join(
             "<tr><td><code>" + _escape(change["path"]) + "</code></td><td><pre>"
@@ -219,20 +215,20 @@ def _html_case(case: dict[str, Any]) -> str:
             for change in changes
         )
         diff = (
-            "<div class=table-wrap><table><thead><tr><th>Pfad</th>"
-            "<th>Basis</th><th>Fall</th></tr></thead><tbody>" + rows
+            "<div class=table-wrap><table><thead><tr><th>Path</th>"
+            "<th>Baseline</th><th>Case</th></tr></thead><tbody>" + rows
             + "</tbody></table></div>"
         )
     return (
         "<section class=case><h3>" + _escape(case["case_id"])
         + " <span class=badge>" + _escape(_status(case)) + "</span></h3><p>"
-        + _escape(case["purpose"]) + "</p><p>Ausgabe gegenüber Basis geändert: <b>"
-        + _escape(_changed(case)) + "</b></p><details><summary>Geänderte Fakten</summary>"
-        + diff + "</details><details><summary>Synthetische Eingabe</summary>"
+        + _escape(case["purpose"]) + "</p><p>Output changed from baseline: <b>"
+        + _escape(_changed(case)) + "</b></p><details><summary>Changed facts</summary>"
+        + diff + "</details><details><summary>Synthetic input</summary>"
         + _pre(case["input"]) + "<p class=hash>SHA-256: <code>"
         + _escape(case["input_sha256"]) + "</code></p></details>"
-        + "<details><summary>Native Ausgabe</summary>" + observed
-        + "</details><details><summary>Vollständige OPA-Antwort</summary>"
+        + "<details><summary>Native output</summary>" + observed
+        + "</details><details><summary>Full OPA response</summary>"
         + _pre(case["opa_result"]) + "</details>" + error + "</section>"
     )
 
@@ -245,23 +241,23 @@ def _html_measure(measure: dict[str, Any], entry: dict[str, Any], artifact_base_
     )
     dependencies = "".join(
         "<li>" + _escape(item) + "</li>" for item in measure["open_dependencies"]
-    ) or "<li>Keine zusätzliche Abhängigkeit im Fixture dokumentiert; dies ist keine Vollständigkeitsbestätigung.</li>"
+    ) or "<li>No further dependency recorded in this fixture; completeness is not confirmed.</li>"
     compile_note = _escape(
         STATUS_LABELS.get(measure["compile"]["status"], measure["compile"]["status"])
     )
     compile_details = ""
     if measure["compile"]["errors"]:
         compile_details += (
-            "<details><summary>Kompilierdiagnose als JSON</summary>"
+            "<details><summary>Compile diagnostics as JSON</summary>"
             + _pre(measure["compile"]["errors"]) + "</details>"
         )
     if "error" in measure["compile"]:
         compile_details += (
-            "<details><summary>Originaler OPA-Kompilierfehlertext</summary><pre>"
+            "<details><summary>Original OPA compile error text</summary><pre>"
             + _escape(measure["compile"]["error"]) + "</pre></details>"
         )
     gap = (
-        '<p class="notice"><b>Fixture-Lücke:</b> ' + _escape(measure["gap"]) + "</p>"
+        '<p class="notice"><b>Fixture gap:</b> ' + _escape(measure["gap"]) + "</p>"
         if "gap" in measure else ""
     )
     return (
@@ -270,17 +266,17 @@ def _html_measure(measure: dict[str, Any], entry: dict[str, Any], artifact_base_
         + _escape(measure["run_id"]) + "</code> · " + compile_note + "</p>"
         + compile_details + gap
         + '<p><a href="' + _escape(_fixture_href(measure)) + '">Fixture</a> · '
-        + '<a href="' + _escape(_result_href(measure)) + '">Ergebnis-JSON</a></p>'
-        + "<dl><dt>Eingaben und Einheiten</dt><dd>"
-        + _escape(measure["input_contract_note"]) + "</dd><dt>Ausgabebedeutung</dt><dd>"
-        + _escape(measure["output_contract_note"]) + "</dd><dt>Fallherkunft</dt><dd>"
-        + _escape(measure["case_origin"]) + "</dd><dt>Native Query</dt><dd><code>"
+        + '<a href="' + _escape(_result_href(measure)) + '">Result JSON</a></p>'
+        + "<dl><dt>Inputs and units</dt><dd>"
+        + _escape(measure["input_contract_note"]) + "</dd><dt>Output meaning</dt><dd>"
+        + _escape(measure["output_contract_note"]) + "</dd><dt>Case origin</dt><dd>"
+        + _escape(measure["case_origin"]) + "</dd><dt>Native query</dt><dd><code>"
         + _escape(measure["query"]) + "</code></dd></dl>"
         + _html_inventory(measure)
-        + ("<details><summary>Zuordnung der Luna-Fakten und Vergleichslücken</summary>"
+        + ("<details><summary>Luna fact mapping and comparison gaps</summary>"
            + _pre(measure["luna_translation"]) + "</details>" if "luna_translation" in measure else "")
-        + "<details><summary>Belege und offene Abhängigkeiten</summary><h3>Belege</h3><ul>"
-        + references + "</ul><h3>Offene Abhängigkeiten</h3><ul>" + dependencies
+        + "<details><summary>Evidence and open dependencies</summary><h3>Evidence</h3><ul>"
+        + references + "</ul><h3>Open dependencies</h3><ul>" + dependencies
         + "</ul><p class=hash>Fixture SHA-256: <code>"
         + _escape(entry["fixture"]["sha256"]) + "</code></p></details>"
         + "".join(_html_case(case) for case in measure["cases"]) + "</article>"
@@ -294,22 +290,22 @@ def render_report(manifest: dict, results: dict, *, label: str = "Luna",
     entries = {entry["measure_id"]: entry for entry in manifest["entries"]}
     measures = results["measures"]
     markdown = [
-        f"# {label}: diagnostische Sichtung der vorhandenen Regelkandidaten\n",
+        f"# {label}: development screening of existing rule candidates\n",
         disclaimer + "\n",
         EXPERT_NOTE + "\n",
         INVENTORY_NOTE + "\n",
         REFERENCE_NOTE + "\n",
-        "Die native Ausgabe bleibt unverändert. `eligible` und ähnliche Felder haben "
-        "je Kandidat unterschiedliche Bedeutungen; die Details stehen unten. "
-        "`undefined` ist ein dokumentierter Befund. Eine definierte Ausgabe kann auch "
-        "den JSON-Wert `null` enthalten; dieser unterscheidet sich von keinem Wert.\n",
-        "[Befunde und nächste Entscheidung](findings.md) · [Aufklappbare Vorschau](index.html) · [Manifest](manifest.json) · "
-        "[Alle Ergebnisse](results.json) · [Matrix als CSV](matrix.csv) · "
-        "[Fixierung und Wiederholung](method.md)\n",
-        f"Basiscommit: `{manifest['base_commit']}`. OPA: `{results['opa_version']}`. "
-        "Policy und Daten werden je Run getrennt geladen; es erfolgt keine neue Modellgenerierung.\n",
-        "## Ausführungsübersicht\n",
-        "| Maßnahme | Run | Kompilierung | Basis | Variation | Fehlende Tatsache |\n"
+        "Original evidence (German) is preserved in the detailed sections: model notes, "
+        "case descriptions and observed outputs keep their original wording. "
+        "`eligible` has a different scope in each candidate. `undefined` means no value; "
+        "a defined JSON `null` remains a separate value.\n",
+        "[Findings and next decision](findings.md) · [Expandable preview](index.html) · [Manifest](manifest.json) · "
+        "[All results](results.json) · [CSV matrix](matrix.csv) · "
+        "[Frozen inputs and replay](method.md)\n",
+        f"Base commit: `{manifest['base_commit']}`. OPA: `{results['opa_version']}`. "
+        "Policy and data are loaded separately for each run. No new model generation takes place.\n",
+        "## Execution overview\n",
+        "| Measure | Run | Compilation | Baseline | Variation | Missing fact |\n"
         "|---|---|---|---|---|---|",
     ]
     html_rows = []
@@ -353,66 +349,66 @@ def render_report(manifest: dict, results: dict, *, label: str = "Luna",
             inventory["independent_reference_case_status"] if inventory is not None else "",
         ])
     markdown.extend([
-        "\n`defined`: Query liefert einen nativen Wert. `undefined`: kein Wert. "
-        "`runtime_error` und `compile_error`: technische Fehler mit originaler "
-        "OPA-Diagnose im Ergebnis-JSON. `fixture_gap`: kein ausführbarer Fall; "
-        "die konkrete Lücke steht beim Kandidaten. Diese Statuswerte sind keine fachlichen Bewertungen.\n",
-        "## Reproduzieren\n",
-        "Vom Repository-Wurzelverzeichnis mit der passenden absoluten OPA-Binary:\n",
+        "\n`defined`: the query returns a value. `undefined`: no value. "
+        "`runtime_error` and `compile_error`: technical errors; the original OPA details "
+        "are in the result JSON. `fixture_gap`: no executable case; see the candidate's "
+        "gap description. These statuses are not domain judgements.\n",
+        "## Reproduce\n",
+        "From the repository root, using the matching OPA executable:\n",
         "```bash\n" + replay_command + "\n```\n",
-        "Die Überprüfung vergleicht den eingefrorenen Bestand und die Ausgaben. "
-        "Eingabe-, Artefakt- und Quellenhashes stehen im Manifest beziehungsweise "
-        "Ergebnis-JSON. Die methodischen Grenzen sind in [method.md](method.md) beschrieben.\n",
-        "## Kandidaten und beobachtete Fälle\n",
+        "Verification compares the bound files and outputs. Input, source and artifact "
+        "hashes are recorded in the manifest and result JSON. See [method.md](method.md) "
+        "for the scope and limits.\n",
+        "## Candidates and observed cases\n",
     ])
     for measure in measures:
         markdown.extend([
             f"### {_markdown(measure['measure_id'])}\n",
             f"Run: `{_markdown(measure['run_id'])}`. "
-            f"[Fixture]({_fixture_href(measure)}) · [Native Ergebnisse]({_result_href(measure)})\n",
-            "**Eingaben:** " + _markdown(measure["input_contract_note"]) + "\n",
-            "**Ausgabebedeutung:** " + _markdown(measure["output_contract_note"]) + "\n",
-            "**Herkunft:** " + _markdown(measure["case_origin"]) + "\n",
+            f"[Fixture]({_fixture_href(measure)}) · [Native results]({_result_href(measure)})\n",
+            "**Inputs:** " + _markdown(measure["input_contract_note"]) + "\n",
+            "**Output meaning:** " + _markdown(measure["output_contract_note"]) + "\n",
+            "**Origin:** " + _markdown(measure["case_origin"]) + "\n",
             "**Query:** `" + _markdown(measure["query"]) + "`\n",
             *_markdown_inventory(measure),
-            *( ["**Zuordnung der Luna-Fakten und Vergleichslücken:**\n"
+            *( ["**Luna fact mapping and comparison gaps:**\n"
                 + _markdown_code(_json(measure["luna_translation"]))] if "luna_translation" in measure else []),
-            "| Fall | Beobachteter Status | Ausgabe gegenüber Basis geändert | Zweck |\n"
+            "| Case | Observed status | Output changed from baseline | Purpose |\n"
             "|---|---|---|---|",
         ])
         if not measure["cases"]:
-            markdown.append("| — | fixture_gap | fixture_gap | Keine ausführbaren Fälle |")
+            markdown.append("| — | fixture_gap | fixture_gap | No executable cases |")
         markdown.extend(
             "| " + _markdown(case["case_id"]) + " | " + _markdown(case["status"])
             + " | " + _changed(case) + " | " + _markdown(case["purpose"]) + " |"
             for case in measure["cases"]
         )
         if "gap" in measure:
-            markdown.append("\n**Fixture-Lücke:** " + _markdown(measure["gap"]) + "\n")
+            markdown.append("\n**Fixture gap:** " + _markdown(measure["gap"]) + "\n")
         if measure["compile"]["errors"]:
             markdown.append(
-                "\n**Kompilierdiagnose als JSON:**\n"
+                "\n**Compile diagnostics as JSON:**\n"
                 + _markdown_code(_json(measure["compile"]["errors"]))
             )
         if "error" in measure["compile"]:
             markdown.append(
-                "\n**Originaler OPA-Kompilierfehlertext:**\n"
+                "\n**Original OPA compile error text:**\n"
                 + _markdown_code(str(measure["compile"]["error"]))
             )
         for case in measure["cases"]:
             if "error" in case:
                 markdown.append(
-                    "\n**Originaler OPA-Fehlertext für " + _markdown(case["case_id"])
+                    "\n**Original OPA error text for " + _markdown(case["case_id"])
                     + ":**\n" + _markdown_code(str(case["error"]))
                 )
-        markdown.append("\n**Offene Abhängigkeiten:**\n")
+        markdown.append("\n**Open dependencies:**\n")
         markdown.extend("- " + _markdown(item) for item in measure["open_dependencies"])
         if not measure["open_dependencies"]:
             markdown.append(
-                "- Keine zusätzliche Abhängigkeit im Fixture dokumentiert; "
-                "dies ist keine Vollständigkeitsbestätigung."
+                "- No further dependency recorded in this fixture; "
+                "completeness is not confirmed."
             )
-        markdown.append("\n**Belege:**\n")
+        markdown.append("\n**Evidence:**\n")
         markdown.extend(
             f"- [{_markdown(ref['path'])}]({_repo_href(ref['path'], artifact_base_url)}): "
             + _markdown(ref["detail"]) for ref in measure["references"]
@@ -437,27 +433,28 @@ def render_report(manifest: dict, results: dict, *, label: str = "Luna",
     .links{display:flex;gap:1rem;flex-wrap:wrap}article{scroll-margin-top:1rem}
     """
     html_document = (
-        '<!doctype html><html lang="de"><head><meta charset="utf-8">'
+        '<!doctype html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
-        "<title>" + _escape(label) + ": diagnostische Regelvorschau</title><style>" + css
-        + "</style></head><body><main><h1>" + _escape(label) + ": diagnostische Regelvorschau</h1>"
+        "<title>" + _escape(label) + ": development rule preview</title><style>" + css
+        + "</style></head><body><main><h1>" + _escape(label) + ": development rule preview</h1>"
         + '<section class="intro"><p class="notice">' + _escape(disclaimer)
         + "</p><p>" + _escape(EXPERT_NOTE) + "</p><p>" + _escape(INVENTORY_NOTE)
-        + "</p><p>" + _escape(REFERENCE_NOTE) + "</p><p>Basiscommit: <code>"
+        + "</p><p>" + _escape(REFERENCE_NOTE) + "</p><p>Base commit: <code>"
         + _escape(manifest["base_commit"]) + "</code> · OPA <code>"
         + _escape(results["opa_version"]) + "</code></p>"
-        + '<p class="links"><a href="README.md">Dokumentation</a>'
-        + '<a href="manifest.json">Manifest</a><a href="results.json">Alle Ergebnisse</a>'
-        + '<a href="matrix.csv">CSV</a><a href="method.md">Methodik</a></p>'
-        + "<p>Ein definierter Wert bestätigt keine fachliche Richtigkeit. Eine undefinierte "
-        "Query ist ein Befund und hat keinen Wert; ein definierter JSON-Wert null bleibt null. "
-        "Die Bedeutung von eligible und ähnlichen Feldern wird je Kandidat erläutert.</p>"
-        + "<details><summary>Wiederholung</summary><pre>" + _escape(replay_command)
-        + "</pre><p>Im Repository-Wurzelverzeichnis ausführen. Details zur Fixierung "
-        + "stehen in method.md.</p></details></section>"
-        + '<section class="matrix"><h2>Ausführungsübersicht</h2><div class="table-wrap">'
-        + "<table><thead><tr><th>Maßnahme</th><th>Run</th><th>Kompilierung</th>"
-        + "<th>Basis</th><th>Variation</th><th>Fehlende Tatsache</th></tr></thead><tbody>"
+        + '<p class="links"><a href="README.md">Documentation</a>'
+        + '<a href="manifest.json">Manifest</a><a href="results.json">All results</a>'
+        + '<a href="matrix.csv">CSV</a><a href="method.md">Method</a></p>'
+        + "<p>Original evidence (German): detailed model notes, case descriptions and "
+        "observed outputs retain their original wording. A defined value does not prove "
+        "domain correctness. An undefined query has no value; a defined JSON null stays null. "
+        "The scope of eligible and similar fields is explained for each candidate.</p>"
+        + "<details><summary>Replay</summary><pre>" + _escape(replay_command)
+        + "</pre><p>Run from the repository root. Details of the frozen inputs "
+        + "are in method.md.</p></details></section>"
+        + '<section class="matrix"><h2>Execution overview</h2><div class="table-wrap">'
+        + "<table><thead><tr><th>Measure</th><th>Run</th><th>Compilation</th>"
+        + "<th>Baseline</th><th>Variation</th><th>Missing fact</th></tr></thead><tbody>"
         + "".join(html_rows) + "</tbody></table></div></section>"
         + "".join(_html_measure(measure, entries[measure["measure_id"]], artifact_base_url) for measure in measures)
         + "</main></body></html>\n"

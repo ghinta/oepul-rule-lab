@@ -1,132 +1,103 @@
-# Methode und Grenzen der Opus-Sichtung
+# Opus screening: method and limits
 
-Diese Diagnose erfüllt [Lab #107](https://github.com/ghinta/oepul-rule-lab/issues/107)
-nach der eingefrorenen [Luna-Sichtung](../luna-screening-20261011/README.md).
-Sie bereitet den kleinen Thesis-Ausschnitt aus
-[App #56](https://github.com/ghinta/oepul-recommender/issues/56) und
-[Draft #149](https://github.com/ghinta/oepul-recommender/pull/149) vor.
-Sie erzeugt keine neuen Modell-Runs oder unabhängigen fachlichen Sollurteile.
+This diagnosis supports [Lab #107](https://github.com/ghinta/oepul-rule-lab/issues/107)
+after the [Luna screening](../luna-screening-20261011/README.md). It prepares a
+limited study for App #56 / draft #149, without new model generation or
+independent expert labels.
 
-## Unveränderliche Bestände
+## Fixed snapshots
 
-Der Luna-Bestand liegt auf Main-Commit
-`d2b63972c99056fde4e032029e1432639e281fda`; sein ursprüngliches Manifest und
-seine Fixtures bleiben unverändert. Die Opus-Kandidaten stammen ausschließlich
-aus PR #79, Commit `e009eed4a83ff076b26eba33ac433ac2b0642621`.
-Von 36 finalisierten Opus-Veröffentlichungen wird je Maßnahme der zeitlich
-letzte nach `max(finalized_at, run_id)` gebunden: genau 26 Maßnahmen,
-o6_1a/b/c und o6_2–24. Die zehn ersetzten Kandidaten bleiben erhalten.
-Die Auswahl filtert weder nach Regelzahl noch nach Prüferfolg oder Ausgabe.
+The historical Luna baseline is `d2b63972c99056fde4e032029e1432639e281fda`.
+Opus candidates come only from PR #79 at
+`e009eed4a83ff076b26eba33ac433ac2b0642621`. Of 36 finalized publications,
+`max(finalized_at, run_id)` selects the latest for each of 26 measures.
+The ten superseded runs remain recorded. Selection does not filter by output,
+rule count or technical success.
 
-Die Herkunft vom genannten Commit wird separat durch die dort veröffentlichten
-Gitblob-Identitäten und den auf diesen SHA geprüften CI-Checkout belegt. Die
-Manifest-API allein weist keinen Git-HEAD nach; ihre Hashprüfung schützt den
-bereits gebundenen Dateibestand vor Änderungen. Diese beiden Nachweise haben
-unterschiedliche Aufgaben.
+CI checks the candidate checkout's actual Git HEAD. Manifest hashes separately
+check the bound files: all 36 metadata records and, for the selected 26,
+sources, profile, model settings, prompts, proposed fields, policy, data,
+model tests, catalogs, coverage, assumptions, historical checks and fixtures.
+`load_paths` restricts execution to native policy/data files. Raw logs and old
+binaries are excluded. A provider revision was not recorded and is not invented.
 
-`manifest.json` bindet die Metadaten aller 36 Veröffentlichungen und für die
-ausgewählten 26 zusätzlich Originalquellen, Canonical Farm Profile, Modell-
-und Promptdateien, Profile-Vorschläge, Policy, Daten, Modelltests, Regelkatalog,
-Coverage-Ledger, Annahmen, historische Prüfartefakte und neue Fixtures mit
-SHA-256 und Bytezahl. `load_paths` beschränkt die Ausführung auf native
-Policy-/Datendateien. Raw-Logs und historische Binaries werden nicht geladen.
-Die Modellkennung lautet `claude-opus-5-5`; eine unveränderliche Anbieterrevision
-ist in diesen historischen Metadaten nicht ausgewiesen und wird nicht ergänzt.
+The privacy migration rebinds sanitized main-checkout metadata and the Luna
+baseline records. The pinned Opus candidate checkout remains unchanged; exported
+historical conditions are sanitized without changing its input hashes.
+See [publication rules](../../publication.md).
 
-Neun aktuelle Opus-Quellenpakete unterscheiden sich gegenüber Luna:
-o6_1c, o6_4, o6_9, o6_12, o6_16, o6_17, o6_21, o6_22, o6_24.
-Bei 17 Maßnahmen sind die historischen Quellenhash-Sets identisch.
-Dateigleichheit belegt keine vollständige Interpretation oder aktuelle Rechtslage.
-Die Quellen werden nicht nachträglich durch neuere Originale ersetzt.
+Nine source sets differ from Luna: o6_1c, o6_4, o6_9, o6_12, o6_16, o6_17,
+o6_21, o6_22 and o6_24. Seventeen sets match. Matching hashes prove identical
+files, not correct interpretation or current law. New editions are not substituted.
 
-## Dieselben fachlichen Fakten, native Verträge
+## Same facts, native input contracts
 
-`luna_translation` verlinkt pro Maßnahme das eingefrorene Luna-Fixture und
-erfasst alle drei ursprünglichen Rollen: Basis, Variation, fehlender Fakt.
-Zuordnungen nennen Pfade und Bedeutung; nicht belegbar übertragbare Fakten
-und der unterschiedliche Prüfbereich werden ausdrücklich ausgewiesen.
-Auch bei `cases=[]` bleiben alle drei ursprünglichen Fälle dokumentiert.
+`luna_translation` links every measure to its Luna fixture and accounts for all
+three original roles: baseline, variation and missing fact. It documents mapped
+paths/meaning, unsupported facts and scope differences, even when `cases=[]`.
 
-Erlaubt sind belegte Umbenennungen, eindeutige Enum-Zuordnungen und reine
-Einheitenumrechnungen. Unbekannte Tierklassen, Einzeldaten, Genehmigungen,
-Registerzulassungen, Compliance oder datierte Ereignisse werden nicht aus
-Modelltests ergänzt. Fehlend, `null`, `false`, `0` und leere Listen
-werden nicht ineinander umgedeutet. Jahre und Mengen werden nicht aktualisiert,
-um erwünschte Ausgaben zu erhalten. Insbesondere bleibt o6_12 im Jahr 2024.
+Supported renaming, exact enum mappings and unit conversions are allowed.
+Unknown animal categories, individual events, dates, permissions, registration
+or compliance are not filled from model tests. Missing, null, false, zero and
+empty lists stay distinct. Years and quantities are not changed to obtain a
+preferred output; o6_12 stays in 2024.
 
-Eine teilweise übersetzte Eingabe ist ausdrücklich eine Teilprobe. Kann eine
-Luna-Variation nicht dargestellt werden, können native Inputs identisch bleiben;
-dies bedeutet eine nicht ausgeführte fachliche Variation und keine bestätigte
-Nichtverwendung des ursprünglichen Fakts. Die JSON-Pointer-Differenzen zeigen
-die tatsächlichen Eingabeänderungen. Ohne sinnvolle belegte native Teilprobe
-enthält das Fixture keine ausführbaren Fälle und eine konkrete `fixture_gap`.
-Die isolierte Kompilierung wird dennoch für alle 26 Kandidaten durchgeführt.
+A partial translation is a partial probe. When the original variation cannot be
+mapped, native inputs may be identical: this is a translation gap, not proof
+that a rule ignores the fact. JSON-pointer differences show actual changes.
+Without a meaningful supported probe, the fixture has no executable cases and
+states its gap. All 26 candidates still undergo isolated compilation.
 
-## Technische Ausführung und Reproduzieren
+## Execution and replay
 
-OPA (Open Policy Agent) 1.18.2 führt Rego aus. Version und Plattform-Prüfsumme
-werden gegen die Repository-Pins geprüft. Pro Kandidat werden ausschließlich
-hashgebundene Policy-/Datendateien in ein temporäres Bundle kopiert und als
-Verzeichnisse geladen, damit native Datennamespaces erhalten bleiben. Modelltests
-sind Herkunftsbelege, keine zusätzlich ausgeführten unabhängigen Referenztests.
+OPA 1.18.2 and its platform checksum must match the repository pins. Only bound
+policy/data directories are loaded, preserving JSON namespaces. Model tests
+are case-origin evidence, not independent reference tests. Strict compilation
+and bounded `data.*` queries use capabilities excluding network, current time,
+randomness and runtime environment data. Evaluation is limited to ten seconds
+and the process to 20 seconds.
 
-`opa check --strict` und native, begrenzte `data.*`-Queries verwenden reduzierte
-Capabilities ohne Netzwerk, aktuelle Zeit, Zufall und Runtime-Umgebungsdaten.
-Eval-Limit: zehn Sekunden; Prozesslimit: 20 Sekunden. `defined`, `undefined`,
-`runtime_error`, `compile_error` und `fixture_gap` sind technische Befunde.
-Ein definiertes `eligible=false` bei unvollständigen Eingangsdaten ist kein
-unabhängiges fachliches Negativurteil. Native Aggregate und Prämien haben je
-Kandidat unterschiedliche Bedeutung; Projektionen können bei undefinierten
-Teilwerten insgesamt undefiniert werden.
+`defined`, `undefined`, `runtime_error`, `compile_error` and `fixture_gap` describe
+execution only. A defined `eligible=false` with incomplete inputs is not an
+independent negative domain judgement. Payment and aggregate scopes differ.
+Undefined components can make a complete projection undefined.
 
-Zwei getrennte Checkouts, ohne Zusammenführen von Branches:
+Use two separate checkouts. From the analysis repository root:
 
 ```bash
-git clone https://github.com/ghinta/oepul-rule-lab.git /absolute/path/candidate-e009eed
-git -C /absolute/path/candidate-e009eed checkout e009eed4a83ff076b26eba33ac433ac2b0642621
-# Im Checkout dieses Diagnose-PRs:
-PYTHONPATH=src OPA_BIN=/absolute/path/opa python -m rulelab.opus_screening verify \
-  --candidate-root /absolute/path/candidate-e009eed
+git clone https://github.com/ghinta/oepul-rule-lab.git ../candidate-e009eed
+git -C ../candidate-e009eed checkout e009eed4a83ff076b26eba33ac433ac2b0642621
+PYTHONPATH=src OPA_BIN=./tools/opa python -m rulelab.opus_screening verify \
+  --candidate-root ../candidate-e009eed
 ```
 
-CI nutzt denselben festen Kandidatencommit und dieselben OPA-Pins in einem
-zweiten Checkout. `verify` prüft vor und nach der Ausführung alle Bindungen
-und vergleicht JSON, CSV, Markdown und HTML bytegenau. Es schreibt keine
-Reports. `freeze` überschreibt kein Manifest; Änderungen brauchen eine neue
-Diagnose. Report-Writes bleiben unter `docs/analysis`, außerhalb der Kandidaten.
-Ein Merge von PR #79 ist keine Voraussetzung für diese Diagnose.
+`verify` checks bindings before/after execution and compares JSON, CSV, Markdown
+and HTML byte for byte, without writes. `freeze` never overwrites a manifest.
+Writes stay under `docs/analysis`, outside the candidate. Merging PR #79 is not
+required. Original German model notes, fixtures and outputs remain evidence
+inside the English report.
 
-## Historische Bedingungen und begrenzter Thesis-Anschluss
+## Historical conditions and thesis scope
 
-`comparison.json` enthält pro Maßnahme Quellen, Profil, Modell/Adapter,
-Reasoning, Timeout, Promptprüfsummen, Attempts/Fortsetzungen, historische
-OPA-Metadaten, vorhandene Nutzungs-/Kostenangaben sowie Zuordnungslücken.
-Die tatsächlichen `generator_result`-Werte werden pro Run einmal verwendet;
-kumulative Sitzungswerte werden nicht über Fortsetzungen hinweg erneut addiert.
-`generation_attempt` und `resumed_attempts` zählen Runner-Starts beziehungsweise
-Fortsetzungen, nicht sämtliche internen Reparaturen oder Werkzeuginteraktionen.
-Eine vollständige Interventionshistorie aus unveröffentlichten Raw-Logs wird
-nicht behauptet.
-Fehlende Luna-Nutzungsangaben bleiben fehlend. Unterschiedliche Werkzeuge,
-Reparaturverläufe, Budgets und Quellen verhindern einen kontrollierten Modelleffekt.
+`comparison.json` records sources, profile, model/adapter, reasoning, timeout,
+prompt hashes, attempts/resumptions, historical OPA metadata, available usage
+and costs, and mapping gaps. Each run's last `generator_result` is counted once;
+cumulative session values are not added again across resumptions. Attempt counts
+do not include every internal repair or tool call. Missing Luna usage stays
+missing. Different tools, repairs, budgets and sources prevent a controlled
+claim about the model effect.
 
-Historische `run.json` nennen keine `quality_gate_version`; die Übergabe
-berichtet v1. Eine spätere erfolgreiche Metadatenprüfung unter einem v2-Vertrag
-belegt keine Erzeugung unter diesem Gate und keine fachliche Vollständigkeit.
-Die Ledger melden insgesamt elf offene Coverage-Punkte; acht davon liegen in
-den neun erneuerten Kandidaten, drei zusätzlich in o6_1a, o6_10 und o6_23.
-Diese Angaben sind Modellbehauptungen, keine unabhängige Volltextprüfung.
+Historical records omit `quality_gate_version`; the handoff reports v1. A later
+v2 metadata pass does not prove generation under v2 or domain completeness.
+The ledgers report 11 unresolved coverage points: eight in the nine renewed
+candidates and three in o6_1a, o6_10 and o6_23. These are model claims.
 
-Die vier vorgeschlagenen Thesis-Einzelklauseln bleiben eine kleine, gezielte
-Auswahl. Die Entwicklungsproben prüfen bei o6_13 Bestäubung statt Antragsfrist,
-bei o6_14 Alpungstage statt Tiergruppen und bei o6_17 eingereichte statt
-erforderliche Bodenproben. Sie bestätigen daher diese drei Klauseln noch nicht.
-Bei o6_17 darf die historische 10,4-ha-Basis nicht aus aktuellen zehn Hektar
-neu gebildet oder mit einem erfundenen 0,4-ha-Schlag aufgefüllt werden.
+The four proposed thesis clauses remain a small targeted selection. Existing
+probes do not establish the o6_13 deadline, o6_14 animal-group or o6_17 required
+sample clauses: they exercise other facts. The o6_17 historical 10.4-ha basis
+must not be rebuilt from today's ten hectares or an invented 0.4-ha parcel.
 
-Die Diagnose liefert Vertrags- und Referenzbedarf für #56, keine Methodfreigabe.
-Die neue neutrale Versuchsmatrix, gemeinsame Budgets und Modellrevisionen sind
-separat zu binden. Danach folgen unabhängige Referenzfälle (#51) und Collector
-(#52). Sichtbare Entwicklungsfälle dürfen nicht nachträglich zu Held-out-Fällen
-umetikettiert werden. #140 blockiert nur fachliche Sollurteile, deren konkrete
-Auslegung noch offen ist; diese technische Diagnose braucht diese Urteile nicht.
+A neutral study matrix, common budgets and fixed model revisions need separate
+binding, followed by independent cases (#51) and a collector (#52). Visible
+cases cannot become hidden tests retroactively. #140 blocks only judgements
+whose relevant interpretation remains open, not this technical diagnosis.

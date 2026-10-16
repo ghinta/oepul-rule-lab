@@ -303,6 +303,10 @@ def read_json(path: Path) -> dict[str, Any]:
 
 
 def write_json(path: Path, value: Any) -> None:
+    if path.name == "run.json":
+        from rulelab.publication import public_metadata
+
+        value = public_metadata(value, REPO_ROOT)
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as handle:
         json.dump(value, handle, ensure_ascii=False, indent=2, sort_keys=True)
@@ -529,11 +533,11 @@ def utc_now() -> str:
 
 
 def display_path(path: Path, root: Path) -> str:
-    """Prefer a repository-relative provenance path, with a safe absolute fallback."""
+    """Record provenance without disclosing the host's directory layout."""
     try:
         return str(path.resolve().relative_to(root.resolve()))
     except ValueError:
-        return str(path.resolve())
+        return "external/" + path.name
 
 
 def default_run_id(measure: str, model: str) -> str:
