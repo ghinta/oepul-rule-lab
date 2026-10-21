@@ -12,7 +12,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -69,6 +69,22 @@ jobs:
             --target policy --target data --target tests \
             --result-json "$RUNNER_TEMP/heuwirtschaft-validation.json" --pretty
           "$OPA_BIN" test --fail-on-empty adaptations/o6_3/policy adaptations/o6_3/data adaptations/o6_3/tests
+      - name: Verify all-measure Opus correction sources and native regressions
+        run: |
+          command -v pdftotext || (sudo apt-get update && sudo apt-get install -y poppler-utils)
+          python adaptations/opus-2026/tools/check_sources.py --candidate .analysis-candidates/opus --output "$RUNNER_TEMP/opus-source-quotes.json"
+          python adaptations/opus-2026/tools/build_contracts.py --candidate .analysis-candidates/opus
+          git diff --exit-code -- adaptations/opus-2026/contracts
+          python adaptations/opus-2026/tools/replay.py --opa "$OPA_BIN" --output "$RUNNER_TEMP/opus-native-regressions.json"
+          python adaptations/opus-2026/tools/export.py --output "$RUNNER_TEMP/opus-export"
+          "$OPA_BIN" check --strict "$RUNNER_TEMP/opus-export/policy"
+          python adaptations/opus-2026/tools/replay.py --opa "$OPA_BIN" --bundle "$RUNNER_TEMP/opus-export/policy" --output "$RUNNER_TEMP/opus-export-regressions.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: opus-adaptation-validation
+          path: ${{ runner.temp }}/opus-*.json
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         if: always()
         with:
