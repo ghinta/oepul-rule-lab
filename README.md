@@ -87,6 +87,10 @@ After a failed `finalize`, `--resume` also sends the rejected evidence checks
 and missing outputs to the generator. Each restart increases
 `generation_attempt`; resumptions are listed in `resumed_attempts`.
 
+If a managed computer makes the Codex home read-only, use the
+[isolated Codex runner](tools/codex_runtime/README.md). It provides a separate
+login and writable home while preserving the usage guard and local OPA flow.
+
 ## Official sources and checks
 
 ```bash
