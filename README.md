@@ -41,9 +41,9 @@ The generator can then format, compile and test its own code without Docker.
 
 Model settings live in `config/models/`. To change the model with the same
 adapter, copy a JSON file and change its `model` value. Configurations are
-included for `gpt-5.5`, `gpt-5.6-luna`, `gpt-5.6-terra`, `gpt-5.6-sol` and
-`gpt-6-astra` using `codex-cli`, and `claude-opus-5-5` with `high` effort using
-`claude-cli`. An external command adapter is described in
+included for `gpt-5.5`, `gpt-5.6-luna`, `gpt-5.6-terra`, `gpt-5.6-sol`,
+`gpt-6-astra` and `gpt-6.2-astra` using `codex-cli`, and `claude-opus-5-5`
+with `high` effort using `claude-cli`. An external command adapter is described in
 [the contracts guide](contracts/README.md).
 
 Every run records its model, provider, adapter and reasoning effort in
