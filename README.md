@@ -66,9 +66,16 @@ Raw logs can contain private data: keep them out of public exports.
 
 ## Usage limits and resuming a run
 
-Codex and Claude runs check only the subscription's five-hour window. The
-weekly window does not gate a run. Codex reads its primary App Server window;
+Codex and Claude runs default to the subscription's five-hour window. Codex
+selects the App Server window with `windowDurationMins=300`, whether it is
+primary or secondary. A weekly primary window is never relabeled as five hours.
 Claude reads `five_hour` through a small, tool-free `claude -p` request.
+
+If a Codex plan exposes only a weekly window, the default refuses to start.
+After an explicitly authorized exception to the five-hour rule in AGENTS.md,
+`run --codex-usage-window weekly` applies the same thresholds to the reported
+10080-minute window. This is opt-in, with no automatic fallback. `run.json`
+records the selected window and duration; do not publish it as five-hour usage.
 
 A run starts with at least **50%** remaining. Usage is checked every 30 seconds.
 At **5% or less**, the generator stops cleanly and records

@@ -69,8 +69,9 @@ class UsageGuardError(ValueError):
 class CodexRateLimitClient:
     """Small JSON-RPC client for Codex App Server rate-limit reads."""
 
-    def __init__(self, executable: str) -> None:
+    def __init__(self, executable: str, *, window_minutes: int = 300) -> None:
         self.executable = executable
+        self.window_minutes = window_minutes
         self.process: subprocess.Popen[str] | None = None
         self.next_request_id = 1
 
@@ -132,7 +133,8 @@ class CodexRateLimitClient:
 
     def remaining_percent(self) -> float:
         return rate_limit_remaining_percent(
-            self.request("account/rateLimits/read", {})
+            self.request("account/rateLimits/read", {}),
+            window_minutes=self.window_minutes,
         )
 
     def _send(self, message: dict[str, Any]) -> None:
@@ -164,8 +166,15 @@ class CodexRateLimitClient:
         return message
 
 
-def rate_limit_remaining_percent(result: dict[str, Any]) -> float:
-    """Return remaining capacity of the Codex five-hour (primary) window only."""
+def rate_limit_remaining_percent(
+    result: dict[str, Any], *, window_minutes: int = 300
+) -> float:
+    """Select the requested duration; primary is not necessarily five hours."""
+
+    if window_minutes not in (300, 10080):
+        raise UsageGuardError("Unsupported Codex usage window duration")
+    if result.get("ordinaryUsageAllowed") is False:
+        raise UsageGuardError("Codex reports ordinary usage is not allowed")
 
     by_limit = result.get("rateLimitsByLimitId")
     if isinstance(by_limit, dict) and by_limit:
@@ -176,11 +185,18 @@ def rate_limit_remaining_percent(result: dict[str, Any]) -> float:
         bucket = result.get("rateLimits")
 
     if not isinstance(bucket, dict):
-        raise UsageGuardError("Codex usage returned no readable primary rate-limit window")
-    primary = bucket.get("primary")
-    if not isinstance(primary, dict):
-        raise UsageGuardError("Codex usage returned no readable primary rate-limit window")
-    used = primary.get("usedPercent")
+        raise UsageGuardError("Codex usage returned no readable rate-limit bucket")
+    if bucket.get("spendControlReached") is True:
+        raise UsageGuardError("Codex reports its spend control is reached")
+    windows = [bucket.get(name) for name in ("primary", "secondary")]
+    matches = [window for window in windows if isinstance(window, dict)
+               and window.get("windowDurationMins") == window_minutes]
+    if len(matches) != 1:
+        raise UsageGuardError(
+            f"Codex usage requires exactly one {window_minutes}-minute window; "
+            "refusing to substitute another duration"
+        )
+    used = matches[0].get("usedPercent")
     if isinstance(used, bool) or not isinstance(used, (int, float)):
         raise UsageGuardError(f"Codex usage returned invalid usedPercent: {used!r}")
     if not 0 <= float(used) <= 100:
@@ -892,6 +908,12 @@ def run_agent(args: argparse.Namespace) -> int:
     adapter = config.get("adapter", "codex-cli")
     workspace = run_dir / "workspace"
     resume = bool(getattr(args, "resume", False))
+    usage_window = getattr(args, "codex_usage_window", "five-hour")
+    if usage_window not in ("five-hour", "weekly"):
+        raise ValueError("Unsupported Codex usage window")
+    if usage_window == "weekly" and adapter != "codex-cli":
+        raise ValueError("--codex-usage-window weekly requires the codex-cli adapter")
+    window_minutes = 10080 if usage_window == "weekly" else 300
     if resume and adapter != "claude-cli":
         raise ValueError(f"--resume is not supported by adapter {adapter}")
 
@@ -926,6 +948,8 @@ def run_agent(args: argparse.Namespace) -> int:
         "stop_remaining_percent": STOP_REMAINING_PERCENT,
         "poll_seconds": USAGE_POLL_SECONDS,
         "adapter": adapter,
+        "window": usage_window,
+        "window_duration_minutes": window_minutes,
     }
     metadata["usage_guard"] = usage_guard
     usage_client: CodexRateLimitClient | ClaudeRateLimitProbe | None = None
@@ -933,7 +957,8 @@ def run_agent(args: argparse.Namespace) -> int:
         try:
             if adapter == "codex-cli":
                 usage_client = CodexRateLimitClient(
-                    str(config.get("executable", "codex"))
+                    str(config.get("executable", "codex")),
+                    window_minutes=window_minutes,
                 )
             else:
                 usage_client = ClaudeRateLimitProbe(
@@ -1617,6 +1642,10 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser = subparsers.add_parser("run")
     run_parser.add_argument("run_dir")
     run_parser.add_argument("--dry-run", action="store_true")
+    run_parser.add_argument(
+        "--codex-usage-window", choices=("five-hour", "weekly"), default="five-hour",
+        help="Budget window; weekly requires an explicitly authorized exception to AGENTS.md",
+    )
     run_parser.add_argument(
         "--resume",
         action="store_true",

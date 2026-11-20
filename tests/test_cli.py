@@ -180,8 +180,8 @@ class UsageGuardTests(unittest.TestCase):
             {
                 "rateLimitsByLimitId": {
                     "codex": {
-                        "primary": {"usedPercent": 25},
-                        "secondary": {"usedPercent": 75},
+                        "primary": {"usedPercent": 25, "windowDurationMins": 300},
+                        "secondary": {"usedPercent": 75, "windowDurationMins": 10080},
                     },
                     "codex_other": {"primary": {"usedPercent": 60}},
                 }
@@ -194,8 +194,8 @@ class UsageGuardTests(unittest.TestCase):
         remaining = cli.rate_limit_remaining_percent(
             {
                 "rateLimits": {
-                    "primary": {"usedPercent": 49},
-                    "secondary": {"usedPercent": 100},
+                    "primary": {"usedPercent": 49, "windowDurationMins": 300},
+                    "secondary": {"usedPercent": 100, "windowDurationMins": 10080},
                 }
             }
         )
@@ -205,6 +205,45 @@ class UsageGuardTests(unittest.TestCase):
     def test_rejects_missing_rate_limit_windows(self) -> None:
         with self.assertRaises(cli.UsageGuardError):
             cli.rate_limit_remaining_percent({"rateLimits": {}})
+
+    def test_weekly_only_response_requires_explicit_window_selection(self) -> None:
+        # Sanitized shape observed after device login; no account or credit IDs.
+        response = {"ordinaryUsageAllowed": True, "rateLimitsByLimitId": {
+            "codex": {"primary": {"usedPercent": 6, "windowDurationMins": 10080},
+                      "secondary": None}}}
+        with self.assertRaisesRegex(cli.UsageGuardError, "300-minute"):
+            cli.rate_limit_remaining_percent(response)
+        self.assertEqual(cli.rate_limit_remaining_percent(response, window_minutes=10080), 94.0)
+
+    def test_five_hour_window_can_be_secondary(self) -> None:
+        response = {"rateLimits": {
+            "primary": {"usedPercent": 6, "windowDurationMins": 10080},
+            "secondary": {"usedPercent": 62, "windowDurationMins": 300}}}
+        self.assertEqual(cli.rate_limit_remaining_percent(response), 38.0)
+
+    def test_unknown_duration_invalid_usage_and_duplicate_windows_fail_closed(self) -> None:
+        invalid = [
+            {"primary": {"usedPercent": 6}},
+            {"primary": {"usedPercent": True, "windowDurationMins": 300}},
+            {"primary": {"usedPercent": float('nan'), "windowDurationMins": 300}},
+            {"primary": {"usedPercent": -1, "windowDurationMins": 300}},
+            {"primary": {"usedPercent": 101, "windowDurationMins": 300}},
+            {"primary": {"usedPercent": 6, "windowDurationMins": 300},
+             "secondary": {"usedPercent": 20, "windowDurationMins": 300}},
+        ]
+        for bucket in invalid:
+            with self.subTest(bucket=bucket), self.assertRaises(cli.UsageGuardError):
+                cli.rate_limit_remaining_percent({"rateLimits": bucket})
+
+    def test_provider_denial_is_not_overridden_by_visible_remaining_budget(self) -> None:
+        response = {"ordinaryUsageAllowed": False, "rateLimits": {
+            "primary": {"usedPercent": 6, "windowDurationMins": 10080}}}
+        with self.assertRaises(cli.UsageGuardError):
+            cli.rate_limit_remaining_percent(response, window_minutes=10080)
+        response['ordinaryUsageAllowed'] = True
+        response['rateLimits']['spendControlReached'] = True
+        with self.assertRaises(cli.UsageGuardError):
+            cli.rate_limit_remaining_percent(response, window_minutes=10080)
 
     def test_claude_gates_on_five_hour_window_only(self) -> None:
         remaining = cli.claude_rate_limit_remaining_percent(
@@ -239,6 +278,64 @@ class UsageGuardTests(unittest.TestCase):
                     "unifiedWindows": {"seven_day": {"utilization": 0.1}},
                 }
             )
+
+
+class CodexUsageWindowRunTests(unittest.TestCase):
+    def run_fixture(self, selected_window: str, used_values: list[int]):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        root = Path(temporary.name)
+        run = root / "run"
+        (run / "workspace/tools").mkdir(parents=True)
+        (run / "raw").mkdir()
+        marker = root / "generator-started"
+        executable = root / "fake-codex"
+        executable.write_text(
+            f"#!{sys.executable}\nimport sys,time\nfrom pathlib import Path\n"
+            f"Path({str(marker)!r}).write_text('started')\nsys.stdin.read()\ntime.sleep(30)\n"
+        )
+        executable.chmod(0o755)
+        (run / "model.json").write_text(json.dumps({
+            "adapter": "codex-cli", "model": "fixture", "executable": str(executable)}))
+        (run / "run.json").write_text(json.dumps({"run_id": "fixture", "status": "prepared"}))
+        (run / "prompt.md").write_text("Fixture only")
+        responses = [{"rateLimits": {"primary": {
+            "usedPercent": used, "windowDurationMins": 10080}, "secondary": None}}
+                     for used in used_values]
+        with (
+            patch.object(cli.CodexRateLimitClient, "__enter__"),
+            patch.object(cli.CodexRateLimitClient, "request", side_effect=responses),
+            patch.object(cli, "stage_workspace_opa", return_value={}),
+            patch.object(cli, "USAGE_POLL_SECONDS", 0.2),
+        ):
+            result = cli.run_agent(argparse.Namespace(
+                run_dir=str(run), dry_run=False, resume=False,
+                codex_usage_window=selected_window))
+        return result, json.loads((run / "run.json").read_text()), marker.exists()
+
+    def test_default_does_not_launch_with_weekly_only_response(self) -> None:
+        result, metadata, launched = self.run_fixture("five-hour", [6])
+        self.assertEqual(result, cli.USAGE_GUARD_EXIT_CODE)
+        self.assertFalse(launched)
+        self.assertEqual(metadata["status"], "not_started_usage_guard")
+        self.assertEqual(metadata["usage_guard"]["status"], "unavailable")
+
+    def test_explicit_weekly_selection_preserves_start_threshold(self) -> None:
+        result, metadata, launched = self.run_fixture("weekly", [51])
+        self.assertEqual(result, cli.USAGE_GUARD_EXIT_CODE)
+        self.assertFalse(launched)
+        self.assertEqual(metadata["usage_guard"]["status"], "blocked_start")
+        self.assertEqual(metadata["usage_guard"]["window_duration_minutes"], 10080)
+
+    def test_weekly_run_stops_at_five_percent_and_records_actual_window(self) -> None:
+        result, metadata, launched = self.run_fixture("weekly", [6, 95])
+        self.assertEqual(result, cli.USAGE_GUARD_EXIT_CODE)
+        self.assertTrue(launched)
+        self.assertEqual(metadata["status"], "aborted_usage_guard")
+        self.assertEqual(metadata["usage_guard"]["window"], "weekly")
+        self.assertEqual(metadata["usage_guard"]["window_duration_minutes"], 10080)
+        self.assertEqual(metadata["usage_guard"]["start_remaining_percent"], 94.0)
+        self.assertEqual(metadata["usage_guard"]["last_remaining_percent"], 5.0)
 
 
 class ClaudeAdapterTests(unittest.TestCase):
