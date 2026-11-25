@@ -1,0 +1,1321 @@
+--- runs/v2-o6_1a-opus-5.5-high-20260929/workspace/policy/o6_1a/arable_supplements.rego
++++ adaptations/opus-2026/o6_1a/policy/o6_1a/arable_supplements.rego
+@@ -230,7 +230,10 @@
+ # ---------------------------------------------------------------------------
+ wb(p) := object.get(p, "wildkraut", {})
+ 
+-wb_window_end(p) := common.earlier_date(sprintf("%d-06-30", [common.year]), object.get(wb(p), "threshing_date", sprintf("%d-06-30", [common.year])))
++# MEASURE-08: optional null is not a date and cannot cancel a known ban.
++wb_window_end(p) := common.earlier_date(sprintf("%d-06-30", [common.year]), wb(p).threshing_date) if is_string(object.get(wb(p), "threshing_date", null))
++
++wb_window_end(p) := sprintf("%d-06-30", [common.year]) if not is_string(object.get(wb(p), "threshing_date", null))
+ 
+ in_wb_window(p, d) if {
+ 	d >= sprintf("%d-03-15", [common.year])
+@@ -266,7 +269,7 @@
+ 
+ wb_violation(p) if {
+ 	some e in object.get(p, ["operations", "use_events"], [])
+-	e.type in {"mechanical_weeding", "harvest_whole_plant"}
++	e.type == "mechanical_weeding"
+ 	in_wb_window(p, e.date)
+ }
+ 
+@@ -355,3 +358,11 @@
+ }
+ 
+ total := ((((((over7_premium + ackerzahl_premium) + per_3ha_premium) + divrs_premium) + slk_premium) + fwk_premium) + wb_premium) + pzr_premium
++
++# MEASURE-06: whole-plant harvest has its own fixed prohibition through 30 June.
++wb_violation(p) if {
++	some e in object.get(p, ["operations", "use_events"], [])
++	e.type == "harvest_whole_plant"
++	e.date >= sprintf("%d-03-15", [common.year])
++	e.date <= sprintf("%d-06-30", [common.year])
++}
+--- runs/v2-o6_1a-opus-5.5-high-20260929/workspace/policy/o6_1a/biodiversity_arable.rego
++++ adaptations/opus-2026/o6_1a/policy/o6_1a/biodiversity_arable.rego
+@@ -290,7 +290,6 @@
+ invasive_exception(p) if {
+ 	invasive_share > 25
+ 	object.get(bio(p), "invasive_species_present", false)
+-	common.year <= first_year(p) + 1
+ }
+ 
+ max_uses(p) := 3 if no_premium_2026_code(p)
+@@ -306,7 +305,7 @@
+ 	some p in common.parcels
+ 	care_managed(p)
+ 	use_count(p) > max_uses(p)
+-	not invasive_exception(p)
++	not invasive_extra_uses(p)
+ }
+ 
+ violations contains {"rule_id": "UBB-DIVA-PFL-001", "subject": common.parcel_id(p), "message": "Biodiversitätsfläche nicht mindestens einmal in zwei Jahren gemäht/gehäckselt/beweidet"} if {
+@@ -393,6 +392,7 @@
+ 	sowing_obligation(p)
+ 	some f in object.get(p, ["operations", "fertilization_events"], [])
+ 	f.date >= sprintf("%d-01-01", [first_year(p)])
++	div_input_ban_active(p, f.date)
+ }
+ 
+ violations contains {"rule_id": "UBB-DIVA-BM-002", "subject": common.parcel_id(p), "message": "Pflanzenschutzmittel mit nicht gemäß VO (EU) 2018/848 zulässigen Wirkstoffen eingesetzt"} if {
+@@ -400,6 +400,7 @@
+ 	sowing_obligation(p)
+ 	some a in object.get(p, ["operations", "psm_applications"], [])
+ 	a.date >= sprintf("%d-01-01", [first_year(p)])
++	div_input_ban_active(p, a.date)
+ 	not object.get(a, "organic_approved_only", false)
+ }
+ 
+@@ -580,3 +581,16 @@
+ 	common.has_code(p, c)
+ 	not common.schlagnutzungsart(p) in {"Grünbrache", "Sonstiges Feldfutter"}
+ }
++
++# MEASURE-04: extra annual cuts only during the two-year minimum duration;
++# the earlier-cut invasive exception itself has no such end.
++invasive_extra_uses(p) if {
++	invasive_exception(p)
++	common.year >= first_year(p)
++	common.year <= first_year(p) + 1
++}
++
++# MEASURE-03: input prohibition ends at actual breakup, not indefinitely.
++div_input_ban_active(p, _) if object.get(bio(p), "breakup_date", null) == null
++
++div_input_ban_active(p, d) if d <= bio(p).breakup_date
+--- runs/v2-o6_1a-opus-5.5-high-20260929/workspace/policy/o6_1a/biodiversity_grassland.rego
++++ adaptations/opus-2026/o6_1a/policy/o6_1a/biodiversity_grassland.rego
+@@ -138,12 +138,12 @@
+ 
+ divsz_earliest(p) := jun15(p) if single_cut(p)
+ 
+-divsz_earliest(p) := jul15(p) if {
++divsz_earliest(p) := ordinary_jul15(p) if {
+ 	not single_cut(p)
+ 	comparable_second_cut(p) == null
+ }
+ 
+-divsz_earliest(p) := common.later_date(jun15(p), common.earlier_date(comparable_second_cut(p), jul15(p))) if {
++divsz_earliest(p) := common.later_date(jun15(p), common.earlier_date(comparable_second_cut(p), ordinary_jul15(p))) if {
+ 	not single_cut(p)
+ 	comparable_second_cut(p) != null
+ }
+@@ -279,15 +279,23 @@
+ 
+ first_year_new_sowing(p) if first_year(p) == common.year
+ 
++# MEASURE-02: removed cleaning cut counts towards the two-use maximum,
++# while its first-year early-cut permission remains separate.
+ counting_uses(p) := [e | some e in year_events(p); e.type in {"mow", "graze"}]
+ 
++counting_use_total(p) := count(counting_uses(p)) + count([e |
++	some e in year_events(p)
++	e.type == "cleaning_cut"
++	e.material_removed == true
++])
++
+ divrs_violation(p) if not site_ok(p)
+ 
+ divrs_violation(p) if not regional_mix_ok(p)
+ 
+ divrs_violation(p) if not sown_in_time(p)
+ 
+-divrs_violation(p) if count(counting_uses(p)) > 2
++divrs_violation(p) if counting_use_total(p) > 2
+ 
+ divrs_violation(p) if {
+ 	some e in counting_uses(p)
+@@ -364,3 +372,17 @@
+ 	ch != null
+ 	not variant_change_allowed(ch)
+ }
++
++# MEASURE-01: without a comparable second cut, the ordinary latest date
++# applies; a drought advance cannot invent a comparator's actual second use.
++ordinary_jul15(p) := common.shift_date(sprintf("%d-07-15", [common.year]), 0 - advance_days(p))
++
++# MEASURE-05: leaving material after either mowing is not a qualifying use.
++violations contains {"rule_id": "UBB-DIVG-NFZ-003", "subject": common.parcel_id(p), "message": "Mähgut der ersten oder zweiten DIVNFZ-Nutzung nicht verbracht"} if {
++	some p in common.parcels
++	common.has_code(p, "DIVNFZ")
++	own_managed(p)
++	some e in year_events(p)
++	e.type == "mow"
++	e.material_removed == false
++}
+--- runs/v2-o6_1b-opus-5.5-high-20260925/workspace/policy/o6_1b/biodiversity_arable.rego
++++ adaptations/opus-2026/o6_1b/policy/o6_1b/biodiversity_arable.rego
+@@ -43,6 +43,7 @@
+ 
+ arable_div_creditable(p) if {
+ 	is_arable_div(p)
++	not has_code(p, "K20")
+ 	has_code(p, "NAT")
+ 	lists.parameters.arable_div_nat_required_auflage in nat_auflagen(p)
+ 	object.get(div_info(p), "nat_area_used", false) == false
+@@ -50,12 +51,14 @@
+ 
+ arable_div_creditable(p) if {
+ 	is_arable_div(p)
++	not has_code(p, "K20")
+ 	has_code(p, "EBW")
+ 	object.get(div_info(p), "ebw_fallow", true) == true
+ }
+ 
+ arable_div_creditable(p) if {
+ 	is_arable_div(p)
++	not has_code(p, "K20")
+ 	count(codes(p) & {"BAW", "AG"}) > 0
+ 	object.get(div_info(p), "care_rules_6_1_4_2_met", true) == true
+ }
+@@ -99,12 +102,6 @@
+ field_piece_div_ha(fp_id) := sum([area(p) | some p in parcels; object.get(p, "field_piece_id", "") == fp_id; field_piece_div_counts(p)])
+ 
+ field_piece_div_counts(p) if arable_div_creditable(p)
+-
+-field_piece_div_counts(p) if {
+-	is_arable_div(p)
+-	not arable_div_creditable(p)
+-	div_from_other_measure(p)
+-}
+ 
+ field_piece_extra_ha(fp) := object.get(fp, "gloez_lse_area_ha", 0) + object.get(fp, "agroforest_strip_area_ha", 0) if year >= 2025
+ 
+@@ -307,7 +304,7 @@
+ 	is_arable_div(p)
+ 	not div_project_precedence(p)
+ 	count(counted_uses(p)) > arable_div_cfg.max_uses_per_year
+-	not invasive_exception(p)
++	not invasive_extra_uses_exception(p)
+ 	not third_use_2026_allowed(p)
+ }
+ 
+@@ -352,6 +349,7 @@
+ 	div_full_rules_apply(p)
+ 	some f in fertilizer_applications(p)
+ 	f.date >= sprintf("%d-01-01", [first_declared_year(p)])
++	before_div_end(p, f.date)
+ }
+ 
+ violations contains {"rule_id": "O61B-DA-026", "message": sprintf("Beseitigung der Biodiversitätsfläche %s nicht mit mechanischen Methoden", [p.parcel_id])} if {
+@@ -500,3 +498,17 @@
+ 	is_arable_div(p)
+ 	has_code(p, "K20")
+ }
++
++# O61B-MEASURE-04, Merkblatt §6.1.4.3 S. 15: until breakup/redeclaration.
++before_div_end(p, _) if {
++	object.get(div_info(p), "break_date", null) == null
++}
++
++before_div_end(p, d) if d <= div_info(p).break_date
++
++# Only the extra-cut exception is limited to the two-year minimum stand period.
++invasive_extra_uses_exception(p) if {
++	invasive_exception(p)
++	year >= first_declared_year(p)
++	year - first_declared_year(p) < 2
++}
+--- runs/v2-o6_1b-opus-5.5-high-20260925/workspace/policy/o6_1b/biodiversity_grassland.rego
++++ adaptations/opus-2026/o6_1b/policy/o6_1b/biodiversity_grassland.rego
+@@ -19,6 +19,9 @@
+ # Anrechenbarkeit (Kap. 6.2.3)
+ grassland_div_creditable(p) if {
+ 	is_grassland_div(p)
++
++	# O61B-MEASURE-02, Merkblatt §10 S. 33: allowed meadow declarations.
++	land_use_type(p) in lists.grassland_div_land_use_types
+ 	not is_bergmaehder(p)
+ 	not gl_div_from_other_measure(p)
+ }
+--- runs/v2-o6_1c-opus-5.5-high-20261009/workspace/policy/o6_1c/agroforest.rego
++++ adaptations/opus-2026/o6_1c/policy/o6_1c/agroforest.rego
+@@ -100,8 +100,22 @@
+ 	afs(p).shrubs_between_trees == true
+ }
+ 
++# O61C-MEASURE-02/03: positive evidence for §4.1, Merkblatt S. 2.
++# Absence withholds the definition; it does not assert a statutory violation.
+ afs_meets_definition(p) if {
+ 	p in afs_parcels
++	afs(p).directly_adjacent_to_arable == true
++	is_number(afs(p).establishment_year)
++	afs(p).establishment_year >= afs_params.earliest_establishment_year
++	afs(p).establishment_year <= year
++	width_in_range(afs(p).average_width_m)
++	density_in_range(trees_per_100_m(p))
++	is_number(afs(p).max_tree_spacing_m)
++	afs(p).max_tree_spacing_m <= afs_params.max_tree_spacing_m
++	afs(p).is_special_crop_gsp_av_25_4 == false
++	count(afs_woody_species(p)) > 0
++	afs(p).long_side_adjacent_to_forest_or_areal_landscape_element == false
++	afs(p).on_or_adjacent_to_reference_area == true
+ 	count({v | some v in afs_definition_violations; v.parcel_id == parcel_id(p)}) == 0
+ }
+ 
+--- runs/v2-o6_1c-opus-5.5-high-20261009/workspace/policy/o6_1c/npa.rego
++++ adaptations/opus-2026/o6_1c/policy/o6_1c/npa.rego
+@@ -86,7 +86,13 @@
+ 	npa(p).existing_green_fallow_broken_and_resown == true
+ }
+ 
+-cut_events(p) := object.get(npa(p), "cutting_events", [])
++# O61C-MEASURE-01: Merkblatt S. 3, §5.1: "je Kalenderjahr".
++# Previous-year maintenance remains the separate cut_in_previous_year fact.
++cut_events(p) := [e |
++	some e in object.get(npa(p), "cutting_events", [])
++	is_string(e.date)
++	startswith(e.date, sprintf("%d-", [year]))
++]
+ 
+ # Schnitte, die zur Höchstanzahl und 50-%-Grenze zählen.
+ regular_cuts(p) := [e |
+--- runs/v2-o6_2-opus-5.5-high-20260930/workspace/policy/o6_2/management.rego
++++ adaptations/opus-2026/o6_2/policy/o6_2/management.rego
+@@ -14,7 +14,14 @@
+ 	not drought_harvest_exemption(p)
+ }
+ 
+-no_mowing_with_removal(p) if count(object.get(ops_of(p), "cutting_dates", [])) == 0
++# O6_2-MEASURE-01: ATB §5.4, S. 6: "jährlich mindestens einmal".
++current_mowing_dates(p) := [d |
++	some d in object.get(ops_of(p), "cutting_dates", [])
++	is_string(d)
++	startswith(d, sprintf("%d-", [year]))
++]
++
++no_mowing_with_removal(p) if count(current_mowing_dates(p)) == 0
+ 
+ no_mowing_with_removal(p) if object.get(ops_of(p), "mowing_material_removed", true) == false
+ 
+--- runs/v2-o6_3-opus-5.5-high-20260930/workspace/policy/o6_3/common.rego
++++ adaptations/opus-2026/o6_3/policy/o6_3/common.rego
+@@ -29,7 +29,12 @@
+ 
+ is_second_crop(p) if object.get(p, ["crop", "is_second_crop"], false) == true
+ 
+-is_mown(p) if count(object.get(p, ["operations", "cutting_dates"], [])) > 0
++# Annual source scope (ATB §5.4, S. 6), not arbitrary history.
++is_mown(p) if {
++	some d in object.get(p, ["operations", "cutting_dates"], [])
++	is_string(d)
++	startswith(d, sprintf("%d-", [year]))
++}
+ 
+ is_grazed(p) if object.get(p, ["operations", "grazed"], false) == true
+ 
+--- runs/v2-o6_3-opus-5.5-high-20260930/workspace/policy/o6_3/decision.rego
++++ adaptations/opus-2026/o6_3/policy/o6_3/decision.rego
+@@ -41,6 +41,7 @@
+ 	"takeover_issues": takeover_issues,
+ 	"full_recovery_required": full_recovery_required_bool,
+ 	"area_decrease_repayment_required": area_decrease_repayment_bool,
++	"area_decrease_assessment_status": area_decrease_assessment_status,
+ }
+ 
+ is_first_contract_year_bool if {
+@@ -55,6 +56,8 @@
+ 	full_recovery_required
+ } else := false
+ 
+-area_decrease_repayment_bool if {
++area_decrease_repayment_bool := null if {
++	area_decrease_assessment_status == "missing_data"
++} else if {
+ 	area_decrease_repayment_required
+ } else := false
+--- runs/v2-o6_3-opus-5.5-high-20260930/workspace/policy/o6_3/general.rego
++++ adaptations/opus-2026/o6_3/policy/o6_3/general.rego
+@@ -18,17 +18,26 @@
+ # GEN-AREA-DEC-01: Toleranz für Flächenabgänge (5 %, max. 5 ha, jedenfalls 0,5 ha pro Jahr).
+ previous_year_grassland_ha := object.get(area_change, "previous_year_grassland_measure_area_ha", null)
+ 
+-tolerated_exempt_decrease_ha := object.get(area_change, "decrease_loss_of_disposal_ha", 0) + object.get(area_change, "decrease_permitted_conversion_ha", 0)
++tolerated_exempt_decrease_ha := loss + conversion if {
++	loss := object.get(area_change, "decrease_loss_of_disposal_ha", 0)
++	conversion := object.get(area_change, "decrease_permitted_conversion_ha", 0)
++	is_number(loss)
++	is_number(conversion)
++}
+ 
+ allowed_decrease_ha(prev) := max([
+ 	min([prev * params.area_decrease_tolerance.max_share, params.area_decrease_tolerance.max_ha]),
+ 	params.area_decrease_tolerance.always_allowed_ha,
+-])
++]) if {
++	is_number(prev)
++}
+ 
+ current_grassland_measure_ha := object.get(area_change, "current_grassland_measure_area_ha", premium_grassland_area_ha)
+ 
+ relevant_decrease_ha := (previous_year_grassland_ha - current_grassland_measure_ha) - tolerated_exempt_decrease_ha if {
+ 	is_number(previous_year_grassland_ha)
++	is_number(current_grassland_measure_ha)
++	is_number(tolerated_exempt_decrease_ha)
+ }
+ 
+ # Überschreitung: Rückzahlung für die gesamten Differenzflächen.
+@@ -104,3 +113,10 @@
+ 
+ # GEN-LH-01: jährlicher Wechsel der Tierhaltereigenschaft; O6_3-PREM-03: keine Rückforderung für Vorjahre.
+ recovery_for_prior_years_due_to_livestock_change := false
++
++# Unknown historical area is not evidence that no repayment is due.
++area_decrease_assessment_status := "evaluated" if {
++	is_number(previous_year_grassland_ha)
++	is_number(current_grassland_measure_ha)
++	is_number(tolerated_exempt_decrease_ha)
++} else := "missing_data"
+--- runs/v2-o6_3-opus-5.5-high-20260930/workspace/policy/o6_3/premium.rego
++++ adaptations/opus-2026/o6_3/policy/o6_3/premium.rego
+@@ -42,6 +42,9 @@
+ parcel_excluded_by(p, "GEN-OP-01") if "OP" in object.get(p, "oepul_codes", [])
+ 
+ parcel_excluded_by(p, "GEN-OP-01") if "o6_3" in object.get(p, "op_measures", [])
++
++# O6_3-MEASURE-03: ATB §5.5.1, S. 7: VF receives no current-year premium.
++parcel_excluded_by(p, "GEN-AREA-01") if "VF" in object.get(p, "oepul_codes", [])
+ 
+ parcel_excluded_by(p, "GEN-AREA-01") if object.get(p, "non_eligible_area_type", null) in non_eligible_area_type_ids
+ 
+@@ -174,7 +177,7 @@
+ 	some p in parcels
+ 	p.parcel_id == pp.parcel_id
+ 	other := object.get(p, "other_capped_oepul_payments_eur_per_ha", 0)
+-	other + current_rate > cap_for(year, cap_type(p))
++	other + (current_rate * modulation_factor(farm_total_area_ha)) > cap_for(year, cap_type(p))
+ }
+ 
+ # NAT-GM01: Zuschlag im Naturschutz bei Teilnahme an der Heuwirtschaft (Anhang I).
+--- runs/v2-o6_4-opus-5.5-high-20261009/workspace/policy/o6_4/obligations.rego
++++ adaptations/opus-2026/o6_4/policy/o6_4/obligations.rego
+@@ -69,8 +69,10 @@
+ violations contains v if {
+ 	some pid, p in o6_4_parcels
+ 	some g in object.get(parcel_ops(p), "grazing_events", [])
+-	date_year(g.start_date) == year
+-	month_day(g.start_date) < cfg.mowing_rules.post_grazing_earliest_month_day
++
++	# O6_4-MEASURE-01, Merkblatt §4.1 S. 2: interval overlap, including New Year.
++	g.start_date < sprintf("%d-%s", [year, cfg.mowing_rules.post_grazing_earliest_month_day])
++	object.get(g, "end_date", g.start_date) >= sprintf("%d-01-01", [year])
+ 	v := {"rule_id": "O64-OBL-004", "parcel_id": pid, "message": sprintf("Beweidung ab %v vor dem 16. August – unzulässig", [g.start_date])}
+ }
+ 
+--- runs/v2-o6_5-opus-5.5-high-20260925/workspace/policy/o6_5/common.rego
++++ adaptations/opus-2026/o6_5/policy/o6_5/common.rego
+@@ -66,7 +66,8 @@
+ # Bezugsdatum für die Kategorieanforderungen: Stichtag 01.04. bzw. 31.05.;
+ # Ersatztiere müssen die Anforderungen (spätestens) zum Zeitpunkt der
+ # Nachbesetzung erfüllen (siehe notes/assumptions.md, A-03).
+-requirement_ref_ns(a) := max([date_of(year, category_meta[a.animal_category].reference_md), parse_date(a.replacement_date)]) if {
++# O6_5-MEASURE-01, Merkblatt §4.5 S. 4: all conditions at actual replacement.
++requirement_ref_ns(a) := parse_date(a.replacement_date) if {
+ 	is_replacement(a)
+ 	a.replacement_date != null
+ } else := date_of(year, category_meta[a.animal_category].reference_md)
+--- runs/v2-o6_5-opus-5.5-high-20260925/workspace/policy/o6_5/eligibility.rego
++++ adaptations/opus-2026/o6_5/policy/o6_5/eligibility.rego
+@@ -119,7 +119,8 @@
+ 
+ annual_breeding_ok(a) if a.breeding_use_in_year == true
+ 
+-annual_breeding_ok(a) if val(a, "breeding_approval_year") == year
++# O6_5-MEASURE-02: approval-year exception follows the actual replacement year.
++annual_breeding_ok(a) if val(a, "breeding_approval_year") == time.date(requirement_ref_ns(a))[0]
+ 
+ # O6_5-ELIG-MALE-MIN-AGE / O6_5-ELIG-STALLION-MIN-AGE: Mindestalter am Bezugsdatum.
+ base_failures contains [a.animal_id, rule_id] if {
+@@ -204,6 +205,10 @@
+ base_failures contains [a.animal_id, "O6_5-OBL-TRANSFER-LIMITS"] if {
+ 	some a in animals
+ 	some t in object.get(a, "temporary_absences", [])
++
++	# O6_5-MEASURE-04: Merkblatt §4.6 S. 5, "während der Haltedauer".
++	parse_date(t.start_date) <= holding_end_ns
++	absence_overlaps_holding(t)
+ 	not absence_permitted(a, t)
+ }
+ 
+@@ -252,3 +257,7 @@
+ }
+ 
+ base_ok(a) if not base_failed(a.animal_id)
++
++absence_overlaps_holding(t) if val(t, "end_date") == null
++
++absence_overlaps_holding(t) if parse_date(t.end_date) >= holding_start_ns
+--- runs/v2-o6_5-opus-5.5-high-20260925/workspace/policy/o6_5/holding.rego
++++ adaptations/opus-2026/o6_5/policy/o6_5/holding.rego
+@@ -2,7 +2,7 @@
+ # description: >-
+ #   Prüft die Haltedauer 01.04.–31.12. (2026: bis 31.08.), zulässige
+ #   Rinder-Weitergaben nach dem 30.09. und Nachbesetzungen binnen 5 Wochen.
+-#   Nachbesetzungsketten werden bis zur zweiten Ebene ausgewertet.
++#   Nachbesetzungsketten werden ohne künstliche Tiefengrenze ausgewertet.
+ package oepul.o6_5
+ 
+ # Abgang innerhalb der (ggf. jahresspezifisch verkürzten) Haltedauer.
+@@ -43,16 +43,22 @@
+ 	not departure_in_holding_period(r)
+ }
+ 
+-# Ersatztier der ersten Ebene: förderbar und entweder ohne Abgang oder selbst
+-# fristgerecht nachbesetzt.
+-replacement_ok(r) if final_replacement_ok(r)
++# O6_5-MEASURE-03: Merkblatt §4.5 S. 4 imposes no two-successor limit.
++# Each edge proves the same breed, timely replacement and the successor's
++# eligibility. A cycle without a final retained animal cannot satisfy a slot.
++replacement_graph := {a.animal_id: {r.animal_id |
++	some r in animals
++	departure_in_holding_period(a)
++	timely_same_breed_replacement(a, r)
++	base_ok(r)
++} |
++	some a in animals
++}
+ 
+ replacement_ok(r) if {
+ 	base_ok(r)
+-	departure_in_holding_period(r)
+-	some r2 in animals
+-	timely_same_breed_replacement(r, r2)
+-	final_replacement_ok(r2)
++	some id in graph.reachable(replacement_graph, {r.animal_id})
++	final_replacement_ok(animal_by_id[id])
+ }
+ 
+ # Haltedauer für den beantragten Förderplatz erfüllt.
+@@ -74,16 +80,12 @@
+ 
+ replacement_animals := [a | some a in animals; is_replacement(a)]
+ 
+-# Tatsächlich herangezogene Ersatztiere eines Förderplatzes (Ebene 1 und 2).
+-used_replacements(a) := {r.animal_id | some r in animals; departure_in_holding_period(a); timely_same_breed_replacement(a, r); replacement_ok(r)} | {r2.animal_id |
+-	some r in animals
+-	departure_in_holding_period(a)
+-	timely_same_breed_replacement(a, r)
+-	replacement_ok(r)
+-	departure_in_holding_period(r)
+-	some r2 in animals
+-	timely_same_breed_replacement(r, r2)
+-	final_replacement_ok(r2)
++# All eligible successors that can reach a final retained animal. The lowest
++# premium across the replacement chain remains applicable (Merkblatt §4.5).
++used_replacements(a) := {id |
++	some id in graph.reachable(replacement_graph, {a.animal_id})
++	id != a.animal_id
++	replacement_ok(animal_by_id[id])
+ }
+ 
+ all_failures contains f if some f in base_failures
+--- runs/v2-o6_6-opus-5.5-high-20260925/workspace/policy/o6_6/notices_2026.rego
++++ adaptations/opus-2026/o6_6/policy/o6_6/notices_2026.rego
+@@ -42,3 +42,10 @@
+ not_established_by_deadline(p) if {
+ 	establishment_ns(p) > ns_md(year, row_of(p).sowing_deadline)
+ }
++
++# O6_6-MEASURE-03: Merkblatt §6 S. 11, actual next-MFA main-crop conversion.
++variant_withdrawal_required contains {"parcel_id": p.parcel_id, "variant": cc(p).variant, "rule_id": "O6_6-WITHDRAW-VARIANT"} if {
++	some p in cover_parcels
++	not cc(p).variant_withdrawn == true
++	cc(p).declared_as_main_crop_next_mfa == true
++}
+--- runs/v2-o6_6-opus-5.5-high-20260925/workspace/policy/o6_6/parcel.rego
++++ adaptations/opus-2026/o6_6/policy/o6_6/parcel.rego
+@@ -213,7 +213,9 @@
+ 
+ care_allowed_from_ns(p) := ns_md(year, row_of(p).care_chopping_mowing_allowed_from)
+ 
++# O6_6-MEASURE-01: Merkblatt §5.5 S. 4 permits early chopping, not mowing.
+ problem_weed_exception(p, e) if {
++	e.type == "care_chopping"
+ 	e.ground_level == false
+ 	some w in object.get(cc(p), "problem_weeds", [])
+ 	w in list_items("problem_weeds_early_chopping")
+@@ -320,6 +322,9 @@
+ 	row_of(p).herbicide_ban_after_rape_four_leaf
+ 	some e in events(p)
+ 	e.type == "herbicide_application"
++
++	# O6_6-MEASURE-02: §5.8.4 S. 10, until end of the cover period.
++	event_in_period(p, e)
+ 	e.impairs_companion_crop == true
+ }
+ 
+--- runs/v2-o6_7-opus-5.5-high-20260925/workspace/policy/o6_7/catch_crop.rego
++++ adaptations/opus-2026/o6_7/policy/o6_7/catch_crop.rego
+@@ -305,7 +305,7 @@
+ 	some op in object.get(s, "operations", [])
+ 	op.type in {"chopping", "maintenance_mowing", "rolling"}
+ 	not op.ground_near == true
+-	in_period(s, op.date)
++	care_in_period(s, op.date)
+ 	before_care_cutoff(s, op)
+ 	not care_before_nov_allowed(op)
+ }
+@@ -370,3 +370,8 @@
+ 	mixture(s).partners_visible_in_field == false
+ 	not mixture(s).seed_proof_available == true
+ }
++
++# O67-MEASURE-04: actual undersowing establishment includes host-harvest day.
++care_in_period(s, d) if in_period(s, d)
++
++care_in_period(s, d) if lib.day(d) == start_day(s)
+--- runs/v2-o6_7-opus-5.5-high-20260925/workspace/policy/o6_7/greening.rego
++++ adaptations/opus-2026/o6_7/policy/o6_7/greening.rego
+@@ -72,7 +72,7 @@
+ 	g := next.start - prev.end
+ 	limit := gap_limit(prev.group, next.group)
+ 	g > limit
+-	not drought_gap_relief(next)
++	not drought_establishment_gap_relief(next, limit)
+ 	next.start - 1 >= lib.year_start_day
+ 	prev.end <= lib.year_end_day
+ }
+@@ -183,7 +183,7 @@
+ 	d in object.get(ungreened, p.parcel_id, set())
+ ])
+ 
+-daily_ungreened_share[d] := round((ungreened_area_on(d) / base_area_ha) * 1000000) / 1000000 if {
++daily_ungreened_share[d] := ungreened_area_on(d) / base_area_ha if {
+ 	base_area_ha > 0
+ 	some d in numbers.range(lib.year_start_day, lib.year_end_day)
+ }
+@@ -193,8 +193,10 @@
+ } else := 0
+ 
+ violation_days contains d if {
+-	some d, share in daily_ungreened_share
+-	lib.approx_gt(share, lib.params.coverage.max_ungreened_share)
++	# O67-MEASURE-03: compare unrounded areas, Merkblatt §5.1 S. 2–3.
++	base_area_ha > 0
++	some d in numbers.range(lib.year_start_day, lib.year_end_day)
++	ungreened_area_on(d) > base_area_ha * lib.params.coverage.max_ungreened_share
+ }
+ 
+ default coverage_ok := false
+@@ -242,3 +244,9 @@
+ 	"violation_day_count": count(violation_days),
+ 	"coverage_ok": coverage_ok,
+ }
++
++# O67-MEASURE-02: notice 12 August 2026 retains immediate catch-to-catch renewal.
++drought_establishment_gap_relief(next, limit) if {
++	limit in {30, 50}
++	drought_gap_relief(next)
++}
+--- runs/v2-o6_8-opus-5.5-high-20261001/workspace/policy/o6_8/ms_ds.rego
++++ adaptations/opus-2026/o6_8/policy/o6_8/ms_ds.rego
+@@ -173,3 +173,9 @@
+ 	"16_humus_wien" in farm_options
+ 	parcel_location(p).federal_state == "Wien"
+ }
++
++# O68-MEASURE-03: SRL §1.7.1 S. 18, whole-farm mutual exclusion.
++farm_violations contains farm_violation("o6_8.combination.zwf_immergruen_exclusive", "Zwischenfruchtanbau (6) und System Immergrün (7) dürfen nicht gleichzeitig beantragt werden.") if {
++	"6" in participating_measures
++	"7" in participating_measures
++}
+--- runs/v2-o6_8-opus-5.5-high-20261001/workspace/policy/o6_8/premium.rego
++++ adaptations/opus-2026/o6_8/policy/o6_8/premium.rego
+@@ -43,8 +43,7 @@
+ # Ersatzweise Erfüllung der Mindestteilnahme durch AH, BAW oder US, wenn MS/DS nicht möglich ist.
+ min_participation_without_ms_ds_ha := sum([parcel_area(p) |
+ 	some p in parcels
+-	some c in (codes(p) & {"AH", "BAW", "US"})
+-	code_compliant(p, c)
++	count({c | some c in (codes(p) & {"AH", "BAW", "US"}); code_compliant(p, c)}) > 0
+ ])
+ 
+ # --- Zugangsvoraussetzungen auf Betriebsebene ------------------------------
+--- runs/v2-o6_9-opus-5.5-high-20261003/workspace/policy/o6_9/general.rego
++++ adaptations/opus-2026/o6_9/policy/o6_9/general.rego
+@@ -158,6 +158,12 @@
+ record_land_scope(r) := "arable_excluding_forage" if {
+ 	object.get(r, "land_use", "") == "arable"
+ 	not is_true(r, "arable_forage")
++}
++
++# O69-MEASURE-03: NAPV §2(3), S. 3: other agricultural land,
++# readily soluble nitrogen: 15 October through 15 February inclusive.
++record_land_scope(r) := "other_agricultural_land" if {
++	object.get(r, "land_use", "") in {"other", "permanent_crops"}
+ }
+ 
+ napv_ban_conflicts contains i if {
+--- runs/v2-o6_9-opus-5.5-high-20261003/workspace/policy/o6_9/participation.rego
++++ adaptations/opus-2026/o6_9/policy/o6_9/participation.rego
+@@ -20,6 +20,9 @@
+ 
+ auto_renewal := false if deregistered_for_year
+ 
++# Merkblatt S. 1 §3.1: ohne Kategorie erlischt der Vertrag.
++auto_renewal := false if contract_lapsed
++
+ is_one_year_measure if {
+ 	some m in tables.general_conditions.one_year_measures
+ 	m.code == measure_codes.srl_measure
+@@ -85,6 +88,7 @@
+ 
+ measure_entry_year_allowed if {
+ 	contract_start_year >= 2023
++	contract_start_year <= year
+ 	contract_start_year <= last_entry_measure.last_contract_year
+ }
+ 
+@@ -98,6 +102,7 @@
+ 
+ pig_feeding_entry_allowed if {
+ 	pig_feeding_start_year >= last_entry_pig_feeding.first_contract_year
++	pig_feeding_start_year <= year
+ 	pig_feeding_start_year <= last_entry_pig_feeding.last_contract_year
+ 	measure_application_timely
+ 	measure_entry_year_allowed
+--- runs/v2-o6_9-opus-5.5-high-20261003/workspace/policy/o6_9/premium.rego
++++ adaptations/opus-2026/o6_9/policy/o6_9/premium.rego
+@@ -23,8 +23,12 @@
+ 
+ parcel_without_n_demand(p) if is_true(object.get(p, "crop", {}), "is_legume_pure_stand")
+ 
++# Adaptation O69-MEASURE-02: NAPV Anlage 3 Tabelle 1, S. 12:
++# "Stilllegungen/ Grünbrachen 0". A non-legume finding cannot override fallow.
++parcel_without_n_demand(p) if object.get(p, ["crop", "crop_category"], "") == "fallow"
++
+ parcel_without_n_demand(p) if {
+-	object.get(p, ["crop", "crop_category"], "") in {c | some c in tables.fertilizable_area.non_fertilizable_crop_categories}
++	object.get(p, ["crop", "crop_category"], "") == "legume"
+ 	not is_false(object.get(p, "crop", {}), "is_legume_pure_stand")
+ }
+ 
+@@ -42,18 +46,63 @@
+ 
+ eligible_application_volume := min2(eligible_application_volume_raw, application_cap_m3)
+ 
+-# Annahme A-03: Kürzung bei Überschreitung der Obergrenze proportional über alle Verfahren.
+-application_scaling := eligible_application_volume / application_volume_total if application_volume_total > 0
+-
+-application_scaling := 0 if application_volume_total == 0
+-
+-application_premium_by_technique[t] := round2((v * application_scaling) * rate_for(t, year)) if {
++# Adaptation O69-MEASURE-01; Merkblatt 2026/06, S. 3 §4.3 and S. 8 §8.
++# Entire invalid biogas volume is excluded from its documented technique.
++# No proportional redistribution across techniques; unresolved allocation is null.
++excluded_biogas_by_technique[t] := sum([r.volume_m3 |
++	some r in application_records
++	r.technique == t
++	r.manure_type == "biogas_slurry"
++]) if {
++	some t in eligible_technique_ids
++}
++
++application_allocation_known if ineligible_application_volume == 0
++
++application_allocation_known if {
++	ineligible_application_volume > 0
++	ineligible_application_volume == ineligible_biogas_volume
++	sum([v | some _, v in excluded_biogas_by_technique]) == ineligible_biogas_volume
++	every t, v in claimed_application_volumes {
++		recorded_volume_by_technique[t] == v
++		excluded_biogas_by_technique[t] <= v
++	}
++}
++
++application_valid_volumes[t] := v if {
++	ineligible_application_volume == 0
++	some t, v in claimed_application_volumes
++}
++
++application_valid_volumes[t] := v - excluded_biogas_by_technique[t] if {
++	ineligible_application_volume > 0
++	application_allocation_known
++	some t, v in claimed_application_volumes
++}
++
++application_cap_allocation_known if eligible_application_volume_raw <= application_cap_m3
++
++application_cap_allocation_known if count({t | some t, v in application_valid_volumes; v > 0}) <= 1
++
++application_amount_known if {
++	application_allocation_known
++	application_cap_allocation_known
++}
++
++# A multi-technique cap needs an authoritative allocation; A-03 is not a rule.
++default application_premium_by_technique := null
++
++application_premium_by_technique := {t: round2(min2(v, application_cap_m3) * rate_for(t, year)) |
+ 	claims_application_volume
+-	some t, v in claimed_application_volumes
+-	v > 0
+-}
+-
+-application_premium := sum([v | some _, v in application_premium_by_technique])
++	some t, v in application_valid_volumes
++	claimed_application_volumes[t] > 0
++} if {
++	application_amount_known
++}
++
++default application_premium := null
++
++application_premium := sum([v | some _, v in application_premium_by_technique]) if application_amount_known
+ 
+ # O69-MB-043: Prämie für Gülleseparierung höchstens für 20 m³ je Rinder-GVE und Jahr.
+ eligible_separation_volume := min2(eligible_separation_volume_raw, separation_cap_m3)
+@@ -72,7 +121,9 @@
+ pig_feeding_premium := round2(pig_feeding_premium_area_ha * rate_for("pig_feeding", year)) if pig_feeding_premium_eligible
+ 
+ # O69-MB-046 / O69-GEN-025: Summe vor Modulation; Prämiengewährung gemäß beantragter Menge.
+-premium_before_modulation := round2((application_premium + separation_premium) + pig_feeding_premium)
++default premium_before_modulation := null
++
++premium_before_modulation := round2((application_premium + separation_premium) + pig_feeding_premium) if is_number(application_premium)
+ 
+ # O69-GEN-023: Betriebsgrößenmodulation in Abhängigkeit zur gesamten Fläche des Betriebes.
+ band_share(band, area) := (min2(area, band.to_ha) - band.from_ha) * band.payout_share if {
+@@ -91,10 +142,15 @@
+ 	total_area_ha > 0
+ }
+ 
+-premium_after_modulation := round2(premium_before_modulation * modulation_factor)
++default premium_after_modulation := null
++
++premium_after_modulation := round2(premium_before_modulation * modulation_factor) if is_number(premium_before_modulation)
+ 
+ # O69-GEN-024: Mindestbetrag – keine Gewährung, wenn der Betrag 50 € nicht überschreitet (kann-Bestimmung).
+-below_minimum_payment if premium_after_modulation <= tables.general_conditions.minimum_payment_eur
++below_minimum_payment if {
++	is_number(premium_after_modulation)
++	premium_after_modulation <= tables.general_conditions.minimum_payment_eur
++}
+ 
+ # O69-GEN-030: Übererklärung bei nach Einheiten berechneten Prämien (§ 46 Abs. 1, 2 und 4 GSP-AV).
+ overdeclaration_payment(claimed, determined) := determined if claimed <= determined
+@@ -130,14 +186,19 @@
+ cumulated_sanction_percent(percents) := min2(sum(percents), 100)
+ 
+ # O69-GEN-022: Teilzahlung höchstens 75 %; Auszahlung bis 30. Juni des Folgejahres, nicht vor 1. Dezember.
++default advance_payment_max_eur := null
++
++advance_payment_max_eur := round2(premium_after_modulation * tables.general_conditions.advance_payment_max_share) if is_number(premium_after_modulation)
++
+ payment_schedule := {
+-	"advance_payment_max_eur": round2(premium_after_modulation * tables.general_conditions.advance_payment_max_share),
++	"advance_payment_max_eur": advance_payment_max_eur,
+ 	"payments_not_before": year_date(year, tables.deadlines.payment.payments_not_before_month_day),
+ 	"final_payment_by": year_date(year + 1, tables.deadlines.payment.payout_by_month_day),
+ }
+ 
+ premium := {
+ 	"year": year,
++	"application_amount_status": application_amount_status,
+ 	"application_by_technique_eur": application_premium_by_technique,
+ 	"application_eur": application_premium,
+ 	"application_cap_m3": application_cap_m3,
+@@ -157,3 +218,7 @@
+ 
+ # O69-GEN-031: Reihenfolge der Mehrfachkürzungen (SRL 1.12.2).
+ deduction_order := tables.general_conditions.deduction_order
++
++application_amount_status := "calculated_component" if application_amount_known
++
++application_amount_status := "allocation_required" if not application_amount_known
+--- runs/v2-o6_10-opus-5.5-high-20260925/workspace/policy/o6_10/obligations.rego
++++ adaptations/opus-2026/o6_10/policy/o6_10/obligations.rego
+@@ -142,7 +142,13 @@
+ 
+ events(p) := object.get(greening(p), "events", [])
+ 
+-destructive_event(e) if e.event_type in {"break", "clearing"}
++# O610-MEASURE-01, Merkblatt §4.4 S. 3: actual destruction/replanting.
++destructive_event(e) if e.event_type in {"break", "clearing", "replanting"}
++
++destructive_event(e) if {
++	e.event_type == "subsoil_loosening"
++	e.destroys_greening == true
++}
+ 
+ destructive_event(e) if {
+ 	e.event_type == "other_tillage"
+@@ -207,6 +213,9 @@
+ # nur prüfen, wenn Folgejahr-Ereignisse vorliegen oder die Frist im Auswertungsjahr endet (Annahme A-07)
+ late_clearing_pending(p, e) if {
+ 	late_clearing(e)
++
++	# O610-MEASURE-02: a completed deadline cannot remain pending forever.
++	late_clearing_deadline_ns(e) > date_ns(object.get(input, ["evaluation", "as_of"], sprintf("%d-12-31", [year])))
+ 	count([r |
+ 		some r in events(p)
+ 		year_of(r.date) > year_of(e.date)
+--- runs/v2-o6_11-opus-5.5-high-20261001/workspace/policy/o6_11/obligations.rego
++++ adaptations/opus-2026/o6_11/policy/o6_11/obligations.rego
+@@ -155,7 +155,7 @@
+ psm_code_needed(p, "PSMBIO") if {
+ 	has_organic(p)
+ 	not has_cs_other(p)
+-	not has_cs_herbicide(p)
++	# O611-MEASURE-02: herbicide-only code does not report the BIO fungicide.
+ }
+ 
+ psm_code_list := {row.code | some row in cfg.psm_codes.rows}
+--- runs/v2-o6_12-opus-5.5-high-20261009/workspace/policy/o6_12/contract.rego
++++ adaptations/opus-2026/o6_12/policy/o6_12/contract.rego
+@@ -36,7 +36,7 @@
+ 
+ rebzikade_exit_conditions_unmet contains "not_approved" if {
+ 	exit_requested
+-	exit_obj.approved == false
++	not exit_obj.approved == true
+ }
+ 
+ rebzikade_exit_without_repayment if {
+--- runs/v2-o6_12-opus-5.5-high-20261009/workspace/policy/o6_12/obligations.rego
++++ adaptations/opus-2026/o6_12/policy/o6_12/obligations.rego
+@@ -140,9 +140,10 @@
+ 	is_chemical_synthetic(a)
+ }
+ 
++# O612-MEASURE-03: report actual BIO application even alongside CS insecticide.
+ has_bio_only(p) if {
+-	count(flat_applications(p)) > 0
+-	not has_chem_insecticide(p)
++	some a in flat_applications(p)
++	is_bio_permitted(a)
+ 	not has_chem_other(p)
+ }
+ 
+@@ -159,7 +160,7 @@
+ 	some p in parcels
+ 	is_wine_fruit_hop_parcel(p)
+ 	some code in required_psm_codes(p)
+-	not code in parcel_codes(p)
++	not psm_code_satisfied(p, code)
+ }
+ 
+ # --- Mindestbewirtschaftung auf Dauer-/Spezialkulturflächen (SRL 1.6.3.2) -------
+@@ -185,3 +186,8 @@
+ obligation_breaches contains "authority_order_not_uploaded" if count(authority_order_upload_missing) > 0
+ 
+ obligation_breaches contains "psm_codes_missing" if count(missing_psm_codes) > 0
++
++# Merkblatt §4.2 S. 3: mixed treatment may be declared with CS; CSI stays separate.
++psm_code_satisfied(p, code) if code in parcel_codes(p)
++
++psm_code_satisfied(p, "PSMBIO") if "PSMCS" in parcel_codes(p)
+--- runs/v2-o6_13-opus-5.5-high-20260926/workspace/policy/o6_13/access.rego
++++ adaptations/opus-2026/o6_13/policy/o6_13/access.rego
+@@ -112,6 +112,9 @@
+ compliant_structures contains p.parcel_id if {
+ 	some p in nue_parcels
+ 	is_protected_structure(p)
++
++	# O613-MEASURE-01: Merkblatt §3.2/3.3 S. 2 excludes sales/display/storage area.
++	eligible_area_ha(p) > 0
+ 	parcel_has_creditable_use(p)
+ }
+ 
+--- runs/v2-o6_14-opus-5.5-high-20260926/workspace/policy/o6_14/animals.rego
++++ adaptations/opus-2026/o6_14/policy/o6_14/animals.rego
+@@ -53,10 +53,11 @@
+ 
+ # Optional kann die Kategorie direkt angegeben werden; sonst Ableitung aus
+ # Tierart, Rasse/Groesse und Geburtsdatum zum Stichtag 1. Juli.
+-rgve_category(animal) := animal.rgve_category_id if animal.rgve_category_id
++# O614-MEASURE-01: optional null means derive the known animal's category.
++rgve_category(animal) := animal.rgve_category_id if object.get(animal, "rgve_category_id", null) != null
+ 
+ rgve_category(animal) := c.category_id if {
+-	not animal.rgve_category_id
++	object.get(animal, "rgve_category_id", null) == null
+ 	some c in rgve_key.categories
+ 	category_matches(c, animal)
+ }
+@@ -164,6 +165,9 @@
+ 	some alm_id, _ in alm_by_id
+ 	n := count({d |
+ 		some a in animals
++
++		# O614-MEASURE-02: only eligible species establish qualifying occupancy.
++		species_eligible(a)
+ 		some s in stays(a)
+ 		valid_stay(s)
+ 		s.alm_id == alm_id
+--- runs/v2-o6_15-opus-5.5-high-20260926/workspace/policy/o6_15/contract.rego
++++ adaptations/opus-2026/o6_15/policy/o6_15/contract.rego
+@@ -148,6 +148,7 @@
+ dog_supplement_entry_ok if {
+ 	start := object.get(herding_application, "dog_supplement_start_year", year)
+ 	start <= params.deadlines.dog_supplement_last_entry_year
++	start <= year
+ 	not dog_supplement_application_late(start)
+ }
+ 
+--- runs/v2-o6_15-opus-5.5-high-20260926/workspace/policy/o6_15/decision.rego
++++ adaptations/opus-2026/o6_15/policy/o6_15/decision.rego
+@@ -141,7 +141,9 @@
+ 	some alm in alms
+ 	declared := object.get(alm, "declared_herder_count", null)
+ 	declared != null
+-	declared != count(object.get(alm, "herders", []))
++
++	# O615-CHILD-03: compare persons, not repeated roster rows.
++	declared != count({h.person_id | some h in object.get(alm, "herders", [])})
+ }
+ 
+ obligation_violations contains {"rule_id": "o6_15.opt.dog_requirements", "alm_id": alm.alm_id, "subject": d.dog_id} if {
+--- runs/v2-o6_16-opus-5.5-high-20261003/workspace/policy/o6_16/option_ag.rego
++++ adaptations/opus-2026/o6_16/policy/o6_16/option_ag.rego
+@@ -167,6 +167,6 @@
+ }
+ 
+ # Prämienfähige AG-Fläche: max. 20 % der Ackerfläche des Betriebes
+-ag_eligible_area_ha := sum([p.area_ha | some p in ag_parcels; ag_parcel_eligible(p); not ag_npf_no_premium(p); not parcel_has_op_code(p)])
++ag_eligible_area_ha := sum([p.area_ha | some p in ag_parcels; ag_parcel_eligible(p); not ag_npf_no_premium(p); not parcel_has_op_code(p); not parcel_in_national_park(p)])
+ 
+ ag_premium_area_ha := min_of(ag_eligible_area_ha, 0.2 * total_arable_area_ha)
+--- runs/v2-o6_16-opus-5.5-high-20261003/workspace/policy/o6_16/psm_upper_austria.rego
++++ adaptations/opus-2026/o6_16/policy/o6_16/psm_upper_austria.rego
+@@ -20,7 +20,7 @@
+ # Wirkstoffverbot bei Sorghum, Sudangras, Mais (inkl. Zuckermais, Saatmaisvermehrung), Raps, Soja, Zuckerrübe
+ obligation_violations contains v if {
+ 	some p in area_parcels
+-	parcel_crop_name(p) in restricted_crop_set
++	restricted_psm_crop(p)
+ 	some a in psm_applications(p)
+ 	some s in a.active_substances
+ 	s in banned_substances
+@@ -152,3 +152,8 @@
+ 		"message": sprintf("Chemisch-synthetische PSM-Maßnahme am %v ohne dokumentierten Kontrollgang/Warndienst", [a.date]),
+ 	}
+ }
++
++# O616-F-DOM-CROPALIASES: source "Mais" includes the already identified maize aliases.
++restricted_psm_crop(p) if parcel_crop_name(p) in restricted_crop_set
++
++restricted_psm_crop(p) if maize_crop(p)
+--- runs/v2-o6_17-opus-5.5-high-20261011/workspace/policy/o6_17/obligations.rego
++++ adaptations/opus-2026/o6_17/policy/o6_17/obligations.rego
+@@ -10,6 +10,9 @@
+ 	is_grassland(p)
+ 	pid := p.parcel_id
+ 	some e in object.get(p, ["operations", "grassland_conversions"], [])
++	is_number(contract_start_year)
++	e.date >= sprintf("%d-01-01", [contract_start_year])
++	e.date <= sprintf("%d-12-31", [application_year])
+ }
+ 
+ # Geringfügige Abweichungen bis 300 m² je Einzelfläche gelten nicht als Umbruch
+@@ -180,7 +183,12 @@
+ # ---------------------------------------------------------------------------
+ # Mindestbewirtschaftung auf Grünland (jährlich Mahd mit Verbringung oder vollflächige Beweidung)
+ # ---------------------------------------------------------------------------
+-grassland_minimum_management_met(p) if count(object.get(p, ["operations", "cutting_dates"], [])) > 0
++# O617-F-DOM-TIME: annual mowing, ATB §5.4 S. 6.
++grassland_minimum_management_met(p) if {
++	some d in object.get(p, ["operations", "cutting_dates"], [])
++	is_string(d)
++	startswith(d, sprintf("%d-", [application_year]))
++}
+ 
+ grassland_minimum_management_met(p) if object.get(p, ["operations", "full_grazing"], false) == true
+ 
+--- runs/v2-o6_18-opus-5.5-high-20260927/workspace/policy/o6_18/lib.rego
++++ adaptations/opus-2026/o6_18/policy/o6_18/lib.rego
+@@ -57,7 +57,12 @@
+ 
+ area(p) := object.get(p, "area_ha", 0)
+ 
+-cutting_dates(p) := object.get(p, ["operations", "cutting_dates"], [])
++# O618-F-DOM-TIME: only actual current-year cuts count as current care.
++cutting_dates(p) := [d |
++	some d in object.get(p, ["operations", "cutting_dates"], [])
++	is_string(d)
++	startswith(d, sprintf("%d-", [year]))
++]
+ 
+ grazing_periods(p) := object.get(ns(p), "grazing_periods", [])
+ 
+--- runs/v2-o6_18-opus-5.5-high-20260927/workspace/policy/o6_18/obligations.rego
++++ adaptations/opus-2026/o6_18/policy/o6_18/obligations.rego
+@@ -310,7 +310,7 @@
+ 	lib.has_any_auflage(parcel, ["NW06"])
+ 	limit := object.get(lib.pc(parcel), "max_gve_per_ha", null)
+ 	limit != null
+-	rgve_per_ha_year(parcel) > limit
++	gve_per_ha_year(parcel) > limit
+ 	v := {"rule_id": "O618-OBL-011K", "parcel_id": parcel.parcel_id, "message": "Viehbesatz über Maximalbesatz laut Projektbestätigung (NW06)"}
+ }
+ 
+@@ -318,8 +318,8 @@
+ violations contains v if {
+ 	some parcel in lib.nat_parcels
+ 	lib.has_auflage(parcel, "GN03")
+-	count(lib.cutting_dates(parcel)) >= 2
+-	lib.days_between(lib.sorted_cuts(parcel)[0], lib.sorted_cuts(parcel)[1]) < 63
++	count(ordered_uses(parcel)) >= 2
++	lib.days_between(ordered_uses(parcel)[0], ordered_uses(parcel)[1]) < 63
+ 	v := {"rule_id": "O618-OBL-011L", "parcel_id": parcel.parcel_id, "message": "Weniger als 9 Wochen zwischen erster und zweiter Nutzung (GN03)"}
+ }
+ 
+@@ -329,8 +329,8 @@
+ 	lib.has_any_auflage(parcel, ["GN01", "GN02"])
+ 	d2 := object.get(lib.pc(parcel), "second_use_earliest_date", null)
+ 	d2 != null
+-	count(lib.cutting_dates(parcel)) >= 2
+-	lib.sorted_cuts(parcel)[1] < effective_date(d2)
++	count(ordered_uses(parcel)) >= 2
++	ordered_uses(parcel)[1] < effective_date(d2)
+ 	v := {"rule_id": "O618-OBL-011M", "parcel_id": parcel.parcel_id, "message": sprintf("2. Nutzung vor %v", [effective_date(d2)])}
+ }
+ 
+@@ -378,7 +378,7 @@
+ 	start := object.get(lib.pc(parcel), "grazing_window_start", null)
+ 	start != null
+ 	some g in lib.grazing_periods(parcel)
+-	g.start < start
++	g.start < effective_date(start)
+ 	v := {"rule_id": "O618-OBL-011Q", "parcel_id": parcel.parcel_id, "message": sprintf("Beweidung ab %v vor erlaubtem Beginn %v", [g.start, start])}
+ }
+ 
+@@ -478,3 +478,69 @@
+ 	some parcel in lib.nat_parcels
+ 	object.get(parcel, ["oepul", "schlagnutzung"], null) == "Grünbrache"
+ }
++
++# O618-F-DOM-USES: Annex I GN01/02/03 refer to uses, including grazing.
++ordered_uses(parcel) := sort(array.concat(lib.cutting_dates(parcel), [g.start | some g in lib.grazing_periods(parcel)]))
++
++# O618-F-DOM-FERT: source Annex I ND01/05/07/16/18, pp. 81–82.
++# Exact material enum, not an inferred fertilizer effect or sanction stage.
++material_prohibited("lime_only", material) if material != "kalk"
++
++material_prohibited("no_liming", "kalk")
++
++material_prohibited("composted_solid_manure_only", material) if material != "kompostierter_festmist"
++
++material_prohibited("rock_dust_only", material) if material != "urgesteinsmehl"
++
++material_prohibited("farm_manure_only", material) if not material in {"festmist", "kompostierter_festmist", "guelle", "jauche", "mistwasser"}
++
++material_prohibited("farm_manure_from_sept", material) if not material in {"festmist", "kompostierter_festmist", "guelle", "jauche", "mistwasser"}
++
++violations contains {"rule_id": "O618-OBL-011D", "parcel_id": parcel.parcel_id, "message": sprintf("Auflage %s verbietet Düngung mit %s", [r, e.type])} if {
++	some parcel in lib.nat_parcels
++	some r in fert_rule(parcel)
++	some e in lib.fertilization_events(parcel)
++	material_prohibited(r, e.type)
++}
++
++# Annex A: ruminant factors are RGVE and GVE; other species have GVE only.
++key_gve(k) := row.gve if {
++	some row in data.o6_18.annex_a_gve_key.rows
++	row.key == k
++	is_number(row.gve)
++}
++
++key_gve(k) := row.rgve if {
++	some row in data.o6_18.annex_a_gve_key.rows
++	row.key == k
++	row.gve == null
++	is_number(row.rgve)
++}
++
++gve_per_ha_year(parcel) := (sum([term |
++	some g in lib.grazing_periods(parcel)
++	some a in object.get(g, "animals", [])
++	term := (a.count * key_gve(a.annex_a_key)) * period_days(g)
++]) / 365) / lib.area(parcel) if {
++	lib.area(parcel) > 0
++}
++
++# NW05 requires simultaneous stock, whereas NW06 is the annual stock measure.
++# Maxima can only increase at a grazing interval's start date.
++simultaneous_gve(parcel, d) := sum([term |
++	some g in lib.grazing_periods(parcel)
++	g.start <= d
++	g.end >= d
++	some a in object.get(g, "animals", [])
++	term := a.count * key_gve(a.annex_a_key)
++])
++
++violations contains {"rule_id": "O618-OBL-011K", "parcel_id": parcel.parcel_id, "message": "Gleichzeitiger GVE-Besatz über Maximalbesatz laut Projektbestätigung (NW05)"} if {
++	some parcel in lib.nat_parcels
++	lib.has_auflage(parcel, "NW05")
++	limit := object.get(lib.pc(parcel), "max_gve_per_ha", null)
++	is_number(limit)
++	lib.area(parcel) > 0
++	some g in lib.grazing_periods(parcel)
++	simultaneous_gve(parcel, g.start) > limit * lib.area(parcel)
++}
+--- runs/v2-o6_19-opus-5.5-high-20260927/workspace/policy/o6_19/parcel.rego
++++ adaptations/opus-2026/o6_19/policy/o6_19/parcel.rego
+@@ -17,6 +17,7 @@
+ 
+ parcel_use_interval_ok(p) if {
+ 	parcel_ebw(p).requires_regular_care == true
++	parcel_ebw(p).last_use_or_care_year <= year
+ 	year - parcel_ebw(p).last_use_or_care_year < params.use_or_care_interval_years
+ }
+ 
+--- runs/v2-o6_21-opus-5.5-high-20261004/workspace/policy/o6_21/housing.rego
++++ adaptations/opus-2026/o6_21/policy/o6_21/housing.rego
+@@ -217,3 +217,16 @@
+ 	stall_sketch_required
+ 	not object.get(lib.measure_input, "stall_sketch_and_occupancy_plan_available", false)
+ }
++
++# O621-F-WEIGHT: unknown weight cannot erase known occupied floor space.
++# These are LOWER BOUNDS, not a positive proof of sufficient space for an
++# unknown weight. animals_missing_weight remains an evidence blocker upstream.
++animal_total_area_requirement(a) := min([row.total_area_m2_per_animal | some row in lib.tables.space_requirements]) if {
++	not object.get(a, "is_cow", false)
++	not is_number(object.get(a, "current_weight_kg", null))
++}
++
++animal_lying_area_requirement(a) := min([row.lying_area_m2_per_animal | some row in lib.tables.space_requirements]) if {
++	not object.get(a, "is_cow", false)
++	not is_number(object.get(a, "current_weight_kg", null))
++}
+--- runs/v2-o6_22-opus-5.5-high-20261004/workspace/policy/o6_22/common.rego
++++ adaptations/opus-2026/o6_22/policy/o6_22/common.rego
+@@ -96,7 +96,12 @@
+ deregistered_count(g) := object.get(g, "deregistered_average_count", 0)
+ 
+ # O622-PREM-002: beantragte Stückzahl abzüglich abgemeldeter Tiere.
+-eligible_head_count(g) := max([0, count_basis(g) - deregistered_count(g)]) if group_eligible(g)
++eligible_head_count(g) := max([0, count_basis(g) - deregistered_count(g)]) if {
++	group_eligible(g)
++	not known_cohort_housing_failure(g)
++}
++
++eligible_head_count(g) := 0 if known_cohort_housing_failure(g)
+ 
+ eligible_head_count(g) := 0 if not group_eligible(g)
+ 
+--- runs/v2-o6_22-opus-5.5-high-20261004/workspace/policy/o6_22/housing.rego
++++ adaptations/opus-2026/o6_22/policy/o6_22/housing.rego
+@@ -469,3 +469,21 @@
+ 	object.get(p, "pig_free_range_run", false) == true
+ 	not object.get(p, "mfa_land_use_type", "") in lists.free_range_run_land_use_types
+ }
++
++# O622-F-BASE: supplied pens describe this cohort over its required weight
++# interval. Point-in-time inspections must not be projected as whole-year facts.
++known_cohort_housing_failure(g) if {
++	object.get(g, ["pig_welfare", "continuous_compliance_from_eligible_weight"], null) == false
++}
++
++known_cohort_housing_failure(g) if {
++	some pen in group_pens(g)
++	checked_pen(g, pen)
++	pen.group_housed == false
++}
++
++known_cohort_housing_failure(g) if {
++	some pen in group_pens(g)
++	checked_pen(g, pen)
++	pen.lying_area_littered_and_dry == false
++}
+--- runs/v2-o6_22-opus-5.5-high-20261004/workspace/policy/o6_22/premium.rego
++++ adaptations/opus-2026/o6_22/policy/o6_22/premium.rego
+@@ -52,15 +52,18 @@
+ unkupiert_premium[c] := r2(category_gve[c] * surcharge_rate("unkupiert", c, year)) if {
+ 	some c in payable_categories
+ 	c in unkupiert_active_categories
++	unkupiert_ok(c)
+ }
+ 
+ gvo_premium[c] := r2(category_gve[c] * surcharge_rate("gvo_frei", c, year)) if {
+ 	gvo_active
++	gvo_entitlement_met
+ 	some c in payable_categories
+ }
+ 
+ festmist_premium[c] := r2(category_gve[c] * surcharge_rate("festmistkompostierung", c, year)) if {
+ 	festmist_active
++	compost_entitlement_met
+ 	some c in payable_categories
+ }
+ 
+@@ -150,3 +153,21 @@
+ }
+ 
+ document_retention_until(y) := year_date(y + params.document_retention_years_one_year_measures, params.commitment_end_mm_dd)
++
++unkupiert_premium[c] := 0 if {
++	some c in payable_categories
++	c in unkupiert_active_categories
++	not unkupiert_ok(c)
++}
++
++gvo_premium[c] := 0 if {
++	gvo_active
++	some c in payable_categories
++	not gvo_entitlement_met
++}
++
++festmist_premium[c] := 0 if {
++	festmist_active
++	some c in payable_categories
++	not compost_entitlement_met
++}
+--- runs/v2-o6_22-opus-5.5-high-20261004/workspace/policy/o6_22/surcharges.rego
++++ adaptations/opus-2026/o6_22/policy/o6_22/surcharges.rego
+@@ -223,3 +223,19 @@
+ 	festmist_active
+ 	object.get(composting, "is_compost_barn", false) == true
+ }
++
++# O622-F-SCOPE: explicitly deregistered animals are outside this option.
++undocked_or_other_category(g, _) if eligible_head_count(g) == 0
++
++# O622-F-OPTIONS: entitlement to each surcharge is separate from base housing.
++gvo_entitlement_met if {
++	count(non_compliant_protein_feeds) == 0
++	not object.get(protein_feed, "non_compliant_protein_feed_stored_or_fed", false) == true
++}
++
++compost_entitlement_met if {
++	composting.all_solid_manure_composted_on_farm == true
++	composting.is_compost_barn == false
++	count(object.get(composting, "heaps", [])) > 0
++	every heap in composting.heaps { heap_ok(heap) }
++}
+--- runs/v2-o6_24-opus-5.5-high-20261003/workspace/policy/o6_24/records.rego
++++ adaptations/opus-2026/o6_24/policy/o6_24/records.rego
+@@ -82,3 +82,11 @@
+ 	is_string(object.get(a, "recorded_date", null))
+ 	days_between(a.date, a.recorded_date) > aufz.entry_deadline_days
+ }
++
++# O624-F-RECORDS: GWSP §5 requires the mineral fertilizer trade name.
++plot_record_missing[p.parcel_id] contains sprintf("Düngung %v: product_name", [object.get(a, "date", "?")]) if {
++	some p in area_arable_parcels
++	some a in applications_of(p)
++	a.fertilizer_type == "mineral"
++	object.get(a, "product_name", null) == null
++}
+--- runs/v2-o6_24-opus-5.5-high-20261003/workspace/policy/o6_24/vegetables.rego
++++ adaptations/opus-2026/o6_24/policy/o6_24/vegetables.rego
+@@ -74,7 +74,7 @@
+ 
+ nmin_missing[p.parcel_id] if {
+ 	some p in area_arable_parcels
+-	is_vegetable_tab3(p)
++	is_vegetable_parcel(p)
+ 	not nmin_ok(p)
+ }
+ 
+@@ -101,6 +101,7 @@
+ 	some t in water_tests
+ 	t.water_source_id == src
+ 	t.method in {"authorized_body", "suitable_method"}
++	year_of(t.test_date) <= farm_year
+ 	farm_year - year_of(t.test_date) < 3
+ }
+ 
