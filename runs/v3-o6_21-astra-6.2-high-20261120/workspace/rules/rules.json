@@ -1,0 +1,3548 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_21",
+  "rules": [
+    {
+      "id": "O21-scope",
+      "rule_type": "Fördergegenstand",
+      "statement": "Jungrinder werden in Gruppen auf eingestreuten Liegeflächen mit erhöhtem Platzangebot gehalten. — Die Jahresprämie gleicht die zusätzlichen Kosten und Einkommensverluste aus. Für Festmistkompostierung ist ein Zuschlag wählbar.",
+      "conditions": [
+        {
+          "expression": "Jungrinder werden in Gruppen auf eingestreuten Liegeflächen mit erhöhtem Platzangebot gehalten.",
+          "description": "Jungrinder werden in Gruppen auf eingestreuten Liegeflächen mit erhöhtem Platzangebot gehalten."
+        }
+      ],
+      "result": {
+        "outcome": "scope",
+        "description": "Die Jahresprämie gleicht die zusätzlichen Kosten und Einkommensverluste aus. Für Festmistkompostierung ist ein Zuschlag wählbar."
+      },
+      "source_reference_ids": [
+        "SRC-M-0013-0017",
+        "SRC-S-4318-4321"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-year",
+      "rule_type": "Vertragsdauer",
+      "statement": "Teilnahme an der Maßnahme oder ihrem Zuschlag im Förderjahr. — Die Verpflichtung umfasst den 1. Jänner bis 31. Dezember. Die Auflagen gelten während des jeweils einschlägigen Haltungszeitraums.",
+      "conditions": [
+        {
+          "expression": "Teilnahme an der Maßnahme oder ihrem Zuschlag im Förderjahr.",
+          "description": "Teilnahme an der Maßnahme oder ihrem Zuschlag im Förderjahr.",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "year",
+        "description": "Die Verpflichtung umfasst den 1. Jänner bis 31. Dezember. Die Auflagen gelten während des jeweils einschlägigen Haltungszeitraums.",
+        "value": {
+          "start": "01-01",
+          "end": "12-31"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0024-0030",
+        "SRC-G-0391-0396",
+        "SRC-S-0592-0598"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-renew",
+      "rule_type": "Verlängerung",
+      "statement": "Einjährige Maßnahme oder Festmistzuschlag wurde beantragt und nicht abgemeldet. — Die Vorbeantragung gilt für das Folgejahr bis Programmende. Zur Weiterführung ist jährlich der Mehrfachantrag mit förderrelevanten Einheiten abzugeben.",
+      "conditions": [
+        {
+          "expression": "Einjährige Maßnahme oder Festmistzuschlag wurde beantragt und nicht abgemeldet.",
+          "description": "Einjährige Maßnahme oder Festmistzuschlag wurde beantragt und nicht abgemeldet.",
+          "input_paths": [
+            "o6_21.categories",
+            "o6_21.previous_status",
+            "o6_21.current_mfa_with_units",
+            "o6_21.withdrawal_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "renew",
+        "description": "Die Vorbeantragung gilt für das Folgejahr bis Programmende. Zur Weiterführung ist jährlich der Mehrfachantrag mit förderrelevanten Einheiten abzugeben."
+      },
+      "source_reference_ids": [
+        "SRC-M-0025-0028",
+        "SRC-G-0489-0494",
+        "SRC-S-1090-1093",
+        "SRC-S-1094-1097"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.contract_effects"
+      ]
+    },
+    {
+      "id": "O21-minimum",
+      "rule_type": "Zugangsschwelle",
+      "statement": "Für alle beantragten Kategorien zusammen werden die teilnehmenden RGVE im Jahresdurchschnitt ermittelt. — Der Betrieb muss mindestens 2,00 RGVE erreichen. Einzelkategorien und einzelne Tage haben keine eigene 2-RGVE-Schwelle.",
+      "conditions": [
+        {
+          "expression": "sum(teilnahmefähige RGVE-Tage aller gewählten Kategorien) / Tage_im_Förderjahr >= 2",
+          "description": "Für alle beantragten Kategorien zusammen werden die teilnehmenden RGVE im Jahresdurchschnitt ermittelt.",
+          "input_paths": [
+            "o6_21.cattle",
+            "o6_21.categories"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "minimum",
+        "description": "Der Betrieb muss mindestens 2,00 RGVE erreichen. Einzelkategorien und einzelne Tage haben keine eigene 2-RGVE-Schwelle.",
+        "value": {
+          "operator": ">=",
+          "threshold": 2,
+          "unit": "RGVE/Betrieb",
+          "period": "Kalenderjahresdurchschnitt",
+          "aggregation": "alle beantragten Kategorien"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0041-0045",
+        "SRC-S-4323-4323"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.minimum_participation_met"
+      ]
+    },
+    {
+      "id": "O21-lapse",
+      "rule_type": "Vertragsfolge",
+      "statement": "Die jährliche Mindestteilnahme wird unterschritten. — Der Maßnahmenvertrag erlischt bzw. es kommt für dieses Jahr kein gültiger Vertrag zustande.",
+      "conditions": [
+        {
+          "expression": "Jahresdurchschnitt_teilnehmende_RGVE < 2",
+          "description": "Die jährliche Mindestteilnahme wird unterschritten.",
+          "input_paths": [
+            "o6_21.cattle"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "lapse",
+        "description": "Der Maßnahmenvertrag erlischt bzw. es kommt für dieses Jahr kein gültiger Vertrag zustande.",
+        "value": {
+          "threshold": 2,
+          "operator": "<",
+          "unit": "RGVE"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0027-0028",
+        "SRC-S-1231-1233"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.minimum_participation_met",
+        "data.oepul.o6_21.contract_effects"
+      ]
+    },
+    {
+      "id": "O21-categories",
+      "rule_type": "Tierkategorie",
+      "statement": "Ein Rind erreicht das jeweilige Alter in einer gewählten Kategorie. — Wählbar sind männliche Rinder unter 6 Monaten und ab 6 Monaten ohne Altersobergrenze sowie weibliche Rinder unter 6 Monaten und ab 6 bis unter 24 Monaten.",
+      "conditions": [
+        {
+          "expression": "Ein Rind erreicht das jeweilige Alter in einer gewählten Kategorie.",
+          "description": "Ein Rind erreicht das jeweilige Alter in einer gewählten Kategorie.",
+          "input_paths": [
+            "o6_21.cattle",
+            "o6_21.categories"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "categories",
+        "description": "Wählbar sind männliche Rinder unter 6 Monaten und ab 6 Monaten ohne Altersobergrenze sowie weibliche Rinder unter 6 Monaten und ab 6 bis unter 24 Monaten.",
+        "value": {
+          "table": "/o6_21_tables/categories"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0047-0047",
+        "SRC-M-0054-0058",
+        "SRC-S-4325-4329"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.category"
+      ]
+    },
+    {
+      "id": "O21-dairy",
+      "rule_type": "Ausschluss",
+      "statement": "Milchanlieferung an eine Molkerei einschließlich saisonaler Lieferung auf der Alm. — Die Kategorie weiblich ab 6 bis unter 24 Monaten ist ausgeschlossen. Direkte Verarbeitung und Vermarktung ohne Molkereilieferung lässt diese Kategorie offen.",
+      "conditions": [
+        {
+          "expression": "Molkereilieferung AND Kategorie = female_6_24",
+          "description": "Milchanlieferung an eine Molkerei einschließlich saisonaler Lieferung auf der Alm.",
+          "input_paths": [
+            "o6_21.dairy_delivery"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "dairy",
+        "description": "Die Kategorie weiblich ab 6 bis unter 24 Monaten ist ausgeschlossen. Direkte Verarbeitung und Vermarktung ohne Molkereilieferung lässt diese Kategorie offen.",
+        "value": {
+          "excluded_category": "female_6_24"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0049-0052",
+        "SRC-S-4338-4339"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.milk_allows"
+      ]
+    },
+    {
+      "id": "O21-option",
+      "rule_type": "Option",
+      "statement": "Der Betrieb nimmt an der Maßnahme teil. — Festmistkompostierung kann zusätzlich beantragt werden.",
+      "conditions": [
+        {
+          "expression": "Der Betrieb nimmt an der Maßnahme teil.",
+          "description": "Der Betrieb nimmt an der Maßnahme teil.",
+          "input_paths": [
+            "o6_21.compost"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "option",
+        "description": "Festmistkompostierung kann zusätzlich beantragt werden."
+      },
+      "source_reference_ids": [
+        "SRC-M-0059-0060",
+        "SRC-M-0015-0015"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-stable",
+      "rule_type": "Stalldefinition",
+      "statement": "Ein übliches Stallgebäude wird für die Haltung verwendet. — Erforderlich sind mindestens dreiseitige Verschalung oder dreiseitiger zugluftschützender Windnetzbehang, überdachte Liegeplätze und befestigter Boden. Schotter und Lehm zählen nicht. Anfallender flüssiger Kot und Harn müssen in einem Behälter gesammelt werden können.",
+      "conditions": [
+        {
+          "expression": "Ein übliches Stallgebäude wird für die Haltung verwendet.",
+          "description": "Ein übliches Stallgebäude wird für die Haltung verwendet.",
+          "input_paths": [
+            "o6_21.stables"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "stable",
+        "description": "Erforderlich sind mindestens dreiseitige Verschalung oder dreiseitiger zugluftschützender Windnetzbehang, überdachte Liegeplätze und befestigter Boden. Schotter und Lehm zählen nicht. Anfallender flüssiger Kot und Harn müssen in einem Behälter gesammelt werden können.",
+        "value": {
+          "wind_protected_sides_min": 3,
+          "not_solid": [
+            "Schotter",
+            "Lehm"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0062-0066"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.stable_structure",
+        "data.oepul.o6_21.stable_checks"
+      ]
+    },
+    {
+      "id": "O21-open",
+      "rule_type": "Stalldefinition",
+      "statement": "Ein anderes bauliches System wird als Offenstall verwendet. — Erforderlich sind ein festes Dach über den Liegeflächen, flüssigkeitsdicht befestigte Stallflächen und der Abfluss der Sickerwässer in eine Sammelgrube.",
+      "conditions": [
+        {
+          "expression": "Ein anderes bauliches System wird als Offenstall verwendet.",
+          "description": "Ein anderes bauliches System wird als Offenstall verwendet.",
+          "input_paths": [
+            "o6_21.stables"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "open",
+        "description": "Erforderlich sind ein festes Dach über den Liegeflächen, flüssigkeitsdicht befestigte Stallflächen und der Abfluss der Sickerwässer in eine Sammelgrube."
+      },
+      "source_reference_ids": [
+        "SRC-M-0067-0071"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.stable_structure"
+      ]
+    },
+    {
+      "id": "O21-capacity",
+      "rule_type": "Platzangebot",
+      "statement": "Tiere befinden sich zeitweise auf der Weide. — Der Stall muss auch dann den Mindestplatz für alle Tiere bieten.",
+      "conditions": [
+        {
+          "expression": "Tiere befinden sich zeitweise auf der Weide.",
+          "description": "Tiere befinden sich zeitweise auf der Weide.",
+          "input_paths": [
+            "o6_21.stables",
+            "o6_21.pens"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "capacity",
+        "description": "Der Stall muss auch dann den Mindestplatz für alle Tiere bieten."
+      },
+      "source_reference_ids": [
+        "SRC-M-0070-0073"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.space_assessment"
+      ]
+    },
+    {
+      "id": "O21-usable",
+      "rule_type": "Flächendefinition",
+      "statement": "Die nutzbare Fläche eines Stallabteils wird festgestellt. — Befestigte, ständig zugängliche Stall- und Auslaufflächen zählen. Teilflächen dürfen nur für Routinearbeiten wie Entmisten gesperrt werden.",
+      "conditions": [
+        {
+          "expression": "Die nutzbare Fläche eines Stallabteils wird festgestellt.",
+          "description": "Die nutzbare Fläche eines Stallabteils wird festgestellt.",
+          "input_paths": [
+            "o6_21.pens"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "usable",
+        "description": "Befestigte, ständig zugängliche Stall- und Auslaufflächen zählen. Teilflächen dürfen nur für Routinearbeiten wie Entmisten gesperrt werden."
+      },
+      "source_reference_ids": [
+        "SRC-M-0080-0083"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.usable_area",
+        "data.oepul.o6_21.restricted_pens"
+      ]
+    },
+    {
+      "id": "O21-tgd",
+      "rule_type": "Programmpflicht",
+      "statement": "Der Betrieb hält über 10,00 RGVE förderbare Rinder. — Ein anerkannter Rinder-Tiergesundheitsdienst muss den Zeitraum 1. Jänner bis 31. Dezember abdecken. Im Jahr 2023 reicht 15. April bis 31. Dezember.",
+      "conditions": [
+        {
+          "expression": "förderbare_Rinder_RGVE > 10",
+          "description": "Der Betrieb hält über 10,00 RGVE förderbare Rinder.",
+          "input_paths": [
+            "o6_21.eligible_cattle_rgve",
+            "o6_21.tgd",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "tgd",
+        "description": "Ein anerkannter Rinder-Tiergesundheitsdienst muss den Zeitraum 1. Jänner bis 31. Dezember abdecken. Im Jahr 2023 reicht 15. April bis 31. Dezember.",
+        "value": {
+          "operator": ">",
+          "threshold_rgve": 10,
+          "start": "01-01",
+          "start_2023": "04-15",
+          "end": "12-31"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0086-0089",
+        "SRC-S-4331-4333"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.tgd_required",
+        "data.oepul.o6_21.tgd_met",
+        "data.oepul.o6_21.membership_status"
+      ]
+    },
+    {
+      "id": "O21-tgd-proof",
+      "rule_type": "Nachweis",
+      "statement": "Die AMA fordert den Teilnahmenachweis an und der Tiergesundheitsdienst übermittelt ihn nicht. — Der Betrieb muss den Nachweis der AMA übermitteln.",
+      "conditions": [
+        {
+          "expression": "TGD_pflichtig AND AMA_angefordert AND NOT durch_TGD_übermittelt",
+          "description": "Die AMA fordert den Teilnahmenachweis an und der Tiergesundheitsdienst übermittelt ihn nicht.",
+          "input_paths": [
+            "o6_21.tgd"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "tgd_proof",
+        "description": "Der Betrieb muss den Nachweis der AMA übermitteln."
+      },
+      "source_reference_ids": [
+        "SRC-M-0089-0091",
+        "SRC-S-4332-4333"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.proof_due",
+        "data.oepul.o6_21.proof_outstanding"
+      ]
+    },
+    {
+      "id": "O21-qplus",
+      "rule_type": "Programmpflicht",
+      "statement": "Mindestens eine weibliche Kategorie wird beantragt. — Qplus Rind oder ein vergleichbares Programm für weibliche Mastrinder muss das ganze Förderjahr abdecken. 2023 genügt ein gültiger Vertrag vom 15. April bis 31. Dezember. Laut Informationsblatt gibt es im Oktober 2025 kein vergleichbares Programm.",
+      "conditions": [
+        {
+          "expression": "gewählte_Kategorien ∩ {female_u6, female_6_24} ≠ ∅",
+          "description": "Mindestens eine weibliche Kategorie wird beantragt.",
+          "input_paths": [
+            "o6_21.categories",
+            "o6_21.qplus",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "qplus",
+        "description": "Qplus Rind oder ein vergleichbares Programm für weibliche Mastrinder muss das ganze Förderjahr abdecken. 2023 genügt ein gültiger Vertrag vom 15. April bis 31. Dezember. Laut Informationsblatt gibt es im Oktober 2025 kein vergleichbares Programm.",
+        "value": {
+          "start": "01-01",
+          "start_2023": "04-15",
+          "end": "12-31"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0093-0098",
+        "SRC-S-4334-4336"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.qplus_required",
+        "data.oepul.o6_21.qplus_met",
+        "data.oepul.o6_21.membership_status"
+      ]
+    },
+    {
+      "id": "O21-qplus-proof",
+      "rule_type": "Nachweis",
+      "statement": "Die AMA fordert den Programmnachweis an und Abwicklungs- oder Zahlstelle übermittelt ihn nicht. — Der Betrieb muss den Nachweis der AMA übermitteln.",
+      "conditions": [
+        {
+          "expression": "weibliche_Kategorie_beantragt AND AMA_angefordert AND NOT durch_Abwicklungs_oder_Zahlstelle_übermittelt",
+          "description": "Die AMA fordert den Programmnachweis an und Abwicklungs- oder Zahlstelle übermittelt ihn nicht.",
+          "input_paths": [
+            "o6_21.qplus"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "qplus_proof",
+        "description": "Der Betrieb muss den Nachweis der AMA übermitteln."
+      },
+      "source_reference_ids": [
+        "SRC-M-0099-0101",
+        "SRC-S-4336-4338"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.proof_due",
+        "data.oepul.o6_21.proof_outstanding"
+      ]
+    },
+    {
+      "id": "O21-group",
+      "rule_type": "Haltungsverpflichtung",
+      "statement": "Eine Rinderkategorie nimmt teil. — Grundsätzlich alle Tiere dieser Kategorie sind im Stall in Gruppen auf eingestreuten Systemen zu halten. Die ausdrücklich geregelten Ausnahmen bleiben anwendbar.",
+      "conditions": [
+        {
+          "expression": "Eine Rinderkategorie nimmt teil.",
+          "description": "Eine Rinderkategorie nimmt teil.",
+          "input_paths": [
+            "o6_21.cattle",
+            "o6_21.housing_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "group",
+        "description": "Grundsätzlich alle Tiere dieser Kategorie sind im Stall in Gruppen auf eingestreuten Systemen zu halten. Die ausdrücklich geregelten Ausnahmen bleiben anwendbar."
+      },
+      "source_reference_ids": [
+        "SRC-M-0103-0107",
+        "SRC-S-4342-4342"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.housing_mode_ok",
+        "data.oepul.o6_21.permitted_events"
+      ]
+    },
+    {
+      "id": "O21-age-window",
+      "rule_type": "Verpflichtungsbeginn",
+      "statement": "Ein Rind wird geboren, erreicht die nächste beantragte Alterskategorie oder wird zugekauft. — Auflagen gelten ab Geburt, ab Erreichen von 6 Monaten bzw. bei Zukauf ab Zukaufsdatum. Sie enden mit dem Verlassen der Kategorie oder des Betriebs bzw. mit Jahresende, bei älteren weiblichen Rindern spätestens mit 2 Jahren.",
+      "conditions": [
+        {
+          "expression": "Ein Rind wird geboren, erreicht die nächste beantragte Alterskategorie oder wird zugekauft.",
+          "description": "Ein Rind wird geboren, erreicht die nächste beantragte Alterskategorie oder wird zugekauft.",
+          "input_paths": [
+            "o6_21.cattle",
+            "o6_21.categories"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "age_window",
+        "description": "Auflagen gelten ab Geburt, ab Erreichen von 6 Monaten bzw. bei Zukauf ab Zukaufsdatum. Sie enden mit dem Verlassen der Kategorie oder des Betriebs bzw. mit Jahresende, bei älteren weiblichen Rindern spätestens mit 2 Jahren."
+      },
+      "source_reference_ids": [
+        "SRC-M-0108-0113",
+        "SRC-M-0119-0120"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animal_rgve_days"
+      ]
+    },
+    {
+      "id": "O21-perforation",
+      "rule_type": "Liegebereich",
+      "statement": "Gruppenhaltung im Stall. — Die geschlossene planbefestigte Liegefläche darf höchstens 5 % perforiert sein.",
+      "conditions": [
+        {
+          "expression": "Gruppenhaltung im Stall.",
+          "description": "Gruppenhaltung im Stall.",
+          "input_paths": [
+            "o6_21.pens"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "perforation",
+        "description": "Die geschlossene planbefestigte Liegefläche darf höchstens 5 % perforiert sein.",
+        "value": {
+          "operator": "<=",
+          "value": 5,
+          "unit": "%"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0122-0124",
+        "SRC-S-4343-4345"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.bedding_ok"
+      ]
+    },
+    {
+      "id": "O21-lying-share",
+      "rule_type": "Flächenminimum",
+      "statement": "Die erforderliche Gesamtfläche wird für die tatsächliche Boxenbelegung berechnet. — Mindestens 40 % dieser Mindestgesamtfläche müssen eingestreute Liegefläche sein.",
+      "conditions": [
+        {
+          "expression": "Die erforderliche Gesamtfläche wird für die tatsächliche Boxenbelegung berechnet.",
+          "description": "Die erforderliche Gesamtfläche wird für die tatsächliche Boxenbelegung berechnet.",
+          "input_paths": [
+            "o6_21.pens"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "lying_share",
+        "description": "Mindestens 40 % dieser Mindestgesamtfläche müssen eingestreute Liegefläche sein.",
+        "value": {
+          "operator": ">=",
+          "value": 0.4,
+          "basis": "geforderte Gesamtfläche"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0125-0128",
+        "SRC-M-0165-0166",
+        "SRC-S-4344-4347"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.space_need"
+      ]
+    },
+    {
+      "id": "O21-bedding",
+      "rule_type": "Einstreu",
+      "statement": "Die Liegefläche wird eingestreut. — Saugfähiges weiches Material ist frei wählbar. Es muss die Fläche weich und trocken halten. Es gibt keine feste Aufwandmenge je GVE. Bei mit dem Daumen eindrückbarem Kunststoff oder Gummi dient die Einstreu der Trockenheit.",
+      "conditions": [
+        {
+          "expression": "Die Liegefläche wird eingestreut.",
+          "description": "Die Liegefläche wird eingestreut.",
+          "input_paths": [
+            "o6_21.pens"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "bedding",
+        "description": "Saugfähiges weiches Material ist frei wählbar. Es muss die Fläche weich und trocken halten. Es gibt keine feste Aufwandmenge je GVE. Bei mit dem Daumen eindrückbarem Kunststoff oder Gummi dient die Einstreu der Trockenheit."
+      },
+      "source_reference_ids": [
+        "SRC-M-0126-0130",
+        "SRC-M-0134-0140"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.bedding_ok",
+        "data.oepul.o6_21.bedded_pens"
+      ]
+    },
+    {
+      "id": "O21-depth",
+      "rule_type": "Einstreu",
+      "statement": "Der Liegegrund besteht aus hartem Gummi oder einer befestigten Fläche. — Eine mindestens 3 cm dicke Einstreudecke und ständiges Nachstreuen müssen Trockenheit gewährleisten.",
+      "conditions": [
+        {
+          "expression": "Der Liegegrund besteht aus hartem Gummi oder einer befestigten Fläche.",
+          "description": "Der Liegegrund besteht aus hartem Gummi oder einer befestigten Fläche.",
+          "input_paths": [
+            "o6_21.pens"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "depth",
+        "description": "Eine mindestens 3 cm dicke Einstreudecke und ständiges Nachstreuen müssen Trockenheit gewährleisten.",
+        "value": {
+          "operator": ">=",
+          "value": 3,
+          "unit": "cm"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0131-0133"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.bedding_depth_ok"
+      ]
+    },
+    {
+      "id": "O21-space",
+      "rule_type": "Flächentabelle",
+      "statement": "Ein Rind belegt die Box einschließlich dauerhaft zugänglicher befestigter Auslauffläche. — Mindestwerte in m² je Tier für Gesamtfläche und eingestreute Liegefläche sind bis 150 kg 1,80 und 0,72, bis 220 kg 2,50 und 1,00, bis 350 kg 3,00 und 1,20, bis 500 kg 3,60 und 1,44 sowie ab 500 kg 4,20 und 1,68. Bei genau 500 kg überschneiden sich die Beschriftungen.",
+      "conditions": [
+        {
+          "expression": "Ein Rind belegt die Box einschließlich dauerhaft zugänglicher befestigter Auslauffläche.",
+          "description": "Ein Rind belegt die Box einschließlich dauerhaft zugänglicher befestigter Auslauffläche.",
+          "input_paths": [
+            "o6_21.pens"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "space",
+        "description": "Mindestwerte in m² je Tier für Gesamtfläche und eingestreute Liegefläche sind bis 150 kg 1,80 und 0,72, bis 220 kg 2,50 und 1,00, bis 350 kg 3,00 und 1,20, bis 500 kg 3,60 und 1,44 sowie ab 500 kg 4,20 und 1,68. Bei genau 500 kg überschneiden sich die Beschriftungen.",
+        "value": {
+          "table": "/o6_21_tables/weight_space",
+          "overlapping_weight_kg": 500
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0141-0148",
+        "SRC-S-4348-4349",
+        "SRC-S-4352-4355",
+        "SRC-S-4362-4363"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.space_rows",
+        "data.oepul.o6_21.space_need",
+        "data.oepul.o6_21.space_assessment",
+        "data.oepul.o6_21.pen_space"
+      ]
+    },
+    {
+      "id": "O21-mixed",
+      "rule_type": "Gruppenbelegung",
+      "statement": "Förderfähige und weitere Rinder laufen in derselben Box. — Alle Tiere zählen für den Platzbedarf. Für mitgehaltene Kühe sind die besonders tierfreundlichen Haltungssysteme mit 6,00 m² Gesamtfläche und 2,40 m² Liegefläche je Kuh zu erfüllen. Die Mitbelegung begründet keinen zusätzlichen Prämienanspruch.",
+      "conditions": [
+        {
+          "expression": "Förderfähige und weitere Rinder laufen in derselben Box.",
+          "description": "Förderfähige und weitere Rinder laufen in derselben Box.",
+          "input_paths": [
+            "o6_21.pens"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "mixed",
+        "description": "Alle Tiere zählen für den Platzbedarf. Für mitgehaltene Kühe sind die besonders tierfreundlichen Haltungssysteme mit 6,00 m² Gesamtfläche und 2,40 m² Liegefläche je Kuh zu erfüllen. Die Mitbelegung begründet keinen zusätzlichen Prämienanspruch.",
+        "value": {
+          "cow_total_m2": 6,
+          "cow_lying_m2": 2.4
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0160-0166",
+        "SRC-M-0168-0174"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.space_rows",
+        "data.oepul.o6_21.space_need"
+      ]
+    },
+    {
+      "id": "O21-cubicles",
+      "rule_type": "Sonderhaltung",
+      "statement": "Mutterkuhbetrieb mit prämienfähigen Rindern im Liegeboxenlaufstall. — Die Gesamtfläche gilt bei Einhaltung des Tierschutzgesetzes als erfüllt. Für die Liegefläche braucht jedes Tier über 6 Monate eine gesetzeskonforme Box, jedes Kalb einen zusätzlichen ständig erreichbaren Platz zum freien Abliegen. Im Kälberschlupf sind mindestens 40 % der geforderten Gesamtfläche einzustreuen.",
+      "conditions": [
+        {
+          "expression": "Mutterkuhbetrieb mit prämienfähigen Rindern im Liegeboxenlaufstall.",
+          "description": "Mutterkuhbetrieb mit prämienfähigen Rindern im Liegeboxenlaufstall.",
+          "input_paths": [
+            "o6_21.pens"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "cubicles",
+        "description": "Die Gesamtfläche gilt bei Einhaltung des Tierschutzgesetzes als erfüllt. Für die Liegefläche braucht jedes Tier über 6 Monate eine gesetzeskonforme Box, jedes Kalb einen zusätzlichen ständig erreichbaren Platz zum freien Abliegen. Im Kälberschlupf sind mindestens 40 % der geforderten Gesamtfläche einzustreuen.",
+        "value": {
+          "cubicle_age_months_exclusive": 6,
+          "calf_bedded_fraction_min": 0.4
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0175-0178",
+        "SRC-M-0179-0182"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.cubicle_space_ok"
+      ]
+    },
+    {
+      "id": "O21-plans",
+      "rule_type": "Dokumentation",
+      "statement": "Antragsjahr 2023 oder 2024, teilnehmende Kategorie und Stallabteil. — Stallskizze und Belegungsplan mit Maximalbelegung müssen für die Vor-Ort-Kontrolle am Betrieb vorliegen. Ab 2025 entfällt beides.",
+      "conditions": [
+        {
+          "expression": "Förderjahr IN [2023, 2024] OR Förderjahr >= 2025 (Entfall)",
+          "description": "Antragsjahr 2023 oder 2024, teilnehmende Kategorie und Stallabteil.",
+          "input_paths": [
+            "o6_21.pens",
+            "documentation.o6_21_pen_plans",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "plans",
+        "description": "Stallskizze und Belegungsplan mit Maximalbelegung müssen für die Vor-Ort-Kontrolle am Betrieb vorliegen. Ab 2025 entfällt beides.",
+        "value": {
+          "through_year": 2024,
+          "waived_from": 2025
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0184-0189",
+        "SRC-S-4340-4341",
+        "SRC-M-0212-0213"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.plans_required",
+        "data.oepul.o6_21.plan_missing",
+        "data.oepul.o6_21.documented_pen"
+      ]
+    },
+    {
+      "id": "O21-measure-pen",
+      "rule_type": "Vermessung",
+      "statement": "Eine Stallskizze ist erforderlich. — Form frei. Maße, Buchtengröße und gegebenenfalls Maßstab angeben. Bei Metall, Kunststoff oder Holz ab Mitte der Aufstallung messen, bei breiten Wänden die lichte Weite.",
+      "conditions": [
+        {
+          "expression": "Eine Stallskizze ist erforderlich.",
+          "description": "Eine Stallskizze ist erforderlich.",
+          "input_paths": [
+            "documentation.o6_21_pen_plans"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "measure_pen",
+        "description": "Form frei. Maße, Buchtengröße und gegebenenfalls Maßstab angeben. Bei Metall, Kunststoff oder Holz ab Mitte der Aufstallung messen, bei breiten Wänden die lichte Weite."
+      },
+      "source_reference_ids": [
+        "SRC-M-0187-0193"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-plan-count",
+      "rule_type": "Belegungsplan",
+      "statement": "Bis 2024 stehen teilnehmende Rinder im Abteil. — Maximal mögliche Anzahl nach Platzbedarf und tatsächlicher Boxengröße ausweisen. Keine tagaktuelle Bestandsangabe und keine Übermittlung der Skizze erforderlich.",
+      "conditions": [
+        {
+          "expression": "Bis 2024 stehen teilnehmende Rinder im Abteil.",
+          "description": "Bis 2024 stehen teilnehmende Rinder im Abteil.",
+          "input_paths": [
+            "o6_21.pens",
+            "documentation.o6_21_pen_plans"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "plan_count",
+        "description": "Maximal mögliche Anzahl nach Platzbedarf und tatsächlicher Boxengröße ausweisen. Keine tagaktuelle Bestandsangabe und keine Übermittlung der Skizze erforderlich."
+      },
+      "source_reference_ids": [
+        "SRC-M-0194-0197",
+        "SRC-M-0203-0211"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.max_occupancy"
+      ]
+    },
+    {
+      "id": "O21-medical",
+      "rule_type": "Ausnahme",
+      "statement": "Ein erkranktes oder verletztes Tier benötigt aus gesundheitlichen Gründen Einzelhaltung. — Bei eingestreuter Haltung bleibt es für höchstens 10 Tage prämienfähig.",
+      "conditions": [
+        {
+          "expression": "krank_oder_verletzt AND medizinisch_notwendige_Einzelhaltung AND Einstreu AND Dauer_Tage <= 10",
+          "description": "Ein erkranktes oder verletztes Tier benötigt aus gesundheitlichen Gründen Einzelhaltung.",
+          "input_paths": [
+            "o6_21.housing_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "medical",
+        "description": "Bei eingestreuter Haltung bleibt es für höchstens 10 Tage prämienfähig.",
+        "value": {
+          "max_consecutive_days": 10
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0215-0219"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.housing_mode_ok"
+      ]
+    },
+    {
+      "id": "O21-medical-long",
+      "rule_type": "Abmeldung",
+      "statement": "Die notwendige gesundheitliche Einzelhaltung dauert länger als 10 Tage. — Das Tier muss von der Kategorie abgemeldet werden.",
+      "conditions": [
+        {
+          "expression": "medizinisch_notwendige_Einzelhaltung AND Dauer_Tage > 10",
+          "description": "Die notwendige gesundheitliche Einzelhaltung dauert länger als 10 Tage.",
+          "input_paths": [
+            "o6_21.housing_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "medical_long",
+        "description": "Das Tier muss von der Kategorie abgemeldet werden.",
+        "value": {
+          "operator": ">",
+          "days": 10
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0220-0221"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animal_withdrawal_due"
+      ]
+    },
+    {
+      "id": "O21-medical-proof",
+      "rule_type": "Dokumentation",
+      "statement": "Ein Tier ist wegen Krankheit oder Verletzung abgesondert. — Krankheit oder Verletzung und Dauer am Betrieb dokumentieren und für Vor-Ort-Kontrollen aufbewahren. Bis einschließlich 10 Tage ist keine gesonderte AMA-Meldung erforderlich.",
+      "conditions": [
+        {
+          "expression": "Ein Tier ist wegen Krankheit oder Verletzung abgesondert.",
+          "description": "Ein Tier ist wegen Krankheit oder Verletzung abgesondert.",
+          "input_paths": [
+            "o6_21.housing_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "medical_proof",
+        "description": "Krankheit oder Verletzung und Dauer am Betrieb dokumentieren und für Vor-Ort-Kontrollen aufbewahren. Bis einschließlich 10 Tage ist keine gesonderte AMA-Meldung erforderlich."
+      },
+      "source_reference_ids": [
+        "SRC-M-0222-0225",
+        "SRC-M-0228-0229"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.medical_records_due",
+        "data.oepul.o6_21.medical_records_missing"
+      ]
+    },
+    {
+      "id": "O21-calf",
+      "rule_type": "Ausnahme",
+      "statement": "Ein Kalb ist unter 21 Kalendertage alt. — Eingestreute Einzelhaltung gemäß 1. THVO ist bei ausreichendem Sozialkontakt zu anderen Kälbern zulässig.",
+      "conditions": [
+        {
+          "expression": "Alter_Tage < 21 AND eingestreut AND THVO_erfüllt AND Sozialkontakt",
+          "description": "Ein Kalb ist unter 21 Kalendertage alt.",
+          "input_paths": [
+            "o6_21.housing_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "calf",
+        "description": "Eingestreute Einzelhaltung gemäß 1. THVO ist bei ausreichendem Sozialkontakt zu anderen Kälbern zulässig.",
+        "value": {
+          "operator": "<",
+          "age_days": 21
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0231-0234",
+        "SRC-S-4364-4365"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.housing_mode_ok"
+      ]
+    },
+    {
+      "id": "O21-manure",
+      "rule_type": "Zuschlagsbedingung",
+      "statement": "Der Festmistzuschlag ist beantragt. — Der gesamte anfallende Festmist aller Tierarten muss am eigenen Betrieb zu Kompostmieten aufgesetzt werden.",
+      "conditions": [
+        {
+          "expression": "Der Festmistzuschlag ist beantragt.",
+          "description": "Der Festmistzuschlag ist beantragt.",
+          "input_paths": [
+            "o6_21.compost"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "manure",
+        "description": "Der gesamte anfallende Festmist aller Tierarten muss am eigenen Betrieb zu Kompostmieten aufgesetzt werden."
+      },
+      "source_reference_ids": [
+        "SRC-M-0236-0238",
+        "SRC-S-4369-4370"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.compost_ok"
+      ]
+    },
+    {
+      "id": "O21-turn",
+      "rule_type": "Wendeverfahren",
+      "statement": "Eine Miete wird im Wendeverfahren kompostiert. — Mindestens zweimal mit dem Kompostwender umsetzen. Zwischen zwei maßgeblichen Umsetzungen liegen mindestens 14 Kalendertage.",
+      "conditions": [
+        {
+          "expression": "Festmistzuschlag_beantragt AND Verfahren = Wendung",
+          "description": "Eine Miete wird im Wendeverfahren kompostiert.",
+          "input_paths": [
+            "o6_21.compost"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "turn",
+        "description": "Mindestens zweimal mit dem Kompostwender umsetzen. Zwischen zwei maßgeblichen Umsetzungen liegen mindestens 14 Kalendertage.",
+        "value": {
+          "minimum_turns": 2,
+          "min_calendar_days_apart": 14
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0245-0246",
+        "SRC-S-4369-4371"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.heap_ok"
+      ]
+    },
+    {
+      "id": "O21-equipment",
+      "rule_type": "Gerätenachweis",
+      "statement": "Die Miete wird im Wendeverfahren umgesetzt. — Wender am Betrieb oder Beleg für überbetrieblichen Einsatz erforderlich. Miststreuer oder gleichwertiges Gerät sind bei gleichwertigem Ergebnis und vollständigem Umsetzen zulässig. Frontlader allein genügt hier nicht.",
+      "conditions": [
+        {
+          "expression": "Die Miete wird im Wendeverfahren umgesetzt.",
+          "description": "Die Miete wird im Wendeverfahren umgesetzt.",
+          "input_paths": [
+            "o6_21.compost"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "equipment",
+        "description": "Wender am Betrieb oder Beleg für überbetrieblichen Einsatz erforderlich. Miststreuer oder gleichwertiges Gerät sind bei gleichwertigem Ergebnis und vollständigem Umsetzen zulässig. Frontlader allein genügt hier nicht."
+      },
+      "source_reference_ids": [
+        "SRC-M-0247-0254"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.turn_ok",
+        "data.oepul.o6_21.equipment_ok"
+      ]
+    },
+    {
+      "id": "O21-mixture",
+      "rule_type": "Verfahrensoption",
+      "statement": "Antragsjahr ab 2025. — Mischung oder Schichtung aus Festmist und organischen Feldrückständen, Stroh, Grünschnitt oder Strauch- bzw. Astmaterial kann als Miete ohne Umsetzen anerkannt werden.",
+      "conditions": [
+        {
+          "expression": "Jahr >= 2025 AND Miete_aufgesetzt AND Festmist_mit_organischem_Feldmaterial_oder_Holz_gemischt_oder_geschichtet",
+          "description": "Antragsjahr ab 2025.",
+          "input_paths": [
+            "o6_21.compost"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "mixture",
+        "description": "Mischung oder Schichtung aus Festmist und organischen Feldrückständen, Stroh, Grünschnitt oder Strauch- bzw. Astmaterial kann als Miete ohne Umsetzen anerkannt werden.",
+        "value": {
+          "from_year": 2025,
+          "turns_required": 0
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0255-0259",
+        "SRC-S-4371-4375"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.heap_ok"
+      ]
+    },
+    {
+      "id": "O21-no-turn",
+      "rule_type": "Verfahrensbedingung",
+      "statement": "Der Betrieb kompostiert ohne vorgeschriebene Wendung. — Erhebliches zusätzliches organisches Material und ein geeignetes Kompostierungsverfahren sind erforderlich. Eigenes Gras ist zulässig, 50:50 ist ein Beispiel. Strohreicher Mist allein genügt nicht. Freiwilliges Umsetzen auch mit Frontlader ist zulässig.",
+      "conditions": [
+        {
+          "expression": "Der Betrieb kompostiert ohne vorgeschriebene Wendung.",
+          "description": "Der Betrieb kompostiert ohne vorgeschriebene Wendung.",
+          "input_paths": [
+            "o6_21.compost"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "no_turn",
+        "description": "Erhebliches zusätzliches organisches Material und ein geeignetes Kompostierungsverfahren sind erforderlich. Eigenes Gras ist zulässig, 50:50 ist ein Beispiel. Strohreicher Mist allein genügt nicht. Freiwilliges Umsetzen auch mit Frontlader ist zulässig."
+      },
+      "source_reference_ids": [
+        "SRC-M-0260-0263",
+        "SRC-M-0264-0267"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.heap_ok"
+      ]
+    },
+    {
+      "id": "O21-compost-records",
+      "rule_type": "Aufzeichnung",
+      "statement": "Kompostmieten werden angelegt, umgesetzt, ausgebracht oder der Kompost an Dritte abgegeben. — Anlage, tatsächliches Umsetzen sowie Ausbringen oder Abgabe dokumentieren. Gleichwertige Aufzeichnungen mit allen notwendigen Angaben sind neben der AMA-Vorlage zulässig.",
+      "conditions": [
+        {
+          "expression": "Kompostmieten werden angelegt, umgesetzt, ausgebracht oder der Kompost an Dritte abgegeben.",
+          "description": "Kompostmieten werden angelegt, umgesetzt, ausgebracht oder der Kompost an Dritte abgegeben.",
+          "input_paths": [
+            "o6_21.compost"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "compost_records",
+        "description": "Anlage, tatsächliches Umsetzen sowie Ausbringen oder Abgabe dokumentieren. Gleichwertige Aufzeichnungen mit allen notwendigen Angaben sind neben der AMA-Vorlage zulässig."
+      },
+      "source_reference_ids": [
+        "SRC-M-0270-0275",
+        "SRC-S-4376-4377"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.compost_ok"
+      ]
+    },
+    {
+      "id": "O21-nitrate",
+      "rule_type": "Zuschlagsbedingung",
+      "statement": "Eine Kompostmiete wird angelegt. — Die Nitrat-Aktionsprogramm-Verordnung ist einzuhalten.",
+      "conditions": [
+        {
+          "expression": "Eine Kompostmiete wird angelegt.",
+          "description": "Eine Kompostmiete wird angelegt.",
+          "input_paths": [
+            "o6_21.compost"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "nitrate",
+        "description": "Die Nitrat-Aktionsprogramm-Verordnung ist einzuhalten."
+      },
+      "source_reference_ids": [
+        "SRC-M-0276-0277"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.compost_ok"
+      ]
+    },
+    {
+      "id": "O21-compost-barn",
+      "rule_type": "Ausschluss",
+      "statement": "Ein Kompoststall wird für den Zuschlag geltend gemacht. — Für Kompostställe kann der Zuschlag nicht gewährt werden.",
+      "conditions": [
+        {
+          "expression": "Ein Kompoststall wird für den Zuschlag geltend gemacht.",
+          "description": "Ein Kompoststall wird für den Zuschlag geltend gemacht.",
+          "input_paths": [
+            "o6_21.compost"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "compost_barn",
+        "description": "Für Kompostställe kann der Zuschlag nicht gewährt werden."
+      },
+      "source_reference_ids": [
+        "SRC-M-0278-0279"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.compost_ok"
+      ]
+    },
+    {
+      "id": "O21-withdraw",
+      "rule_type": "Meldepflicht",
+      "statement": "Die Anforderungen sind für einzelne Tiere in einer teilnehmenden Kategorie im Förderjahr nicht einhaltbar, etwa wegen Vollspalten, Anbindung oder Platzmangel. — Jährlich betroffene Tiere umgehend ohrmarkenbezogen im Mehrfachantrag auf eAMA in der Beilage Tierwohl – Weide/Stallhaltung abmelden.",
+      "conditions": [
+        {
+          "expression": "Die Anforderungen sind für einzelne Tiere in einer teilnehmenden Kategorie im Förderjahr nicht einhaltbar, etwa wegen Vollspalten, Anbindung oder Platzmangel.",
+          "description": "Die Anforderungen sind für einzelne Tiere in einer teilnehmenden Kategorie im Förderjahr nicht einhaltbar, etwa wegen Vollspalten, Anbindung oder Platzmangel.",
+          "input_paths": [
+            "o6_21.housing_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "withdraw",
+        "description": "Jährlich betroffene Tiere umgehend ohrmarkenbezogen im Mehrfachantrag auf eAMA in der Beilage Tierwohl – Weide/Stallhaltung abmelden."
+      },
+      "source_reference_ids": [
+        "SRC-M-0281-0281",
+        "SRC-M-0288-0292",
+        "SRC-M-0293-0297",
+        "SRC-S-4366-4367"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animal_withdrawal_due"
+      ]
+    },
+    {
+      "id": "O21-tag-year",
+      "rule_type": "Prämienausschluss",
+      "statement": "Ein Tier wurde von der Maßnahme abgemeldet. — Die Ohrmarke ist für das gesamte Förderjahr in sämtlichen Kategorien ausgeschlossen, auch für vorherige konforme Zeiträume.",
+      "conditions": [
+        {
+          "expression": "Ein Tier wurde von der Maßnahme abgemeldet.",
+          "description": "Ein Tier wurde von der Maßnahme abgemeldet.",
+          "input_paths": [
+            "o6_21.cattle",
+            "o6_21.housing_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "tag_year",
+        "description": "Die Ohrmarke ist für das gesamte Förderjahr in sämtlichen Kategorien ausgeschlossen, auch für vorherige konforme Zeiträume.",
+        "value": {
+          "period": "gesamtes Förderjahr",
+          "affected": "alle Kategorien derselben Ohrmarke",
+          "animal_premium_eur": 0
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0305-0309",
+        "SRC-M-0315-0319",
+        "SRC-M-0320-0323",
+        "SRC-M-0450-0452"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.eligible_tag",
+        "data.oepul.o6_21.credited_days"
+      ]
+    },
+    {
+      "id": "O21-db-exit",
+      "rule_type": "Abgang",
+      "statement": "Ein Tier verlässt ordnungsgemäß den Betrieb, etwa durch Verkauf oder Schlachtung. — Es genügt die Abmeldung in der Rinderdatenbank. Der förderfähige Zeitraum bleibt anteilig anrechenbar.",
+      "conditions": [
+        {
+          "expression": "Ein Tier verlässt ordnungsgemäß den Betrieb, etwa durch Verkauf oder Schlachtung.",
+          "description": "Ein Tier verlässt ordnungsgemäß den Betrieb, etwa durch Verkauf oder Schlachtung.",
+          "input_paths": [
+            "o6_21.cattle"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "db_exit",
+        "description": "Es genügt die Abmeldung in der Rinderdatenbank. Der förderfähige Zeitraum bleibt anteilig anrechenbar."
+      },
+      "source_reference_ids": [
+        "SRC-M-0324-0326",
+        "SRC-M-0333-0336"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animal_rgve_days"
+      ]
+    },
+    {
+      "id": "O21-marking",
+      "rule_type": "Meldepflicht",
+      "statement": "Eine Tierkennzeichnungsmeldung ist vorgeschrieben. — Die Rinderdatenbankmeldung ist unabhängig vom Förderantrag zu erstatten.",
+      "conditions": [
+        {
+          "expression": "Eine Tierkennzeichnungsmeldung ist vorgeschrieben.",
+          "description": "Eine Tierkennzeichnungsmeldung ist vorgeschrieben."
+        }
+      ],
+      "result": {
+        "outcome": "marking",
+        "description": "Die Rinderdatenbankmeldung ist unabhängig vom Förderantrag zu erstatten."
+      },
+      "source_reference_ids": [
+        "SRC-M-0339-0340"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-pasture",
+      "rule_type": "Kombination",
+      "statement": "Zeitweise Weide oder Alpung bei tatsächlicher Stallhaltung und entsprechendem Stall am Heimbetrieb. — Kombination mit Tierwohl – Weide ist je Tier zulässig. Die Stallbedingungen gelten in der Weideperiode als erfüllt. Ganzjährige Freilandhaltung ohne entsprechenden Stall ist nicht förderfähig.",
+      "conditions": [
+        {
+          "expression": "Zeitweise Weide oder Alpung bei tatsächlicher Stallhaltung und entsprechendem Stall am Heimbetrieb.",
+          "description": "Zeitweise Weide oder Alpung bei tatsächlicher Stallhaltung und entsprechendem Stall am Heimbetrieb.",
+          "input_paths": [
+            "o6_21.cattle",
+            "o6_21.stables",
+            "o6_21.housing_events"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "pasture",
+        "description": "Kombination mit Tierwohl – Weide ist je Tier zulässig. Die Stallbedingungen gelten in der Weideperiode als erfüllt. Ganzjährige Freilandhaltung ohne entsprechenden Stall ist nicht förderfähig."
+      },
+      "source_reference_ids": [
+        "SRC-M-0342-0347"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.housing_mode_ok"
+      ]
+    },
+    {
+      "id": "O21-apply",
+      "rule_type": "Antragsfrist",
+      "statement": "Erste Beantragung einer Kategorie oder der Festmistoption. — Im Maßnahmenantrag des Mehrfachantrags vor Vertragsbeginn spätestens am 31. Dezember des Vorjahres beantragen.",
+      "conditions": [
+        {
+          "expression": "Erste Beantragung einer Kategorie oder der Festmistoption.",
+          "description": "Erste Beantragung einer Kategorie oder der Festmistoption.",
+          "input_paths": [
+            "o6_21.applications"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "apply",
+        "description": "Im Maßnahmenantrag des Mehrfachantrags vor Vertragsbeginn spätestens am 31. Dezember des Vorjahres beantragen.",
+        "value": {
+          "deadline": "12-31",
+          "relative_year": -1
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0353-0356",
+        "SRC-S-1062-1065",
+        "SRC-S-1085-1088"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.entry_timely",
+        "data.oepul.o6_21.entry_checks"
+      ]
+    },
+    {
+      "id": "O21-last-entry",
+      "rule_type": "Einstiegsfrist",
+      "statement": "Neuer Einstieg in eine Kategorie oder den Zuschlag. — Letzter Kategorieeinstieg ist 2027 mit Antrag bis 31.12.2026. Letzter Zuschlagseinstieg ist 2028 mit Antrag bis 31.12.2027.",
+      "conditions": [
+        {
+          "expression": "Neuer Einstieg in eine Kategorie oder den Zuschlag.",
+          "description": "Neuer Einstieg in eine Kategorie oder den Zuschlag.",
+          "input_paths": [
+            "o6_21.applications",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "last_entry",
+        "description": "Letzter Kategorieeinstieg ist 2027 mit Antrag bis 31.12.2026. Letzter Zuschlagseinstieg ist 2028 mit Antrag bis 31.12.2027.",
+        "value": {
+          "categories": {
+            "last_start": 2027,
+            "deadline": "2026-12-31"
+          },
+          "compost": {
+            "last_start": 2028,
+            "deadline": "2027-12-31"
+          }
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0357-0360",
+        "SRC-G-0465-0469",
+        "SRC-S-0618-0620"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.entry_timely"
+      ]
+    },
+    {
+      "id": "O21-automatic",
+      "rule_type": "Berechnung",
+      "statement": "Teilnehmende Rinder werden für das Kalenderjahr ermittelt. — Die Rinderdatenbank liefert die Berechnungsbasis automatisch. Keine separate positive Einzelbeantragung. Nicht teilnehmende Ohrmarken müssen abgemeldet werden.",
+      "conditions": [
+        {
+          "expression": "Teilnehmende Rinder werden für das Kalenderjahr ermittelt.",
+          "description": "Teilnehmende Rinder werden für das Kalenderjahr ermittelt.",
+          "input_paths": [
+            "o6_21.cattle"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "automatic",
+        "description": "Die Rinderdatenbank liefert die Berechnungsbasis automatisch. Keine separate positive Einzelbeantragung. Nicht teilnehmende Ohrmarken müssen abgemeldet werden."
+      },
+      "source_reference_ids": [
+        "SRC-M-0361-0365",
+        "SRC-M-0450-0452",
+        "SRC-S-4393-4393",
+        "SRC-S-0497-0503"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.annual_rgve"
+      ]
+    },
+    {
+      "id": "O21-replace",
+      "rule_type": "Kategorienwechsel",
+      "statement": "Eine Kategorie wird durch eine neue ersetzt. — Neue Kategorie bis 31. Dezember des Vorjahres beantragen. Alte nach Ende der Verpflichtung im Mehrfachantrag online abmelden. Sonst gelten die Auflagen für alle gültigen Kategorien.",
+      "conditions": [
+        {
+          "expression": "Eine Kategorie wird durch eine neue ersetzt.",
+          "description": "Eine Kategorie wird durch eine neue ersetzt.",
+          "input_paths": [
+            "o6_21.applications",
+            "o6_21.withdrawal_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "replace",
+        "description": "Neue Kategorie bis 31. Dezember des Vorjahres beantragen. Alte nach Ende der Verpflichtung im Mehrfachantrag online abmelden. Sonst gelten die Auflagen für alle gültigen Kategorien."
+      },
+      "source_reference_ids": [
+        "SRC-M-0366-0368",
+        "SRC-M-0375-0379"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.entry_timely"
+      ]
+    },
+    {
+      "id": "O21-empty",
+      "rule_type": "Vertragsfolge",
+      "statement": "In einer beantragten Kategorie nimmt im Jahr kein einziges prämienfähiges Tier teil. — Der Kategorienvertrag erlischt automatisch. Für erneute Teilnahme ist ein neuer fristgerechter Maßnahmenantrag erforderlich.",
+      "conditions": [
+        {
+          "expression": "Anzahl_prämienfähiger_Tiere_der_Kategorie = 0",
+          "description": "In einer beantragten Kategorie nimmt im Jahr kein einziges prämienfähiges Tier teil.",
+          "input_paths": [
+            "o6_21.cattle",
+            "o6_21.categories",
+            "o6_21.previous_status"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "empty",
+        "description": "Der Kategorienvertrag erlischt automatisch. Für erneute Teilnahme ist ein neuer fristgerechter Maßnahmenantrag erforderlich.",
+        "value": {
+          "premium_eligible_animals": 0,
+          "effect": "Kategorienvertrag erlischt"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0380-0384"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.expired_categories"
+      ]
+    },
+    {
+      "id": "O21-late",
+      "rule_type": "Wiedereinstieg",
+      "statement": "Nach Erlöschen einer Kategorie soll unmittelbar im Folgejahr teilgenommen werden und die Antragsfrist ist bereits abgelaufen. — Vorhergehenden Maßnahmenantrag online korrigieren und Kategorie erneut beantragen. Zusätzlich gesondertes schriftliches Ersuchen an die AMA richten.",
+      "conditions": [
+        {
+          "expression": "Nach Erlöschen einer Kategorie soll unmittelbar im Folgejahr teilgenommen werden und die Antragsfrist ist bereits abgelaufen.",
+          "description": "Nach Erlöschen einer Kategorie soll unmittelbar im Folgejahr teilgenommen werden und die Antragsfrist ist bereits abgelaufen.",
+          "input_paths": [
+            "o6_21.previous_status",
+            "o6_21.immediate_reentry",
+            "o6_21.reentry_application_date",
+            "documentation.o6_21_case"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "late",
+        "description": "Vorhergehenden Maßnahmenantrag online korrigieren und Kategorie erneut beantragen. Zusätzlich gesondertes schriftliches Ersuchen an die AMA richten."
+      },
+      "source_reference_ids": [
+        "SRC-M-0384-0388",
+        "SRC-M-0395-0401"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.contract_effects"
+      ]
+    },
+    {
+      "id": "O21-exit",
+      "rule_type": "Ausstieg",
+      "statement": "Der jährliche Vertragszeitraum wurde erfüllt. — Vollständiger Ausstieg oder Abmeldung einzelner Kategorien oder des Zuschlags ist auch nach mehreren Jahren möglich. Im aktuellen Mehrfachantrag online der AMA bekannt geben.",
+      "conditions": [
+        {
+          "expression": "Der jährliche Vertragszeitraum wurde erfüllt.",
+          "description": "Der jährliche Vertragszeitraum wurde erfüllt.",
+          "input_paths": [
+            "o6_21.withdrawal_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exit",
+        "description": "Vollständiger Ausstieg oder Abmeldung einzelner Kategorien oder des Zuschlags ist auch nach mehreren Jahren möglich. Im aktuellen Mehrfachantrag online der AMA bekannt geben."
+      },
+      "source_reference_ids": [
+        "SRC-M-0404-0410"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-exit-year",
+      "rule_type": "Abmeldewirkung",
+      "statement": "Abmeldung zwischen 1. Jänner und 31. Dezember. — Die Abmeldung wirkt für das betroffene Förderjahr. Bei Erfüllung bis Jahresende frühestens ab 1. Jänner des Folgejahres abmelden.",
+      "conditions": [
+        {
+          "expression": "Abmeldung zwischen 1. Jänner und 31. Dezember.",
+          "description": "Abmeldung zwischen 1. Jänner und 31. Dezember.",
+          "input_paths": [
+            "o6_21.withdrawal_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exit_year",
+        "description": "Die Abmeldung wirkt für das betroffene Förderjahr. Bei Erfüllung bis Jahresende frühestens ab 1. Jänner des Folgejahres abmelden."
+      },
+      "source_reference_ids": [
+        "SRC-M-0418-0421",
+        "SRC-G-0497-0500"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.contract_effects"
+      ]
+    },
+    {
+      "id": "O21-base",
+      "rule_type": "Prämiensatz",
+      "statement": "Prämienfähige RGVE ohne tierbezogene Überschneidung. — 2023 beträgt der Satz 180,00 Euro je RGVE, ab 2024 194,40 Euro.",
+      "conditions": [
+        {
+          "expression": "prämienfähige_RGVE > 0 AND keine_tierbezogene_Überschneidung",
+          "description": "Prämienfähige RGVE ohne tierbezogene Überschneidung.",
+          "input_paths": [
+            "o6_21.cattle",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "base",
+        "description": "2023 beträgt der Satz 180,00 Euro je RGVE, ab 2024 194,40 Euro.",
+        "value": {
+          "2023": 180,
+          "from_2024": 194.4,
+          "unit": "EUR/RGVE"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0424-0430",
+        "SRC-S-4379-4379",
+        "SRC-S-4381-4383"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.rates",
+        "data.oepul.o6_21.base_rate",
+        "data.oepul.o6_21.base_amount_eur"
+      ]
+    },
+    {
+      "id": "O21-overlap",
+      "rule_type": "Prämiensatz",
+      "statement": "Für dasselbe Tier wird Almbewirtschaftung, Tierwohl – Weide oder die fakultativ gekoppelte Direktzahlungsstützung für auf Almen aufgetriebene Rinder beansprucht. — Der Grundsatz sinkt 2023 auf 150,00 Euro je RGVE, ab 2024 auf 162,00 Euro. Mehrere Überschneidungen führen zum selben Satz.",
+      "conditions": [
+        {
+          "expression": "prämienfähiges_Tier AND (Almbewirtschaftung OR Tierwohl_Weide OR gekoppelte_Almstützung)",
+          "description": "Für dasselbe Tier wird Almbewirtschaftung, Tierwohl – Weide oder die fakultativ gekoppelte Direktzahlungsstützung für auf Almen aufgetriebene Rinder beansprucht.",
+          "input_paths": [
+            "o6_21.cattle"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "overlap",
+        "description": "Der Grundsatz sinkt 2023 auf 150,00 Euro je RGVE, ab 2024 auf 162,00 Euro. Mehrere Überschneidungen führen zum selben Satz.",
+        "value": {
+          "2023": 150,
+          "from_2024": 162,
+          "unit": "EUR/RGVE"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0348-0350",
+        "SRC-M-0431-0441",
+        "SRC-S-4384-4390"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.base_rate"
+      ]
+    },
+    {
+      "id": "O21-bonus",
+      "rule_type": "Prämiensatz",
+      "statement": "Die beantragte Kompostierung erfüllt die Förderbedingungen. — Zusätzlich 20,00 Euro je teilnehmender RGVE im Jahr 2023 und 21,60 Euro je RGVE ab 2024.",
+      "conditions": [
+        {
+          "expression": "Festmistzuschlag_beantragt AND Kompostierungsbedingungen_erfüllt",
+          "description": "Die beantragte Kompostierung erfüllt die Förderbedingungen.",
+          "input_paths": [
+            "o6_21.cattle",
+            "o6_21.compost",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "bonus",
+        "description": "Zusätzlich 20,00 Euro je teilnehmender RGVE im Jahr 2023 und 21,60 Euro je RGVE ab 2024.",
+        "value": {
+          "2023": 20,
+          "from_2024": 21.6,
+          "unit": "EUR/RGVE"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0442-0448",
+        "SRC-S-4391-4392"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.rates",
+        "data.oepul.o6_21.compost_amount_eur"
+      ]
+    },
+    {
+      "id": "O21-rgve",
+      "rule_type": "RGVE-Schlüssel",
+      "statement": "Rind wird im Förderjahr gehalten. Maßgeblich ist die jeweils erreichte Altersstufe. — Je Stück unter 6 Monaten, ab 6 bis unter 24 Monaten und ab 24 Monaten gelten 0,40 / 0,60 / 1,00 RGVE. Für Zwergrinder gelten entsprechend 0,20 / 0,30 / 0,50.",
+      "conditions": [
+        {
+          "expression": "Rind wird im Förderjahr gehalten. Maßgeblich ist die jeweils erreichte Altersstufe.",
+          "description": "Rind wird im Förderjahr gehalten. Maßgeblich ist die jeweils erreichte Altersstufe.",
+          "input_paths": [
+            "o6_21.cattle",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "rgve",
+        "description": "Je Stück unter 6 Monaten, ab 6 bis unter 24 Monaten und ab 24 Monaten gelten 0,40 / 0,60 / 1,00 RGVE. Für Zwergrinder gelten entsprechend 0,20 / 0,30 / 0,50.",
+        "value": {
+          "table": "/o6_21_tables/cattle_rgve"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-M-0454-0464",
+        "SRC-A-0077-0082"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.rgve_per_head"
+      ]
+    },
+    {
+      "id": "O21-dwarf",
+      "rule_type": "Rassendefinition",
+      "statement": "Zuordnung eines Rindes zum reduzierten Schlüssel. — Als Zwergrinder gelten Dahomey, Dexter, Kerry und Zwergzebu.",
+      "conditions": [
+        {
+          "expression": "Zuordnung eines Rindes zum reduzierten Schlüssel.",
+          "description": "Zuordnung eines Rindes zum reduzierten Schlüssel.",
+          "input_paths": [
+            "o6_21.cattle"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "dwarf",
+        "description": "Als Zwergrinder gelten Dahomey, Dexter, Kerry und Zwergzebu.",
+        "value": {
+          "table": "/o6_21_tables/dwarf_breeds"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-A-0108-0108"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.breed_class"
+      ]
+    },
+    {
+      "id": "O21-days",
+      "rule_type": "Zeitanteil",
+      "statement": "Ein Rind wächst in eine beantragte Altersstufe hinein oder ist nur zeitweise dem Betrieb zugeordnet. — RGVE taggenau für die jeweiligen Zeiträume berechnen und auf die Dauer des Kalenderjahres beziehen.",
+      "conditions": [
+        {
+          "expression": "Ein Rind wächst in eine beantragte Altersstufe hinein oder ist nur zeitweise dem Betrieb zugeordnet.",
+          "description": "Ein Rind wächst in eine beantragte Altersstufe hinein oder ist nur zeitweise dem Betrieb zugeordnet.",
+          "input_paths": [
+            "o6_21.cattle",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "days",
+        "description": "RGVE taggenau für die jeweiligen Zeiträume berechnen und auf die Dauer des Kalenderjahres beziehen."
+      },
+      "source_reference_ids": [
+        "SRC-M-0450-0457",
+        "SRC-G-0379-0380",
+        "SRC-S-0500-0503"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.annual_rgve",
+        "data.oepul.o6_21.animal_rgve_days",
+        "data.oepul.o6_21.per_animal_rgve"
+      ]
+    },
+    {
+      "id": "O21-law",
+      "rule_type": "Rechtsgrundlage",
+      "statement": "Beantragung einer ÖPUL-Förderung. — Neben der SRL gelten MOG 2021 und GAP-Strategieplan-Anwendungsverordnung.",
+      "conditions": [
+        {
+          "expression": "Beantragung einer ÖPUL-Förderung.",
+          "description": "Beantragung einer ÖPUL-Förderung."
+        }
+      ],
+      "result": {
+        "outcome": "law",
+        "description": "Neben der SRL gelten MOG 2021 und GAP-Strategieplan-Anwendungsverordnung."
+      },
+      "source_reference_ids": [
+        "SRC-G-0066-0071",
+        "SRC-G-0072-0076",
+        "SRC-G-0082-0083"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-conditionality",
+      "rule_type": "Konditionalität",
+      "statement": "Der Betrieb beansprucht die Förderung in voller Höhe. — Vorgaben für Klima, Umwelt, öffentliche Gesundheit, Pflanzengesundheit, Tierwohl und soziale Konditionalität gemäß §§ 6e und 6f MOG 2021 einhalten. Bei Verstößen sind die einschlägigen EU-Verwaltungssanktionen anzuwenden.",
+      "conditions": [
+        {
+          "expression": "Der Betrieb beansprucht die Förderung in voller Höhe.",
+          "description": "Der Betrieb beansprucht die Förderung in voller Höhe.",
+          "input_paths": [
+            "documentation.o6_21_case"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "conditionality",
+        "description": "Vorgaben für Klima, Umwelt, öffentliche Gesundheit, Pflanzengesundheit, Tierwohl und soziale Konditionalität gemäß §§ 6e und 6f MOG 2021 einhalten. Bei Verstößen sind die einschlägigen EU-Verwaltungssanktionen anzuwenden."
+      },
+      "source_reference_ids": [
+        "SRC-G-0138-0143",
+        "SRC-S-1253-1258"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-applicant",
+      "rule_type": "Förderwerber",
+      "statement": "Eine Person oder Vereinigung bewirtschaftet den Betrieb. — Zulässig sind natürliche Personen, eingetragene Personengesellschaften, juristische Personen und Vereinigungen. Aktiver Landwirt, landwirtschaftliche Tätigkeit, eigener Name, eigene Rechnung und Verfügungsgewalt über die Antragsflächen sind erforderlich. Ohne eigene Rechtspersönlichkeit sind die dahinterstehenden Personen Vertragspartner, veröffentlicht wird die Vereinigung.",
+      "conditions": [
+        {
+          "expression": "Eine Person oder Vereinigung bewirtschaftet den Betrieb.",
+          "description": "Eine Person oder Vereinigung bewirtschaftet den Betrieb.",
+          "input_paths": [
+            "farm.oepul.legal_form",
+            "farm.oepul.active_farmer",
+            "farm.oepul.agricultural_activity",
+            "farm.oepul.own_name_and_account",
+            "farm.oepul.land_at_disposal"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "applicant",
+        "description": "Zulässig sind natürliche Personen, eingetragene Personengesellschaften, juristische Personen und Vereinigungen. Aktiver Landwirt, landwirtschaftliche Tätigkeit, eigener Name, eigene Rechnung und Verfügungsgewalt über die Antragsflächen sind erforderlich. Ohne eigene Rechtspersönlichkeit sind die dahinterstehenden Personen Vertragspartner, veröffentlicht wird die Vereinigung."
+      },
+      "source_reference_ids": [
+        "SRC-G-0147-0152",
+        "SRC-G-0153-0157",
+        "SRC-G-0163-0164",
+        "SRC-S-0405-0409",
+        "SRC-S-0410-0414"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.applicant_ok"
+      ]
+    },
+    {
+      "id": "O21-public",
+      "rule_type": "Ausschluss",
+      "statement": "Öffentliche Beteiligung oder bestimmender Einfluss an einer Einrichtung wird geprüft. — Gebietskörperschaften, ihre Einrichtungen und nachgelagerte beherrschte Einrichtungen sind bei o6_21 ausgeschlossen. Bestimmender Einfluss liegt bei mehr als 25 % Beteiligung allein oder zusammen oder gleichwertigem wirtschaftlichem oder organisatorischem Einfluss vor.",
+      "conditions": [
+        {
+          "expression": "Öffentliche Beteiligung oder bestimmender Einfluss an einer Einrichtung wird geprüft.",
+          "description": "Öffentliche Beteiligung oder bestimmender Einfluss an einer Einrichtung wird geprüft.",
+          "input_paths": [
+            "farm.oepul.legal_form",
+            "farm.oepul.public_entity_or_controlled_subsidiary",
+            "farm.oepul.public_share_pct",
+            "farm.oepul.equivalent_public_influence"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "public",
+        "description": "Gebietskörperschaften, ihre Einrichtungen und nachgelagerte beherrschte Einrichtungen sind bei o6_21 ausgeschlossen. Bestimmender Einfluss liegt bei mehr als 25 % Beteiligung allein oder zusammen oder gleichwertigem wirtschaftlichem oder organisatorischem Einfluss vor.",
+        "value": {
+          "public_share_pct_max": 25
+        }
+      },
+      "source_reference_ids": [
+        "SRC-G-0150-0153",
+        "SRC-G-0165-0171",
+        "SRC-S-0415-0418",
+        "SRC-S-0419-0421",
+        "SRC-S-0422-0427"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.applicant_ok",
+        "data.oepul.o6_21.public_exception"
+      ]
+    },
+    {
+      "id": "O21-farm",
+      "rule_type": "Betriebsdefinition",
+      "statement": "Betrieb einer förderwerbenden Person wird abgegrenzt. — Alle von ihr verwalteten Produktionseinheiten in Österreich bilden den Betrieb.",
+      "conditions": [
+        {
+          "expression": "Betrieb einer förderwerbenden Person wird abgegrenzt.",
+          "description": "Betrieb einer förderwerbenden Person wird abgegrenzt."
+        }
+      ],
+      "result": {
+        "outcome": "farm",
+        "description": "Alle von ihr verwalteten Produktionseinheiten in Österreich bilden den Betrieb."
+      },
+      "source_reference_ids": [
+        "SRC-G-0154-0157",
+        "SRC-S-0443-0445"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-first-size",
+      "rule_type": "Betriebsmindestgröße",
+      "statement": "Erstes ÖPUL-Teilnahmejahr. — Mindestens 0,50 ha geschützter Anbau (A oder GA unabhängig von Nützlingsmaßnahme) oder 1,50 ha anrechenbare inländische Gesamtfläche laut MFA. Einzurechnen sind LF einschließlich Alm, GA, zulässige K20 auf NF, GLÖZ-Landschaftselemente, Mehrnutzenhecken und ab 2025 Agroforststreifen.",
+      "conditions": [
+        {
+          "expression": "ÖPUL_Teilnahmejahr = 1",
+          "description": "Erstes ÖPUL-Teilnahmejahr.",
+          "input_paths": [
+            "farm.oepul.participation_year_number",
+            "farm.oepul.protected_cultivation_at_ha",
+            "farm.oepul.qualifying_at_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "first_size",
+        "description": "Mindestens 0,50 ha geschützter Anbau (A oder GA unabhängig von Nützlingsmaßnahme) oder 1,50 ha anrechenbare inländische Gesamtfläche laut MFA. Einzurechnen sind LF einschließlich Alm, GA, zulässige K20 auf NF, GLÖZ-Landschaftselemente, Mehrnutzenhecken und ab 2025 Agroforststreifen.",
+        "value": {
+          "any_of": [
+            {
+              "at_protected_ha_min": 0.5
+            },
+            {
+              "at_eligible_area_ha_min": 1.5
+            }
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "SRC-G-0173-0178",
+        "SRC-G-0179-0184",
+        "SRC-S-0506-0510",
+        "SRC-S-0511-0515"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.size_met"
+      ]
+    },
+    {
+      "id": "O21-later-size",
+      "rule_type": "Betriebsmindestgröße",
+      "statement": "Ab dem zweiten ÖPUL-Teilnahmejahr. — Die allgemeine Mindestfläche entfällt. Die jährliche Mindestteilnahme mit 2 RGVE gilt weiterhin.",
+      "conditions": [
+        {
+          "expression": "ÖPUL_Teilnahmejahr >= 2",
+          "description": "Ab dem zweiten ÖPUL-Teilnahmejahr.",
+          "input_paths": [
+            "farm.oepul.participation_year_number"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "later_size",
+        "description": "Die allgemeine Mindestfläche entfällt. Die jährliche Mindestteilnahme mit 2 RGVE gilt weiterhin.",
+        "value": {
+          "from_programme_year": 2
+        }
+      },
+      "source_reference_ids": [
+        "SRC-G-0185-0187",
+        "SRC-M-0041-0045"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.size_met",
+        "data.oepul.o6_21.minimum_participation_met"
+      ]
+    },
+    {
+      "id": "O21-area-definition",
+      "rule_type": "Flächendefinition",
+      "statement": "Flächen werden für die Betriebsgröße ermittelt. — Acker, Grünland, Dauer- und Spezialkulturen, Wein, Alm und zugehörige Landschaftselemente bis 5 m Abstand sind berücksichtigt. Geschützte Substrat- oder Topfkulturen in befestigten Gewächshäusern und unbefestigten Folientunneln sowie K20 bis einschließlich 2024 sind zusätzlich erfasst.",
+      "conditions": [
+        {
+          "expression": "Flächen werden für die Betriebsgröße ermittelt.",
+          "description": "Flächen werden für die Betriebsgröße ermittelt.",
+          "input_paths": [
+            "farm.oepul.qualifying_at_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "area_definition",
+        "description": "Acker, Grünland, Dauer- und Spezialkulturen, Wein, Alm und zugehörige Landschaftselemente bis 5 m Abstand sind berücksichtigt. Geschützte Substrat- oder Topfkulturen in befestigten Gewächshäusern und unbefestigten Folientunneln sowie K20 bis einschließlich 2024 sind zusätzlich erfasst."
+      },
+      "source_reference_ids": [
+        "SRC-G-0092-0097",
+        "SRC-G-0098-0103",
+        "SRC-S-0453-0457",
+        "SRC-S-0458-0461"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-location",
+      "rule_type": "Gebietsbezug",
+      "statement": "Österreichische Betriebsfläche wird abgegrenzt. — Nur inländische Flächen sind förderfähig und für Begrenzungen anrechenbar. Ausländische Antragstellende mit Bewirtschaftung in Österreich sind zulässig. Für den maximalen Viehbesatz auf Grenzalmen ist der einzelbetriebliche Nachweis unmittelbar angrenzender bewirtschafteter Auslandsflächen möglich.",
+      "conditions": [
+        {
+          "expression": "Österreichische Betriebsfläche wird abgegrenzt.",
+          "description": "Österreichische Betriebsfläche wird abgegrenzt.",
+          "input_paths": [
+            "farm.oepul.qualifying_at_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "location",
+        "description": "Nur inländische Flächen sind förderfähig und für Begrenzungen anrechenbar. Ausländische Antragstellende mit Bewirtschaftung in Österreich sind zulässig. Für den maximalen Viehbesatz auf Grenzalmen ist der einzelbetriebliche Nachweis unmittelbar angrenzender bewirtschafteter Auslandsflächen möglich."
+      },
+      "source_reference_ids": [
+        "SRC-G-0355-0361",
+        "SRC-S-0436-0437"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-at-cattle",
+      "rule_type": "Haltungsort",
+      "statement": "Ein Tier soll gefördert oder für den prämienrelevanten Besatz berücksichtigt werden. — Nur im Inland gehaltene Tiere zählen und dürfen in der Tierliste stehen.",
+      "conditions": [
+        {
+          "expression": "Ein Tier soll gefördert oder für den prämienrelevanten Besatz berücksichtigt werden.",
+          "description": "Ein Tier soll gefördert oder für den prämienrelevanten Besatz berücksichtigt werden.",
+          "input_paths": [
+            "o6_21.cattle"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "at_cattle",
+        "description": "Nur im Inland gehaltene Tiere zählen und dürfen in der Tierliste stehen."
+      },
+      "source_reference_ids": [
+        "SRC-G-0362-0365",
+        "SRC-S-0438-0439"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animal_rgve_days"
+      ]
+    },
+    {
+      "id": "O21-forage",
+      "rule_type": "Betriebseinstufung",
+      "statement": "Für eine Förderung ist die allgemeine Eigenschaft als tierhaltender Betrieb maßgeblich. — Ab 0,30 RGVE/ha Grünland plus Ackerfutter gilt der Betrieb als tierhaltend. Jährlicher Wechsel ist möglich. Für o6_21 ist die eigene jährliche 2-RGVE-Schwelle maßgeblich.",
+      "conditions": [
+        {
+          "expression": "Für eine Förderung ist die allgemeine Eigenschaft als tierhaltender Betrieb maßgeblich.",
+          "description": "Für eine Förderung ist die allgemeine Eigenschaft als tierhaltender Betrieb maßgeblich.",
+          "input_paths": [
+            "farm.oepul.arable_forage_ha",
+            "farm.oepul.all_annual_rgve",
+            "land.grassland_area_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "forage",
+        "description": "Ab 0,30 RGVE/ha Grünland plus Ackerfutter gilt der Betrieb als tierhaltend. Jährlicher Wechsel ist möglich. Für o6_21 ist die eigene jährliche 2-RGVE-Schwelle maßgeblich.",
+        "value": {
+          "min_rgve_per_ha": 0.3
+        }
+      },
+      "source_reference_ids": [
+        "SRC-G-0110-0112",
+        "SRC-G-0372-0378",
+        "SRC-S-0490-0495"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.livestock_density_met",
+        "data.oepul.o6_21.forage_crop"
+      ]
+    },
+    {
+      "id": "O21-stock-source",
+      "rule_type": "Bestandsermittlung",
+      "statement": "Der für die Viehbesatzdichte erforderliche Tierbestand wird bestimmt. — Rinder taggenau aus der Rinderdatenbank, übrige Kategorien aus der Tierliste zum 1. April oder bei beantragtem Durchschnitt aus der Durchschnittstierliste. Bei schwankendem Bestand ist die Durchschnittstierliste ein- oder nachzureichen. Anhang A bestimmt die Umrechnungsfaktoren.",
+      "conditions": [
+        {
+          "expression": "Der für die Viehbesatzdichte erforderliche Tierbestand wird bestimmt.",
+          "description": "Der für die Viehbesatzdichte erforderliche Tierbestand wird bestimmt.",
+          "input_paths": [
+            "farm.oepul.all_annual_rgve"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "stock_source",
+        "description": "Rinder taggenau aus der Rinderdatenbank, übrige Kategorien aus der Tierliste zum 1. April oder bei beantragtem Durchschnitt aus der Durchschnittstierliste. Bei schwankendem Bestand ist die Durchschnittstierliste ein- oder nachzureichen. Anhang A bestimmt die Umrechnungsfaktoren."
+      },
+      "source_reference_ids": [
+        "SRC-G-0379-0384",
+        "SRC-S-0497-0503",
+        "SRC-A-0077-0091",
+        "SRC-A-0092-0099",
+        "SRC-A-0100-0106"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.annex_units"
+      ]
+    },
+    {
+      "id": "O21-wild",
+      "rule_type": "RGVE-Definition",
+      "statement": "Andere raufutterverzehrende Wildhuftiere werden für den allgemeinen Besatz geprüft. — Die bezeichneten pflanzenfressenden Wildhuftiere müssen in Gefangenschaft gehalten, gezüchtet oder zur Fleischgewinnung getötet werden und auf landwirtschaftlichen Nutzflächen gehalten werden.",
+      "conditions": [
+        {
+          "expression": "Andere raufutterverzehrende Wildhuftiere werden für den allgemeinen Besatz geprüft.",
+          "description": "Andere raufutterverzehrende Wildhuftiere werden für den allgemeinen Besatz geprüft.",
+          "input_paths": [
+            "farm.oepul.all_annual_rgve"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "wild",
+        "description": "Die bezeichneten pflanzenfressenden Wildhuftiere müssen in Gefangenschaft gehalten, gezüchtet oder zur Fleischgewinnung getötet werden und auf landwirtschaftlichen Nutzflächen gehalten werden."
+      },
+      "source_reference_ids": [
+        "SRC-A-0098-0102",
+        "SRC-A-0109-0110"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-structure-change",
+      "rule_type": "Zuordnung",
+      "statement": "Hauptbetrieb wird Teilbetrieb, Teilbetrieb wird Hauptbetrieb oder wechselt den Hauptbetrieb. — Rinder zählen ab dem Tag des Betriebsstrukturwechsels zur neuen Betriebsstruktur. Dadurch kann die Tierhaltereigenschaft des Antragstellers entfallen.",
+      "conditions": [
+        {
+          "expression": "Hauptbetrieb wird Teilbetrieb, Teilbetrieb wird Hauptbetrieb oder wechselt den Hauptbetrieb.",
+          "description": "Hauptbetrieb wird Teilbetrieb, Teilbetrieb wird Hauptbetrieb oder wechselt den Hauptbetrieb.",
+          "input_paths": [
+            "o6_21.cattle"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "structure_change",
+        "description": "Rinder zählen ab dem Tag des Betriebsstrukturwechsels zur neuen Betriebsstruktur. Dadurch kann die Tierhaltereigenschaft des Antragstellers entfallen."
+      },
+      "source_reference_ids": [
+        "SRC-G-0385-0389"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.animal_rgve_days"
+      ]
+    },
+    {
+      "id": "O21-annual",
+      "rule_type": "Vertragstyp",
+      "statement": "Tierwohl – Stallhaltung Rinder einschließlich der Option ist gewählt. — Es gilt ein einjähriger Vertrag. Kategorien können bis zum Förderjahr 2027 und der optionale Zuschlag bis zum Förderjahr 2028 neu beantragt werden.",
+      "conditions": [
+        {
+          "expression": "Tierwohl – Stallhaltung Rinder einschließlich der Option ist gewählt.",
+          "description": "Tierwohl – Stallhaltung Rinder einschließlich der Option ist gewählt.",
+          "input_paths": [
+            "o6_21.categories",
+            "o6_21.applications"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "annual",
+        "description": "Es gilt ein einjähriger Vertrag. Kategorien können bis zum Förderjahr 2027 und der optionale Zuschlag bis zum Förderjahr 2028 neu beantragt werden."
+      },
+      "source_reference_ids": [
+        "SRC-G-0450-0457",
+        "SRC-G-0458-0464",
+        "SRC-S-0603-0604",
+        "SRC-S-0614-0614",
+        "SRC-S-0618-0620"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.entry_timely"
+      ]
+    },
+    {
+      "id": "O21-payment-application",
+      "rule_type": "Zahlungsantrag",
+      "statement": "Der Maßnahmenantrag wurde vor Beginn der Verpflichtung gestellt. — Weitere förderrelevante Angaben im jährlichen MFA ergänzen. Diese Angaben bilden den Zahlungsantrag.",
+      "conditions": [
+        {
+          "expression": "Der Maßnahmenantrag wurde vor Beginn der Verpflichtung gestellt.",
+          "description": "Der Maßnahmenantrag wurde vor Beginn der Verpflichtung gestellt.",
+          "input_paths": [
+            "o6_21.current_mfa_with_units"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "payment_application",
+        "description": "Weitere förderrelevante Angaben im jährlichen MFA ergänzen. Diese Angaben bilden den Zahlungsantrag."
+      },
+      "source_reference_ids": [
+        "SRC-G-0479-0483",
+        "SRC-S-1087-1089",
+        "SRC-S-1105-1108"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-exit-control",
+      "rule_type": "Ausstiegsfrist",
+      "statement": "Der Betrieb will aussteigen. — Bis zum Ausstieg Auflagen einhalten. Ausstieg grundsätzlich bis Durchführung oder Ankündigung einer Vor-Ort-Kontrolle oder Mitteilung des Verwaltungskontrollergebnisses möglich.",
+      "conditions": [
+        {
+          "expression": "Der Betrieb will aussteigen.",
+          "description": "Der Betrieb will aussteigen.",
+          "input_paths": [
+            "documentation.o6_21_case"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exit_control",
+        "description": "Bis zum Ausstieg Auflagen einhalten. Ausstieg grundsätzlich bis Durchführung oder Ankündigung einer Vor-Ort-Kontrolle oder Mitteilung des Verwaltungskontrollergebnisses möglich."
+      },
+      "source_reference_ids": [
+        "SRC-G-0502-0506"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-reentry",
+      "rule_type": "Wiedereinstieg",
+      "statement": "Ausstieg, Ausschluss oder einjährige Nichtabgabe des MFA. — Wiedereinstieg nur durch neuerlichen Maßnahmenantrag. Ein versäumter Zahlungsantrag muss binnen eines Jahres nach ursprünglicher Frist vorliegen, andernfalls entfallen Zahlung und Verpflichtung.",
+      "conditions": [
+        {
+          "expression": "Ausstieg, Ausschluss oder einjährige Nichtabgabe des MFA.",
+          "description": "Ausstieg, Ausschluss oder einjährige Nichtabgabe des MFA.",
+          "input_paths": [
+            "o6_21.previous_status",
+            "o6_21.reentry_application_date"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "reentry",
+        "description": "Wiedereinstieg nur durch neuerlichen Maßnahmenantrag. Ein versäumter Zahlungsantrag muss binnen eines Jahres nach ursprünglicher Frist vorliegen, andernfalls entfallen Zahlung und Verpflichtung."
+      },
+      "source_reference_ids": [
+        "SRC-G-0510-0512",
+        "SRC-S-1118-1123"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.contract_effects"
+      ]
+    },
+    {
+      "id": "O21-combination",
+      "rule_type": "Kombinierbarkeit",
+      "statement": "Ein Betrieb beantragt mehrere Maßnahmen. — Teilnahme und Prämienkumulation sind grundsätzlich möglich, soweit keine Ausschlussregel greift. Unmögliche Kombinationen können bis Erhalt der Auszahlungsmitteilung korrigiert werden, sofern keine Kontrollbeanstandung o. Ä. vorliegt. Bis Abmeldung gelten die Auflagen. Anhang L betrifft Kombinationen auf Einzelflächen.",
+      "conditions": [
+        {
+          "expression": "Ein Betrieb beantragt mehrere Maßnahmen.",
+          "description": "Ein Betrieb beantragt mehrere Maßnahmen."
+        }
+      ],
+      "result": {
+        "outcome": "combination",
+        "description": "Teilnahme und Prämienkumulation sind grundsätzlich möglich, soweit keine Ausschlussregel greift. Unmögliche Kombinationen können bis Erhalt der Auszahlungsmitteilung korrigiert werden, sofern keine Kontrollbeanstandung o. Ä. vorliegt. Bis Abmeldung gelten die Auflagen. Anhang L betrifft Kombinationen auf Einzelflächen."
+      },
+      "source_reference_ids": [
+        "SRC-G-0514-0521",
+        "SRC-S-0915-0919",
+        "SRC-A-6434-6438"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-takeover",
+      "rule_type": "Übernahme",
+      "statement": "Ein anderer Betrieb will o6_21 oder den Festmistzuschlag übernehmen. — Einzelfallprüfung nur bei Betriebsauflösung, -teilung oder -zusammenlegung. Tiere und Flächen müssen vom selben Vorbetrieb stammen. Online-Antrag im MFA und Genehmigung der AMA erforderlich.",
+      "conditions": [
+        {
+          "expression": "Ein anderer Betrieb will o6_21 oder den Festmistzuschlag übernehmen.",
+          "description": "Ein anderer Betrieb will o6_21 oder den Festmistzuschlag übernehmen.",
+          "input_paths": [
+            "o6_21.takeover"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "takeover",
+        "description": "Einzelfallprüfung nur bei Betriebsauflösung, -teilung oder -zusammenlegung. Tiere und Flächen müssen vom selben Vorbetrieb stammen. Online-Antrag im MFA und Genehmigung der AMA erforderlich."
+      },
+      "source_reference_ids": [
+        "SRC-G-0569-0570",
+        "SRC-G-0576-0578",
+        "SRC-G-0592-0593",
+        "SRC-G-0598-0599",
+        "SRC-S-0721-0727",
+        "SRC-S-0728-0734"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.takeover_reviewable"
+      ]
+    },
+    {
+      "id": "O21-inspection",
+      "rule_type": "Kontrolle",
+      "statement": "Ein Antrag liegt vor oder eine Förderung wurde bereits ausgezahlt. — Verwaltungskontrolle für alle Anträge, Vor-Ort-Kontrollen bei einer Auswahl, nachgängige Prüfungen durch zuständige Kontrollstellen.",
+      "conditions": [
+        {
+          "expression": "Ein Antrag liegt vor oder eine Förderung wurde bereits ausgezahlt.",
+          "description": "Ein Antrag liegt vor oder eine Förderung wurde bereits ausgezahlt.",
+          "input_paths": [
+            "farm.oepul.administrative_checks_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "inspection",
+        "description": "Verwaltungskontrolle für alle Anträge, Vor-Ort-Kontrollen bei einer Auswahl, nachgängige Prüfungen durch zuständige Kontrollstellen."
+      },
+      "source_reference_ids": [
+        "SRC-G-0672-0675",
+        "SRC-G-0676-0679",
+        "SRC-S-1154-1158",
+        "SRC-S-1159-1162"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-sanction",
+      "rule_type": "Kürzungsgrund",
+      "statement": "Zugangsvoraussetzungen, gemeldete Einheiten, Förderverpflichtungen oder Konditionalität sind verletzt. — Einbehalt, Kürzung oder Rückforderung samt möglichen Zinsen je Tatbestand. Bei einjährigen Maßnahmen ohne Zugangsvoraussetzung kommt kein gültiger Vertrag zustande. Tierabweichungen nach §§ 42–47 GSP-AV, inhaltliche Verstöße nach § 48.",
+      "conditions": [
+        {
+          "expression": "Zugangsvoraussetzungen, gemeldete Einheiten, Förderverpflichtungen oder Konditionalität sind verletzt.",
+          "description": "Zugangsvoraussetzungen, gemeldete Einheiten, Förderverpflichtungen oder Konditionalität sind verletzt."
+        }
+      ],
+      "result": {
+        "outcome": "sanction",
+        "description": "Einbehalt, Kürzung oder Rückforderung samt möglichen Zinsen je Tatbestand. Bei einjährigen Maßnahmen ohne Zugangsvoraussetzung kommt kein gültiger Vertrag zustande. Tierabweichungen nach §§ 42–47 GSP-AV, inhaltliche Verstöße nach § 48."
+      },
+      "source_reference_ids": [
+        "SRC-G-0681-0685",
+        "SRC-G-0686-0690",
+        "SRC-S-1227-1233",
+        "SRC-S-1238-1241",
+        "SRC-S-1242-1245"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-scale",
+      "rule_type": "Sanktionsstufen",
+      "statement": "Ein inhaltlicher Verstoß ist festgestellt. — Schwere, Ausmaß, Dauer und Häufigkeit sind maßnahmenbezogen einschließlich Optionen und Zuschlägen zu beurteilen. Stufen sind Verwarnung oder Kürzung um 2, 5, 10, 25, 50 oder 100 %.",
+      "conditions": [
+        {
+          "expression": "Ein inhaltlicher Verstoß ist festgestellt.",
+          "description": "Ein inhaltlicher Verstoß ist festgestellt.",
+          "input_paths": [
+            "farm.oepul.sanction_level",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "scale",
+        "description": "Schwere, Ausmaß, Dauer und Häufigkeit sind maßnahmenbezogen einschließlich Optionen und Zuschlägen zu beurteilen. Stufen sind Verwarnung oder Kürzung um 2, 5, 10, 25, 50 oder 100 %."
+      },
+      "source_reference_ids": [
+        "SRC-G-0696-0707"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.sanction_percent",
+        "data.oepul.o6_21.assessed_sanction_pct"
+      ]
+    },
+    {
+      "id": "O21-warning",
+      "rule_type": "Übergang",
+      "statement": "Die unterste Sanktionsstufe wird verhängt. — Bis 2026 Verwarnung, ab 2027 Einbehalt von 1 % der Maßnahmenprämie.",
+      "conditions": [
+        {
+          "expression": "gewählte_Sanktionsstufe = Verwarnung",
+          "description": "Die unterste Sanktionsstufe wird verhängt.",
+          "input_paths": [
+            "farm.oepul.sanction_level",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "warning",
+        "description": "Bis 2026 Verwarnung, ab 2027 Einbehalt von 1 % der Maßnahmenprämie.",
+        "value": {
+          "through_2026_pct": 0,
+          "from_2027_pct": 1
+        }
+      },
+      "source_reference_ids": [
+        "SRC-G-0710-0711"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.sanction_percent"
+      ]
+    },
+    {
+      "id": "O21-exclusion",
+      "rule_type": "Ausschluss",
+      "statement": "Im Vertragszeitraum ist zum zweiten Mal eine 100-%-Kürzung verhängt. — Ausschluss aus der Maßnahme und Rückforderung der bisher im Vertragszeitraum gewährten Maßnahmenprämie.",
+      "conditions": [
+        {
+          "expression": "Anzahl_100_Prozent_Kürzungen_im_Vertragszeitraum >= 2",
+          "description": "Im Vertragszeitraum ist zum zweiten Mal eine 100-%-Kürzung verhängt.",
+          "input_paths": [
+            "farm.oepul.full_cuts_in_contract"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "exclusion",
+        "description": "Ausschluss aus der Maßnahme und Rückforderung der bisher im Vertragszeitraum gewährten Maßnahmenprämie.",
+        "value": {
+          "full_cuts_same_contract": 2
+        }
+      },
+      "source_reference_ids": [
+        "SRC-G-0708-0709"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.repeated_full_cut"
+      ]
+    },
+    {
+      "id": "O21-award",
+      "rule_type": "Entscheidung",
+      "statement": "Die AMA entscheidet über den Antrag. — Schriftliche Verständigung per Post oder Mein Postkorb, bei Ablehnung mit Gründen. Mit Verständigung der Genehmigung entsteht der Vertrag. Bei mehreren Maßnahmen besteht ein Vertrag mit eigenständig beurteilbaren Maßnahmen.",
+      "conditions": [
+        {
+          "expression": "Die AMA entscheidet über den Antrag.",
+          "description": "Die AMA entscheidet über den Antrag."
+        }
+      ],
+      "result": {
+        "outcome": "award",
+        "description": "Schriftliche Verständigung per Post oder Mein Postkorb, bei Ablehnung mit Gründen. Mit Verständigung der Genehmigung entsteht der Vertrag. Bei mehreren Maßnahmen besteht ein Vertrag mit eigenständig beurteilbaren Maßnahmen."
+      },
+      "source_reference_ids": [
+        "SRC-G-0714-0716",
+        "SRC-S-1124-1128",
+        "SRC-S-1129-1132"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-payment",
+      "rule_type": "Auszahlung",
+      "statement": "Die Jahresprämie wurde ermittelt. — AMA überweist auf das im MFA genannte Namenskonto nach Maßgabe verfügbarer Mittel bis 30. Juni des Folgejahres. Nach abgeschlossener Verwaltungskontrolle ist eine Teilzahlung bis 75 % möglich. Spätere Nachzahlung oder Rückforderung möglich.",
+      "conditions": [
+        {
+          "expression": "Die Jahresprämie wurde ermittelt.",
+          "description": "Die Jahresprämie wurde ermittelt.",
+          "input_paths": [
+            "farm.oepul.expected_premium_eur",
+            "farm.oepul.administrative_checks_complete"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "payment",
+        "description": "AMA überweist auf das im MFA genannte Namenskonto nach Maßgabe verfügbarer Mittel bis 30. Juni des Folgejahres. Nach abgeschlossener Verwaltungskontrolle ist eine Teilzahlung bis 75 % möglich. Spätere Nachzahlung oder Rückforderung möglich.",
+        "value": {
+          "advance_max_fraction": 0.75,
+          "deadline_next_year": "06-30"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-G-0717-0725",
+        "SRC-S-1135-1139",
+        "SRC-S-1140-1143"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.payment_deadline",
+        "data.oepul.o6_21.maximum_advance"
+      ]
+    },
+    {
+      "id": "O21-de-minimis",
+      "rule_type": "Ermessen",
+      "statement": "Auszahlungsbetrag übersteigt 50 Euro nicht. — Die Behörde kann von der Förderung absehen.",
+      "conditions": [
+        {
+          "expression": "Auszahlungsbetrag übersteigt 50 Euro nicht.",
+          "description": "Auszahlungsbetrag übersteigt 50 Euro nicht."
+        }
+      ],
+      "result": {
+        "outcome": "de_minimis",
+        "description": "Die Behörde kann von der Förderung absehen.",
+        "value": {
+          "operator": "<=",
+          "value": 50,
+          "unit": "EUR",
+          "discretionary": true
+        }
+      },
+      "source_reference_ids": [
+        "SRC-S-1144-1145"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-modulation",
+      "rule_type": "Größenmodulation",
+      "statement": "Die MFA-Heimfläche ist für die Betriebsgrößenmodulation maßgeblich. — Bis 200 ha zählen 100 %, für den Teil über 200 bis 300 ha 90 %, über 300 bis 1.000 ha 85 % und darüber 75 %. Flächengewichteten Faktor auf die gesamte Maßnahmenprämie anwenden. Alm und Behirtung sind gesondert zu betrachten.",
+      "conditions": [
+        {
+          "expression": "Die MFA-Heimfläche ist für die Betriebsgrößenmodulation maßgeblich.",
+          "description": "Die MFA-Heimfläche ist für die Betriebsgrößenmodulation maßgeblich.",
+          "input_paths": [
+            "farm.oepul.home_area_ha",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "modulation",
+        "description": "Bis 200 ha zählen 100 %, für den Teil über 200 bis 300 ha 90 %, über 300 bis 1.000 ha 85 % und darüber 75 %. Flächengewichteten Faktor auf die gesamte Maßnahmenprämie anwenden. Alm und Behirtung sind gesondert zu betrachten.",
+        "value": {
+          "table": "/o6_21_tables/modulation"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-G-0767-0776",
+        "SRC-G-0778-0780",
+        "SRC-S-0843-0852"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.modulation_factor",
+        "data.oepul.o6_21.modulated_tariff_eur"
+      ]
+    },
+    {
+      "id": "O21-double-funding",
+      "rule_type": "Leistungsabgrenzung",
+      "statement": "Dieselbe Leistung ist aus einem anderen öffentlichen Titel finanziert oder gesetzlich bzw. behördlich vorgeschrieben. — Keine zusätzliche Abgeltung derselben Leistung aus o6_21.",
+      "conditions": [
+        {
+          "expression": "Dieselbe Leistung ist aus einem anderen öffentlichen Titel finanziert oder gesetzlich bzw. behördlich vorgeschrieben.",
+          "description": "Dieselbe Leistung ist aus einem anderen öffentlichen Titel finanziert oder gesetzlich bzw. behördlich vorgeschrieben."
+        }
+      ],
+      "result": {
+        "outcome": "double_funding",
+        "description": "Keine zusätzliche Abgeltung derselben Leistung aus o6_21."
+      },
+      "source_reference_ids": [
+        "SRC-S-0554-0559"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-force",
+      "rule_type": "Höhere Gewalt",
+      "statement": "Dürre macht 2026 die Einhaltung einer konkreten Verpflichtung unmöglich. — Einzelbetriebliches Ansuchen auf Anerkennung höherer Gewalt oder besonderer Umstände über eAMA im Register Eingaben einbringen. Die Anerkennung ist fallbezogen.",
+      "conditions": [
+        {
+          "expression": "Dürre macht 2026 die Einhaltung einer konkreten Verpflichtung unmöglich.",
+          "description": "Dürre macht 2026 die Einhaltung einer konkreten Verpflichtung unmöglich.",
+          "input_paths": [
+            "documentation.o6_21_case"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "force",
+        "description": "Einzelbetriebliches Ansuchen auf Anerkennung höherer Gewalt oder besonderer Umstände über eAMA im Register Eingaben einbringen. Die Anerkennung ist fallbezogen."
+      },
+      "source_reference_ids": [
+        "SRC-05-22-0044-0044-1",
+        "SRC-05-22-0044-0044-2",
+        "SRC-05-22-0044-0044-3",
+        "SRC-05-22-0044-0044-4",
+        "SRC-05-22-0044-0044-5",
+        "SRC-05-22-0044-0044-6",
+        "SRC-S-0758-0759"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-revision",
+      "rule_type": "Vertragsanpassung",
+      "statement": "Geänderter verbindlicher Rechtsrahmen erfordert Anpassung von Auflagen oder Prämien. — Verweigerte Zustimmung beendet den ursprünglichen Vertrag ohne Rückforderung wegen der Vertragsdauer. Andere Rückforderungsgründe bleiben bestehen.",
+      "conditions": [
+        {
+          "expression": "Geänderter verbindlicher Rechtsrahmen erfordert Anpassung von Auflagen oder Prämien.",
+          "description": "Geänderter verbindlicher Rechtsrahmen erfordert Anpassung von Auflagen oder Prämien."
+        }
+      ],
+      "result": {
+        "outcome": "revision",
+        "description": "Verweigerte Zustimmung beendet den ursprünglichen Vertrag ohne Rückforderung wegen der Vertragsdauer. Andere Rückforderungsgründe bleiben bestehen."
+      },
+      "source_reference_ids": [
+        "SRC-S-0803-0808",
+        "SRC-S-0809-0813"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-inspection-access",
+      "rule_type": "Mitwirkung",
+      "statement": "Eine berechtigte Stelle kontrolliert. — Auch unangekündigten Zutritt zu Betriebs- und Lagerräumen sowie Flächen, Einsicht, Auskünfte, Unterstützung, Kopien oder nötigenfalls Originale und elektronischen Zugang gewähren. Verträge und Unterlagen am Betrieb bereithalten.",
+      "conditions": [
+        {
+          "expression": "Eine berechtigte Stelle kontrolliert.",
+          "description": "Eine berechtigte Stelle kontrolliert."
+        }
+      ],
+      "result": {
+        "outcome": "inspection_access",
+        "description": "Auch unangekündigten Zutritt zu Betriebs- und Lagerräumen sowie Flächen, Einsicht, Auskünfte, Unterstützung, Kopien oder nötigenfalls Originale und elektronischen Zugang gewähren. Verträge und Unterlagen am Betrieb bereithalten."
+      },
+      "source_reference_ids": [
+        "SRC-S-1163-1167",
+        "SRC-S-1168-1171",
+        "SRC-S-1172-1175",
+        "SRC-S-1176-1179"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-inspection-third",
+      "rule_type": "Mitwirkung",
+      "statement": "Unterlagen liegen rechtmäßig bei Dritten. — Auf Aufforderung für Einsicht, Herausgabe oder elektronischen Zugang sorgen.",
+      "conditions": [
+        {
+          "expression": "Unterlagen liegen rechtmäßig bei Dritten.",
+          "description": "Unterlagen liegen rechtmäßig bei Dritten."
+        }
+      ],
+      "result": {
+        "outcome": "inspection_third",
+        "description": "Auf Aufforderung für Einsicht, Herausgabe oder elektronischen Zugang sorgen."
+      },
+      "source_reference_ids": [
+        "SRC-S-1180-1184"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-inspection-denied",
+      "rule_type": "Vertragsfolge",
+      "statement": "Eine Auskunft wird verweigert oder die Vor-Ort-Kontrolle verhindert, ohne höhere Gewalt oder außergewöhnliche Umstände. — Antrag ablehnen, im laufenden Jahr keine Prämie gewähren und bestehende Verträge beenden und rückabwickeln.",
+      "conditions": [
+        {
+          "expression": "Eine Auskunft wird verweigert oder die Vor-Ort-Kontrolle verhindert, ohne höhere Gewalt oder außergewöhnliche Umstände.",
+          "description": "Eine Auskunft wird verweigert oder die Vor-Ort-Kontrolle verhindert, ohne höhere Gewalt oder außergewöhnliche Umstände.",
+          "input_paths": [
+            "documentation.o6_21_case"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "inspection_denied",
+        "description": "Antrag ablehnen, im laufenden Jahr keine Prämie gewähren und bestehende Verträge beenden und rückabwickeln."
+      },
+      "source_reference_ids": [
+        "SRC-S-1185-1189"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-inspection-person",
+      "rule_type": "Auskunftsperson",
+      "statement": "Der Förderwerber ist abwesend oder kann keine Auskunft geben. — Benannte Vertretungsbevollmächtigte gelten als geeignet. Bei angekündigter Kontrolle und Fehlen einer benannten auskunftgebenden Person kommen maßgeblich mitwirkende volljährige Betriebsangehörige in Betracht.",
+      "conditions": [
+        {
+          "expression": "Der Förderwerber ist abwesend oder kann keine Auskunft geben.",
+          "description": "Der Förderwerber ist abwesend oder kann keine Auskunft geben."
+        }
+      ],
+      "result": {
+        "outcome": "inspection_person",
+        "description": "Benannte Vertretungsbevollmächtigte gelten als geeignet. Bei angekündigter Kontrolle und Fehlen einer benannten auskunftgebenden Person kommen maßgeblich mitwirkende volljährige Betriebsangehörige in Betracht."
+      },
+      "source_reference_ids": [
+        "SRC-S-1190-1196",
+        "SRC-S-1202-1203"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-assessment",
+      "rule_type": "Prüfbefugnis",
+      "statement": "Die Richtigkeit und Vollständigkeit der Angaben und die Einhaltung der Auflagen werden vor Ort geprüft. — Das Kontrollorgan bewertet die Rechtsfolgen nicht verbindlich.",
+      "conditions": [
+        {
+          "expression": "Die Richtigkeit und Vollständigkeit der Angaben und die Einhaltung der Auflagen werden vor Ort geprüft.",
+          "description": "Die Richtigkeit und Vollständigkeit der Angaben und die Einhaltung der Auflagen werden vor Ort geprüft."
+        }
+      ],
+      "result": {
+        "outcome": "assessment",
+        "description": "Das Kontrollorgan bewertet die Rechtsfolgen nicht verbindlich."
+      },
+      "source_reference_ids": [
+        "SRC-S-1205-1208",
+        "SRC-S-1209-1212"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-documents",
+      "rule_type": "Nachreichung",
+      "statement": "Unterlagen sind unzugänglich oder wurden verspätet vorgelegt. — Unzugängliche Unterlagen gelten als fehlend. Die AMA kann geeignete Nachreichung zulassen. Nach Fristablauf eingereichte Nachweise zählen nicht. Nachgewiesene besonders berücksichtigungswürdige Umstände können Nachweisfristen verlängern, ausgenommen Antragsfristen. Aufbewahrung gemäß § 16 Z 1 GSP-AV.",
+      "conditions": [
+        {
+          "expression": "Unterlagen sind unzugänglich oder wurden verspätet vorgelegt.",
+          "description": "Unterlagen sind unzugänglich oder wurden verspätet vorgelegt."
+        }
+      ],
+      "result": {
+        "outcome": "documents",
+        "description": "Unzugängliche Unterlagen gelten als fehlend. Die AMA kann geeignete Nachreichung zulassen. Nach Fristablauf eingereichte Nachweise zählen nicht. Nachgewiesene besonders berücksichtigungswürdige Umstände können Nachweisfristen verlängern, ausgenommen Antragsfristen. Aufbewahrung gemäß § 16 Z 1 GSP-AV."
+      },
+      "source_reference_ids": [
+        "SRC-S-1213-1218",
+        "SRC-S-1219-1224"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-cut-order",
+      "rule_type": "Berechnungsreihenfolge",
+      "statement": "Mehrere Kürzungen treffen zusammen. — Reihenfolge gemäß SRL anwenden. Inhaltliche Kürzung geht der maßnahmenspezifischen Obergrenze und Modulation voraus. Konditionalitätskürzungen folgen zuletzt.",
+      "conditions": [
+        {
+          "expression": "Mehrere Kürzungen treffen zusammen.",
+          "description": "Mehrere Kürzungen treffen zusammen."
+        }
+      ],
+      "result": {
+        "outcome": "cut_order",
+        "description": "Reihenfolge gemäß SRL anwenden. Inhaltliche Kürzung geht der maßnahmenspezifischen Obergrenze und Modulation voraus. Konditionalitätskürzungen folgen zuletzt."
+      },
+      "source_reference_ids": [
+        "SRC-S-1259-1266",
+        "SRC-S-1267-1273"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.cut_sequence"
+      ]
+    },
+    {
+      "id": "O21-uplift",
+      "rule_type": "Übergang",
+      "statement": "Prämiensatz für eine Art.-70-Maßnahme ab 2024 bzw. inhaltliche Änderung mit Kennzeichen 1b. — Das Impulsprogramm hebt die Sätze ab 2024 um 8 % mit Rundung auf eine Nachkommastelle an. Die ausgewiesenen neuen Sätze enthalten die Anhebung bereits. Inhaltliche Änderungen mit 1b gelten ab 2025.",
+      "conditions": [
+        {
+          "expression": "Prämiensatz für eine Art.-70-Maßnahme ab 2024 bzw. inhaltliche Änderung mit Kennzeichen 1b.",
+          "description": "Prämiensatz für eine Art.-70-Maßnahme ab 2024 bzw. inhaltliche Änderung mit Kennzeichen 1b."
+        }
+      ],
+      "result": {
+        "outcome": "uplift",
+        "description": "Das Impulsprogramm hebt die Sätze ab 2024 um 8 % mit Rundung auf eine Nachkommastelle an. Die ausgewiesenen neuen Sätze enthalten die Anhebung bereits. Inhaltliche Änderungen mit 1b gelten ab 2025."
+      },
+      "source_reference_ids": [
+        "SRC-S-0158-0163",
+        "SRC-S-0185-0189",
+        "SRC-S-4379-4379"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.rates"
+      ]
+    },
+    {
+      "id": "O21-cultures",
+      "rule_type": "Flächenklassifikation",
+      "statement": "Für eine flächenbezogene ÖPUL-Einstufung ist die Kultur zu bestimmen. — Getreide, Gegenbeispiele, Ackerfutter, Feldgemüse und Obst nach der vollständigen Kulturtabelle zuordnen. Gemenge unter 50 % Getreide sind kein Getreide. Felsenbirne, Maulbeere und Papau zählen ab 2025 als Obst.",
+      "conditions": [
+        {
+          "expression": "Für eine flächenbezogene ÖPUL-Einstufung ist die Kultur zu bestimmen.",
+          "description": "Für eine flächenbezogene ÖPUL-Einstufung ist die Kultur zu bestimmen."
+        }
+      ],
+      "result": {
+        "outcome": "cultures",
+        "description": "Getreide, Gegenbeispiele, Ackerfutter, Feldgemüse und Obst nach der vollständigen Kulturtabelle zuordnen. Gemenge unter 50 % Getreide sind kein Getreide. Felsenbirne, Maulbeere und Papau zählen ab 2025 als Obst."
+      },
+      "source_reference_ids": [
+        "SRC-G-0104-0110",
+        "SRC-G-0111-0117",
+        "SRC-G-0123-0129",
+        "SRC-G-0130-0135",
+        "SRC-S-0462-0466",
+        "SRC-S-0467-0471",
+        "SRC-S-0472-0476",
+        "SRC-S-0477-0481",
+        "SRC-S-0488-0489"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.crop_groups"
+      ]
+    },
+    {
+      "id": "O21-area-mgmt",
+      "rule_type": "Flächenbewirtschaftung",
+      "statement": "Förderfähige Flächen sind in eine Flächenmaßnahme eingebracht. — Acker ohne Ackerfutter und geschützter Anbau brauchen ordnungsgemäßen Anbau, jährliche Pflege, Ernte und Abtransport auf mindestens 85 % des Schlages. Bei Dauer-, Spezial- und Weinkulturen gelten Auspflanzung, Pflege, Ernte und Abtransport. Grünland und Ackerfutter jährlich vollflächig mähen und Mähgut verbringen oder vollflächig beweiden, Bergmähder mindestens jedes zweite Jahr vollflächig mähen und Mähgut verbringen.",
+      "conditions": [
+        {
+          "expression": "Förderfähige Flächen sind in eine Flächenmaßnahme eingebracht.",
+          "description": "Förderfähige Flächen sind in eine Flächenmaßnahme eingebracht."
+        }
+      ],
+      "result": {
+        "outcome": "area_mgmt",
+        "description": "Acker ohne Ackerfutter und geschützter Anbau brauchen ordnungsgemäßen Anbau, jährliche Pflege, Ernte und Abtransport auf mindestens 85 % des Schlages. Bei Dauer-, Spezial- und Weinkulturen gelten Auspflanzung, Pflege, Ernte und Abtransport. Grünland und Ackerfutter jährlich vollflächig mähen und Mähgut verbringen oder vollflächig beweiden, Bergmähder mindestens jedes zweite Jahr vollflächig mähen und Mähgut verbringen."
+      },
+      "source_reference_ids": [
+        "SRC-G-0192-0197",
+        "SRC-G-0203-0212"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-area-idle",
+      "rule_type": "Flächenbewirtschaftung",
+      "statement": "Fläche wird aus der Produktion genommen. — Gründecke ordnungsgemäß anlegen, ausgenommen zulässige Selbstbegrünung bei nichtproduktiven Ackerflächen. Mindestens jedes zweite Jahr häckseln oder pflegemähen.",
+      "conditions": [
+        {
+          "expression": "Fläche wird aus der Produktion genommen.",
+          "description": "Fläche wird aus der Produktion genommen."
+        }
+      ],
+      "result": {
+        "outcome": "area_idle",
+        "description": "Gründecke ordnungsgemäß anlegen, ausgenommen zulässige Selbstbegrünung bei nichtproduktiven Ackerflächen. Mindestens jedes zweite Jahr häckseln oder pflegemähen."
+      },
+      "source_reference_ids": [
+        "SRC-G-0213-0217"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-area-exceptions",
+      "rule_type": "Flächenausnahmen",
+      "statement": "Ein Betrieb beantragt eine Flächenprämie mit Ausnahme von der Mindestbewirtschaftung. — Es gelten die Spezialauflagen für DIV und Mehrnutzenhecken bei UBB/BIO, nichtproduktive Äcker und Agroforst bei 1C, BAW bei Erosionsschutz Acker, AG bei Grundwasserschutz, Grünbrachen bei NAT/EBW sowie K20 bis 2024.",
+      "conditions": [
+        {
+          "expression": "Ein Betrieb beantragt eine Flächenprämie mit Ausnahme von der Mindestbewirtschaftung.",
+          "description": "Ein Betrieb beantragt eine Flächenprämie mit Ausnahme von der Mindestbewirtschaftung."
+        }
+      ],
+      "result": {
+        "outcome": "area_exceptions",
+        "description": "Es gelten die Spezialauflagen für DIV und Mehrnutzenhecken bei UBB/BIO, nichtproduktive Äcker und Agroforst bei 1C, BAW bei Erosionsschutz Acker, AG bei Grundwasserschutz, Grünbrachen bei NAT/EBW sowie K20 bis 2024."
+      },
+      "source_reference_ids": [
+        "SRC-G-0219-0227",
+        "SRC-G-0228-0236"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.management_exception"
+      ]
+    },
+    {
+      "id": "O21-area-ineligible",
+      "rule_type": "Flächenausschluss",
+      "statement": "Flächenprämien werden bestimmt. — Energieholz, Kurzumtrieb, Palmkätzchenproduktion, Reb- und Baumschulen, inaktive Flächen ohne Ausnahme, sonstige Acker-, Grünland-, Hutweide-, Wein-, Spezialkultur- und geschützte Flächen, nicht oder falsch angegebene Flächen, nicht hauptsächlich landwirtschaftliche Flächen und GLÖZ-Landschaftselemente sind ausgeschlossen.",
+      "conditions": [
+        {
+          "expression": "Flächenprämien werden bestimmt.",
+          "description": "Flächenprämien werden bestimmt."
+        }
+      ],
+      "result": {
+        "outcome": "area_ineligible",
+        "description": "Energieholz, Kurzumtrieb, Palmkätzchenproduktion, Reb- und Baumschulen, inaktive Flächen ohne Ausnahme, sonstige Acker-, Grünland-, Hutweide-, Wein-, Spezialkultur- und geschützte Flächen, nicht oder falsch angegebene Flächen, nicht hauptsächlich landwirtschaftliche Flächen und GLÖZ-Landschaftselemente sind ausgeschlossen."
+      },
+      "source_reference_ids": [
+        "SRC-G-0243-0248",
+        "SRC-G-0249-0253",
+        "SRC-G-0266-0268"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-parks",
+      "rule_type": "Flächenausschluss",
+      "statement": "Der beantragte Schlag liegt im Nationalpark. — Nationalpark-Layer wird automatisch abgeglichen. Bei relevanten Auflagen nur Natura 2000 und Wasserrahmenrichtlinie, in Neusiedlersee und Donau-Auen generell nur diese beiden Maßnahmen, in Kalkalpen keine Almprämie. Gesamtbetriebliche Verpflichtungen gelten fort. Keine gesonderte OP-Codierung für den Nationalpark nötig.",
+      "conditions": [
+        {
+          "expression": "Der beantragte Schlag liegt im Nationalpark.",
+          "description": "Der beantragte Schlag liegt im Nationalpark."
+        }
+      ],
+      "result": {
+        "outcome": "parks",
+        "description": "Nationalpark-Layer wird automatisch abgeglichen. Bei relevanten Auflagen nur Natura 2000 und Wasserrahmenrichtlinie, in Neusiedlersee und Donau-Auen generell nur diese beiden Maßnahmen, in Kalkalpen keine Almprämie. Gesamtbetriebliche Verpflichtungen gelten fort. Keine gesonderte OP-Codierung für den Nationalpark nötig."
+      },
+      "source_reference_ids": [
+        "SRC-G-0254-0259",
+        "SRC-G-0260-0265",
+        "SRC-G-0277-0278",
+        "SRC-G-0284-0285"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-trial",
+      "rule_type": "Flächendokumentation",
+      "statement": "Ein genehmigter wissenschaftlicher Versuch verhindert die Einhaltung auf einer Fläche. — Genehmigung aufbewahren, Art, Ausmaß und Lage dokumentieren, Schlag mit VF kennzeichnen. Für diese Fläche keine Jahresprämie.",
+      "conditions": [
+        {
+          "expression": "Ein genehmigter wissenschaftlicher Versuch verhindert die Einhaltung auf einer Fläche.",
+          "description": "Ein genehmigter wissenschaftlicher Versuch verhindert die Einhaltung auf einer Fläche."
+        }
+      ],
+      "result": {
+        "outcome": "trial",
+        "description": "Genehmigung aufbewahren, Art, Ausmaß und Lage dokumentieren, Schlag mit VF kennzeichnen. Für diese Fläche keine Jahresprämie."
+      },
+      "source_reference_ids": [
+        "SRC-G-0269-0275"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-op",
+      "rule_type": "Flächencodierung",
+      "statement": "Ernte, Vertragsdauer oder ganzjährige Flächenverpflichtung wird verfehlt, oder öffentliche Leistung bzw. vorgeschriebene Ausgleichsnutzung überschneidet sich. — OP oder maßnahmenbezogenen OP-Code setzen, entsprechende Flächenprämie entfällt. Bei angelegter Zwischenfrucht auf nicht geerntetem Schlag maßnahmenbezogen codieren, ohne OPZWF. Ausnahmen für Natura 2000 und Wasserrahmenrichtlinie beachten.",
+      "conditions": [
+        {
+          "expression": "Ernte, Vertragsdauer oder ganzjährige Flächenverpflichtung wird verfehlt, oder öffentliche Leistung bzw. vorgeschriebene Ausgleichsnutzung überschneidet sich.",
+          "description": "Ernte, Vertragsdauer oder ganzjährige Flächenverpflichtung wird verfehlt, oder öffentliche Leistung bzw. vorgeschriebene Ausgleichsnutzung überschneidet sich."
+        }
+      ],
+      "result": {
+        "outcome": "op",
+        "description": "OP oder maßnahmenbezogenen OP-Code setzen, entsprechende Flächenprämie entfällt. Bei angelegter Zwischenfrucht auf nicht geerntetem Schlag maßnahmenbezogen codieren, ohne OPZWF. Ausnahmen für Natura 2000 und Wasserrahmenrichtlinie beachten."
+      },
+      "source_reference_ids": [
+        "SRC-G-0277-0277",
+        "SRC-G-0286-0291",
+        "SRC-G-0292-0296",
+        "SRC-G-0297-0304",
+        "SRC-G-0305-0311"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-orchard",
+      "rule_type": "Flächencodierung",
+      "statement": "Obstprämie für Neu- oder Altanlage wird beantragt. — Hochwertiges grundsätzlich veredeltes Pflanzgut erforderlich. Unveredelte Bäume OP-codieren, ausgenommen die Option Streuobstbäume bei punktförmigen Landschaftselementen.",
+      "conditions": [
+        {
+          "expression": "Obstprämie für Neu- oder Altanlage wird beantragt.",
+          "description": "Obstprämie für Neu- oder Altanlage wird beantragt."
+        }
+      ],
+      "result": {
+        "outcome": "orchard",
+        "description": "Hochwertiges grundsätzlich veredeltes Pflanzgut erforderlich. Unveredelte Bäume OP-codieren, ausgenommen die Option Streuobstbäume bei punktförmigen Landschaftselementen."
+      },
+      "source_reference_ids": [
+        "SRC-G-0312-0317"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-third-party",
+      "rule_type": "Flächencodierung",
+      "statement": "Förderverpflichtung auf einem Schlag kann wegen reinen Fremdverschuldens nicht eingehalten werden. — Betroffenen maßnahmenbezogenen OP-Code setzen, Nachweis aufbewahren und vorlegen. Schaden bilateral klären. Andernfalls betroffenen Code per MFA-Korrektur löschen oder Selbstanzeige bei der AMA erstatten. Bei Selbstanzeige inhaltliche Sanktion gemäß Verwaltungskontrolle.",
+      "conditions": [
+        {
+          "expression": "Förderverpflichtung auf einem Schlag kann wegen reinen Fremdverschuldens nicht eingehalten werden.",
+          "description": "Förderverpflichtung auf einem Schlag kann wegen reinen Fremdverschuldens nicht eingehalten werden."
+        }
+      ],
+      "result": {
+        "outcome": "third_party",
+        "description": "Betroffenen maßnahmenbezogenen OP-Code setzen, Nachweis aufbewahren und vorlegen. Schaden bilateral klären. Andernfalls betroffenen Code per MFA-Korrektur löschen oder Selbstanzeige bei der AMA erstatten. Bei Selbstanzeige inhaltliche Sanktion gemäß Verwaltungskontrolle."
+      },
+      "source_reference_ids": [
+        "SRC-G-0318-0322",
+        "SRC-G-0328-0332",
+        "SRC-G-0333-0336"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-long-contract",
+      "rule_type": "Vertragsabgrenzung",
+      "statement": "Für eine mehrjährige Maßnahme oder mehrjährige Option wird ein Vertrag begründet. — Beginn 2023, 2024 oder 2025 ergibt sechs, fünf oder vier Jahre bis 31.12.2028. Eingebrachte Flächen und Zugänge sind bis Vertragsende gebunden. Letzter Einstieg 2025 mit Antrag bis 31.12.2024. Einjährige Optionen bis Förderjahr 2028 möglich.",
+      "conditions": [
+        {
+          "expression": "Für eine mehrjährige Maßnahme oder mehrjährige Option wird ein Vertrag begründet.",
+          "description": "Für eine mehrjährige Maßnahme oder mehrjährige Option wird ein Vertrag begründet."
+        }
+      ],
+      "result": {
+        "outcome": "long_contract",
+        "description": "Beginn 2023, 2024 oder 2025 ergibt sechs, fünf oder vier Jahre bis 31.12.2028. Eingebrachte Flächen und Zugänge sind bis Vertragsende gebunden. Letzter Einstieg 2025 mit Antrag bis 31.12.2024. Einjährige Optionen bis Förderjahr 2028 möglich."
+      },
+      "source_reference_ids": [
+        "SRC-G-0402-0407",
+        "SRC-G-0413-0424",
+        "SRC-G-0425-0430",
+        "SRC-G-0431-0435",
+        "SRC-G-0470-0475"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.duration_of",
+        "data.oepul.o6_21.contract_term"
+      ]
+    },
+    {
+      "id": "O21-variable-area",
+      "rule_type": "Flächenbindung",
+      "statement": "Heuwirtschaft auf Acker, Erosionsschutz Acker, Herbizid- oder Insektizidverzicht Wein/Obst/Hopfen oder Almbewirtschaftung wird beantragt. — Die Bindung bezieht sich auf die jährlich verfügbaren Flächen oder Tiere.",
+      "conditions": [
+        {
+          "expression": "Heuwirtschaft auf Acker, Erosionsschutz Acker, Herbizid- oder Insektizidverzicht Wein/Obst/Hopfen oder Almbewirtschaftung wird beantragt.",
+          "description": "Heuwirtschaft auf Acker, Erosionsschutz Acker, Herbizid- oder Insektizidverzicht Wein/Obst/Hopfen oder Almbewirtschaftung wird beantragt."
+        }
+      ],
+      "result": {
+        "outcome": "variable_area",
+        "description": "Die Bindung bezieht sich auf die jährlich verfügbaren Flächen oder Tiere."
+      },
+      "source_reference_ids": [
+        "SRC-G-0436-0444"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.annually_variable"
+      ]
+    },
+    {
+      "id": "O21-convert",
+      "rule_type": "Maßnahmenumwandlung",
+      "statement": "Ein mehrjähriger Vertrag wird per MFA spätestens am 31.12.2025 auf eine zugelassene höherwertige Maßnahme umgestellt. — Keine Rückzahlung für die ursprüngliche Maßnahme. Neue Verpflichtungen für die Restlaufzeit einhalten. Zulässige Paare gemäß Wechseltabelle, K20 nur bis einschließlich 2024.",
+      "conditions": [
+        {
+          "expression": "Ein mehrjähriger Vertrag wird per MFA spätestens am 31.12.2025 auf eine zugelassene höherwertige Maßnahme umgestellt.",
+          "description": "Ein mehrjähriger Vertrag wird per MFA spätestens am 31.12.2025 auf eine zugelassene höherwertige Maßnahme umgestellt."
+        }
+      ],
+      "result": {
+        "outcome": "convert",
+        "description": "Keine Rückzahlung für die ursprüngliche Maßnahme. Neue Verpflichtungen für die Restlaufzeit einhalten. Zulässige Paare gemäß Wechseltabelle, K20 nur bis einschließlich 2024."
+      },
+      "source_reference_ids": [
+        "SRC-G-0523-0525",
+        "SRC-G-0532-0538",
+        "SRC-G-0539-0544",
+        "SRC-G-0545-0557"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.switch_allowed"
+      ]
+    },
+    {
+      "id": "O21-area-transfer",
+      "rule_type": "Flächenübernahme",
+      "statement": "Bisher nicht teilnehmender Betrieb übernimmt die mit der Maßnahme belegten Flächen. — Nach Maßnahmenantragsfrist bis 15. April, bei Almbewirtschaftung bis 15. Juli, jeweils 2023 und 2028 bis zum 17. Restlaufzeit übernehmen, bei mehrjährigen Maßnahmen auch nach letztem Einstieg. Ausweitung auf andere Flächen höchstens 50 %. Online-MFA und Genehmigung der AMA erforderlich.",
+      "conditions": [
+        {
+          "expression": "Bisher nicht teilnehmender Betrieb übernimmt die mit der Maßnahme belegten Flächen.",
+          "description": "Bisher nicht teilnehmender Betrieb übernimmt die mit der Maßnahme belegten Flächen."
+        }
+      ],
+      "result": {
+        "outcome": "area_transfer",
+        "description": "Nach Maßnahmenantragsfrist bis 15. April, bei Almbewirtschaftung bis 15. Juli, jeweils 2023 und 2028 bis zum 17. Restlaufzeit übernehmen, bei mehrjährigen Maßnahmen auch nach letztem Einstieg. Ausweitung auf andere Flächen höchstens 50 %. Online-MFA und Genehmigung der AMA erforderlich."
+      },
+      "source_reference_ids": [
+        "SRC-G-0559-0564",
+        "SRC-G-0565-0570",
+        "SRC-S-0714-0717",
+        "SRC-S-0718-0721"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-area-loss",
+      "rule_type": "Flächenabgang",
+      "statement": "Die Fläche eines mehrjährigen Vertrags sinkt. — Rückzahlung bis Vertragsbeginn für betroffene Flächen, ausgenommen echter Verlust von Verfügungsgewalt. Bewirtschafterwechsel führt zum Beitritt des Nachfolgers. Zulässig sind jährlich 5 % der Vorjahresfläche, maximal 5 ha, jedenfalls 0,50 ha. Bei Überschreitung gesamte Differenzfläche rückzahlungspflichtig.",
+      "conditions": [
+        {
+          "expression": "Die Fläche eines mehrjährigen Vertrags sinkt.",
+          "description": "Die Fläche eines mehrjährigen Vertrags sinkt."
+        }
+      ],
+      "result": {
+        "outcome": "area_loss",
+        "description": "Rückzahlung bis Vertragsbeginn für betroffene Flächen, ausgenommen echter Verlust von Verfügungsgewalt. Bewirtschafterwechsel führt zum Beitritt des Nachfolgers. Zulässig sind jährlich 5 % der Vorjahresfläche, maximal 5 ha, jedenfalls 0,50 ha. Bei Überschreitung gesamte Differenzfläche rückzahlungspflichtig.",
+        "value": {
+          "annual_percent": 5,
+          "cap_ha": 5,
+          "minimum_tolerance_ha": 0.5
+        }
+      },
+      "source_reference_ids": [
+        "SRC-G-0602-0606",
+        "SRC-G-0607-0610",
+        "SRC-G-0617-0620",
+        "SRC-G-0622-0627",
+        "SRC-G-0628-0633"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.allowed_area_loss"
+      ]
+    },
+    {
+      "id": "O21-land-change",
+      "rule_type": "Nutzungsänderung",
+      "statement": "Eine Vertragsfläche wechselt die Nutzung. — Zulässig sind A/S/WI/WT zu G/D, G/D zu L, Maßnahmenflächen zu Mehrnutzenhecke bei UBB/BIO bzw. zu Agroforststreifen bei 1C.",
+      "conditions": [
+        {
+          "expression": "Eine Vertragsfläche wechselt die Nutzung.",
+          "description": "Eine Vertragsfläche wechselt die Nutzung."
+        }
+      ],
+      "result": {
+        "outcome": "land_change",
+        "description": "Zulässig sind A/S/WI/WT zu G/D, G/D zu L, Maßnahmenflächen zu Mehrnutzenhecke bei UBB/BIO bzw. zu Agroforststreifen bei 1C."
+      },
+      "source_reference_ids": [
+        "SRC-G-0634-0638",
+        "SRC-G-0639-0643"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-area-gain",
+      "rule_type": "Flächenzugang",
+      "statement": "UBB, BIO, Betriebsmittelverzicht, Heuwirtschaft auf Grünland, Bergmähder, Grundwasserschutz Acker, Humuserhalt Grünland, Naturschutz oder EBW. — Flächenzugänge 2024 und 2025 voll prämienfähig. Danach höchstens 50 % der Basis 2025, jedenfalls 5 ha Zuwachs. Bereits mit derselben Maßnahme belegte Flächen zählen nicht als Zugang. Für nicht aufgeführte Maßnahmen gilt diese Beschränkung nicht.",
+      "conditions": [
+        {
+          "expression": "UBB, BIO, Betriebsmittelverzicht, Heuwirtschaft auf Grünland, Bergmähder, Grundwasserschutz Acker, Humuserhalt Grünland, Naturschutz oder EBW.",
+          "description": "UBB, BIO, Betriebsmittelverzicht, Heuwirtschaft auf Grünland, Bergmähder, Grundwasserschutz Acker, Humuserhalt Grünland, Naturschutz oder EBW."
+        }
+      ],
+      "result": {
+        "outcome": "area_gain",
+        "description": "Flächenzugänge 2024 und 2025 voll prämienfähig. Danach höchstens 50 % der Basis 2025, jedenfalls 5 ha Zuwachs. Bereits mit derselben Maßnahme belegte Flächen zählen nicht als Zugang. Für nicht aufgeführte Maßnahmen gilt diese Beschränkung nicht.",
+        "value": {
+          "base_year": 2025,
+          "max_percent": 50,
+          "minimum_tolerance_ha": 5
+        }
+      },
+      "source_reference_ids": [
+        "SRC-G-0645-0651",
+        "SRC-G-0658-0663",
+        "SRC-G-0664-0669"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.permitted_access_ha"
+      ]
+    },
+    {
+      "id": "O21-ceiling",
+      "rule_type": "Flächenobergrenze",
+      "statement": "Summe flächenbezogener Zahlungen je Schlag einschließlich umgelegter Landschaftselemente. — Jahres- und gruppenspezifische Obergrenzen und Ausnahmen aus der Tabelle anwenden. Keine Hektarobergrenze auf die tierbezogenen RGVE-Sätze anwenden.",
+      "conditions": [
+        {
+          "expression": "Summe flächenbezogener Zahlungen je Schlag einschließlich umgelegter Landschaftselemente.",
+          "description": "Summe flächenbezogener Zahlungen je Schlag einschließlich umgelegter Landschaftselemente."
+        }
+      ],
+      "result": {
+        "outcome": "ceiling",
+        "description": "Jahres- und gruppenspezifische Obergrenzen und Ausnahmen aus der Tabelle anwenden. Keine Hektarobergrenze auf die tierbezogenen RGVE-Sätze anwenden."
+      },
+      "source_reference_ids": [
+        "SRC-G-0735-0749",
+        "SRC-G-0750-0764"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.area_ceiling"
+      ]
+    },
+    {
+      "id": "O21-matrix",
+      "rule_type": "Flächenkombination",
+      "statement": "Eine Prämienkombination auf derselben Einzelfläche wird überprüft. — Anhang L enthält 21 Maßnahmen mit x für kombinierbar und a für kombinierbar mit Abschlag. Fußnoten schränken die Abgeltung der Landschaftselemente, Topf-/Substratkulturen, Organismenzuschlag und die Optionen in Wien, Pflanzenschutzmittelverzicht, BAW und AG ein. Maßnahme 21 ist keine Achse dieser Matrix.",
+      "conditions": [
+        {
+          "expression": "Eine Prämienkombination auf derselben Einzelfläche wird überprüft.",
+          "description": "Eine Prämienkombination auf derselben Einzelfläche wird überprüft."
+        }
+      ],
+      "result": {
+        "outcome": "matrix",
+        "description": "Anhang L enthält 21 Maßnahmen mit x für kombinierbar und a für kombinierbar mit Abschlag. Fußnoten schränken die Abgeltung der Landschaftselemente, Topf-/Substratkulturen, Organismenzuschlag und die Optionen in Wien, Pflanzenschutzmittelverzicht, BAW und AG ein. Maßnahme 21 ist keine Achse dieser Matrix."
+      },
+      "source_reference_ids": [
+        "SRC-A-6433-6438",
+        "SRC-A-6471-6476",
+        "SRC-A-6477-6481",
+        "SRC-A-6482-6486",
+        "SRC-A-6487-6491",
+        "SRC-A-6492-6494",
+        "SRC-A-6495-6497"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.combination_cell"
+      ]
+    },
+    {
+      "id": "O21-drought-harvest",
+      "rule_type": "Flächenausnahme 2026",
+      "statement": "Dürrebedingt kein erntbarer Bestand einer üblicherweise im Spätsommer oder Herbst geernteten Ackerkultur in der ausgewiesenen Gebietskulisse. — Ernte und Abtransport auf 85 % des Schlages entfallen 2026 ohne Einzelmeldung bei fortbestehender Flächenprämie. Die Steiermark-Erweiterung vom 12. August ist zu berücksichtigen. Außerhalb der automatischen Anerkennung ist grundsätzlich ein belegtes Einzelansuchen erforderlich.",
+      "conditions": [
+        {
+          "expression": "Dürrebedingt kein erntbarer Bestand einer üblicherweise im Spätsommer oder Herbst geernteten Ackerkultur in der ausgewiesenen Gebietskulisse.",
+          "description": "Dürrebedingt kein erntbarer Bestand einer üblicherweise im Spätsommer oder Herbst geernteten Ackerkultur in der ausgewiesenen Gebietskulisse.",
+          "input_paths": [
+            "land.parcels[].harvest_exception_2026"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "drought_harvest",
+        "description": "Ernte und Abtransport auf 85 % des Schlages entfallen 2026 ohne Einzelmeldung bei fortbestehender Flächenprämie. Die Steiermark-Erweiterung vom 12. August ist zu berücksichtigen. Außerhalb der automatischen Anerkennung ist grundsätzlich ein belegtes Einzelansuchen erforderlich.",
+        "value": {
+          "year": 2026,
+          "table": "/o6_programmkontext/drought_districts"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-08-05-0006-0006-1",
+        "SRC-08-05-0006-0006-2",
+        "SRC-08-05-0006-0006-3",
+        "SRC-08-05-0006-0006-4",
+        "SRC-08-05-0008-0008-1",
+        "SRC-08-05-0008-0008-2",
+        "SRC-08-05-0008-0008-3",
+        "SRC-08-05-0009-0009-1",
+        "SRC-08-05-0010-0010-1",
+        "SRC-08-05-0011-0011-1",
+        "SRC-08-05-0012-0012-1",
+        "SRC-08-12-0010-0010-1",
+        "SRC-08-12-0010-0010-2"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.drought_harvest_waiver",
+        "data.oepul.o6_21.harvest_exempt_parcels"
+      ]
+    },
+    {
+      "id": "O21-div-regular",
+      "rule_type": "Flächenabgrenzung",
+      "statement": "UBB oder BIO mit mehr als 2 ha Acker bzw. Grünland. — Mindestens 7 % Biodiversitätsflächen. Auf Acker mindestens eine Nutzung binnen zwei Jahren, maximal zwei jährlich, auf 75 % Mahd/Häckseln erst ab 1. August, Beweidung überall erst ab 1. August. Grünlandvarianten bis 15. April codieren, mindestens eine Mahd mit Abtransport jährlich. Variantenspezifische Auflagen gemäß Tabelle. DIVSZ kann phänologisch um bis zu 10 Tage vorverlegt werden, 2026 bezirksweise 4–7 Tage.",
+      "conditions": [
+        {
+          "expression": "UBB oder BIO mit mehr als 2 ha Acker bzw. Grünland.",
+          "description": "UBB oder BIO mit mehr als 2 ha Acker bzw. Grünland."
+        }
+      ],
+      "result": {
+        "outcome": "div_regular",
+        "description": "Mindestens 7 % Biodiversitätsflächen. Auf Acker mindestens eine Nutzung binnen zwei Jahren, maximal zwei jährlich, auf 75 % Mahd/Häckseln erst ab 1. August, Beweidung überall erst ab 1. August. Grünlandvarianten bis 15. April codieren, mindestens eine Mahd mit Abtransport jährlich. Variantenspezifische Auflagen gemäß Tabelle. DIVSZ kann phänologisch um bis zu 10 Tage vorverlegt werden, 2026 bezirksweise 4–7 Tage."
+      },
+      "source_reference_ids": [
+        "SRC-05-22-0005-0005-1",
+        "SRC-05-22-0007-0007-1",
+        "SRC-05-22-0007-0007-2",
+        "SRC-05-22-0007-0007-3",
+        "SRC-05-22-0009-0009-1",
+        "SRC-05-22-0010-0013-1",
+        "SRC-05-22-0010-0013-2",
+        "SRC-05-22-0010-0013-3",
+        "SRC-05-22-0010-0013-4",
+        "SRC-05-22-0015-0022-1",
+        "SRC-05-22-0015-0022-2",
+        "SRC-05-22-0015-0022-3",
+        "SRC-05-22-0015-0022-4",
+        "SRC-05-22-0023-0023-1",
+        "SRC-05-22-0023-0023-2",
+        "SRC-05-22-0023-0023-3"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.div_option"
+      ]
+    },
+    {
+      "id": "O21-div-drought",
+      "rule_type": "Flächenausnahme 2026",
+      "statement": "Vorzeitige Nutzung einer UBB-/BIO-Biodiversitätsfläche oder dritte Ackernutzung 2026. — Auf Acker bei vorzeitiger Mahd über dem freien Viertel und bei früher Beweidung sowie bei dritter Nutzung OPUBB/OPBIO setzen. Auf Grünland bis 14 Tage vorziehen, DIVSZ nur ab zweiter Mahd vergleichbarer Schläge, DIVNFZ auf 49 Tage verkürzbar. Codierte betroffene Flächen erhalten keine UBB-/BIO-Prämie. Projektauflagen NAT/EBW bleiben maßgeblich.",
+      "conditions": [
+        {
+          "expression": "Vorzeitige Nutzung einer UBB-/BIO-Biodiversitätsfläche oder dritte Ackernutzung 2026.",
+          "description": "Vorzeitige Nutzung einer UBB-/BIO-Biodiversitätsfläche oder dritte Ackernutzung 2026."
+        }
+      ],
+      "result": {
+        "outcome": "div_drought",
+        "description": "Auf Acker bei vorzeitiger Mahd über dem freien Viertel und bei früher Beweidung sowie bei dritter Nutzung OPUBB/OPBIO setzen. Auf Grünland bis 14 Tage vorziehen, DIVSZ nur ab zweiter Mahd vergleichbarer Schläge, DIVNFZ auf 49 Tage verkürzbar. Codierte betroffene Flächen erhalten keine UBB-/BIO-Prämie. Projektauflagen NAT/EBW bleiben maßgeblich."
+      },
+      "source_reference_ids": [
+        "SRC-05-22-0027-0027-1",
+        "SRC-05-22-0027-0027-2",
+        "SRC-05-22-0027-0027-3",
+        "SRC-05-22-0031-0031-1",
+        "SRC-05-22-0031-0031-2",
+        "SRC-05-22-0032-0032-1",
+        "SRC-05-22-0032-0032-2",
+        "SRC-05-22-0032-0032-3",
+        "SRC-05-22-0035-0035-1",
+        "SRC-08-12-0014-0014-1",
+        "SRC-08-12-0014-0014-2",
+        "SRC-08-12-0015-0015-1"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-div-code",
+      "rule_type": "Korrektur 2026",
+      "statement": "Wechsel des Grünland-DIV-Codes nach 15. April oder Meldung vorzeitiger Nutzung. — DIVSZ bis 15. Juni in DIVNFZ oder DIVAGF, DIVNFZ bis 15. August in DIVAGF wechselbar. Kein Wechsel von DIVNFZ auf DIVSZ nach 15. April. Vorzeitige Nutzung zeitnah nachcodieren, sonst Beanstandung.",
+      "conditions": [
+        {
+          "expression": "Wechsel des Grünland-DIV-Codes nach 15. April oder Meldung vorzeitiger Nutzung.",
+          "description": "Wechsel des Grünland-DIV-Codes nach 15. April oder Meldung vorzeitiger Nutzung."
+        }
+      ],
+      "result": {
+        "outcome": "div_code",
+        "description": "DIVSZ bis 15. Juni in DIVNFZ oder DIVAGF, DIVNFZ bis 15. August in DIVAGF wechselbar. Kein Wechsel von DIVNFZ auf DIVSZ nach 15. April. Vorzeitige Nutzung zeitnah nachcodieren, sonst Beanstandung."
+      },
+      "source_reference_ids": [
+        "SRC-05-22-0037-0040-1",
+        "SRC-05-22-0037-0040-2",
+        "SRC-05-22-0037-0040-3",
+        "SRC-05-22-0037-0040-4",
+        "SRC-05-22-0042-0042-1",
+        "SRC-05-22-0042-0042-2",
+        "SRC-05-22-0042-0042-3"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-wine-exit",
+      "rule_type": "Sonderausstieg 2026",
+      "statement": "Weinbaubetrieb nimmt an Insektizidverzicht Wein, Obst und Hopfen teil. — Rückzahlungsfreier Ausstieg ab 2026 über eAMA, Eingaben, Andere Eingaben, Antrag höhere Gewalt mit Begründung Bekämpfung der Rebzikade. Bei Genehmigung endet der Vertrag mit der einzelbetrieblichen Meldung, keine Prämie 2026. Bis dahin sind im Insektizidverzicht nur nach EU-Bio-Verordnung erlaubte Insektizide zulässig. Ab Ausstieg ist gesetzmäßiger Einsatz chemisch-synthetischer Insektizide zulässig.",
+      "conditions": [
+        {
+          "expression": "Weinbaubetrieb nimmt an Insektizidverzicht Wein, Obst und Hopfen teil.",
+          "description": "Weinbaubetrieb nimmt an Insektizidverzicht Wein, Obst und Hopfen teil."
+        }
+      ],
+      "result": {
+        "outcome": "wine_exit",
+        "description": "Rückzahlungsfreier Ausstieg ab 2026 über eAMA, Eingaben, Andere Eingaben, Antrag höhere Gewalt mit Begründung Bekämpfung der Rebzikade. Bei Genehmigung endet der Vertrag mit der einzelbetrieblichen Meldung, keine Prämie 2026. Bis dahin sind im Insektizidverzicht nur nach EU-Bio-Verordnung erlaubte Insektizide zulässig. Ab Ausstieg ist gesetzmäßiger Einsatz chemisch-synthetischer Insektizide zulässig."
+      },
+      "source_reference_ids": [
+        "SRC-06-12-0004-0004-1",
+        "SRC-06-12-0004-0004-2",
+        "SRC-06-12-0004-0004-3",
+        "SRC-06-12-0006-0006-1",
+        "SRC-06-12-0007-0007-1",
+        "SRC-06-12-0007-0007-2",
+        "SRC-06-12-0008-0008-1",
+        "SRC-06-12-0008-0008-2",
+        "SRC-06-12-0008-0008-3",
+        "SRC-06-12-0009-0009-1",
+        "SRC-06-12-0009-0009-2"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-wine-order",
+      "rule_type": "Pflanzenschutz-Ausnahme",
+      "statement": "Behördliche Bekämpfung in festgelegten Gebieten von Steiermark, Burgenland oder Niederösterreich bei Insektizidverzicht. — Zulässigen Bio-Wirkstoff verwenden, sofern möglich. Bei ausdrücklich vorgeschriebenem chemisch-synthetischem Wirkstoff oder fehlender Bio-Alternative kein Auflagenverstoß. Anordnung und Durchführung am Betrieb dokumentieren, keine gesonderte Übermittlung.",
+      "conditions": [
+        {
+          "expression": "Behördliche Bekämpfung in festgelegten Gebieten von Steiermark, Burgenland oder Niederösterreich bei Insektizidverzicht.",
+          "description": "Behördliche Bekämpfung in festgelegten Gebieten von Steiermark, Burgenland oder Niederösterreich bei Insektizidverzicht."
+        }
+      ],
+      "result": {
+        "outcome": "wine_order",
+        "description": "Zulässigen Bio-Wirkstoff verwenden, sofern möglich. Bei ausdrücklich vorgeschriebenem chemisch-synthetischem Wirkstoff oder fehlender Bio-Alternative kein Auflagenverstoß. Anordnung und Durchführung am Betrieb dokumentieren, keine gesonderte Übermittlung."
+      },
+      "source_reference_ids": [
+        "SRC-06-12-0005-0005-1",
+        "SRC-06-12-0005-0005-2",
+        "SRC-06-12-0005-0005-3",
+        "SRC-06-12-0010-0010-1",
+        "SRC-06-12-0011-0011-1",
+        "SRC-06-12-0011-0011-2",
+        "SRC-06-12-0011-0011-3",
+        "SRC-06-12-0011-0011-4",
+        "SRC-06-12-0011-0011-5"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-cover-drought",
+      "rule_type": "Begrünung 2026",
+      "statement": "Ordnungsgemäße Anlage bei Zwischenfrucht, Immergrün oder Erosionsschutz Wein/Obst/Hopfen und dürrebedingter unzureichender Feldaufgang. — Keine Beanstandung bei fehlender Deckung oder über 50 % Ausfallgetreide aufgrund mangelnder Keimbedingungen, ohne Meldung österreichweit. Nicht angelegte Varianten umgehend per MFA korrigieren oder streichen. Der Text nennt für Varianten 1 und 2 den 5. bzw. 10. August. Das Beispiel nennt für Variante 2 den 5. August. Der genaue Termin der Variante 2 ist offen.",
+      "conditions": [
+        {
+          "expression": "Ordnungsgemäße Anlage bei Zwischenfrucht, Immergrün oder Erosionsschutz Wein/Obst/Hopfen und dürrebedingter unzureichender Feldaufgang.",
+          "description": "Ordnungsgemäße Anlage bei Zwischenfrucht, Immergrün oder Erosionsschutz Wein/Obst/Hopfen und dürrebedingter unzureichender Feldaufgang."
+        }
+      ],
+      "result": {
+        "outcome": "cover_drought",
+        "description": "Keine Beanstandung bei fehlender Deckung oder über 50 % Ausfallgetreide aufgrund mangelnder Keimbedingungen, ohne Meldung österreichweit. Nicht angelegte Varianten umgehend per MFA korrigieren oder streichen. Der Text nennt für Varianten 1 und 2 den 5. bzw. 10. August. Das Beispiel nennt für Variante 2 den 5. August. Der genaue Termin der Variante 2 ist offen."
+      },
+      "source_reference_ids": [
+        "SRC-08-05-0014-0014-1",
+        "SRC-08-05-0014-0014-2",
+        "SRC-08-05-0015-0015-1",
+        "SRC-08-05-0015-0015-2",
+        "SRC-08-05-0017-0017-1",
+        "SRC-08-05-0017-0017-2",
+        "SRC-08-05-0018-0018-1",
+        "SRC-08-05-0018-0018-2",
+        "SRC-08-05-0020-0020-1"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-evergreen",
+      "rule_type": "Anlagefrist 2026",
+      "statement": "Bei Immergrün fehlen trotz vorausschauender Bewirtschaftung bodenspezifische, phytosanitäre oder pflanzenbauliche Anlagevoraussetzungen. — 30-/50-Tage-Fristen für Zwischen-/Hauptfrucht dürfen bei Glaubhaftmachung überschritten werden. Frühestmöglich im selben Jahr nachholen. Zwischenfrucht bis 20. September abfrostend bzw. 15. Oktober überwiegend winterhart, Mindestdauer 42 Tage.",
+      "conditions": [
+        {
+          "expression": "Bei Immergrün fehlen trotz vorausschauender Bewirtschaftung bodenspezifische, phytosanitäre oder pflanzenbauliche Anlagevoraussetzungen.",
+          "description": "Bei Immergrün fehlen trotz vorausschauender Bewirtschaftung bodenspezifische, phytosanitäre oder pflanzenbauliche Anlagevoraussetzungen."
+        }
+      ],
+      "result": {
+        "outcome": "evergreen",
+        "description": "30-/50-Tage-Fristen für Zwischen-/Hauptfrucht dürfen bei Glaubhaftmachung überschritten werden. Frühestmöglich im selben Jahr nachholen. Zwischenfrucht bis 20. September abfrostend bzw. 15. Oktober überwiegend winterhart, Mindestdauer 42 Tage."
+      },
+      "source_reference_ids": [
+        "SRC-08-12-0006-0006-1",
+        "SRC-08-12-0006-0006-2",
+        "SRC-08-12-0007-0007-1",
+        "SRC-08-12-0008-0008-1"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-undersow",
+      "rule_type": "Flächenausnahme 2026",
+      "statement": "Untersaat US bei Erosionsschutz Acker wurde ordnungsgemäß mit vorgeschriebenen Mischungspartnern angelegt. — Fehlende Deckung wird 2026 ohne zusätzliche Meldung als höhere Gewalt anerkannt.",
+      "conditions": [
+        {
+          "expression": "Untersaat US bei Erosionsschutz Acker wurde ordnungsgemäß mit vorgeschriebenen Mischungspartnern angelegt.",
+          "description": "Untersaat US bei Erosionsschutz Acker wurde ordnungsgemäß mit vorgeschriebenen Mischungspartnern angelegt."
+        }
+      ],
+      "result": {
+        "outcome": "undersow",
+        "description": "Fehlende Deckung wird 2026 ohne zusätzliche Meldung als höhere Gewalt anerkannt."
+      },
+      "source_reference_ids": [
+        "SRC-08-12-0012-0012-1"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-nature",
+      "rule_type": "Flächennutzung 2026",
+      "statement": "Naturschutzflächen haben einen festgelegten Nutzungstermin. — Ab 12. August erste oder zweite Nutzung möglich. Für Natura 2000 und andere Schutzgebiete sind geänderte Landesverordnungen Voraussetzung. Projektbestätigung und ausgewiesene Prämie bleiben bestehen.",
+      "conditions": [
+        {
+          "expression": "Naturschutzflächen haben einen festgelegten Nutzungstermin.",
+          "description": "Naturschutzflächen haben einen festgelegten Nutzungstermin."
+        }
+      ],
+      "result": {
+        "outcome": "nature",
+        "description": "Ab 12. August erste oder zweite Nutzung möglich. Für Natura 2000 und andere Schutzgebiete sind geänderte Landesverordnungen Voraussetzung. Projektbestätigung und ausgewiesene Prämie bleiben bestehen."
+      },
+      "source_reference_ids": [
+        "SRC-08-12-0017-0017-1",
+        "SRC-08-12-0017-0017-2",
+        "SRC-08-12-0018-0018-1",
+        "SRC-08-12-0018-0018-2"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-rare-breed",
+      "rule_type": "Maßnahmenabgrenzung 2026",
+      "statement": "Ein Tier nimmt an Erhaltung gefährdeter Nutztierrassen teil. — Die Sonderhaltedauer endet dort am 31. August. Abgänge ab 1. September bleiben prämienfähig. Bewegungen bis Jahresende melden, Nachbesetzungen nach 31. August nicht mehr. Für gleichzeitig beantragte Stallhaltung gelten deren eigene Jahres- und Abmelderegeln.",
+      "conditions": [
+        {
+          "expression": "Ein Tier nimmt an Erhaltung gefährdeter Nutztierrassen teil.",
+          "description": "Ein Tier nimmt an Erhaltung gefährdeter Nutztierrassen teil."
+        }
+      ],
+      "result": {
+        "outcome": "rare_breed",
+        "description": "Die Sonderhaltedauer endet dort am 31. August. Abgänge ab 1. September bleiben prämienfähig. Bewegungen bis Jahresende melden, Nachbesetzungen nach 31. August nicht mehr. Für gleichzeitig beantragte Stallhaltung gelten deren eigene Jahres- und Abmelderegeln.",
+        "value": {
+          "measure": "o6_5",
+          "year": 2026,
+          "last_day": "2026-08-31"
+        }
+      },
+      "source_reference_ids": [
+        "SRC-08-12-0020-0020-1",
+        "SRC-08-12-0020-0020-2"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-k20",
+      "rule_type": "Flächenausnahme",
+      "statement": "Bis einschließlich Antragsjahr 2024 wird die Weiterführung 20-jähriger Verpflichtungen beantragt. — Für diese Maßnahme entfällt die allgemeine Betriebsmindestgröße.",
+      "conditions": [
+        {
+          "expression": "Bis einschließlich Antragsjahr 2024 wird die Weiterführung 20-jähriger Verpflichtungen beantragt.",
+          "description": "Bis einschließlich Antragsjahr 2024 wird die Weiterführung 20-jähriger Verpflichtungen beantragt."
+        }
+      ],
+      "result": {
+        "outcome": "k20",
+        "description": "Für diese Maßnahme entfällt die allgemeine Betriebsmindestgröße."
+      },
+      "source_reference_ids": [
+        "SRC-G-0188-0190"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-ongoing-obligations",
+      "rule_type": "Flächenweitergabe",
+      "statement": "In die Maßnahme eingebrachte Fläche wird unterjährig weitergegeben. — Übernehmer muss die Auflagen bis Jahresende in gleicher oder höherwertiger Maßnahme fortführen. Sonst melden und OP oder maßnahmenbezogenen OP-Code setzen. Für das unvollendete Jahr entfällt die Prämie auf der betroffenen Fläche.",
+      "conditions": [
+        {
+          "expression": "In die Maßnahme eingebrachte Fläche wird unterjährig weitergegeben.",
+          "description": "In die Maßnahme eingebrachte Fläche wird unterjährig weitergegeben."
+        }
+      ],
+      "result": {
+        "outcome": "ongoing_obligations",
+        "description": "Übernehmer muss die Auflagen bis Jahresende in gleicher oder höherwertiger Maßnahme fortführen. Sonst melden und OP oder maßnahmenbezogenen OP-Code setzen. Für das unvollendete Jahr entfällt die Prämie auf der betroffenen Fläche."
+      },
+      "source_reference_ids": [
+        "SRC-G-0395-0400",
+        "SRC-S-0596-0599",
+        "SRC-S-0600-0602"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-multi-exit",
+      "rule_type": "Vertragsfolge",
+      "statement": "Eine mehrjährige Maßnahme oder Option wird vorzeitig verlassen. — Bereits gewährte Prämien sind rückforderbar und Kombinationsverpflichtungen können verletzt sein.",
+      "conditions": [
+        {
+          "expression": "Eine mehrjährige Maßnahme oder Option wird vorzeitig verlassen.",
+          "description": "Eine mehrjährige Maßnahme oder Option wird vorzeitig verlassen."
+        }
+      ],
+      "result": {
+        "outcome": "multi_exit",
+        "description": "Bereits gewährte Prämien sind rückforderbar und Kombinationsverpflichtungen können verletzt sein."
+      },
+      "source_reference_ids": [
+        "SRC-G-0507-0509"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-assistance",
+      "rule_type": "Finanzierung",
+      "statement": "ELER-kofinanzierte Art.-70-Maßnahme wird finanziert. — Die jährliche Prämie wird aus EU-, Bundes- und Landesmitteln finanziert. Bundeszuschuss setzt einen zeitgerecht bereitgestellten Landeszuschuss von zwei Dritteln der Bundesmittel voraus.",
+      "conditions": [
+        {
+          "expression": "ELER-kofinanzierte Art.-70-Maßnahme wird finanziert.",
+          "description": "ELER-kofinanzierte Art.-70-Maßnahme wird finanziert."
+        }
+      ],
+      "result": {
+        "outcome": "assistance",
+        "description": "Die jährliche Prämie wird aus EU-, Bundes- und Landesmitteln finanziert. Bundeszuschuss setzt einen zeitgerecht bereitgestellten Landeszuschuss von zwei Dritteln der Bundesmittel voraus."
+      },
+      "source_reference_ids": [
+        "SRC-G-0717-0721",
+        "SRC-S-0855-0857",
+        "SRC-S-0888-0892"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-farm-combinations",
+      "rule_type": "Betriebskombination",
+      "statement": "Auf einem Betrieb werden zusätzlich weitere Maßnahmen beantragt. — UBB, Betriebsmittelverzicht oder Herbizid-/Insektizidverzicht sind mit BIO außer bei Bio-Teilbetrieben ausgeschlossen. Gleiches gilt für nichtproduktive Ackerflächen mit UBB/BIO. Zwischenfrucht und Immergrün sowie die beiden Schweine-N-Fütterungszuschläge in 9 und 16 sind je Paar ausgeschlossen. o6_21 steht nicht in dieser Ausschlussliste.",
+      "conditions": [
+        {
+          "expression": "Auf einem Betrieb werden zusätzlich weitere Maßnahmen beantragt.",
+          "description": "Auf einem Betrieb werden zusätzlich weitere Maßnahmen beantragt."
+        }
+      ],
+      "result": {
+        "outcome": "farm_combinations",
+        "description": "UBB, Betriebsmittelverzicht oder Herbizid-/Insektizidverzicht sind mit BIO außer bei Bio-Teilbetrieben ausgeschlossen. Gleiches gilt für nichtproduktive Ackerflächen mit UBB/BIO. Zwischenfrucht und Immergrün sowie die beiden Schweine-N-Fütterungszuschläge in 9 und 16 sind je Paar ausgeschlossen. o6_21 steht nicht in dieser Ausschlussliste."
+      },
+      "source_reference_ids": [
+        "SRC-S-0915-0919",
+        "SRC-S-0920-0924",
+        "SRC-S-0925-0929",
+        "SRC-S-0930-0934"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.farm_conflict"
+      ]
+    },
+    {
+      "id": "O21-notice-scope",
+      "rule_type": "Kontrolle 2026",
+      "statement": "Vor-Ort-Kontrolle in der außergewöhnlichen Trockenheit. — Die besondere Situation wird bei der Kontrolle berücksichtigt, etwa hinsichtlich Feldaufgang oder Grundfutterbedarf auf der Weide. Eine automatische Befreiung von Stallauflagen ist daraus nicht ableitbar.",
+      "conditions": [
+        {
+          "expression": "Vor-Ort-Kontrolle in der außergewöhnlichen Trockenheit.",
+          "description": "Vor-Ort-Kontrolle in der außergewöhnlichen Trockenheit."
+        }
+      ],
+      "result": {
+        "outcome": "notice_scope",
+        "description": "Die besondere Situation wird bei der Kontrolle berücksichtigt, etwa hinsichtlich Feldaufgang oder Grundfutterbedarf auf der Weide. Eine automatische Befreiung von Stallauflagen ist daraus nicht ableitbar."
+      },
+      "source_reference_ids": [
+        "SRC-05-22-0042-0042-1",
+        "SRC-05-22-0042-0042-2",
+        "SRC-05-22-0042-0042-3"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "O21-takeover-list",
+      "rule_type": "Übernahmeabgrenzung",
+      "statement": "Eine im allgemeinen Informationsblatt angeführte tierbezogene Maßnahme oder Option soll übernommen werden. — Für die in der Tabelle bezeichneten Maßnahmen und Optionen ist die Übernahme nur im Einzelfall bei Auflösung, Teilung oder Zusammenlegung möglich. Bei tierbezogenen Maßnahmen müssen Tiere und Flächen vom selben Vorbetrieb stammen.",
+      "conditions": [
+        {
+          "expression": "Eine im allgemeinen Informationsblatt angeführte tierbezogene Maßnahme oder Option soll übernommen werden.",
+          "description": "Eine im allgemeinen Informationsblatt angeführte tierbezogene Maßnahme oder Option soll übernommen werden."
+        }
+      ],
+      "result": {
+        "outcome": "takeover_list",
+        "description": "Für die in der Tabelle bezeichneten Maßnahmen und Optionen ist die Übernahme nur im Einzelfall bei Auflösung, Teilung oder Zusammenlegung möglich. Bei tierbezogenen Maßnahmen müssen Tiere und Flächen vom selben Vorbetrieb stammen."
+      },
+      "source_reference_ids": [
+        "SRC-G-0576-0581",
+        "SRC-G-0582-0587",
+        "SRC-G-0588-0593",
+        "SRC-G-0594-0599"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_21.structural_takeover_activity"
+      ]
+    }
+  ]
+}

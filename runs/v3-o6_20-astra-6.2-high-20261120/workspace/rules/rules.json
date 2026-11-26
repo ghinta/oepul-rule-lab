@@ -1,0 +1,3353 @@
+{
+  "contract_version": "rules-catalog-v2.0.0",
+  "measure": "o6_20",
+  "rules": [
+    {
+      "id": "o6_20.foerdergegenstand",
+      "rule_type": "Fördergegenstand",
+      "statement": "Weidehaltung von Rindern, Schafen, Ziegen, Equiden oder Neuweltkamelen — Die jährliche Tierprämie gleicht die daraus entstehenden Kosten und Einkommensverluste aus.",
+      "conditions": [
+        {
+          "expression": "Weidehaltung von Rindern, Schafen, Ziegen, Equiden oder Neuweltkamelen",
+          "description": "Weidehaltung von Rindern, Schafen, Ziegen, Equiden oder Neuweltkamelen",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Fördergegenstand",
+        "description": "Die jährliche Tierprämie gleicht die daraus entstehenden Kosten und Einkommensverluste aus."
+      },
+      "source_reference_ids": [
+        "src.W.13.16",
+        "src.S.4250.4252"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.vertrag",
+      "rule_type": "Vertragsdauer",
+      "statement": "Gültige Teilnahme an Tierwohl – Weide — Verpflichtung und Vertrag laufen vom 1. Jänner bis 31. Dezember. Ohne Abmeldung verlängert sich die Maßnahme bei erfüllter Mindestteilnahme um ein Förderjahr.",
+      "conditions": [
+        {
+          "expression": "Gültige Teilnahme an Tierwohl – Weide",
+          "description": "Gültige Teilnahme an Tierwohl – Weide",
+          "input_paths": [
+            "farm.weide_categories",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Vertragsdauer",
+        "description": "Verpflichtung und Vertrag laufen vom 1. Jänner bis 31. Dezember. Ohne Abmeldung verlängert sich die Maßnahme bei erfüllter Mindestteilnahme um ein Förderjahr.",
+        "value": {
+          "start": "01-01",
+          "end": "12-31",
+          "auto_renewal": true
+        }
+      },
+      "source_reference_ids": [
+        "src.W.23.26",
+        "src.G.450.451",
+        "src.G.460.460",
+        "src.S.603.604",
+        "src.S.613.613"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.effective_claims"
+      ]
+    },
+    {
+      "id": "o6_20.minimum",
+      "rule_type": "Zugang",
+      "statement": "Summe der teilnehmenden RGVE aller beantragten Kategorien im Durchschnitt vom 1. April bis einschließlich 31. Oktober — Ab 2,00 RGVE ist das betriebliche Jahresminimum erfüllt. Unterhalb der Grenze erlischt der Maßnahmenvertrag.",
+      "conditions": [
+        {
+          "expression": "Summe(qualifizierende RGVE-Tage) / 214 >= 2",
+          "description": "Summe der teilnehmenden RGVE aller beantragten Kategorien im Durchschnitt vom 1. April bis einschließlich 31. Oktober",
+          "input_paths": [
+            "farm.weide_categories",
+            "livestock.weide_animals",
+            "livestock.weide_count_claims",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Betriebliche Mindestteilnahme",
+        "description": "Ab 2,00 RGVE ist das betriebliche Jahresminimum erfüllt. Unterhalb der Grenze erlischt der Maßnahmenvertrag.",
+        "value": {
+          "operator": ">=",
+          "threshold_rgve": 2,
+          "aggregation": "mean_across_requested_categories",
+          "period": [
+            "04-01",
+            "10-31"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "src.W.28.32",
+        "src.S.4253.4254"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.farm_minimum"
+      ]
+    },
+    {
+      "id": "o6_20.kategoriepraesenz",
+      "rule_type": "Zugang",
+      "statement": "Mindestens ein teilnehmendes Tier oder sukzessive Ersatztiere derselben beantragten Kategorie am Betrieb — Die vereinigten Anwesenheitstage müssen in der Weideperiode mindestens 120 bzw. bei Zuschlag 150 Tage erreichen. Gleichzeitig gehaltene Tiere vervielfachen die Tage nicht.",
+      "conditions": [
+        {
+          "expression": "Anzahl(unterschiedliche Anwesenheitstage der Kategorie) >= gewählte Mindestweidetage",
+          "description": "Mindestens ein teilnehmendes Tier oder sukzessive Ersatztiere derselben beantragten Kategorie am Betrieb",
+          "input_paths": [
+            "farm.weide_categories",
+            "livestock.weide_animals",
+            "livestock.weide_count_claims",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Zugang",
+        "description": "Die vereinigten Anwesenheitstage müssen in der Weideperiode mindestens 120 bzw. bei Zuschlag 150 Tage erreichen. Gleichzeitig gehaltene Tiere vervielfachen die Tage nicht."
+      },
+      "source_reference_ids": [
+        "src.W.41.45",
+        "src.W.50.54",
+        "src.W.43.45"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.presence_ok"
+      ]
+    },
+    {
+      "id": "o6_20.kalbin",
+      "rule_type": "Ausnahme",
+      "statement": "Beide weiblichen Rinderkategorien beantragt und dasselbe Tier wechselt mit zwei Jahren die Kategorie — Die Tage dieses Tieres über beide Kategorien dürfen für die 120- bzw. 150-Tage-Anforderung zusammengerechnet werden.",
+      "conditions": [
+        {
+          "expression": "beide weiblichen Kategorien beantragt UND Summe der Tage desselben Rindes über beide Kategorien >= Solltage der geprüften Kategorie",
+          "description": "Beide weiblichen Rinderkategorien beantragt und dasselbe Tier wechselt mit zwei Jahren die Kategorie",
+          "input_paths": [
+            "farm.weide_categories",
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Ausnahme",
+        "description": "Die Tage dieses Tieres über beide Kategorien dürfen für die 120- bzw. 150-Tage-Anforderung zusammengerechnet werden."
+      },
+      "source_reference_ids": [
+        "src.W.46.48",
+        "src.W.55.59"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.presence_ok"
+      ]
+    },
+    {
+      "id": "o6_20.vertragsende",
+      "rule_type": "Folge",
+      "statement": "Jährliche Mindestteilnahme einer Kategorie verfehlt, insbesondere kein prämienfähiges Tier — Der Kategorievertrag endet. Für das Folgejahr ist gegebenenfalls eine erneute fristgerechte Beantragung nötig. Förderverpflichtungen gelten unabhängig vom Mindestbestand.",
+      "conditions": [
+        {
+          "expression": "Jährliche Mindestteilnahme einer Kategorie verfehlt, insbesondere kein prämienfähiges Tier",
+          "description": "Jährliche Mindestteilnahme einer Kategorie verfehlt, insbesondere kein prämienfähiges Tier",
+          "input_paths": [
+            "farm.weide_categories"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Kategorievertrag endet",
+        "description": "Der Kategorievertrag endet. Für das Folgejahr ist gegebenenfalls eine erneute fristgerechte Beantragung nötig. Förderverpflichtungen gelten unabhängig vom Mindestbestand."
+      },
+      "source_reference_ids": [
+        "src.W.60.63",
+        "src.W.357.360",
+        "src.S.1230.1233"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.administrative_findings"
+      ]
+    },
+    {
+      "id": "o6_20.strukturwechsel",
+      "rule_type": "Zurechnung",
+      "statement": "Hauptbetrieb wird Teilbetrieb, Teilbetrieb wird Hauptbetrieb oder wechselt den Hauptbetrieb — Rinder zählen ab dem Wechseltag zur neuen Struktur. Für die ursprüngliche Struktur entfällt die weitere Prämienfähigkeit. Auch die Tierhaltereigenschaft kann verloren gehen.",
+      "conditions": [
+        {
+          "expression": "Hauptbetrieb wird Teilbetrieb, Teilbetrieb wird Hauptbetrieb oder wechselt den Hauptbetrieb",
+          "description": "Hauptbetrieb wird Teilbetrieb, Teilbetrieb wird Hauptbetrieb oder wechselt den Hauptbetrieb",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Zurechnung",
+        "description": "Rinder zählen ab dem Wechseltag zur neuen Struktur. Für die ursprüngliche Struktur entfällt die weitere Prämienfähigkeit. Auch die Tierhaltereigenschaft kann verloren gehen."
+      },
+      "source_reference_ids": [
+        "src.W.66.70",
+        "src.G.385.389"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.registered_days"
+      ]
+    },
+    {
+      "id": "o6_20.tierkategorien",
+      "rule_type": "Definition",
+      "statement": "Tierart, Geschlecht und vollendetes Alter am jeweiligen Tag — Wählbar sind weibliche Rinder ab 2 Jahren und von ½ bis unter 2 Jahren, männliche Rinder ab ½ Jahr, weibliche Schafe und Ziegen jeweils ab 1 Jahr, Equiden ab ½ Jahr und Neuweltkamele ab 1 Jahr. Equiden umfassen Pferde, Ponys, Esel und Kreuzungen.",
+      "conditions": [
+        {
+          "expression": "Tierart, Geschlecht und vollendetes Alter am jeweiligen Tag",
+          "description": "Tierart, Geschlecht und vollendetes Alter am jeweiligen Tag",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Definition",
+        "description": "Wählbar sind weibliche Rinder ab 2 Jahren und von ½ bis unter 2 Jahren, männliche Rinder ab ½ Jahr, weibliche Schafe und Ziegen jeweils ab 1 Jahr, Equiden ab ½ Jahr und Neuweltkamele ab 1 Jahr. Equiden umfassen Pferde, Ponys, Esel und Kreuzungen.",
+        "value": {
+          "table": "/weide_tables/categories"
+        }
+      },
+      "source_reference_ids": [
+        "src.W.72.74",
+        "src.W.83.90",
+        "src.S.4255.4263",
+        "src.W.84.84",
+        "src.W.85.85",
+        "src.W.86.86",
+        "src.W.87.87",
+        "src.W.88.88",
+        "src.W.89.89",
+        "src.W.90.90"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.category"
+      ]
+    },
+    {
+      "id": "o6_20.basisweide",
+      "rule_type": "Verpflichtung",
+      "statement": "Beantragte Tierkategorie ohne 150-Tage-Option — Alle Tiere der Kategorie müssen zwischen 1. April und 31. Oktober an mindestens 120 Kalendertagen weiden. Zu- und Abgänge sowie Alterswechsel sind nach den artspezifischen Regeln zu berücksichtigen.",
+      "conditions": [
+        {
+          "expression": "Kategorie beantragt UND kein wirksamer 150-Tage-Zuschlag",
+          "description": "Beantragte Tierkategorie ohne 150-Tage-Option",
+          "input_paths": [
+            "farm.weide_categories",
+            "livestock.weide_animals",
+            "livestock.species_groups[].housing.pasture.weide_participating",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Verpflichtung",
+        "description": "Alle Tiere der Kategorie müssen zwischen 1. April und 31. Oktober an mindestens 120 Kalendertagen weiden. Zu- und Abgänge sowie Alterswechsel sind nach den artspezifischen Regeln zu berücksichtigen.",
+        "value": {
+          "minimum_days": 120,
+          "inclusive_period": [
+            "04-01",
+            "10-31"
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "src.W.96.101",
+        "src.W.169.169",
+        "src.S.4265.4268"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.required_days",
+        "data.oepul.o6_20.grazing_days"
+      ]
+    },
+    {
+      "id": "o6_20.zuschlag",
+      "rule_type": "Option",
+      "statement": "Jährlich je Kategorie beantragte längere Weidedauer — Mindestens 150 Kalendertage im selben Zeitraum für alle teilnehmenden Tiere dieser Kategorie einhalten.",
+      "conditions": [
+        {
+          "expression": "Jährlich je Kategorie beantragte längere Weidedauer",
+          "description": "Jährlich je Kategorie beantragte längere Weidedauer",
+          "input_paths": [
+            "farm.weide_categories"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Option",
+        "description": "Mindestens 150 Kalendertage im selben Zeitraum für alle teilnehmenden Tiere dieser Kategorie einhalten.",
+        "value": {
+          "minimum_days": 150,
+          "per": "category"
+        }
+      },
+      "source_reference_ids": [
+        "src.W.91.93",
+        "src.W.97.101",
+        "src.W.338.342",
+        "src.S.4266.4268"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.required_days"
+      ]
+    },
+    {
+      "id": "o6_20.almzeit",
+      "rule_type": "Anrechnung",
+      "statement": "Weidetage auf Almen oder Gemeinschaftsweiden oder voneinander getrennte Weideperioden — Diese Tage zählen für Basis und Zuschlag. Nach einer Unterbrechung darf weitergeweidet werden.",
+      "conditions": [
+        {
+          "expression": "Weidetage auf Almen oder Gemeinschaftsweiden oder voneinander getrennte Weideperioden",
+          "description": "Weidetage auf Almen oder Gemeinschaftsweiden oder voneinander getrennte Weideperioden",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Anrechnung",
+        "description": "Diese Tage zählen für Basis und Zuschlag. Nach einer Unterbrechung darf weitergeweidet werden."
+      },
+      "source_reference_ids": [
+        "src.W.102.105"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.grazing_days"
+      ]
+    },
+    {
+      "id": "o6_20.saisonal",
+      "rule_type": "Ausnahme",
+      "statement": "Betrieb hält Tiere nur in einem Teil des Jahres — Saisonale Haltung ist bei Erfüllung der Mindestweidedauer zulässig.",
+      "conditions": [
+        {
+          "expression": "Betrieb hält Tiere nur in einem Teil des Jahres",
+          "description": "Betrieb hält Tiere nur in einem Teil des Jahres",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Ausnahme",
+        "description": "Saisonale Haltung ist bei Erfüllung der Mindestweidedauer zulässig."
+      },
+      "source_reference_ids": [
+        "src.W.106.108"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.futter",
+      "rule_type": "Verpflichtung",
+      "statement": "Während der gesamten Weidedauer — Den Grundfutterbedarf überwiegend durch Beweidung decken. Ergänzungsfutter auf der Weide und im Stall ist zulässig.",
+      "conditions": [
+        {
+          "expression": "Während der gesamten Weidedauer",
+          "description": "Während der gesamten Weidedauer",
+          "input_paths": [
+            "livestock.species_groups[].housing.pasture.forage_predominantly_grazed"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Verpflichtung",
+        "description": "Den Grundfutterbedarf überwiegend durch Beweidung decken. Ergänzungsfutter auf der Weide und im Stall ist zulässig."
+      },
+      "source_reference_ids": [
+        "src.W.110.112",
+        "src.S.4269.4270",
+        "src.W.121.129"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.welfare_findings"
+      ]
+    },
+    {
+      "id": "o6_20.tagesdauer",
+      "rule_type": "Verpflichtung",
+      "statement": "An einem angerechneten Weidetag — Beweidung muss einen wesentlichen Teil des Tages umfassen. Nachtweide ist möglich. Eine feste Stundenzahl ist nicht vorgegeben.",
+      "conditions": [
+        {
+          "expression": "An einem angerechneten Weidetag",
+          "description": "An einem angerechneten Weidetag",
+          "input_paths": [
+            "livestock.species_groups[].housing.pasture.substantial_day_or_night"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Verpflichtung",
+        "description": "Beweidung muss einen wesentlichen Teil des Tages umfassen. Nachtweide ist möglich. Eine feste Stundenzahl ist nicht vorgegeben."
+      },
+      "source_reference_ids": [
+        "src.W.112.115",
+        "src.S.4270.4270",
+        "src.W.121.129"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.welfare_findings"
+      ]
+    },
+    {
+      "id": "o6_20.traenke",
+      "rule_type": "Verpflichtung",
+      "statement": "Während der Weidehaltung — Allen Weidetieren Zugang zu einer Tränke gewähren.",
+      "conditions": [
+        {
+          "expression": "Während der Weidehaltung",
+          "description": "Während der Weidehaltung",
+          "input_paths": [
+            "livestock.species_groups[].housing.pasture.water_availability"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Verpflichtung",
+        "description": "Allen Weidetieren Zugang zu einer Tränke gewähren."
+      },
+      "source_reference_ids": [
+        "src.W.132.135",
+        "src.S.4271.4272"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.welfare_findings"
+      ]
+    },
+    {
+      "id": "o6_20.schutz",
+      "rule_type": "Verpflichtung",
+      "statement": "Während der Weidehaltung — Unterstand, etwa eine Baumgruppe, oder bei Bedarf rasche Verbringung in den Stall gewährleisten.",
+      "conditions": [
+        {
+          "expression": "Während der Weidehaltung",
+          "description": "Während der Weidehaltung",
+          "input_paths": [
+            "livestock.species_groups[].housing.pasture.shelter",
+            "livestock.species_groups[].housing.pasture.rapid_return"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Verpflichtung",
+        "description": "Unterstand, etwa eine Baumgruppe, oder bei Bedarf rasche Verbringung in den Stall gewährleisten."
+      },
+      "source_reference_ids": [
+        "src.W.132.135",
+        "src.S.4271.4272"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.welfare_findings"
+      ]
+    },
+    {
+      "id": "o6_20.tagebuch",
+      "rule_type": "Dokumentation",
+      "statement": "Laufende Weidehaltung — Tierkategorie oder Gruppe, Weideort (Heimfeldstück, Fremdweide oder Alm), Beginn und Ende jedes zusammenhängenden Zeitraums je Ort sowie tier- und tageweise Hinderungs- und Unterbrechungsgründe dokumentieren.",
+      "conditions": [
+        {
+          "expression": "Laufende Weidehaltung",
+          "description": "Laufende Weidehaltung",
+          "input_paths": [
+            "documentation.weide_diary"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Dokumentation",
+        "description": "Tierkategorie oder Gruppe, Weideort (Heimfeldstück, Fremdweide oder Alm), Beginn und Ende jedes zusammenhängenden Zeitraums je Ort sowie tier- und tageweise Hinderungs- und Unterbrechungsgründe dokumentieren."
+      },
+      "source_reference_ids": [
+        "src.W.137.142",
+        "src.S.4273.4276"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.diary_findings"
+      ]
+    },
+    {
+      "id": "o6_20.sammelaufzeichnung",
+      "rule_type": "Erleichterung",
+      "statement": "Gruppe beweidet mehrere Feldstücke im zusammenhängenden Zeitraum — Mehrere Feldstücke dürfen gemeinsam angegeben werden. Weiden alle Tiere der Kategorie dort, ist die Mengenangabe „alle“ auch bei wechselnder Stückzahl zulässig.",
+      "conditions": [
+        {
+          "expression": "Gruppe beweidet mehrere Feldstücke im zusammenhängenden Zeitraum",
+          "description": "Gruppe beweidet mehrere Feldstücke im zusammenhängenden Zeitraum",
+          "input_paths": [
+            "documentation.weide_diary"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Erleichterung",
+        "description": "Mehrere Feldstücke dürfen gemeinsam angegeben werden. Weiden alle Tiere der Kategorie dort, ist die Mengenangabe „alle“ auch bei wechselnder Stückzahl zulässig."
+      },
+      "source_reference_ids": [
+        "src.W.143.147"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.aenderungsjournal",
+      "rule_type": "Dokumentation",
+      "statement": "Wesentliche Änderung wie Ortswechsel, frühzeitiges Ende oder individuelle Unterbrechung wegen Geburt, Krankheit oder Verletzung — Weidetagebuch am selben Tag aktualisieren.",
+      "conditions": [
+        {
+          "expression": "Wesentliche Änderung wie Ortswechsel, frühzeitiges Ende oder individuelle Unterbrechung wegen Geburt, Krankheit oder Verletzung",
+          "description": "Wesentliche Änderung wie Ortswechsel, frühzeitiges Ende oder individuelle Unterbrechung wegen Geburt, Krankheit oder Verletzung",
+          "input_paths": [
+            "documentation.weide_diary"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Dokumentation",
+        "description": "Weidetagebuch am selben Tag aktualisieren."
+      },
+      "source_reference_ids": [
+        "src.W.148.151"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.diary_findings"
+      ]
+    },
+    {
+      "id": "o6_20.geburt",
+      "rule_type": "Erleichterung",
+      "statement": "Ablammung oder Abkitzung mit dokumentierter Anzahl im Stall gehaltener Tiere und ausreichenden verbleibenden Weidetagen — Gruppenaufzeichnung genügt. Stalltage abziehen. Bei zehn Stalltagen braucht die Gruppe mindestens 130 bzw. 160 Tage Gesamtweidezeit.",
+      "conditions": [
+        {
+          "expression": "Art IN {Schaf, Ziege} UND Anlass = Geburt UND Anzahl Stalltiere dokumentiert UND Gruppenweidezeit minus Stalltage >= Solltage",
+          "description": "Ablammung oder Abkitzung mit dokumentierter Anzahl im Stall gehaltener Tiere und ausreichenden verbleibenden Weidetagen",
+          "input_paths": [
+            "documentation.weide_diary"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Erleichterung",
+        "description": "Gruppenaufzeichnung genügt. Stalltage abziehen. Bei zehn Stalltagen braucht die Gruppe mindestens 130 bzw. 160 Tage Gesamtweidezeit."
+      },
+      "source_reference_ids": [
+        "src.W.152.159"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.birth_group_ok",
+        "data.oepul.o6_20.diary_findings"
+      ]
+    },
+    {
+      "id": "o6_20.aufzeichnungsform",
+      "rule_type": "Dokumentation",
+      "statement": "Vollständige Pflichtangaben — AMA-Vorlage und gleichwertige andere Aufzeichnungen sind zulässig.",
+      "conditions": [
+        {
+          "expression": "Vollständige Pflichtangaben",
+          "description": "Vollständige Pflichtangaben",
+          "input_paths": [
+            "documentation.weide_diary"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Dokumentation",
+        "description": "AMA-Vorlage und gleichwertige andere Aufzeichnungen sind zulässig."
+      },
+      "source_reference_ids": [
+        "src.W.165.167"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.nichtteilnahme",
+      "rule_type": "Meldung",
+      "statement": "Mindestdauer für ein Tier, mehrere Tiere oder die ganze Kategorie nicht einhaltbar, vorbehaltlich artspezifischer Ausnahmen — Online an die AMA melden. Betroffene Tiere erhalten keine Prämie. Tage der Verhinderung oder Unterbrechung zählen nicht.",
+      "conditions": [
+        {
+          "expression": "Mindestdauer für ein Tier, mehrere Tiere oder die ganze Kategorie nicht einhaltbar, vorbehaltlich artspezifischer Ausnahmen",
+          "description": "Mindestdauer für ein Tier, mehrere Tiere oder die ganze Kategorie nicht einhaltbar, vorbehaltlich artspezifischer Ausnahmen",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Meldung",
+        "description": "Online an die AMA melden. Betroffene Tiere erhalten keine Prämie. Tage der Verhinderung oder Unterbrechung zählen nicht."
+      },
+      "source_reference_ids": [
+        "src.W.170.175",
+        "src.S.4277.4279"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.grazing_days"
+      ]
+    },
+    {
+      "id": "o6_20.rinderabmeldung",
+      "rule_type": "Meldung",
+      "statement": "Ein Rind kann nicht mitweiden, auch beim Hineinwachsen in die Kategorie — Ab Bekanntwerden unverzüglich ohrmarkenbezogen auf eAMA als Korrektur in der Beilage Tierwohl – Weide/Stallhaltung unter Tierwohl – Weide bei Rindern abmelden.",
+      "conditions": [
+        {
+          "expression": "Ein Rind kann nicht mitweiden, auch beim Hineinwachsen in die Kategorie",
+          "description": "Ein Rind kann nicht mitweiden, auch beim Hineinwachsen in die Kategorie",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Meldung",
+        "description": "Ab Bekanntwerden unverzüglich ohrmarkenbezogen auf eAMA als Korrektur in der Beilage Tierwohl – Weide/Stallhaltung unter Tierwohl – Weide bei Rindern abmelden."
+      },
+      "source_reference_ids": [
+        "src.W.179.184",
+        "src.W.192.195"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.report_actions"
+      ]
+    },
+    {
+      "id": "o6_20.rind_aliquot",
+      "rule_type": "Ausnahme",
+      "statement": "Allein das Alter oder ein in der Rinderdatenbank meldepflichtiger Abgang wie Verkauf oder Schlachtung verkürzt die Teilnahme bei ordnungsgemäßer Mitweide — Keine gesonderte AMA-Abmeldung. Ab Erreichen der Altersgrenze mitweiden und den Bestand anteilig über 214 Tage berücksichtigen.",
+      "conditions": [
+        {
+          "expression": "Allein das Alter oder ein in der Rinderdatenbank meldepflichtiger Abgang wie Verkauf oder Schlachtung verkürzt die Teilnahme bei ordnungsgemäßer Mitweide",
+          "description": "Allein das Alter oder ein in der Rinderdatenbank meldepflichtiger Abgang wie Verkauf oder Schlachtung verkürzt die Teilnahme bei ordnungsgemäßer Mitweide",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Anteilig anrechnen",
+        "description": "Keine gesonderte AMA-Abmeldung. Ab Erreichen der Altersgrenze mitweiden und den Bestand anteilig über 214 Tage berücksichtigen."
+      },
+      "source_reference_ids": [
+        "src.W.185.189",
+        "src.W.196.201",
+        "src.W.207.210"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.registered_days"
+      ]
+    },
+    {
+      "id": "o6_20.erfuellt",
+      "rule_type": "Ausnahme",
+      "statement": "Rinderkategorie hat die erforderlichen Weidetage vollständig erreicht — Weitere Austriebe sind auch für danach hineinwachsende Rinder nicht erforderlich.",
+      "conditions": [
+        {
+          "expression": "Rinderkategorie hat die erforderlichen Weidetage vollständig erreicht",
+          "description": "Rinderkategorie hat die erforderlichen Weidetage vollständig erreicht",
+          "input_paths": [
+            "farm.weide_categories",
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Ausnahme",
+        "description": "Weitere Austriebe sind auch für danach hineinwachsende Rinder nicht erforderlich."
+      },
+      "source_reference_ids": [
+        "src.W.211.214"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.kleinvieh_meldezeit",
+      "rule_type": "Frist",
+      "statement": "Prämienfähiges Schaf oder Ziege mit Zu- oder Abgang nach dem 1. April — In der Weide/Stallhaltungsbeilage bis zum Saisonende 31. Oktober melden. Bewegungen ab 1. November erfordern keine Weidebeilagenmeldung.",
+      "conditions": [
+        {
+          "expression": "Prämienfähiges Schaf oder Ziege mit Zu- oder Abgang nach dem 1. April",
+          "description": "Prämienfähiges Schaf oder Ziege mit Zu- oder Abgang nach dem 1. April",
+          "input_paths": [
+            "livestock.weide_movements"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Frist",
+        "description": "In der Weide/Stallhaltungsbeilage bis zum Saisonende 31. Oktober melden. Bewegungen ab 1. November erfordern keine Weidebeilagenmeldung."
+      },
+      "source_reference_ids": [
+        "src.W.217.221"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.movement_deadline"
+      ]
+    },
+    {
+      "id": "o6_20.zugang",
+      "rule_type": "Frist",
+      "statement": "Zukauf oder nicht vorangemeldeter Kategorieeintritt bei weiblichen Schafen oder Ziegen nach dem 1. April — Innerhalb von sieben Tagen online korrigieren. Bei Betriebszugang Zugangsdatum angeben.",
+      "conditions": [
+        {
+          "expression": "Zukauf oder nicht vorangemeldeter Kategorieeintritt bei weiblichen Schafen oder Ziegen nach dem 1. April",
+          "description": "Zukauf oder nicht vorangemeldeter Kategorieeintritt bei weiblichen Schafen oder Ziegen nach dem 1. April",
+          "input_paths": [
+            "livestock.weide_movements"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Frist",
+        "description": "Innerhalb von sieben Tagen online korrigieren. Bei Betriebszugang Zugangsdatum angeben.",
+        "value": {
+          "days": 7
+        }
+      },
+      "source_reference_ids": [
+        "src.W.222.224",
+        "src.W.257.258",
+        "src.W.399.401"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.movement_deadline",
+        "data.oepul.o6_20.movement_action",
+        "data.oepul.o6_20.movement_findings"
+      ]
+    },
+    {
+      "id": "o6_20.spaetmeldung",
+      "rule_type": "Berechnung",
+      "statement": "Meldung eines Zugangs von Schaf oder Ziege — Bei rechtzeitiger Meldung ab Zugang zählen. Bei Verspätung frühestens sieben Tage vor Meldedatum anrechnen.",
+      "conditions": [
+        {
+          "expression": "Meldebeginn = Maximum(Zugangsdatum, Meldedatum minus 7 Kalendertage)",
+          "description": "Meldung eines Zugangs von Schaf oder Ziege",
+          "input_paths": [
+            "livestock.weide_movements"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Berechnung",
+        "description": "Bei rechtzeitiger Meldung ab Zugang zählen. Bei Verspätung frühestens sieben Tage vor Meldedatum anrechnen.",
+        "value": {
+          "lookback_days": 7
+        }
+      },
+      "source_reference_ids": [
+        "src.W.225.227",
+        "src.W.259.260",
+        "src.W.534.537"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.credit_start"
+      ]
+    },
+    {
+      "id": "o6_20.voranmeldung",
+      "rule_type": "Antrag",
+      "statement": "Jüngeres betriebseigenes Schaf oder Ziege bereits in der Beilage beantragt und Förderverpflichtungen erfüllt — Ab dem ersten Geburtstag automatisch berücksichtigen und spätestens dann mitweiden.",
+      "conditions": [
+        {
+          "expression": "Jüngeres betriebseigenes Schaf oder Ziege bereits in der Beilage beantragt und Förderverpflichtungen erfüllt",
+          "description": "Jüngeres betriebseigenes Schaf oder Ziege bereits in der Beilage beantragt und Förderverpflichtungen erfüllt",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Antrag",
+        "description": "Ab dem ersten Geburtstag automatisch berücksichtigen und spätestens dann mitweiden."
+      },
+      "source_reference_ids": [
+        "src.W.228.230",
+        "src.W.395.398"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.category"
+      ]
+    },
+    {
+      "id": "o6_20.abgang",
+      "rule_type": "Meldung",
+      "statement": "Beantragtes Schaf oder Ziege verkauft, verendet oder geschlachtet — Abgang innerhalb von sieben Tagen ab Abgangstag melden. Bei Mitweide bis zum Abgang anteilige Prämie auch bei weniger als 120/150 Tagen. Verspätung kann bei Vor-Ort-Kontrolle beanstandet werden.",
+      "conditions": [
+        {
+          "expression": "Beantragtes Schaf oder Ziege verkauft, verendet oder geschlachtet",
+          "description": "Beantragtes Schaf oder Ziege verkauft, verendet oder geschlachtet",
+          "input_paths": [
+            "livestock.weide_movements"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Abgang an AMA melden",
+        "description": "Abgang innerhalb von sieben Tagen ab Abgangstag melden. Bei Mitweide bis zum Abgang anteilige Prämie auch bei weniger als 120/150 Tagen. Verspätung kann bei Vor-Ort-Kontrolle beanstandet werden.",
+        "value": {
+          "days": 7
+        }
+      },
+      "source_reference_ids": [
+        "src.W.231.238",
+        "src.W.277.279"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.movement_deadline",
+        "data.oepul.o6_20.registered_days",
+        "data.oepul.o6_20.movement_action",
+        "data.oepul.o6_20.movement_findings"
+      ]
+    },
+    {
+      "id": "o6_20.fremdweide",
+      "rule_type": "Ausnahme",
+      "statement": "Vorübergehend auf Zins-, Alm- oder Gemeinschaftsweide bei fortbestehender Verfügungsgewalt oder vorübergehender Betreuung durch Alm- oder Gemeinschaftsweidebetrieb — Nur im Tagebuch dokumentieren. Keine Löschung und keine Abgangsmeldung am Heimbetrieb.",
+      "conditions": [
+        {
+          "expression": "Vorübergehend auf Zins-, Alm- oder Gemeinschaftsweide bei fortbestehender Verfügungsgewalt oder vorübergehender Betreuung durch Alm- oder Gemeinschaftsweidebetrieb",
+          "description": "Vorübergehend auf Zins-, Alm- oder Gemeinschaftsweide bei fortbestehender Verfügungsgewalt oder vorübergehender Betreuung durch Alm- oder Gemeinschaftsweidebetrieb",
+          "input_paths": [
+            "livestock.weide_movements",
+            "documentation.weide_diary"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Ausnahme",
+        "description": "Nur im Tagebuch dokumentieren. Keine Löschung und keine Abgangsmeldung am Heimbetrieb."
+      },
+      "source_reference_ids": [
+        "src.W.239.244",
+        "src.W.279.282"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.movement_action"
+      ]
+    },
+    {
+      "id": "o6_20.almabtrieb",
+      "rule_type": "Meldung",
+      "statement": "Schaf oder Ziege geht während der Alpung oder Gemeinschaftsweide tatsächlich am Heimbetrieb ab — Abgang am Heimbetrieb löst automatisch die Meldung des tatsächlichen Abtriebs in der Auftriebsliste aus. Bei Verkauf nach Abtrieb zusätzlich Abgang am Heimbetrieb melden.",
+      "conditions": [
+        {
+          "expression": "Schaf oder Ziege geht während der Alpung oder Gemeinschaftsweide tatsächlich am Heimbetrieb ab",
+          "description": "Schaf oder Ziege geht während der Alpung oder Gemeinschaftsweide tatsächlich am Heimbetrieb ab",
+          "input_paths": [
+            "livestock.weide_movements"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Meldung",
+        "description": "Abgang am Heimbetrieb löst automatisch die Meldung des tatsächlichen Abtriebs in der Auftriebsliste aus. Bei Verkauf nach Abtrieb zusätzlich Abgang am Heimbetrieb melden."
+      },
+      "source_reference_ids": [
+        "src.W.250.252",
+        "src.W.261.269",
+        "src.W.538.543"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.movement_findings"
+      ]
+    },
+    {
+      "id": "o6_20.nur_alpung",
+      "rule_type": "Antrag",
+      "statement": "Gesamte Weideverpflichtung durch Alpung von Schafen oder Ziegen erfüllt — Zusätzlich zur Meldung am Almbetrieb auch am Heimbetrieb in der Weide/Stallhaltungsbeilage beantragen.",
+      "conditions": [
+        {
+          "expression": "Gesamte Weideverpflichtung durch Alpung von Schafen oder Ziegen erfüllt",
+          "description": "Gesamte Weideverpflichtung durch Alpung von Schafen oder Ziegen erfüllt",
+          "input_paths": [
+            "livestock.weide_movements"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Antrag",
+        "description": "Zusätzlich zur Meldung am Almbetrieb auch am Heimbetrieb in der Weide/Stallhaltungsbeilage beantragen."
+      },
+      "source_reference_ids": [
+        "src.W.253.255"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.loeschung",
+      "rule_type": "Folge",
+      "statement": "Weibliches Schaf oder Ziege ab einem Jahr verbleibt am Betrieb und nimmt nicht teil — Tier online aus der Weide/Stallhaltungsbeilage löschen. Für das gelöschte Tier erfolgt keine Auszahlung.",
+      "conditions": [
+        {
+          "expression": "Weibliches Schaf oder Ziege ab einem Jahr verbleibt am Betrieb und nimmt nicht teil",
+          "description": "Weibliches Schaf oder Ziege ab einem Jahr verbleibt am Betrieb und nimmt nicht teil",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Löschung ohne Auszahlung",
+        "description": "Tier online aus der Weide/Stallhaltungsbeilage löschen. Für das gelöschte Tier erfolgt keine Auszahlung."
+      },
+      "source_reference_ids": [
+        "src.W.271.274",
+        "src.W.277.282"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.report_actions"
+      ]
+    },
+    {
+      "id": "o6_20.stueckkorrektur",
+      "rule_type": "Meldung",
+      "statement": "Bei Equiden oder Neuweltkamelen erreicht eine geringere Anzahl die Mindestweidedauer — Ab Bekanntwerden die beantragte Anzahl der entsprechenden Kategorie online auf die tatsächliche Anzahl herabsetzen.",
+      "conditions": [
+        {
+          "expression": "Bei Equiden oder Neuweltkamelen erreicht eine geringere Anzahl die Mindestweidedauer",
+          "description": "Bei Equiden oder Neuweltkamelen erreicht eine geringere Anzahl die Mindestweidedauer",
+          "input_paths": [
+            "livestock.weide_count_claims"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Meldung",
+        "description": "Ab Bekanntwerden die beantragte Anzahl der entsprechenden Kategorie online auf die tatsächliche Anzahl herabsetzen."
+      },
+      "source_reference_ids": [
+        "src.W.284.286",
+        "src.W.293.294",
+        "src.W.433.438"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.payable_count"
+      ]
+    },
+    {
+      "id": "o6_20.ersatz",
+      "rule_type": "Ausnahme",
+      "statement": "Equide oder Neuweltkamel wird während der Weideperiode verkauft, geschlachtet oder verendet und ein Tier wächst in das Teilnahmealter hinein — Ersatz innerhalb der betreffenden Tiergruppe ist zulässig, wenn zusammen 120 bzw. 150 Tage erreicht werden. Eine Reduktion der Stückzahl entfällt.",
+      "conditions": [
+        {
+          "expression": "Equide oder Neuweltkamel wird während der Weideperiode verkauft, geschlachtet oder verendet und ein Tier wächst in das Teilnahmealter hinein",
+          "description": "Equide oder Neuweltkamel wird während der Weideperiode verkauft, geschlachtet oder verendet und ein Tier wächst in das Teilnahmealter hinein",
+          "input_paths": [
+            "livestock.weide_count_claims"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Ausnahme",
+        "description": "Ersatz innerhalb der betreffenden Tiergruppe ist zulässig, wenn zusammen 120 bzw. 150 Tage erreicht werden. Eine Reduktion der Stückzahl entfällt."
+      },
+      "source_reference_ids": [
+        "src.W.295.299",
+        "src.W.453.459"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.replacement_ok"
+      ]
+    },
+    {
+      "id": "o6_20.vis_klein",
+      "rule_type": "Meldung",
+      "statement": "Haltung von Schafen oder Ziegen — Zu- und Abgänge lebender Tiere zusätzlich nach TKZVO an das VIS melden.",
+      "conditions": [
+        {
+          "expression": "Haltung von Schafen oder Ziegen",
+          "description": "Haltung von Schafen oder Ziegen",
+          "input_paths": [
+            "livestock.weide_movements"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Meldung",
+        "description": "Zu- und Abgänge lebender Tiere zusätzlich nach TKZVO an das VIS melden."
+      },
+      "source_reference_ids": [
+        "src.W.302.305"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.vis_findings"
+      ]
+    },
+    {
+      "id": "o6_20.vis_equiden",
+      "rule_type": "Meldung",
+      "statement": "Haltung eines Equiden — Mit UELN identifizieren und sowohl in der österreichischen Equidendatenbank als auch im VIS melden.",
+      "conditions": [
+        {
+          "expression": "Haltung eines Equiden",
+          "description": "Haltung eines Equiden",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Meldung",
+        "description": "Mit UELN identifizieren und sowohl in der österreichischen Equidendatenbank als auch im VIS melden."
+      },
+      "source_reference_ids": [
+        "src.W.306.309"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.vis_findings"
+      ]
+    },
+    {
+      "id": "o6_20.vis_abgleich",
+      "rule_type": "Kontrolle",
+      "statement": "Tierinformationen wurden an AMA und VIS gemeldet — Haltende Personen verantworten richtige und vollständige Daten. AMA gleicht die VIS-Informationen ab und prüft die Plausibilität.",
+      "conditions": [
+        {
+          "expression": "Tierinformationen wurden an AMA und VIS gemeldet",
+          "description": "Tierinformationen wurden an AMA und VIS gemeldet",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Kontrolle",
+        "description": "Haltende Personen verantworten richtige und vollständige Daten. AMA gleicht die VIS-Informationen ab und prüft die Plausibilität."
+      },
+      "source_reference_ids": [
+        "src.W.310.313"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.einstieg",
+      "rule_type": "Frist",
+      "statement": "Neue Kategorie im Maßnahmenantrag für das Folgejahr — Spätestens am 31. Dezember vor Vertragsbeginn beantragen. Letztmöglicher Einstieg ist 2027 mit Antrag bis 31. Dezember 2026.",
+      "conditions": [
+        {
+          "expression": "Förderjahr <= 2027 UND Maßnahmenantrag für die Kategorie bis einschließlich 31.12. des Vorjahres",
+          "description": "Neue Kategorie im Maßnahmenantrag für das Folgejahr",
+          "input_paths": [
+            "farm.weide_categories",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Frist",
+        "description": "Spätestens am 31. Dezember vor Vertragsbeginn beantragen. Letztmöglicher Einstieg ist 2027 mit Antrag bis 31. Dezember 2026.",
+        "value": {
+          "last_entry_year": 2027,
+          "last_application": "2026-12-31"
+        }
+      },
+      "source_reference_ids": [
+        "src.W.320.325",
+        "src.G.465.466",
+        "src.S.618.620"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.entry_on_time",
+        "data.oepul.o6_20.continued_or_new_contract"
+      ]
+    },
+    {
+      "id": "o6_20.optionsfrist",
+      "rule_type": "Frist",
+      "statement": "Optionaler 150-Tage-Zuschlag in bestehender oder neu beantragter Kategorie — Jährlich gesondert in der Beilage bis einschließlich 15. April beantragen, 2023 und 2028 bis 17. April. Letztmals 2028 möglich.",
+      "conditions": [
+        {
+          "expression": "Förderjahr in 2023..2028 UND Zuschlag je Kategorie bis einschließlich der Aprilfrist",
+          "description": "Optionaler 150-Tage-Zuschlag in bestehender oder neu beantragter Kategorie",
+          "input_paths": [
+            "farm.weide_categories",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Frist",
+        "description": "Jährlich gesondert in der Beilage bis einschließlich 15. April beantragen, 2023 und 2028 bis 17. April. Letztmals 2028 möglich.",
+        "value": {
+          "regular_deadline": "04-15",
+          "exceptions": {
+            "2023": "04-17",
+            "2028": "04-17"
+          },
+          "through_year": 2028
+        }
+      },
+      "source_reference_ids": [
+        "src.W.326.331",
+        "src.G.466.467",
+        "src.S.618.620"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.april_deadline"
+      ]
+    },
+    {
+      "id": "o6_20.optionskorrektur",
+      "rule_type": "Korrektur",
+      "statement": "150-Tage-Option beantragt und Kategorie erreicht wegen Unterbrechung nur die kürzere Weidedauer — Zuschlag durch Korrektur zum Mehrfachantrag entfernen. Basisverpflichtungen gelten weiter.",
+      "conditions": [
+        {
+          "expression": "150-Tage-Option beantragt und Kategorie erreicht wegen Unterbrechung nur die kürzere Weidedauer",
+          "description": "150-Tage-Option beantragt und Kategorie erreicht wegen Unterbrechung nur die kürzere Weidedauer",
+          "input_paths": [
+            "farm.weide_categories"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Korrektur",
+        "description": "Zuschlag durch Korrektur zum Mehrfachantrag entfernen. Basisverpflichtungen gelten weiter."
+      },
+      "source_reference_ids": [
+        "src.W.343.349"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.administrative_findings"
+      ]
+    },
+    {
+      "id": "o6_20.kategorietausch",
+      "rule_type": "Antrag",
+      "statement": "Betrieb möchte eine Kategorie durch eine neue ersetzen — Neue Kategorie vor Jahreswechsel beantragen, auslaufende Kategorie erst nach dem 31. Dezember auf eAMA abmelden. Sonst gelten beide Verpflichtungen.",
+      "conditions": [
+        {
+          "expression": "Betrieb möchte eine Kategorie durch eine neue ersetzen",
+          "description": "Betrieb möchte eine Kategorie durch eine neue ersetzen",
+          "input_paths": [
+            "farm.weide_categories"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Antrag",
+        "description": "Neue Kategorie vor Jahreswechsel beantragen, auslaufende Kategorie erst nach dem 31. Dezember auf eAMA abmelden. Sonst gelten beide Verpflichtungen."
+      },
+      "source_reference_ids": [
+        "src.W.350.356"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.effective_claims"
+      ]
+    },
+    {
+      "id": "o6_20.nachfrist",
+      "rule_type": "Verfahren",
+      "statement": "Kategorie erloschen und Frist für unmittelbaren Wiedereinstieg bereits abgelaufen — Vorhergehenden Maßnahmenantrag unverzüglich online korrigieren, Kategorie erneut beantragen und zusätzlich gesondert schriftlich um fristgerechte Anerkennung durch die AMA ersuchen.",
+      "conditions": [
+        {
+          "expression": "Kategorie erloschen und Frist für unmittelbaren Wiedereinstieg bereits abgelaufen",
+          "description": "Kategorie erloschen und Frist für unmittelbaren Wiedereinstieg bereits abgelaufen",
+          "input_paths": [
+            "farm.weide_categories"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Verfahren",
+        "description": "Vorhergehenden Maßnahmenantrag unverzüglich online korrigieren, Kategorie erneut beantragen und zusätzlich gesondert schriftlich um fristgerechte Anerkennung durch die AMA ersuchen."
+      },
+      "source_reference_ids": [
+        "src.W.357.365",
+        "src.W.367.376"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.administrative_findings"
+      ]
+    },
+    {
+      "id": "o6_20.rinderdatenbank",
+      "rule_type": "Berechnung",
+      "statement": "Rinder einer beantragten Kategorie — Ohne Einzeltierantrag die anrechenbaren Bestandstage je Tier und Kategorie taggenau aus der Rinderdatenbank unter Abzug der abgemeldeten Tiere ableiten. Stets durch 214 teilen, unabhängig vom tatsächlichen Beginn der Beweidung.",
+      "conditions": [
+        {
+          "expression": "Rinder einer beantragten Kategorie",
+          "description": "Rinder einer beantragten Kategorie",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Berechnung",
+        "description": "Ohne Einzeltierantrag die anrechenbaren Bestandstage je Tier und Kategorie taggenau aus der Rinderdatenbank unter Abzug der abgemeldeten Tiere ableiten. Stets durch 214 teilen, unabhängig vom tatsächlichen Beginn der Beweidung.",
+        "value": {
+          "denominator_days": 214,
+          "unit": "RGVE"
+        }
+      },
+      "source_reference_ids": [
+        "src.W.383.388",
+        "src.W.501.504",
+        "src.S.4303.4306"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.individual_rgve"
+      ]
+    },
+    {
+      "id": "o6_20.einzeltierantrag",
+      "rule_type": "Antrag",
+      "statement": "Weibliche Schafe und Ziegen am Stichtag 1. April — Einzeln mit Tierart, Ohrmarke, Geschlecht und Geburtsdatum bis 15. April, 2023 und 2028 bis 17. April, in der Beilage beantragen.",
+      "conditions": [
+        {
+          "expression": "Weibliche Schafe und Ziegen am Stichtag 1. April",
+          "description": "Weibliche Schafe und Ziegen am Stichtag 1. April",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Antrag",
+        "description": "Einzeln mit Tierart, Ohrmarke, Geschlecht und Geburtsdatum bis 15. April, 2023 und 2028 bis 17. April, in der Beilage beantragen."
+      },
+      "source_reference_ids": [
+        "src.W.390.394",
+        "src.W.538.539"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.april_deadline"
+      ]
+    },
+    {
+      "id": "o6_20.kleinvieh_aliquot",
+      "rule_type": "Berechnung",
+      "statement": "Weibliche Schafe oder Ziegen ab einem Jahr in der Beilage — Anrechenbare Meldetage über die vollständigen 214 Saisontage mitteln, auch bei kürzerer tatsächlicher Beweidung oder unterjährigem Abgang.",
+      "conditions": [
+        {
+          "expression": "Weibliche Schafe oder Ziegen ab einem Jahr in der Beilage",
+          "description": "Weibliche Schafe oder Ziegen ab einem Jahr in der Beilage",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Berechnung",
+        "description": "Anrechenbare Meldetage über die vollständigen 214 Saisontage mitteln, auch bei kürzerer tatsächlicher Beweidung oder unterjährigem Abgang.",
+        "value": {
+          "denominator_days": 214,
+          "unit": "RGVE"
+        }
+      },
+      "source_reference_ids": [
+        "src.W.402.403",
+        "src.W.504.506",
+        "src.W.529.537",
+        "src.W.544.547",
+        "src.S.4303.4306"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.individual_rgve"
+      ]
+    },
+    {
+      "id": "o6_20.tierliste",
+      "rule_type": "Antrag",
+      "statement": "Betrieb hält Schafe, Ziegen, Equiden oder Neuweltkamele — Alle im Inland gehaltenen Tiere zusätzlich in der MFA-Tierliste zum 1. April bzw. im Jahresdurchschnitt angeben.",
+      "conditions": [
+        {
+          "expression": "Betrieb hält Schafe, Ziegen, Equiden oder Neuweltkamele",
+          "description": "Betrieb hält Schafe, Ziegen, Equiden oder Neuweltkamele",
+          "input_paths": [
+            "livestock.annual_stock"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Antrag",
+        "description": "Alle im Inland gehaltenen Tiere zusätzlich in der MFA-Tierliste zum 1. April bzw. im Jahresdurchschnitt angeben."
+      },
+      "source_reference_ids": [
+        "src.W.404.405",
+        "src.W.439.440",
+        "src.W.460.461"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.equidenanzahl",
+      "rule_type": "Antrag",
+      "statement": "Equiden ab ½ Jahr zur Weideprämie angemeldet — Stückzahlen in vier Gruppen angeben. Kleine Rasse bis einschließlich 1,48 m und 300 kg, sonst große Rasse. Jeweils Jungtiere unter drei Jahren und Stuten, Hengste, Wallache ab drei Jahren trennen.",
+      "conditions": [
+        {
+          "expression": "Equiden ab ½ Jahr zur Weideprämie angemeldet",
+          "description": "Equiden ab ½ Jahr zur Weideprämie angemeldet",
+          "input_paths": [
+            "livestock.weide_count_claims"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Antrag",
+        "description": "Stückzahlen in vier Gruppen angeben. Kleine Rasse bis einschließlich 1,48 m und 300 kg, sonst große Rasse. Jeweils Jungtiere unter drei Jahren und Stuten, Hengste, Wallache ab drei Jahren trennen."
+      },
+      "source_reference_ids": [
+        "src.W.407.418"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.factor_class"
+      ]
+    },
+    {
+      "id": "o6_20.kamelanzahl",
+      "rule_type": "Antrag",
+      "statement": "Neuweltkamele ab einem Jahr zur Weideprämie angemeldet — Anzahl in der Beilage Tierwohl – Weide/Stallhaltung beantragen.",
+      "conditions": [
+        {
+          "expression": "Neuweltkamele ab einem Jahr zur Weideprämie angemeldet",
+          "description": "Neuweltkamele ab einem Jahr zur Weideprämie angemeldet",
+          "input_paths": [
+            "livestock.weide_count_claims"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Antrag",
+        "description": "Anzahl in der Beilage Tierwohl – Weide/Stallhaltung beantragen."
+      },
+      "source_reference_ids": [
+        "src.W.442.443"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.payable_count"
+      ]
+    },
+    {
+      "id": "o6_20.vorab_stueck",
+      "rule_type": "Frist",
+      "statement": "Hineinwachsender oder zum Zukauf vorgesehener Equide bzw. Neuweltkamel erreicht die Mindesttage nach Erreichen des Teilnahmealters bis 31. Oktober — Stückzahl bereits bis 15. April bzw. 17. April 2023/2028 beantragen. Danach keine Ausweitung mehr.",
+      "conditions": [
+        {
+          "expression": "Hineinwachsender oder zum Zukauf vorgesehener Equide bzw. Neuweltkamel erreicht die Mindesttage nach Erreichen des Teilnahmealters bis 31. Oktober",
+          "description": "Hineinwachsender oder zum Zukauf vorgesehener Equide bzw. Neuweltkamel erreicht die Mindesttage nach Erreichen des Teilnahmealters bis 31. Oktober",
+          "input_paths": [
+            "livestock.weide_count_claims"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Frist",
+        "description": "Stückzahl bereits bis 15. April bzw. 17. April 2023/2028 beantragen. Danach keine Ausweitung mehr."
+      },
+      "source_reference_ids": [
+        "src.W.424.431",
+        "src.W.444.451"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.april_deadline",
+        "data.oepul.o6_20.payable_count"
+      ]
+    },
+    {
+      "id": "o6_20.ausstieg",
+      "rule_type": "Verfahren",
+      "statement": "Ein oder mehrere volle Vertragsjahre erfüllt — Ausstieg aus allen oder einzelnen Tierkategorien ist im aktuellen Mehrfachantrag online auf eAMA bekanntzugeben. Der ab dem Antragsjahr 2026 wegen der Amerikanischen Rebzikade mögliche rückzahlungsfreie Ausstieg gilt ausschließlich für die Maßnahme „Insektizidverzicht Wein, Obst und Hopfen“.",
+      "conditions": [
+        {
+          "expression": "Ein oder mehrere volle Vertragsjahre erfüllt",
+          "description": "Ein oder mehrere volle Vertragsjahre erfüllt",
+          "input_paths": [
+            "farm.weide_categories"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Verfahren",
+        "description": "Ausstieg aus allen oder einzelnen Tierkategorien ist im aktuellen Mehrfachantrag online auf eAMA bekanntzugeben. Der ab dem Antragsjahr 2026 wegen der Amerikanischen Rebzikade mögliche rückzahlungsfreie Ausstieg gilt ausschließlich für die Maßnahme „Insektizidverzicht Wein, Obst und Hopfen“."
+      },
+      "source_reference_ids": [
+        "src.W.468.474",
+        "src.G.489.494",
+        "src.J.7.7"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.abmeldejahr",
+      "rule_type": "Folge",
+      "statement": "Abmeldung zwischen 1. Jänner und 31. Dezember — Maßnahme im Jahr der Abmeldung ungültig. Bei Erfüllung bis Jahresende frühestens am 1. Jänner des Folgejahres abmelden.",
+      "conditions": [
+        {
+          "expression": "Abmeldung zwischen 1. Jänner und 31. Dezember",
+          "description": "Abmeldung zwischen 1. Jänner und 31. Dezember",
+          "input_paths": [
+            "farm.weide_categories"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Folge",
+        "description": "Maßnahme im Jahr der Abmeldung ungültig. Bei Erfüllung bis Jahresende frühestens am 1. Jänner des Folgejahres abmelden."
+      },
+      "source_reference_ids": [
+        "src.W.476.479",
+        "src.G.497.500"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.withdrawn_for_year"
+      ]
+    },
+    {
+      "id": "o6_20.basisband",
+      "rule_type": "Prämie",
+      "statement": "Prämienfähige RGVE ab Förderjahr 2023 — Basisprämie zwischen 40 und 60 Euro je RGVE.",
+      "conditions": [
+        {
+          "expression": "Prämienfähige RGVE ab Förderjahr 2023",
+          "description": "Prämienfähige RGVE ab Förderjahr 2023",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Basisprämienband je RGVE",
+        "description": "Basisprämie zwischen 40 und 60 Euro je RGVE.",
+        "value": {
+          "min_eur_per_rgve": 40,
+          "max_eur_per_rgve": 60
+        }
+      },
+      "source_reference_ids": [
+        "src.W.481.486",
+        "src.S.4286.4294",
+        "src.W.486.486"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.premium_band"
+      ]
+    },
+    {
+      "id": "o6_20.optionsband",
+      "rule_type": "Prämie",
+      "statement": "Prämienfähige RGVE einer Kategorie mit beantragten und eingehaltenen mindestens 150 Tagen — Zusätzlich 16 bis 24 Euro je RGVE.",
+      "conditions": [
+        {
+          "expression": "Prämienfähige RGVE einer Kategorie mit beantragten und eingehaltenen mindestens 150 Tagen",
+          "description": "Prämienfähige RGVE einer Kategorie mit beantragten und eingehaltenen mindestens 150 Tagen",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Zuschlagsband je RGVE",
+        "description": "Zusätzlich 16 bis 24 Euro je RGVE.",
+        "value": {
+          "min_eur_per_rgve": 16,
+          "max_eur_per_rgve": 24
+        }
+      },
+      "source_reference_ids": [
+        "src.W.487.491",
+        "src.S.4301.4302",
+        "src.W.491.491"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.premium_band"
+      ]
+    },
+    {
+      "id": "o6_20.garantie",
+      "rule_type": "Prämie",
+      "statement": "Zugeteilte Mittel und insgesamt beantragte Tiere — Innerhalb des Bandes richtet sich der Satz nach Teilnahme und verfügbaren Mitteln. Der untere Satz ist garantiert.",
+      "conditions": [
+        {
+          "expression": "Zugeteilte Mittel und insgesamt beantragte Tiere",
+          "description": "Zugeteilte Mittel und insgesamt beantragte Tiere",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Prämie",
+        "description": "Innerhalb des Bandes richtet sich der Satz nach Teilnahme und verfügbaren Mitteln. Der untere Satz ist garantiert."
+      },
+      "source_reference_ids": [
+        "src.W.493.495",
+        "src.S.865.867"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.halbierung",
+      "rule_type": "Kombination",
+      "statement": "Tierbezogen gleichzeitig fakultativ gekoppelte Direktzahlung für ein auf eine Alm aufgetriebenes Rind, Schaf oder eine Ziege beantragt — Nur die Basisprämie des betroffenen Tieres halbieren. Der Zuschlag bleibt in voller Höhe anrechenbar.",
+      "conditions": [
+        {
+          "expression": "Art IN {Rind, Schaf, Ziege} UND Almauftrieb UND gekoppelte Stützung für dasselbe Tier beantragt",
+          "description": "Tierbezogen gleichzeitig fakultativ gekoppelte Direktzahlung für ein auf eine Alm aufgetriebenes Rind, Schaf oder eine Ziege beantragt",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Basisprämie des betroffenen Tieres halbieren",
+        "description": "Nur die Basisprämie des betroffenen Tieres halbieren. Der Zuschlag bleibt in voller Höhe anrechenbar.",
+        "value": {
+          "base_multiplier": 0.5,
+          "bonus_multiplier": 1
+        }
+      },
+      "source_reference_ids": [
+        "src.W.496.498",
+        "src.S.4296.4300"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.base_multiplier",
+        "data.oepul.o6_20.premium_band"
+      ]
+    },
+    {
+      "id": "o6_20.gemeinschaft",
+      "rule_type": "Kombination",
+      "statement": "Auftrieb auf Gemeinschaftsweide ohne Antrag auf gekoppelte Stützung — Volle Weideprämie gewähren.",
+      "conditions": [
+        {
+          "expression": "Auftrieb auf Gemeinschaftsweide ohne Antrag auf gekoppelte Stützung",
+          "description": "Auftrieb auf Gemeinschaftsweide ohne Antrag auf gekoppelte Stützung",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Kombination",
+        "description": "Volle Weideprämie gewähren.",
+        "value": {
+          "base_multiplier": 1
+        }
+      },
+      "source_reference_ids": [
+        "src.W.499.500"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.base_multiplier"
+      ]
+    },
+    {
+      "id": "o6_20.rgve",
+      "rule_type": "Berechnung",
+      "statement": "Teilnahmefähiges Tier einer beantragten Kategorie — RGVE pro Stück nach Tierart, Rasse und Altersstufe aus dem Schlüssel anwenden. Dessen allgemeine Faktoren für Jungtiere begründen für sich keine Teilnahmeberechtigung.",
+      "conditions": [
+        {
+          "expression": "Teilnahmefähiges Tier einer beantragten Kategorie",
+          "description": "Teilnahmefähiges Tier einer beantragten Kategorie",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Berechnung",
+        "description": "RGVE pro Stück nach Tierart, Rasse und Altersstufe aus dem Schlüssel anwenden. Dessen allgemeine Faktoren für Jungtiere begründen für sich keine Teilnahmeberechtigung.",
+        "value": {
+          "table": "/weide_tables/rgve"
+        }
+      },
+      "source_reference_ids": [
+        "src.W.515.516",
+        "src.W.520.522",
+        "src.W.553.571",
+        "src.A.77.102",
+        "src.S.497.499",
+        "src.W.522.522",
+        "src.W.553.553",
+        "src.W.554.554",
+        "src.W.555.555",
+        "src.W.557.557",
+        "src.W.559.559",
+        "src.W.561.564",
+        "src.W.565.569",
+        "src.W.571.571"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.factor"
+      ]
+    },
+    {
+      "id": "o6_20.altersanteil",
+      "rule_type": "Berechnung",
+      "statement": "Rind, Schaf oder Ziege erreicht eine beantragte Altersstufe während der Weideperiode — RGVE-Wert erst ab Erreichen der Altersstufe für die entsprechenden Bestandstage gewichten.",
+      "conditions": [
+        {
+          "expression": "Rind, Schaf oder Ziege erreicht eine beantragte Altersstufe während der Weideperiode",
+          "description": "Rind, Schaf oder Ziege erreicht eine beantragte Altersstufe während der Weideperiode",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Berechnung",
+        "description": "RGVE-Wert erst ab Erreichen der Altersstufe für die entsprechenden Bestandstage gewichten."
+      },
+      "source_reference_ids": [
+        "src.W.517.519",
+        "src.W.524.528",
+        "src.W.529.533",
+        "src.W.534.537"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.individual_rgve"
+      ]
+    },
+    {
+      "id": "o6_20.zwergrassen",
+      "rule_type": "Definition",
+      "statement": "Rind der Rasse Dahomey, Dexter, Kerry oder Zwergzebu — Die verminderten RGVE-Faktoren für Zwergrinder anwenden.",
+      "conditions": [
+        {
+          "expression": "Rind der Rasse Dahomey, Dexter, Kerry oder Zwergzebu",
+          "description": "Rind der Rasse Dahomey, Dexter, Kerry oder Zwergzebu",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Definition",
+        "description": "Die verminderten RGVE-Faktoren für Zwergrinder anwenden."
+      },
+      "source_reference_ids": [
+        "src.A.108.108"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.factor_class"
+      ]
+    },
+    {
+      "id": "o6_20.rechtsrahmen",
+      "rule_type": "Rechtsgrundlage",
+      "statement": "Abschluss des ÖPUL-Fördervertrags — Sonderrichtlinie samt Anhängen, MOG 2021 und GSP-AV gelten. Der genehmigte Antrag bindet Bund und förderwerbende Person. Abweichende Nebenabreden sind unwirksam.",
+      "conditions": [
+        {
+          "expression": "Abschluss des ÖPUL-Fördervertrags",
+          "description": "Abschluss des ÖPUL-Fördervertrags",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Rechtsgrundlage",
+        "description": "Sonderrichtlinie samt Anhängen, MOG 2021 und GSP-AV gelten. Der genehmigte Antrag bindet Bund und förderwerbende Person. Abweichende Nebenabreden sind unwirksam."
+      },
+      "source_reference_ids": [
+        "src.G.66.76",
+        "src.G.82.83",
+        "src.S.210.215",
+        "src.S.219.224"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.laufzeit",
+      "rule_type": "Geltung",
+      "statement": "ÖPUL 2023 Tierwohl – Weide — Das Programm gilt vom 1. Jänner 2023 bis 31. Dezember 2028, unbeschadet späterer Abrechnung, Auszahlung und Kontrolle.",
+      "conditions": [
+        {
+          "expression": "ÖPUL 2023 Tierwohl – Weide",
+          "description": "ÖPUL 2023 Tierwohl – Weide",
+          "input_paths": [
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Geltung",
+        "description": "Das Programm gilt vom 1. Jänner 2023 bis 31. Dezember 2028, unbeschadet späterer Abrechnung, Auszahlung und Kontrolle."
+      },
+      "source_reference_ids": [
+        "src.S.216.219"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.konditionalitaet",
+      "rule_type": "Verpflichtung",
+      "statement": "Volle ÖPUL-Förderung beantragt — Klima-, Umwelt-, Gesundheits-, Pflanzengesundheits-, Tierwohl- und soziale Konditionalität gemäß §§ 6e und 6f MOG erfüllen. Bei Verstößen gelten die einschlägigen Verwaltungssanktionen.",
+      "conditions": [
+        {
+          "expression": "Volle ÖPUL-Förderung beantragt",
+          "description": "Volle ÖPUL-Förderung beantragt",
+          "input_paths": [
+            "documentation.oepul_control"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Verpflichtung",
+        "description": "Klima-, Umwelt-, Gesundheits-, Pflanzengesundheits-, Tierwohl- und soziale Konditionalität gemäß §§ 6e und 6f MOG erfüllen. Bei Verstößen gelten die einschlägigen Verwaltungssanktionen."
+      },
+      "source_reference_ids": [
+        "src.G.138.143",
+        "src.S.1253.1258"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.personen",
+      "rule_type": "Zugang",
+      "statement": "Prüfung der Rechtspersönlichkeit — Natürliche Personen, eingetragene Personengesellschaften, juristische Personen und Personenvereinigungen kommen in Betracht. Für Tierwohl – Weide gilt die Ausnahme auch für Gebietskörperschaften und öffentlich beherrschte Einrichtungen einschließlich weiterer Stufen. Die allgemeine 25-Prozent-Grenze schließt sie hier nicht aus.",
+      "conditions": [
+        {
+          "expression": "Prüfung der Rechtspersönlichkeit",
+          "description": "Prüfung der Rechtspersönlichkeit",
+          "input_paths": [
+            "farm.applicant"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Zugang",
+        "description": "Natürliche Personen, eingetragene Personengesellschaften, juristische Personen und Personenvereinigungen kommen in Betracht. Für Tierwohl – Weide gilt die Ausnahme auch für Gebietskörperschaften und öffentlich beherrschte Einrichtungen einschließlich weiterer Stufen. Die allgemeine 25-Prozent-Grenze schließt sie hier nicht aus."
+      },
+      "source_reference_ids": [
+        "src.G.147.153",
+        "src.G.165.171",
+        "src.S.404.426",
+        "src.S.415.419",
+        "src.S.421.426"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.applicant_form_ok"
+      ]
+    },
+    {
+      "id": "o6_20.vereinigung",
+      "rule_type": "Vertragspartei",
+      "statement": "Personenvereinigung ohne eigene Rechtspersönlichkeit — Die dahinterstehenden Personen sind Vertragspartner. Veröffentlichung der Begünstigten auf Ebene der Vereinigung.",
+      "conditions": [
+        {
+          "expression": "Personenvereinigung ohne eigene Rechtspersönlichkeit",
+          "description": "Personenvereinigung ohne eigene Rechtspersönlichkeit",
+          "input_paths": [
+            "farm.applicant"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Vertragspartei",
+        "description": "Die dahinterstehenden Personen sind Vertragspartner. Veröffentlichung der Begünstigten auf Ebene der Vereinigung."
+      },
+      "source_reference_ids": [
+        "src.S.410.414"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.betrieb",
+      "rule_type": "Zugang",
+      "statement": "Antrag eines landwirtschaftlichen Betriebs — Alle verwalteten Produktionseinheiten in Österreich bilden einen Betrieb. Im eigenen Namen auf eigene Rechnung bewirtschaften, über Antragsflächen verfügen, aktiver Landwirt sein und landwirtschaftliche Tätigkeit ausüben.",
+      "conditions": [
+        {
+          "expression": "Antrag eines landwirtschaftlichen Betriebs",
+          "description": "Antrag eines landwirtschaftlichen Betriebs",
+          "input_paths": [
+            "farm.applicant"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Zugang",
+        "description": "Alle verwalteten Produktionseinheiten in Österreich bilden einen Betrieb. Im eigenen Namen auf eigene Rechnung bewirtschaften, über Antragsflächen verfügen, aktiver Landwirt sein und landwirtschaftliche Tätigkeit ausüben."
+      },
+      "source_reference_ids": [
+        "src.G.154.157",
+        "src.G.163.164",
+        "src.S.410.412",
+        "src.S.443.445"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.operator_ok"
+      ]
+    },
+    {
+      "id": "o6_20.inland",
+      "rule_type": "Zugang",
+      "statement": "Geförderte bzw. förderrelevante Tiere und Flächen — Nur in Österreich gehaltene Tiere in Tierliste und Viehbesatz anrechnen. Flächen in Österreich sind unabhängig von der Nationalität der bewirtschaftenden Person zugänglich. Für unmittelbar angrenzende Auslandsflächen grenzüberschreitender Almen ist für den maximalen Besatz eine einzelbetriebliche Meldung mit Nachweis möglich.",
+      "conditions": [
+        {
+          "expression": "Geförderte bzw. förderrelevante Tiere und Flächen",
+          "description": "Geförderte bzw. förderrelevante Tiere und Flächen",
+          "input_paths": [
+            "livestock.weide_animals"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Zugang",
+        "description": "Nur in Österreich gehaltene Tiere in Tierliste und Viehbesatz anrechnen. Flächen in Österreich sind unabhängig von der Nationalität der bewirtschaftenden Person zugänglich. Für unmittelbar angrenzende Auslandsflächen grenzüberschreitender Almen ist für den maximalen Besatz eine einzelbetriebliche Meldung mit Nachweis möglich."
+      },
+      "source_reference_ids": [
+        "src.G.355.361",
+        "src.G.362.365",
+        "src.S.435.439"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.registered_days"
+      ]
+    },
+    {
+      "id": "o6_20.mindestflaeche",
+      "rule_type": "Zugang",
+      "statement": "Erstes ÖPUL-Teilnahmejahr — Mindestens 0,50 ha geschützter Anbau (A oder GA) oder 1,50 ha anrechenbare Gesamtfläche in Österreich gemäß MFA. Berücksichtigt werden Landwirtschaftsflächen einschließlich Alm, GA, zulässige K20, GLÖZ-Landschaftselemente, Mehrnutzenhecken und ab 2025 Agroforststreifen. Ab zweitem Jahr entfällt dieses Flächenminimum, das Maßnahmenminimum gilt jährlich.",
+      "conditions": [
+        {
+          "expression": "Teilnahmejahr > 1 ODER (Teilnahmejahr = 1 UND (geschützter Anbau AT >= 0,50 ha ODER anrechenbare Fläche AT >= 1,50 ha))",
+          "description": "Erstes ÖPUL-Teilnahmejahr",
+          "input_paths": [
+            "farm.oepul_participation_year",
+            "land.protected_at_ha",
+            "land.qualifying_at_ha"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Zugang",
+        "description": "Mindestens 0,50 ha geschützter Anbau (A oder GA) oder 1,50 ha anrechenbare Gesamtfläche in Österreich gemäß MFA. Berücksichtigt werden Landwirtschaftsflächen einschließlich Alm, GA, zulässige K20, GLÖZ-Landschaftselemente, Mehrnutzenhecken und ab 2025 Agroforststreifen. Ab zweitem Jahr entfällt dieses Flächenminimum, das Maßnahmenminimum gilt jährlich.",
+        "value": {
+          "first_participation_year": 1,
+          "at_least_one": [
+            {
+              "protected_ha_min": 0.5
+            },
+            {
+              "eligible_ha_min": 1.5
+            }
+          ]
+        }
+      },
+      "source_reference_ids": [
+        "src.G.173.187",
+        "src.S.506.513"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.area_ok"
+      ]
+    },
+    {
+      "id": "o6_20.flaeche",
+      "rule_type": "Definition",
+      "statement": "Ermittlung landwirtschaftlicher Flächen — Acker-, Grünland-, Dauer-, Spezialkultur-, Wein- und Almflächen sowie aufliegende oder bis 5 m angrenzende Landschaftselemente gemäß § 25 GSP-AV berücksichtigen. Substrat- und Topfkulturen im gedeckten Anbau und bis einschließlich 2024 vertragliche K20-Stilllegungen sind zusätzlich erfasst.",
+      "conditions": [
+        {
+          "expression": "Ermittlung landwirtschaftlicher Flächen",
+          "description": "Ermittlung landwirtschaftlicher Flächen",
+          "input_paths": [
+            "land.qualifying_at_ha",
+            "land.parcels[].oepul_claim"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Definition",
+        "description": "Acker-, Grünland-, Dauer-, Spezialkultur-, Wein- und Almflächen sowie aufliegende oder bis 5 m angrenzende Landschaftselemente gemäß § 25 GSP-AV berücksichtigen. Substrat- und Topfkulturen im gedeckten Anbau und bis einschließlich 2024 vertragliche K20-Stilllegungen sind zusätzlich erfasst."
+      },
+      "source_reference_ids": [
+        "src.G.92.103",
+        "src.S.453.460"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.ackerfutter",
+      "rule_type": "Definition",
+      "statement": "Futterfläche für die Viehbesatzermittlung — Zum Grünland kommen die Ackerflächen mit Futtergräsern, Wechselwiese, Kleegras, Klee, Luzerne, ausschließlich beweideter Ackerweide oder sonstigem Feldfutter.",
+      "conditions": [
+        {
+          "expression": "Futterfläche für die Viehbesatzermittlung",
+          "description": "Futterfläche für die Viehbesatzermittlung",
+          "input_paths": [
+            "land.parcels[].crop.crop_name"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Definition",
+        "description": "Zum Grünland kommen die Ackerflächen mit Futtergräsern, Wechselwiese, Kleegras, Klee, Luzerne, ausschließlich beweideter Ackerweide oder sonstigem Feldfutter."
+      },
+      "source_reference_ids": [
+        "src.G.110.112",
+        "src.S.467.469"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.forage_crop"
+      ]
+    },
+    {
+      "id": "o6_20.tierhalter",
+      "rule_type": "Definition",
+      "statement": "Eine Prämienbestimmung knüpft an die Eigenschaft als tierhaltender Betrieb an — Ab 0,30 RGVE je ha Grünland und Ackerfutter ist der Betrieb im jeweiligen Jahr tierhaltend. Tierwohl – Weide hat eine eigene Zugangsschwelle von 2 RGVE.",
+      "conditions": [
+        {
+          "expression": "Futterfläche > 0 UND Jahres-RGVE / Futterfläche >= 0,30",
+          "description": "Eine Prämienbestimmung knüpft an die Eigenschaft als tierhaltender Betrieb an",
+          "input_paths": [
+            "livestock.annual_stock"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Definition",
+        "description": "Ab 0,30 RGVE je ha Grünland und Ackerfutter ist der Betrieb im jeweiligen Jahr tierhaltend. Tierwohl – Weide hat eine eigene Zugangsschwelle von 2 RGVE.",
+        "value": {
+          "minimum_rgve_per_forage_ha": 0.3
+        }
+      },
+      "source_reference_ids": [
+        "src.G.372.378",
+        "src.S.491.495"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.livestock_density_ok"
+      ]
+    },
+    {
+      "id": "o6_20.tierbestand",
+      "rule_type": "Berechnung",
+      "statement": "Allgemeine Jahresviehbesatzermittlung — Jahresdurchschnitt Rinder taggenau aus Datenbank, sonst Tierliste zum 1. April bzw. eingereichte Durchschnittstierliste mit Anhang A bewerten. Bei wechselnden Beständen Durchschnittstierliste ein- oder nachreichen. Wildhuftiere nach Fußnote ** nur bei Haltung auf landwirtschaftlicher Nutzfläche berücksichtigen.",
+      "conditions": [
+        {
+          "expression": "Allgemeine Jahresviehbesatzermittlung",
+          "description": "Allgemeine Jahresviehbesatzermittlung",
+          "input_paths": [
+            "livestock.annual_stock"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Berechnung",
+        "description": "Jahresdurchschnitt Rinder taggenau aus Datenbank, sonst Tierliste zum 1. April bzw. eingereichte Durchschnittstierliste mit Anhang A bewerten. Bei wechselnden Beständen Durchschnittstierliste ein- oder nachreichen. Wildhuftiere nach Fußnote ** nur bei Haltung auf landwirtschaftlicher Nutzfläche berücksichtigen."
+      },
+      "source_reference_ids": [
+        "src.G.379.384",
+        "src.S.497.503",
+        "src.A.76.106",
+        "src.A.108.110",
+        "src.A.77.77",
+        "src.A.78.78",
+        "src.A.79.79",
+        "src.A.80.80",
+        "src.A.81.81",
+        "src.A.82.82",
+        "src.A.84.84",
+        "src.A.85.85",
+        "src.A.87.87",
+        "src.A.88.88",
+        "src.A.91.91",
+        "src.A.92.92",
+        "src.A.93.93",
+        "src.A.95.95",
+        "src.A.96.96",
+        "src.A.97.97",
+        "src.A.99.99",
+        "src.A.100.100",
+        "src.A.101.101",
+        "src.A.102.102",
+        "src.A.104.104",
+        "src.A.105.105",
+        "src.A.106.106"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.annex_value"
+      ]
+    },
+    {
+      "id": "o6_20.flaechenpflege",
+      "rule_type": "Verpflichtung",
+      "statement": "Eine förderfähige Fläche ist in eine flächenbezogene Maßnahme eingebracht — Acker ohne Ackerfutter und geschützter Anbau brauchen Anbau, jährliche Pflege und Ernte samt Abfuhr auf mindestens 85 % des Schlags. Dauer-, Spezial- und Weinkulturen brauchen Pflanzung, jährliche Pflege, Ernte und Abfuhr. Grünland und Ackerfutter jährlich vollflächig beweiden oder mähen und abführen, Bergmähder mindestens alle zwei Jahre mähen und abführen. Stilllegungen begrünen und mindestens alle zwei Jahre pflegen, bei nichtproduktiven Ackerflächen ist Selbstbegrünung zulässig.",
+      "conditions": [
+        {
+          "expression": "Eine förderfähige Fläche ist in eine flächenbezogene Maßnahme eingebracht",
+          "description": "Eine förderfähige Fläche ist in eine flächenbezogene Maßnahme eingebracht",
+          "input_paths": [
+            "land.parcels[].oepul_claim"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Verpflichtung",
+        "description": "Acker ohne Ackerfutter und geschützter Anbau brauchen Anbau, jährliche Pflege und Ernte samt Abfuhr auf mindestens 85 % des Schlags. Dauer-, Spezial- und Weinkulturen brauchen Pflanzung, jährliche Pflege, Ernte und Abfuhr. Grünland und Ackerfutter jährlich vollflächig beweiden oder mähen und abführen, Bergmähder mindestens alle zwei Jahre mähen und abführen. Stilllegungen begrünen und mindestens alle zwei Jahre pflegen, bei nichtproduktiven Ackerflächen ist Selbstbegrünung zulässig."
+      },
+      "source_reference_ids": [
+        "src.G.192.197",
+        "src.G.203.217"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.ausnahme_flaechen",
+      "rule_type": "Ausnahme",
+      "statement": "Biodiversitätsflächen oder Mehrnutzenhecken in UBB/BIO, nichtproduktive Ackerflächen oder Agroforststreifen in 1C, BAW, AG, NAT-/EBW-Grünbrachen oder K20 bis einschließlich 2024 — Es gelten die besonderen Förderbedingungen der zugehörigen Flächenmaßnahme anstelle der allgemeinen Mindestbewirtschaftung.",
+      "conditions": [
+        {
+          "expression": "Biodiversitätsflächen oder Mehrnutzenhecken in UBB/BIO, nichtproduktive Ackerflächen oder Agroforststreifen in 1C, BAW, AG, NAT-/EBW-Grünbrachen oder K20 bis einschließlich 2024",
+          "description": "Biodiversitätsflächen oder Mehrnutzenhecken in UBB/BIO, nichtproduktive Ackerflächen oder Agroforststreifen in 1C, BAW, AG, NAT-/EBW-Grünbrachen oder K20 bis einschließlich 2024",
+          "input_paths": [
+            "land.parcels[].oepul_claim"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Ausnahme",
+        "description": "Es gelten die besonderen Förderbedingungen der zugehörigen Flächenmaßnahme anstelle der allgemeinen Mindestbewirtschaftung."
+      },
+      "source_reference_ids": [
+        "src.G.219.236"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.doppelfoerderung",
+      "rule_type": "Ausschluss",
+      "statement": "Gleiche Leistung wird anderweitig öffentlich gefördert oder ist bereits gesetzlich oder behördlich vorgeschrieben — Für dieselbe Leistung ist bei Tierwohl – Weide keine zusätzliche Abgeltung zulässig.",
+      "conditions": [
+        {
+          "expression": "Gleiche Leistung wird anderweitig öffentlich gefördert oder ist bereits gesetzlich oder behördlich vorgeschrieben",
+          "description": "Gleiche Leistung wird anderweitig öffentlich gefördert oder ist bereits gesetzlich oder behördlich vorgeschrieben",
+          "input_paths": [
+            "documentation.oepul_control"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Ausschluss",
+        "description": "Für dieselbe Leistung ist bei Tierwohl – Weide keine zusätzliche Abgeltung zulässig."
+      },
+      "source_reference_ids": [
+        "src.S.553.559"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.einheiten",
+      "rule_type": "Verpflichtung",
+      "statement": "Förderung einer Einheit — Bedingungen während der gesamten maßgeblichen Verpflichtungsdauer erfüllen. Die besonderen saisonalen Tierregeln der Maßnahme bestimmen die Weidedauer.",
+      "conditions": [
+        {
+          "expression": "Förderung einer Einheit",
+          "description": "Förderung einer Einheit",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Verpflichtung",
+        "description": "Bedingungen während der gesamten maßgeblichen Verpflichtungsdauer erfüllen. Die besonderen saisonalen Tierregeln der Maßnahme bestimmen die Weidedauer."
+      },
+      "source_reference_ids": [
+        "src.G.391.396",
+        "src.S.592.596"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.weiterfuehrung",
+      "rule_type": "Antrag",
+      "statement": "Maßnahme im Vorjahr beantragt und weitergeführt — Jährlichen MFA mit förderrelevanten Tierangaben als Zahlungsantrag einreichen. Für den Vertrag sind Maßnahmenantrag und ergänzende Angaben erforderlich.",
+      "conditions": [
+        {
+          "expression": "Maßnahme im Vorjahr beantragt und weitergeführt",
+          "description": "Maßnahme im Vorjahr beantragt und weitergeführt",
+          "input_paths": [
+            "farm.weide_categories"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Antrag",
+        "description": "Jährlichen MFA mit förderrelevanten Tierangaben als Zahlungsantrag einreichen. Für den Vertrag sind Maßnahmenantrag und ergänzende Angaben erforderlich."
+      },
+      "source_reference_ids": [
+        "src.G.479.483",
+        "src.G.489.494",
+        "src.S.1087.1097",
+        "src.S.1106.1109"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.administrative_findings"
+      ]
+    },
+    {
+      "id": "o6_20.ausstiegsgrenze",
+      "rule_type": "Frist",
+      "statement": "Ausstieg beabsichtigt — Verpflichtungen bis zum Ausstieg erfüllen. Ausstieg grundsätzlich nur bis Durchführung oder Ankündigung einer Vor-Ort-Kontrolle bzw. Mitteilung des Verwaltungskontrollergebnisses möglich.",
+      "conditions": [
+        {
+          "expression": "Ausstieg beabsichtigt",
+          "description": "Ausstieg beabsichtigt",
+          "input_paths": [
+            "documentation.oepul_control"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Frist",
+        "description": "Verpflichtungen bis zum Ausstieg erfüllen. Ausstieg grundsätzlich nur bis Durchführung oder Ankündigung einer Vor-Ort-Kontrolle bzw. Mitteilung des Verwaltungskontrollergebnisses möglich."
+      },
+      "source_reference_ids": [
+        "src.G.502.506"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.wiedereinstieg",
+      "rule_type": "Verfahren",
+      "statement": "Ausstieg, Ausschluss oder einjährige Nichtabgabe des MFA — Wiedereinstieg erfordert einen neuen Maßnahmenantrag. Wird ein versäumter Zahlungsantrag nicht innerhalb eines Jahres nach Fristablauf nachgereicht, entfällt die Zahlung und die Verpflichtung endet.",
+      "conditions": [
+        {
+          "expression": "Ausstieg, Ausschluss oder einjährige Nichtabgabe des MFA",
+          "description": "Ausstieg, Ausschluss oder einjährige Nichtabgabe des MFA",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Verfahren",
+        "description": "Wiedereinstieg erfordert einen neuen Maßnahmenantrag. Wird ein versäumter Zahlungsantrag nicht innerhalb eines Jahres nach Fristablauf nachgereicht, entfällt die Zahlung und die Verpflichtung endet."
+      },
+      "source_reference_ids": [
+        "src.G.510.512",
+        "src.S.1118.1123"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.kombination",
+      "rule_type": "Kombination",
+      "statement": "Teilnahme an mehreren ÖPUL-Maßnahmen — Kombination grundsätzlich zulässig, soweit kein Ausschluss besteht. Unzulässige Kombination bis zur Auszahlungsmitteilung korrigieren, sofern keine Kontrollbeanstandung o. Ä. vorliegt. Bis zur Abmeldung alle Verpflichtungen einhalten.",
+      "conditions": [
+        {
+          "expression": "Teilnahme an mehreren ÖPUL-Maßnahmen",
+          "description": "Teilnahme an mehreren ÖPUL-Maßnahmen",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Kombination",
+        "description": "Kombination grundsätzlich zulässig, soweit kein Ausschluss besteht. Unzulässige Kombination bis zur Auszahlungsmitteilung korrigieren, sofern keine Kontrollbeanstandung o. Ä. vorliegt. Bis zur Abmeldung alle Verpflichtungen einhalten."
+      },
+      "source_reference_ids": [
+        "src.G.514.521",
+        "src.S.914.919"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.uebernahme",
+      "rule_type": "Übernahme",
+      "statement": "Übernahme der tierbezogenen Maßnahme von einem Vorbetrieb — Nur im Einzelfall bei Auflösung, Teilung oder Zusammenlegung des Betriebs. Tiere und Flächen müssen vom selben Vorbetrieb stammen. Übernahme online im MFA einreichen und von AMA genehmigen lassen.",
+      "conditions": [
+        {
+          "expression": "Übernahme der tierbezogenen Maßnahme von einem Vorbetrieb",
+          "description": "Übernahme der tierbezogenen Maßnahme von einem Vorbetrieb",
+          "input_paths": [
+            "farm.weide_takeover"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Übernahme",
+        "description": "Nur im Einzelfall bei Auflösung, Teilung oder Zusammenlegung des Betriebs. Tiere und Flächen müssen vom selben Vorbetrieb stammen. Übernahme online im MFA einreichen und von AMA genehmigen lassen."
+      },
+      "source_reference_ids": [
+        "src.G.569.570",
+        "src.G.576.578",
+        "src.G.591.591",
+        "src.G.598.599",
+        "src.S.720.726",
+        "src.S.733.734"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.takeover_possible"
+      ]
+    },
+    {
+      "id": "o6_20.kontrolle",
+      "rule_type": "Kontrolle",
+      "statement": "Beantragte oder bereits ausbezahlte Förderung — Verwaltungskontrolle aller Anträge, Vor-Ort-Kontrolle ausgewählter Betriebe und nachgängige Prüfungen zulassen. Ab Vertragsbeginn gelten Förderbedingungen und Mitteilungspflichten.",
+      "conditions": [
+        {
+          "expression": "Beantragte oder bereits ausbezahlte Förderung",
+          "description": "Beantragte oder bereits ausbezahlte Förderung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Kontrolle",
+        "description": "Verwaltungskontrolle aller Anträge, Vor-Ort-Kontrolle ausgewählter Betriebe und nachgängige Prüfungen zulassen. Ab Vertragsbeginn gelten Förderbedingungen und Mitteilungspflichten."
+      },
+      "source_reference_ids": [
+        "src.G.672.679",
+        "src.S.1058.1060",
+        "src.S.1154.1157"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.kontrollzugang",
+      "rule_type": "Kontrolle",
+      "statement": "Kontrollorgan verlangt Zutritt, Auskunft, Unterlagen oder elektronischen Zugang — Auch unangekündigt Zutritt zu Betriebs- und Lagerräumen und Flächen gewähren. Förderunterlagen am Betrieb bereithalten, auf Verlangen Kopien oder erforderliche Originale auf eigene Kosten vorlegen und Einsicht auch bei Dritten ermöglichen. Aufbewahrung gemäß § 16 Z 1 GSP-AV.",
+      "conditions": [
+        {
+          "expression": "Kontrollorgan verlangt Zutritt, Auskunft, Unterlagen oder elektronischen Zugang",
+          "description": "Kontrollorgan verlangt Zutritt, Auskunft, Unterlagen oder elektronischen Zugang",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Kontrolle",
+        "description": "Auch unangekündigt Zutritt zu Betriebs- und Lagerräumen und Flächen gewähren. Förderunterlagen am Betrieb bereithalten, auf Verlangen Kopien oder erforderliche Originale auf eigene Kosten vorlegen und Einsicht auch bei Dritten ermöglichen. Aufbewahrung gemäß § 16 Z 1 GSP-AV."
+      },
+      "source_reference_ids": [
+        "src.S.1159.1170",
+        "src.S.1172.1184",
+        "src.S.1223.1224"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.kontrollperson",
+      "rule_type": "Kontrolle",
+      "statement": "Antragsteller fehlt bei Kontrolle oder kann keine Auskunft erteilen — Ausgewiesene Vertretung gilt als informiert. Bei angekündigter Kontrolle, Abwesenheit und fehlender anderer Benennung können maßgeblich mitwirkende volljährige Betriebsangehörige Auskunft geben.",
+      "conditions": [
+        {
+          "expression": "Antragsteller fehlt bei Kontrolle oder kann keine Auskunft erteilen",
+          "description": "Antragsteller fehlt bei Kontrolle oder kann keine Auskunft erteilen",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Kontrolle",
+        "description": "Ausgewiesene Vertretung gilt als informiert. Bei angekündigter Kontrolle, Abwesenheit und fehlender anderer Benennung können maßgeblich mitwirkende volljährige Betriebsangehörige Auskunft geben."
+      },
+      "source_reference_ids": [
+        "src.S.1190.1196",
+        "src.S.1202.1203"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.verweigerung",
+      "rule_type": "Folge",
+      "statement": "Auskunft verweigert oder Vor-Ort-Kontrolle verhindert, ohne höhere Gewalt oder außergewöhnliche Umstände — Antrag ablehnen, im laufenden Jahr keine Prämie gewähren und bestehende Verträge beenden und rückabwickeln.",
+      "conditions": [
+        {
+          "expression": "Auskunft verweigert oder Vor-Ort-Kontrolle verhindert, ohne höhere Gewalt oder außergewöhnliche Umstände",
+          "description": "Auskunft verweigert oder Vor-Ort-Kontrolle verhindert, ohne höhere Gewalt oder außergewöhnliche Umstände",
+          "input_paths": [
+            "documentation.oepul_control"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Folge",
+        "description": "Antrag ablehnen, im laufenden Jahr keine Prämie gewähren und bestehende Verträge beenden und rückabwickeln."
+      },
+      "source_reference_ids": [
+        "src.S.1185.1189"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.kontrollbefund",
+      "rule_type": "Verfahren",
+      "statement": "Vor-Ort-Prüfung der Richtigkeit, Vollständigkeit und Einhaltung — Das Kontrollorgan trifft keine Entscheidung über Rechtsfolgen. Eigene Einschätzungen des Prüforgans begründen keinen Anspruch.",
+      "conditions": [
+        {
+          "expression": "Vor-Ort-Prüfung der Richtigkeit, Vollständigkeit und Einhaltung",
+          "description": "Vor-Ort-Prüfung der Richtigkeit, Vollständigkeit und Einhaltung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Verfahren",
+        "description": "Das Kontrollorgan trifft keine Entscheidung über Rechtsfolgen. Eigene Einschätzungen des Prüforgans begründen keinen Anspruch."
+      },
+      "source_reference_ids": [
+        "src.S.1205.1212"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.nachreichen",
+      "rule_type": "Verfahren",
+      "statement": "Unterlagen nicht zugänglich oder Nachweisfrist versäumt — Unterlage gilt als nicht vorgefunden. AMA kann angemessene Nachreichfrist gewähren. Verspätete Nachweise bleiben unberücksichtigt. Bei nachgewiesenen besonderen Umständen kann AMA Nachweisfristen außer Antragsfristen verlängern.",
+      "conditions": [
+        {
+          "expression": "Unterlagen nicht zugänglich oder Nachweisfrist versäumt",
+          "description": "Unterlagen nicht zugänglich oder Nachweisfrist versäumt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Verfahren",
+        "description": "Unterlage gilt als nicht vorgefunden. AMA kann angemessene Nachreichfrist gewähren. Verspätete Nachweise bleiben unberücksichtigt. Bei nachgewiesenen besonderen Umständen kann AMA Nachweisfristen außer Antragsfristen verlängern."
+      },
+      "source_reference_ids": [
+        "src.S.1213.1222"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.sanktion",
+      "rule_type": "Folge",
+      "statement": "Zugangsvoraussetzungen, Angaben zu Tieren, inhaltliche Auflagen oder Konditionalität verletzt — Je nach Verstoß Kürzung, Einbehalt und Rückforderung einschließlich allfälliger Zinsen. Schwere, Ausmaß, Dauer und Häufigkeit der Bewirtschaftungsverstöße maßnahmenbezogen samt Zuschlägen und Optionen beurteilen.",
+      "conditions": [
+        {
+          "expression": "Zugangsvoraussetzungen, Angaben zu Tieren, inhaltliche Auflagen oder Konditionalität verletzt",
+          "description": "Zugangsvoraussetzungen, Angaben zu Tieren, inhaltliche Auflagen oder Konditionalität verletzt",
+          "input_paths": [
+            "documentation.oepul_control"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Kürzung oder Rückforderung möglich",
+        "description": "Je nach Verstoß Kürzung, Einbehalt und Rückforderung einschließlich allfälliger Zinsen. Schwere, Ausmaß, Dauer und Häufigkeit der Bewirtschaftungsverstöße maßnahmenbezogen samt Zuschlägen und Optionen beurteilen."
+      },
+      "source_reference_ids": [
+        "src.G.681.690",
+        "src.G.696.700",
+        "src.S.1227.1233",
+        "src.S.1238.1245"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.stufen",
+      "rule_type": "Sanktion",
+      "statement": "Bewertung eines Verstoßes gegen inhaltliche Bewirtschaftungsauflagen — Verwarnung oder Kürzung um 2, 5, 10, 25, 50 oder 100 Prozent. Zweimalige 100-Prozent-Kürzung im Vertragszeitraum führt zum Ausschluss und zur Rückforderung der bisher in diesem Zeitraum gewährten Maßnahmenprämie.",
+      "conditions": [
+        {
+          "expression": "Bewertung eines Verstoßes gegen inhaltliche Bewirtschaftungsauflagen",
+          "description": "Bewertung eines Verstoßes gegen inhaltliche Bewirtschaftungsauflagen",
+          "input_paths": [
+            "documentation.oepul_control"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Sanktion",
+        "description": "Verwarnung oder Kürzung um 2, 5, 10, 25, 50 oder 100 Prozent. Zweimalige 100-Prozent-Kürzung im Vertragszeitraum führt zum Ausschluss und zur Rückforderung der bisher in diesem Zeitraum gewährten Maßnahmenprämie.",
+        "value": {
+          "table": "/weide_tables/sanctions"
+        }
+      },
+      "source_reference_ids": [
+        "src.G.701.709"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.sanction_rate",
+        "data.oepul.o6_20.sanction_effect"
+      ]
+    },
+    {
+      "id": "o6_20.verwarnung",
+      "rule_type": "Übergang",
+      "statement": "Niedrigste Sanktionsstufe ab dem Förderjahr 2027 — 1 Prozent der Maßnahmenprämie einbehalten. In früheren Förderjahren Verwarnung.",
+      "conditions": [
+        {
+          "expression": "Förderjahr >= 2027 UND zugeordnete Sanktionsstufe = Verwarnung",
+          "description": "Niedrigste Sanktionsstufe ab dem Förderjahr 2027",
+          "input_paths": [
+            "documentation.oepul_control",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Übergang",
+        "description": "1 Prozent der Maßnahmenprämie einbehalten. In früheren Förderjahren Verwarnung.",
+        "value": {
+          "from_year": 2027,
+          "percent": 1
+        }
+      },
+      "source_reference_ids": [
+        "src.G.710.711"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.sanction_rate"
+      ]
+    },
+    {
+      "id": "o6_20.kuerzungsfolge",
+      "rule_type": "Berechnung",
+      "statement": "Mehrere Kürzungen fallen zusammen — Für die zutreffenden Kürzungsgründe die Reihenfolge des Punkts 1.12 der SRL anwenden, einschließlich inhaltlicher Kürzung vor Modulation und Konditionalität zuletzt.",
+      "conditions": [
+        {
+          "expression": "Mehrere Kürzungen fallen zusammen",
+          "description": "Mehrere Kürzungen fallen zusammen",
+          "input_paths": [
+            "documentation.oepul_control"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Berechnung",
+        "description": "Für die zutreffenden Kürzungsgründe die Reihenfolge des Punkts 1.12 der SRL anwenden, einschließlich inhaltlicher Kürzung vor Modulation und Konditionalität zuletzt."
+      },
+      "source_reference_ids": [
+        "src.S.1259.1273"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.ordered_reductions"
+      ]
+    },
+    {
+      "id": "o6_20.entscheidung",
+      "rule_type": "Verfahren",
+      "statement": "AMA entscheidet nach Berechnung und Kontrollen — Genehmigung oder begründete Ablehnung schriftlich per Post oder Mein Postkorb mitteilen. Mit Genehmigungsverständigung entsteht bei mehreren Maßnahmen ein Vertrag mit separat beurteilbaren Maßnahmen.",
+      "conditions": [
+        {
+          "expression": "AMA entscheidet nach Berechnung und Kontrollen",
+          "description": "AMA entscheidet nach Berechnung und Kontrollen",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Verfahren",
+        "description": "Genehmigung oder begründete Ablehnung schriftlich per Post oder Mein Postkorb mitteilen. Mit Genehmigungsverständigung entsteht bei mehreren Maßnahmen ein Vertrag mit separat beurteilbaren Maßnahmen."
+      },
+      "source_reference_ids": [
+        "src.G.714.716",
+        "src.S.1125.1132"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.auszahlung",
+      "rule_type": "Frist",
+      "statement": "Jährliche Prämie genehmigt — Bis zum 30. Juni des Folgejahres durch AMA auf das Namenskonto im MFA überweisen.",
+      "conditions": [
+        {
+          "expression": "Jährliche Prämie genehmigt",
+          "description": "Jährliche Prämie genehmigt",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Frist",
+        "description": "Bis zum 30. Juni des Folgejahres durch AMA auf das Namenskonto im MFA überweisen."
+      },
+      "source_reference_ids": [
+        "src.G.718.721",
+        "src.S.1135.1137"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.teilzahlung",
+      "rule_type": "Zahlung",
+      "statement": "Verwaltungskontrollen abgeschlossen — Vorläufig bis zu 75 % des voraussichtlichen Prämienvolumens auszahlen. Spätere Umstände können Rückforderung oder Nachzahlung bewirken.",
+      "conditions": [
+        {
+          "expression": "AMA-Verwaltungskontrollen abgeschlossen",
+          "description": "Verwaltungskontrollen abgeschlossen",
+          "input_paths": [
+            "documentation.oepul_control"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Zahlung",
+        "description": "Vorläufig bis zu 75 % des voraussichtlichen Prämienvolumens auszahlen. Spätere Umstände können Rückforderung oder Nachzahlung bewirken.",
+        "value": {
+          "maximum_fraction": 0.75
+        }
+      },
+      "source_reference_ids": [
+        "src.G.722.725",
+        "src.S.1138.1143"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.advance_limit"
+      ]
+    },
+    {
+      "id": "o6_20.bagatelle",
+      "rule_type": "Ermessen",
+      "statement": "Errechneter Auszahlungsbetrag höchstens 50 Euro — Von der Gewährung kann abgesehen werden. Der Betrag allein bewirkt keine zwingende Ablehnung.",
+      "conditions": [
+        {
+          "expression": "Auszahlungsbetrag <= 50 EUR",
+          "description": "Errechneter Auszahlungsbetrag höchstens 50 Euro",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Ermessen",
+        "description": "Von der Gewährung kann abgesehen werden. Der Betrag allein bewirkt keine zwingende Ablehnung.",
+        "value": {
+          "discretionary": true,
+          "max_eur": 50
+        }
+      },
+      "source_reference_ids": [
+        "src.S.1144.1145"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.modulation",
+      "rule_type": "Berechnung",
+      "statement": "Berechnung der Tierwohl-Weide-Prämie anhand der Heimfläche im MFA — Gewichteten Betriebsfaktor aus den Hektarstaffeln bis 200 zu 100 %, danach bis 300 zu 90 %, bis 1.000 zu 85 %, darüber zu 75 % auf die Prämie anwenden. Almwirtschaft und Behirtung getrennt betrachten.",
+      "conditions": [
+        {
+          "expression": "Berechnung der Tierwohl-Weide-Prämie anhand der Heimfläche im MFA",
+          "description": "Berechnung der Tierwohl-Weide-Prämie anhand der Heimfläche im MFA",
+          "input_paths": [
+            "land.home_mfa_ha",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Berechnung",
+        "description": "Gewichteten Betriebsfaktor aus den Hektarstaffeln bis 200 zu 100 %, danach bis 300 zu 90 %, bis 1.000 zu 85 %, darüber zu 75 % auf die Prämie anwenden. Almwirtschaft und Behirtung getrennt betrachten.",
+        "value": {
+          "table": "/weide_tables/modulation"
+        }
+      },
+      "source_reference_ids": [
+        "src.G.767.776",
+        "src.G.778.780",
+        "src.S.843.852"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.modulation",
+        "data.oepul.o6_20.modulated_band"
+      ]
+    },
+    {
+      "id": "o6_20.egfl",
+      "rule_type": "Finanzierung",
+      "statement": "Öko-Regelung Tierwohl – Weide nach Art. 31 — Ausschließliche Finanzierung aus EGFL-Mitteln im Umfang gemäß § 111 GSP-AV.",
+      "conditions": [
+        {
+          "expression": "Öko-Regelung Tierwohl – Weide nach Art. 31",
+          "description": "Öko-Regelung Tierwohl – Weide nach Art. 31",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Finanzierung",
+        "description": "Ausschließliche Finanzierung aus EGFL-Mitteln im Umfang gemäß § 111 GSP-AV."
+      },
+      "source_reference_ids": [
+        "src.S.858.865",
+        "src.S.861.864"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.umverteilung",
+      "rule_type": "Finanzierung",
+      "statement": "Unter- oder Überschreitung eines Prämienbands der Art.-31-Maßnahmen — Mittel aliquot aufteilen. Zur Sicherung des Minimums zuerst Mittel aus Maßnahmen mit höchster relativer Überschreitung ihres Minimums heranziehen. Bei Überschreitung des Maximums freie Mittel vorrangig an Maßnahmen mit höchster relativer Unterschreitung ihres Maximums geben.",
+      "conditions": [
+        {
+          "expression": "Unter- oder Überschreitung eines Prämienbands der Art.-31-Maßnahmen",
+          "description": "Unter- oder Überschreitung eines Prämienbands der Art.-31-Maßnahmen",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Finanzierung",
+        "description": "Mittel aliquot aufteilen. Zur Sicherung des Minimums zuerst Mittel aus Maßnahmen mit höchster relativer Überschreitung ihres Minimums heranziehen. Bei Überschreitung des Maximums freie Mittel vorrangig an Maßnahmen mit höchster relativer Unterschreitung ihres Maximums geben."
+      },
+      "source_reference_ids": [
+        "src.S.865.876",
+        "src.S.867.873",
+        "src.S.874.877"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.stallkombination",
+      "rule_type": "Kombination",
+      "statement": "Ab 2024 zugleich förderbare Rinder in Stallhaltung und Weide — Für die Stallhaltungsmaßnahme nennt die Tabelle 162 statt 194,4 Euro je RGVE bei gleichzeitiger Weideteilnahme. Der Festmistzuschlag der Stallhaltung beträgt 21,6 Euro je RGVE. Die Wirkung betrifft den Stallhaltungssatz.",
+      "conditions": [
+        {
+          "expression": "Ab 2024 zugleich förderbare Rinder in Stallhaltung und Weide",
+          "description": "Ab 2024 zugleich förderbare Rinder in Stallhaltung und Weide",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Kombination",
+        "description": "Für die Stallhaltungsmaßnahme nennt die Tabelle 162 statt 194,4 Euro je RGVE bei gleichzeitiger Weideteilnahme. Der Festmistzuschlag der Stallhaltung beträgt 21,6 Euro je RGVE. Die Wirkung betrifft den Stallhaltungssatz."
+      },
+      "source_reference_ids": [
+        "src.S.4378.4392"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.duerrekontrolle",
+      "rule_type": "Kontrolle",
+      "statement": "Vor-Ort-Kontrolle im Dürrejahr 2026 — Die besondere Trockenheit ist insbesondere bei der Beurteilung des Grundfutterbedarfs auf der Weide zu berücksichtigen. Eine konkrete Ausnahmeentscheidung bleibt der Kontrolle vorbehalten.",
+      "conditions": [
+        {
+          "expression": "Vor-Ort-Kontrolle im Dürrejahr 2026",
+          "description": "Vor-Ort-Kontrolle im Dürrejahr 2026",
+          "input_paths": [
+            "farm.weide_drought",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Einzelfall bei Kontrolle würdigen",
+        "description": "Die besondere Trockenheit ist insbesondere bei der Beurteilung des Grundfutterbedarfs auf der Weide zu berücksichtigen. Eine konkrete Ausnahmeentscheidung bleibt der Kontrolle vorbehalten.",
+        "value": {
+          "year": 2026,
+          "individual_assessment": true
+        }
+      },
+      "source_reference_ids": [
+        "src.M.42.42"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.drought_review"
+      ]
+    },
+    {
+      "id": "o6_20.hoehere_gewalt",
+      "rule_type": "Verfahren",
+      "statement": "Dürre 2026 macht die Einhaltung der Förderverpflichtung unmöglich, etwa bei fehlender Wasserversorgung auf Almen — Einzelbetriebliches Ansuchen um Anerkennung höherer Gewalt oder besonderer Umstände über eAMA im Register Eingaben einbringen.",
+      "conditions": [
+        {
+          "expression": "Dürre 2026 macht die Einhaltung der Förderverpflichtung unmöglich, etwa bei fehlender Wasserversorgung auf Almen",
+          "description": "Dürre 2026 macht die Einhaltung der Förderverpflichtung unmöglich, etwa bei fehlender Wasserversorgung auf Almen",
+          "input_paths": [
+            "farm.weide_drought"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Verfahren",
+        "description": "Einzelbetriebliches Ansuchen um Anerkennung höherer Gewalt oder besonderer Umstände über eAMA im Register Eingaben einbringen."
+      },
+      "source_reference_ids": [
+        "src.M.44.44",
+        "src.S.758.759"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.gruenlandtermine",
+      "rule_type": "Flächenauflage",
+      "statement": "Weidefläche ist zugleich als Grünland-Biodiversitätsfläche in UBB/BIO beantragt — Bis 15. April eine der vier Varianten codieren. Unabhängig von der Variante mindestens einmal jährlich mähen und Mähgut abführen. Für Beweidung zusätzlich die jeweilige Variantenregel beachten.",
+      "conditions": [
+        {
+          "expression": "Weidefläche ist zugleich als Grünland-Biodiversitätsfläche in UBB/BIO beantragt",
+          "description": "Weidefläche ist zugleich als Grünland-Biodiversitätsfläche in UBB/BIO beantragt",
+          "input_paths": [
+            "land.parcels[].oepul_use_2026"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenauflage",
+        "description": "Bis 15. April eine der vier Varianten codieren. Unabhängig von der Variante mindestens einmal jährlich mähen und Mähgut abführen. Für Beweidung zusätzlich die jeweilige Variantenregel beachten."
+      },
+      "source_reference_ids": [
+        "src.M.8.14",
+        "src.M.15.22"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.div_requirements"
+      ]
+    },
+    {
+      "id": "o6_20.divsz",
+      "rule_type": "Flächenfrist",
+      "statement": "Weidenutzung einer DIVSZ-Fläche — Erste Nutzung mit der zweiten Mahd vergleichbarer Schläge, frühestens am 15. Juni, jedenfalls ab 15. Juli. Phänologische Vorverlegung bis zehn Tage, 2026 je Bezirk vier bis sieben Tage. Bei weiterer Vorziehung um bis zu 14 Tage sind zweite Mahd und OPUBB/OPBIO ohne Flächenprämie erforderlich.",
+      "conditions": [
+        {
+          "expression": "Weidenutzung einer DIVSZ-Fläche",
+          "description": "Weidenutzung einer DIVSZ-Fläche",
+          "input_paths": [
+            "land.parcels[].oepul_use_2026"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenfrist",
+        "description": "Erste Nutzung mit der zweiten Mahd vergleichbarer Schläge, frühestens am 15. Juni, jedenfalls ab 15. Juli. Phänologische Vorverlegung bis zehn Tage, 2026 je Bezirk vier bis sieben Tage. Bei weiterer Vorziehung um bis zu 14 Tage sind zweite Mahd und OPUBB/OPBIO ohne Flächenprämie erforderlich."
+      },
+      "source_reference_ids": [
+        "src.M.19.19",
+        "src.M.23.23",
+        "src.M.31.32",
+        "src.M.34.34"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.div_requirements"
+      ]
+    },
+    {
+      "id": "o6_20.divnfz",
+      "rule_type": "Flächenfrist",
+      "statement": "Weidenutzung einer DIVNFZ-Fläche — Nach der ersten Nutzung neun Wochen nutzungsfrei und jedenfalls zwei Nutzungen pro Jahr. 2026 mit OPUBB/OPBIO ohne Flächenprämie Verkürzung auf sieben Wochen (49 Tage) möglich.",
+      "conditions": [
+        {
+          "expression": "Weidenutzung einer DIVNFZ-Fläche",
+          "description": "Weidenutzung einer DIVNFZ-Fläche",
+          "input_paths": [
+            "land.parcels[].oepul_use_2026"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenfrist",
+        "description": "Nach der ersten Nutzung neun Wochen nutzungsfrei und jedenfalls zwei Nutzungen pro Jahr. 2026 mit OPUBB/OPBIO ohne Flächenprämie Verkürzung auf sieben Wochen (49 Tage) möglich."
+      },
+      "source_reference_ids": [
+        "src.M.20.20",
+        "src.M.35.35"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.div_requirements"
+      ]
+    },
+    {
+      "id": "o6_20.divagf",
+      "rule_type": "Flächenfrist",
+      "statement": "Nutzung einer DIVAGF-Fläche — Letzte Mahd oder Beweidung am 15. August laut Übersicht. Für die Vorverlegung der Grünlandnutzung 2026 um 14 Tage verlangt die Mitteilung OPUBB/OPBIO und Verzicht auf die betroffene Flächenprämie.",
+      "conditions": [
+        {
+          "expression": "Nutzung einer DIVAGF-Fläche",
+          "description": "Nutzung einer DIVAGF-Fläche",
+          "input_paths": [
+            "land.parcels[].oepul_use_2026"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenfrist",
+        "description": "Letzte Mahd oder Beweidung am 15. August laut Übersicht. Für die Vorverlegung der Grünlandnutzung 2026 um 14 Tage verlangt die Mitteilung OPUBB/OPBIO und Verzicht auf die betroffene Flächenprämie."
+      },
+      "source_reference_ids": [
+        "src.M.21.21",
+        "src.M.31.31"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.div_requirements"
+      ]
+    },
+    {
+      "id": "o6_20.divrs",
+      "rule_type": "Flächenfrist",
+      "statement": "DIVRS-Fläche — Erste Mahd oder Beweidung frühestens am 15. Juli. Höchstens zwei Nutzungen je Jahr mit Ausnahme des Reinigungsschnitts im ersten Jahr. Für die Vorverlegung 2026 um 14 Tage OPUBB/OPBIO setzen.",
+      "conditions": [
+        {
+          "expression": "DIVRS-Fläche",
+          "description": "DIVRS-Fläche",
+          "input_paths": [
+            "land.parcels[].oepul_use_2026"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenfrist",
+        "description": "Erste Mahd oder Beweidung frühestens am 15. Juli. Höchstens zwei Nutzungen je Jahr mit Ausnahme des Reinigungsschnitts im ersten Jahr. Für die Vorverlegung 2026 um 14 Tage OPUBB/OPBIO setzen."
+      },
+      "source_reference_ids": [
+        "src.M.22.22",
+        "src.M.31.31"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.div_requirements"
+      ]
+    },
+    {
+      "id": "o6_20.divwechsel",
+      "rule_type": "Flächenantrag",
+      "statement": "Nach Ende der Einreichfrist 15. April wird eine Grünland-Biodiversitätsvariante geändert — DIVSZ zu DIVNFZ oder DIVAGF bis einschließlich 15. Juni und DIVNFZ zu DIVAGF bis einschließlich 15. August ohne Prämieneinbuße möglich. DIVNFZ zu DIVSZ ist nach 15. April ausgeschlossen.",
+      "conditions": [
+        {
+          "expression": "Nach Ende der Einreichfrist 15. April wird eine Grünland-Biodiversitätsvariante geändert",
+          "description": "Nach Ende der Einreichfrist 15. April wird eine Grünland-Biodiversitätsvariante geändert",
+          "input_paths": [
+            "land.parcels[].oepul_use_2026"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenantrag",
+        "description": "DIVSZ zu DIVNFZ oder DIVAGF bis einschließlich 15. Juni und DIVNFZ zu DIVAGF bis einschließlich 15. August ohne Prämieneinbuße möglich. DIVNFZ zu DIVSZ ist nach 15. April ausgeschlossen."
+      },
+      "source_reference_ids": [
+        "src.M.37.40"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.variant_change"
+      ]
+    },
+    {
+      "id": "o6_20.divacker",
+      "rule_type": "Flächenauflage",
+      "statement": "Weidefläche ist Acker-Biodiversitätsfläche bei UBB/BIO — Bei mehr als 2 ha Acker- bzw. Grünland sind zumindest 7 % Biodiversitätsfläche anzulegen. Acker-DIV mindestens einmal in zwei Jahren nutzen, grundsätzlich höchstens zweimal jährlich. Vor 1. August Mahd/Häckseln regulär auf höchstens 25 %, Beweidung generell erst ab 1. August. 2026 jede früh beweidete oder über 25 % hinaus früh gemähte Fläche mit OPUBB/OPBIO ohne UBB/BIO-Prämie codieren. Seit August ist auch eine dritte Nutzung so zulässig. NAT/EBW-Projektauflagen weiter einhalten.",
+      "conditions": [
+        {
+          "expression": "Weidefläche ist Acker-Biodiversitätsfläche bei UBB/BIO",
+          "description": "Weidefläche ist Acker-Biodiversitätsfläche bei UBB/BIO",
+          "input_paths": [
+            "land.parcels[].oepul_use_2026"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenauflage",
+        "description": "Bei mehr als 2 ha Acker- bzw. Grünland sind zumindest 7 % Biodiversitätsfläche anzulegen. Acker-DIV mindestens einmal in zwei Jahren nutzen, grundsätzlich höchstens zweimal jährlich. Vor 1. August Mahd/Häckseln regulär auf höchstens 25 %, Beweidung generell erst ab 1. August. 2026 jede früh beweidete oder über 25 % hinaus früh gemähte Fläche mit OPUBB/OPBIO ohne UBB/BIO-Prämie codieren. Seit August ist auch eine dritte Nutzung so zulässig. NAT/EBW-Projektauflagen weiter einhalten."
+      },
+      "source_reference_ids": [
+        "src.M.5.5",
+        "src.M.7.7",
+        "src.M.27.27",
+        "src.M.29.29",
+        "src.H.14.14",
+        "src.H.15.15"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.divkontrolle",
+      "rule_type": "Kontrolle",
+      "statement": "Vorzeitig genutzte Biodiversitätsfläche im Jahr 2026 — Zeitnah im MFA korrigieren, auch nachträglich möglich. Ohne OPUBB/OPBIO Beanstandung. Andere Projektauflagen bleiben bindend.",
+      "conditions": [
+        {
+          "expression": "Vorzeitig genutzte Biodiversitätsfläche im Jahr 2026",
+          "description": "Vorzeitig genutzte Biodiversitätsfläche im Jahr 2026",
+          "input_paths": [
+            "land.parcels[].oepul_use_2026"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Kontrolle",
+        "description": "Zeitnah im MFA korrigieren, auch nachträglich möglich. Ohne OPUBB/OPBIO Beanstandung. Andere Projektauflagen bleiben bindend."
+      },
+      "source_reference_ids": [
+        "src.M.42.42"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.ernte_duerre",
+      "rule_type": "Flächenausnahme",
+      "statement": "2026 liegt dürrebedingt kein erntbarer Bestand einer üblicherweise erst im Spätsommer oder Herbst geernteten Ackerkultur im bezeichneten Gebiet vor — Dürre für Ernte und Abfuhr auf 85 % ohne Einzelmeldung als höhere Gewalt anerkannt. ÖPUL-Flächenprämie und AZ können gewährt werden. Außerhalb dieses Tatbestands ist bei Unmöglichkeit der Ernte grundsätzlich ein einzelschlagbezogenes Ansuchen mit Nachweisen erforderlich.",
+      "conditions": [
+        {
+          "expression": "2026 liegt dürrebedingt kein erntbarer Bestand einer üblicherweise erst im Spätsommer oder Herbst geernteten Ackerkultur im bezeichneten Gebiet vor",
+          "description": "2026 liegt dürrebedingt kein erntbarer Bestand einer üblicherweise erst im Spätsommer oder Herbst geernteten Ackerkultur im bezeichneten Gebiet vor",
+          "input_paths": [
+            "land.parcels[].oepul_use_2026",
+            "farm.year"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenausnahme",
+        "description": "Dürre für Ernte und Abfuhr auf 85 % ohne Einzelmeldung als höhere Gewalt anerkannt. ÖPUL-Flächenprämie und AZ können gewährt werden. Außerhalb dieses Tatbestands ist bei Unmöglichkeit der Ernte grundsätzlich ein einzelschlagbezogenes Ansuchen mit Nachweisen erforderlich."
+      },
+      "source_reference_ids": [
+        "src.D.6.6",
+        "src.D.8.8",
+        "src.D.9.12",
+        "src.H.10.10"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.harvest_area_exception"
+      ]
+    },
+    {
+      "id": "o6_20.kulturarten",
+      "rule_type": "Definition",
+      "statement": "Eine weitere Flächenmaßnahme erfordert die Kulturzuordnung — Getreide, Feldgemüse und Obst nach der Liste in Abschnitt 4 zuordnen. Gemenge unter 50 % Getreide zählen nicht als Getreide. Felsenbirne, Maulbeere und Papau zählen ab 2025 als Obst.",
+      "conditions": [
+        {
+          "expression": "Eine weitere Flächenmaßnahme erfordert die Kulturzuordnung",
+          "description": "Eine weitere Flächenmaßnahme erfordert die Kulturzuordnung",
+          "input_paths": [
+            "land.parcels[].crop.crop_name"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Definition",
+        "description": "Getreide, Feldgemüse und Obst nach der Liste in Abschnitt 4 zuordnen. Gemenge unter 50 % Getreide zählen nicht als Getreide. Felsenbirne, Maulbeere und Papau zählen ab 2025 als Obst."
+      },
+      "source_reference_ids": [
+        "src.G.104.109",
+        "src.G.113.117",
+        "src.G.123.135"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.crop_group"
+      ]
+    },
+    {
+      "id": "o6_20.flaechenausschluss",
+      "rule_type": "Flächenausschluss",
+      "statement": "Schlag mit Energieholz/Kurzumtrieb, Palmkätzchen, Reb-/Baumschule, fehlender aktiver Produktion außerhalb zulässiger Ausnahmen, sonstiger Fläche, fehlerhafter Identifikation oder fehlender Angabe im MFA — Keine Flächenprämie. Das gilt auch bei nicht hauptsächlich landwirtschaftlicher Nutzung nach § 31 GSP-AV sowie für GLÖZ-Landschaftselemente selbst.",
+      "conditions": [
+        {
+          "expression": "Schlag mit Energieholz/Kurzumtrieb, Palmkätzchen, Reb-/Baumschule, fehlender aktiver Produktion außerhalb zulässiger Ausnahmen, sonstiger Fläche, fehlerhafter Identifikation oder fehlender Angabe im MFA",
+          "description": "Schlag mit Energieholz/Kurzumtrieb, Palmkätzchen, Reb-/Baumschule, fehlender aktiver Produktion außerhalb zulässiger Ausnahmen, sonstiger Fläche, fehlerhafter Identifikation oder fehlender Angabe im MFA",
+          "input_paths": [
+            "land.parcels[].oepul_claim"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenausschluss",
+        "description": "Keine Flächenprämie. Das gilt auch bei nicht hauptsächlich landwirtschaftlicher Nutzung nach § 31 GSP-AV sowie für GLÖZ-Landschaftselemente selbst."
+      },
+      "source_reference_ids": [
+        "src.G.243.253",
+        "src.G.266.268"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.nationalpark",
+      "rule_type": "Flächenausschluss",
+      "statement": "Schlag im Nationalpark — Abgleich durch AMA-Layer, keine gesonderte OP-Codierung erforderlich. Bei einschlägigen Auflagen grundsätzlich nur Natura 2000 und Wasserrahmenrichtlinie. In Neusiedlersee und Donau-Auen generell nur diese beiden Flächenmaßnahmen, in Kalkalpen keine Almwirtschaftsprämie. Gesamtbetriebliche Verpflichtungen weiter einhalten.",
+      "conditions": [
+        {
+          "expression": "Schlag im Nationalpark",
+          "description": "Schlag im Nationalpark",
+          "input_paths": [
+            "land.parcels[].oepul_claim"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenausschluss",
+        "description": "Abgleich durch AMA-Layer, keine gesonderte OP-Codierung erforderlich. Bei einschlägigen Auflagen grundsätzlich nur Natura 2000 und Wasserrahmenrichtlinie. In Neusiedlersee und Donau-Auen generell nur diese beiden Flächenmaßnahmen, in Kalkalpen keine Almwirtschaftsprämie. Gesamtbetriebliche Verpflichtungen weiter einhalten."
+      },
+      "source_reference_ids": [
+        "src.G.254.265",
+        "src.G.277.278",
+        "src.G.284.285"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.versuch",
+      "rule_type": "Dokumentation",
+      "statement": "Bewilligte wissenschaftliche Versuche verhindern die Einhaltung einer Flächenauflage — Genehmigung am Betrieb bereithalten, Art, Ausmaß und Lage dokumentieren, betroffene Schläge im MFA mit VF codieren. Keine Flächenprämie im Antragsjahr.",
+      "conditions": [
+        {
+          "expression": "Bewilligte wissenschaftliche Versuche verhindern die Einhaltung einer Flächenauflage",
+          "description": "Bewilligte wissenschaftliche Versuche verhindern die Einhaltung einer Flächenauflage",
+          "input_paths": [
+            "land.parcels[].oepul_claim"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Dokumentation",
+        "description": "Genehmigung am Betrieb bereithalten, Art, Ausmaß und Lage dokumentieren, betroffene Schläge im MFA mit VF codieren. Keine Flächenprämie im Antragsjahr."
+      },
+      "source_reference_ids": [
+        "src.G.269.275",
+        "src.S.796.803"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.op",
+      "rule_type": "Flächenantrag",
+      "statement": "Flächenpflicht wegen Ernteausfall, öffentlicher Leistungsüberschneidung, vorgeschriebener Ausgleichsnutzung, unterjähriger Weitergabe ohne Auflagenfortsetzung oder geplanter Aufforstung unerfüllt — OP bzw. maßnahmenbezogenen OP-Code setzen, keine entsprechende Flächenprämie. Für nachfolgende Zwischenfrucht auf nicht geerntetem Schlag maßnahmenbezogene OP-Codes außer OPZWF setzen. Unveredelte Obstbäume grundsätzlich OP, Ausnahme punktförmige Streuobst-Landschaftselemente.",
+      "conditions": [
+        {
+          "expression": "Flächenpflicht wegen Ernteausfall, öffentlicher Leistungsüberschneidung, vorgeschriebener Ausgleichsnutzung, unterjähriger Weitergabe ohne Auflagenfortsetzung oder geplanter Aufforstung unerfüllt",
+          "description": "Flächenpflicht wegen Ernteausfall, öffentlicher Leistungsüberschneidung, vorgeschriebener Ausgleichsnutzung, unterjähriger Weitergabe ohne Auflagenfortsetzung oder geplanter Aufforstung unerfüllt",
+          "input_paths": [
+            "land.parcels[].oepul_claim"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenantrag",
+        "description": "OP bzw. maßnahmenbezogenen OP-Code setzen, keine entsprechende Flächenprämie. Für nachfolgende Zwischenfrucht auf nicht geerntetem Schlag maßnahmenbezogene OP-Codes außer OPZWF setzen. Unveredelte Obstbäume grundsätzlich OP, Ausnahme punktförmige Streuobst-Landschaftselemente."
+      },
+      "source_reference_ids": [
+        "src.G.276.278",
+        "src.G.286.296",
+        "src.G.297.317"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.fremdverschulden",
+      "rule_type": "Flächenantrag",
+      "statement": "Reines Fremdverschulden an einer verletzten Flächenauflage — Betroffene Schlagfläche mit maßnahmenbezogenem OP-Code kennzeichnen. Nachweise aufbewahren und bei Kontrolle vorlegen, Schaden bilateral klären. Sonst betroffenen Code korrigieren/löschen oder der AMA Selbstanzeige erstatten. Diese führt grundsätzlich zu geringerer Sanktion als Feststellung vor Ort.",
+      "conditions": [
+        {
+          "expression": "Reines Fremdverschulden an einer verletzten Flächenauflage",
+          "description": "Reines Fremdverschulden an einer verletzten Flächenauflage",
+          "input_paths": [
+            "land.parcels[].oepul_claim"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenantrag",
+        "description": "Betroffene Schlagfläche mit maßnahmenbezogenem OP-Code kennzeichnen. Nachweise aufbewahren und bei Kontrolle vorlegen, Schaden bilateral klären. Sonst betroffenen Code korrigieren/löschen oder der AMA Selbstanzeige erstatten. Diese führt grundsätzlich zu geringerer Sanktion als Feststellung vor Ort."
+      },
+      "source_reference_ids": [
+        "src.G.318.322",
+        "src.G.328.336",
+        "src.G.338.353"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.vertragsarten",
+      "rule_type": "Vertragsdauer",
+      "statement": "Laufzeit einer weiteren angemeldeten Maßnahme — Die in Abschnitt 5.9 aufgezählten mehrjährigen Maßnahmen laufen bis 31.12.2028 bei Beginn 2023/2024/2025 sechs/fünf/vier Jahre. Ihre belegten Flächen einschließlich Zugänge sind fortzuführen. Die aufgezählten einjährigen Maßnahmen einschließlich Tierwohl – Weide laufen je Kalenderjahr.",
+      "conditions": [
+        {
+          "expression": "Laufzeit einer weiteren angemeldeten Maßnahme",
+          "description": "Laufzeit einer weiteren angemeldeten Maßnahme",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Vertragsdauer",
+        "description": "Die in Abschnitt 5.9 aufgezählten mehrjährigen Maßnahmen laufen bis 31.12.2028 bei Beginn 2023/2024/2025 sechs/fünf/vier Jahre. Ihre belegten Flächen einschließlich Zugänge sind fortzuführen. Die aufgezählten einjährigen Maßnahmen einschließlich Tierwohl – Weide laufen je Kalenderjahr."
+      },
+      "source_reference_ids": [
+        "src.G.402.407",
+        "src.G.413.435",
+        "src.G.450.464"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.contract_term"
+      ]
+    },
+    {
+      "id": "o6_20.jahresbestand",
+      "rule_type": "Definition",
+      "statement": "Heuwirtschaft auf Acker, Erosionsschutz Acker, Herbizidverzicht oder Insektizidverzicht Wein/Obst/Hopfen bzw. Almbewirtschaftung — Mit der Verpflichtung belegte Einheiten richten sich nach dem jeweiligen Jahresbestand.",
+      "conditions": [
+        {
+          "expression": "Heuwirtschaft auf Acker, Erosionsschutz Acker, Herbizidverzicht oder Insektizidverzicht Wein/Obst/Hopfen bzw. Almbewirtschaftung",
+          "description": "Heuwirtschaft auf Acker, Erosionsschutz Acker, Herbizidverzicht oder Insektizidverzicht Wein/Obst/Hopfen bzw. Almbewirtschaftung",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Definition",
+        "description": "Mit der Verpflichtung belegte Einheiten richten sich nach dem jeweiligen Jahresbestand."
+      },
+      "source_reference_ids": [
+        "src.G.436.443"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.optionseinstieg",
+      "rule_type": "Frist",
+      "statement": "Einstieg in mehrjährige Maßnahme oder mehrjährige Option — Letztmalig Förderjahr 2025 mit Antrag bis 31.12.2024. Einjährige Optionen bzw. Zuschläge bei ein- und mehrjährigen Maßnahmen bis einschließlich 2028. Soweit im Maßnahmenantrag abzuwickeln, letzte Frist 31.12.2027. Für die separate Weidebeilage gilt die Aprilfrist.",
+      "conditions": [
+        {
+          "expression": "Einstieg in mehrjährige Maßnahme oder mehrjährige Option",
+          "description": "Einstieg in mehrjährige Maßnahme oder mehrjährige Option",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Frist",
+        "description": "Letztmalig Förderjahr 2025 mit Antrag bis 31.12.2024. Einjährige Optionen bzw. Zuschläge bei ein- und mehrjährigen Maßnahmen bis einschließlich 2028. Soweit im Maßnahmenantrag abzuwickeln, letzte Frist 31.12.2027. Für die separate Weidebeilage gilt die Aprilfrist."
+      },
+      "source_reference_ids": [
+        "src.G.465.475"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.umwandlung",
+      "rule_type": "Maßnahmenwechsel",
+      "statement": "Beantragter Wechsel in eine in Abschnitt 6.2 tabellierte höherwertige Maßnahme — Im MFA spätestens zum 31.12.2025 wechseln. Keine Rückzahlung für die ursprüngliche Maßnahme. Höherwertige Verpflichtungen für die Restlaufzeit einhalten. Für Tierwohl – Weide ist kein solcher Umwandlungspfad aufgeführt.",
+      "conditions": [
+        {
+          "expression": "Beantragter Wechsel in eine in Abschnitt 6.2 tabellierte höherwertige Maßnahme",
+          "description": "Beantragter Wechsel in eine in Abschnitt 6.2 tabellierte höherwertige Maßnahme",
+          "input_paths": [
+            "land.parcels[].oepul_claim"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Maßnahmenwechsel",
+        "description": "Im MFA spätestens zum 31.12.2025 wechseln. Keine Rückzahlung für die ursprüngliche Maßnahme. Höherwertige Verpflichtungen für die Restlaufzeit einhalten. Für Tierwohl – Weide ist kein solcher Umwandlungspfad aufgeführt."
+      },
+      "source_reference_ids": [
+        "src.G.523.525",
+        "src.G.532.557"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.switch_allowed"
+      ]
+    },
+    {
+      "id": "o6_20.flaechenuebernahme",
+      "rule_type": "Übernahme",
+      "statement": "Ein bisher nicht teilnehmender Betrieb übernimmt eine flächenbezogene Maßnahme oder Option mit der Fläche — Nach Maßnahmenantragsfrist bis 15. April (2023/2028 17. April), bei Almwirtschaft bis 15. Juli (2023/2028 17. Juli) im Übernahmejahr online beantragen. AMA genehmigt für Restlaufzeit, bei mehrjährigen Maßnahmen auch nach letztem Einstieg. Ausweitung auf andere Fläche um höchstens 50 %.",
+      "conditions": [
+        {
+          "expression": "Ein bisher nicht teilnehmender Betrieb übernimmt eine flächenbezogene Maßnahme oder Option mit der Fläche",
+          "description": "Ein bisher nicht teilnehmender Betrieb übernimmt eine flächenbezogene Maßnahme oder Option mit der Fläche",
+          "input_paths": [
+            "land.parcels[].oepul_claim"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Übernahme",
+        "description": "Nach Maßnahmenantragsfrist bis 15. April (2023/2028 17. April), bei Almwirtschaft bis 15. Juli (2023/2028 17. Juli) im Übernahmejahr online beantragen. AMA genehmigt für Restlaufzeit, bei mehrjährigen Maßnahmen auch nach letztem Einstieg. Ausweitung auf andere Fläche um höchstens 50 %."
+      },
+      "source_reference_ids": [
+        "src.G.559.570"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.mehrjahresabgang",
+      "rule_type": "Flächenfolge",
+      "statement": "Mehrjährige Maßnahmenfläche geht ab oder ihre Nutzung ändert sich — Förderbeträge für die Differenzflächen bis Vertragsbeginn zurückzahlen, außer bei Übergang des Verfügungsrechts an Dritte oder zulässiger Verringerung. Toleranz jährlich 5 % der Vorjahresmaßnahmenfläche, höchstens 5 ha, jedenfalls 0,50 ha. Bei Bewirtschafterwechsel tritt der Nachfolger in den Vertrag ein.",
+      "conditions": [
+        {
+          "expression": "Mehrjährige Maßnahmenfläche geht ab oder ihre Nutzung ändert sich",
+          "description": "Mehrjährige Maßnahmenfläche geht ab oder ihre Nutzung ändert sich",
+          "input_paths": [
+            "land.parcels[].oepul_claim"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenfolge",
+        "description": "Förderbeträge für die Differenzflächen bis Vertragsbeginn zurückzahlen, außer bei Übergang des Verfügungsrechts an Dritte oder zulässiger Verringerung. Toleranz jährlich 5 % der Vorjahresmaßnahmenfläche, höchstens 5 ha, jedenfalls 0,50 ha. Bei Bewirtschafterwechsel tritt der Nachfolger in den Vertrag ein."
+      },
+      "source_reference_ids": [
+        "src.G.602.610",
+        "src.G.616.620",
+        "src.G.622.633"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.area_loss_tolerance"
+      ]
+    },
+    {
+      "id": "o6_20.umwandlungsflaeche",
+      "rule_type": "Flächenausnahme",
+      "statement": "Zulässige Umwandlung von Maßnahmenflächen — A/S/WI/WT zu G/D, G/D zu L sowie zu LSE Mehrnutzenhecke bei UBB/BIO bzw. LSE Agroforststreifen bei 1C sind zulässig.",
+      "conditions": [
+        {
+          "expression": "Zulässige Umwandlung von Maßnahmenflächen",
+          "description": "Zulässige Umwandlung von Maßnahmenflächen",
+          "input_paths": [
+            "land.parcels[].oepul_claim"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenausnahme",
+        "description": "A/S/WI/WT zu G/D, G/D zu L sowie zu LSE Mehrnutzenhecke bei UBB/BIO bzw. LSE Agroforststreifen bei 1C sind zulässig."
+      },
+      "source_reference_ids": [
+        "src.G.634.643"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.flaechenzugang",
+      "rule_type": "Flächenberechnung",
+      "statement": "Zugang zu UBB, BIO, Einschränkung ertragssteigernder Betriebsmittel, Heuwirtschaft auf Grünland, Bergmähder, Grundwasserschutz Acker samt Wien-Zuschlag, Humuserhalt Grünland, Naturschutz oder EBW — 2024/2025 vollständig prämienfähig. Danach Ausweitung höchstens 50 % der Maßnahmenfläche 2025, jedenfalls 5 ha. Bereits gleich verpflichtete Flächen sind keine Zugänge. Für nicht genannte Maßnahmen gilt diese Beschränkung nicht.",
+      "conditions": [
+        {
+          "expression": "Zugang zu UBB, BIO, Einschränkung ertragssteigernder Betriebsmittel, Heuwirtschaft auf Grünland, Bergmähder, Grundwasserschutz Acker samt Wien-Zuschlag, Humuserhalt Grünland, Naturschutz oder EBW",
+          "description": "Zugang zu UBB, BIO, Einschränkung ertragssteigernder Betriebsmittel, Heuwirtschaft auf Grünland, Bergmähder, Grundwasserschutz Acker samt Wien-Zuschlag, Humuserhalt Grünland, Naturschutz oder EBW",
+          "input_paths": [
+            "land.parcels[].oepul_claim"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenberechnung",
+        "description": "2024/2025 vollständig prämienfähig. Danach Ausweitung höchstens 50 % der Maßnahmenfläche 2025, jedenfalls 5 ha. Bereits gleich verpflichtete Flächen sind keine Zugänge. Für nicht genannte Maßnahmen gilt diese Beschränkung nicht."
+      },
+      "source_reference_ids": [
+        "src.G.645.651",
+        "src.G.658.669"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.hektargrenze",
+      "rule_type": "Flächenberechnung",
+      "statement": "Summe der Flächenzahlungen je Schlag einschließlich umgelegter LSE-Zahlungen — Je Maßnahme und Jahr gelten die Beträge und Ausnahmen in der Tabelle Förderobergrenzen. Diese Hektargrenzen erfassen keine tierbezogene Weideprämie.",
+      "conditions": [
+        {
+          "expression": "Summe der Flächenzahlungen je Schlag einschließlich umgelegter LSE-Zahlungen",
+          "description": "Summe der Flächenzahlungen je Schlag einschließlich umgelegter LSE-Zahlungen",
+          "input_paths": [
+            "land.parcels[].oepul_claim"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenberechnung",
+        "description": "Je Maßnahme und Jahr gelten die Beträge und Ausnahmen in der Tabelle Förderobergrenzen. Diese Hektargrenzen erfassen keine tierbezogene Weideprämie."
+      },
+      "source_reference_ids": [
+        "src.G.735.764"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.hectare_cap"
+      ]
+    },
+    {
+      "id": "o6_20.kombinationsmatrix",
+      "rule_type": "Flächenkombination",
+      "statement": "Kombinierbarkeit der zusätzlich beantragten Maßnahmen auf demselben Schlag wird geprüft — Anhang L unterscheidet kombinierbar, kombinierbar mit Abschlag und leere Zellen. LSE, Topf-/Substratkultur, Organismen-Zuschlag und die Teilauflagen zu 8/16 unterliegen den Fußnoten 1 bis 4. Die Matrix enthält keine Zelle für die Tierprämie der Maßnahme 20.",
+      "conditions": [
+        {
+          "expression": "Kombinierbarkeit der zusätzlich beantragten Maßnahmen auf demselben Schlag wird geprüft",
+          "description": "Kombinierbarkeit der zusätzlich beantragten Maßnahmen auf demselben Schlag wird geprüft",
+          "input_paths": [
+            "land.parcels[].oepul_claim"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenkombination",
+        "description": "Anhang L unterscheidet kombinierbar, kombinierbar mit Abschlag und leere Zellen. LSE, Topf-/Substratkultur, Organismen-Zuschlag und die Teilauflagen zu 8/16 unterliegen den Fußnoten 1 bis 4. Die Matrix enthält keine Zelle für die Tierprämie der Maßnahme 20."
+      },
+      "source_reference_ids": [
+        "src.S.914.919",
+        "src.A.6433.6438",
+        "src.A.6471.6491",
+        "src.A.6492.6497",
+        "src.A.6471.6471",
+        "src.A.6472.6472",
+        "src.A.6473.6473",
+        "src.A.6474.6474",
+        "src.A.6475.6475",
+        "src.A.6476.6476",
+        "src.A.6477.6477",
+        "src.A.6478.6478",
+        "src.A.6479.6479",
+        "src.A.6480.6480",
+        "src.A.6481.6481",
+        "src.A.6482.6482",
+        "src.A.6483.6483",
+        "src.A.6484.6484",
+        "src.A.6485.6485",
+        "src.A.6486.6486",
+        "src.A.6487.6487",
+        "src.A.6488.6488",
+        "src.A.6489.6489",
+        "src.A.6490.6490",
+        "src.A.6491.6491"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.parcel_combination"
+      ]
+    },
+    {
+      "id": "o6_20.sonderumstand",
+      "rule_type": "Ausnahme",
+      "statement": "Nicht beeinflussbare Umstände machen Flächen- oder Bewirtschaftungspflichten dauerhaft oder vorübergehend unmöglich — Bei Meldung kann AMA auf Rückforderung verzichten. Dauerhaft betroffene Flächen kann sie aus dem Vertrag nehmen. Grundsätzlich keine Prämie im Ereignisjahr außer höherer Gewalt oder außergewöhnlichen Umständen. Bei dauerhafter Änderung nach 15. April, Almauftrieb oder Begrünungsanlage ist Förderung möglich, bei vorübergehender Änderung auch bei Einhaltung aller Auflagen auf Ersatzflächen. BML kann besondere Festlegungen treffen.",
+      "conditions": [
+        {
+          "expression": "Nicht beeinflussbare Umstände machen Flächen- oder Bewirtschaftungspflichten dauerhaft oder vorübergehend unmöglich",
+          "description": "Nicht beeinflussbare Umstände machen Flächen- oder Bewirtschaftungspflichten dauerhaft oder vorübergehend unmöglich",
+          "input_paths": []
+        }
+      ],
+      "result": {
+        "outcome": "Ausnahme",
+        "description": "Bei Meldung kann AMA auf Rückforderung verzichten. Dauerhaft betroffene Flächen kann sie aus dem Vertrag nehmen. Grundsätzlich keine Prämie im Ereignisjahr außer höherer Gewalt oder außergewöhnlichen Umständen. Bei dauerhafter Änderung nach 15. April, Almauftrieb oder Begrünungsanlage ist Förderung möglich, bei vorübergehender Änderung auch bei Einhaltung aller Auflagen auf Ersatzflächen. BML kann besondere Festlegungen treffen."
+      },
+      "source_reference_ids": [
+        "src.S.758.759",
+        "src.S.761.770",
+        "src.S.772.782",
+        "src.S.789.795"
+      ],
+      "rego_symbols": []
+    },
+    {
+      "id": "o6_20.projektweide",
+      "rule_type": "Flächenauflage",
+      "statement": "Dieselbe Fläche trägt eine Naturschutz-Projektauflage zur verpflichtenden Beweidung — Zusätzlich die Projektbestätigung einhalten und ein Weidetagebuch führen. WA01 und WA03 begrenzen den Jahresbesatz auf 1 bzw. 0,5 RGVE/ha, verlangen das projektbezogene Zeitfenster und verbieten zusätzliche Düngung und Pflanzenschutzmittel. Weidepflege ist zulässig. Die jeweiligen Euro/ha gehören zur Flächenmaßnahme.",
+      "conditions": [
+        {
+          "expression": "Dieselbe Fläche trägt eine Naturschutz-Projektauflage zur verpflichtenden Beweidung",
+          "description": "Dieselbe Fläche trägt eine Naturschutz-Projektauflage zur verpflichtenden Beweidung",
+          "input_paths": [
+            "land.parcels[].oepul_use_2026"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenauflage",
+        "description": "Zusätzlich die Projektbestätigung einhalten und ein Weidetagebuch führen. WA01 und WA03 begrenzen den Jahresbesatz auf 1 bzw. 0,5 RGVE/ha, verlangen das projektbezogene Zeitfenster und verbieten zusätzliche Düngung und Pflanzenschutzmittel. Weidepflege ist zulässig. Die jeweiligen Euro/ha gehören zur Flächenmaßnahme."
+      },
+      "source_reference_ids": [
+        "src.S.4094.4099",
+        "src.S.4107.4113",
+        "src.A.5004.5007",
+        "src.A.5008.5011",
+        "src.H.15.15"
+      ],
+      "rego_symbols": [
+        "data.oepul.o6_20.project_pasture"
+      ]
+    },
+    {
+      "id": "o6_20.naturschutztermin",
+      "rule_type": "Flächenfrist",
+      "statement": "2026 ist auf einer Naturschutzfläche ein Nutzungstermin festgelegt — Ab 12. August dürfen erste bzw. zweite Nutzung ohne Änderung der Projektbestätigung und mit voller Flächenprämie erfolgen. Bei Natura 2000 gelten veränderte Termine erst gemäß entsprechend angepasster Landesverordnung.",
+      "conditions": [
+        {
+          "expression": "2026 ist auf einer Naturschutzfläche ein Nutzungstermin festgelegt",
+          "description": "2026 ist auf einer Naturschutzfläche ein Nutzungstermin festgelegt",
+          "input_paths": [
+            "land.parcels[].oepul_use_2026"
+          ]
+        }
+      ],
+      "result": {
+        "outcome": "Flächenfrist",
+        "description": "Ab 12. August dürfen erste bzw. zweite Nutzung ohne Änderung der Projektbestätigung und mit voller Flächenprämie erfolgen. Bei Natura 2000 gelten veränderte Termine erst gemäß entsprechend angepasster Landesverordnung."
+      },
+      "source_reference_ids": [
+        "src.H.16.18"
+      ],
+      "rego_symbols": []
+    }
+  ]
+}

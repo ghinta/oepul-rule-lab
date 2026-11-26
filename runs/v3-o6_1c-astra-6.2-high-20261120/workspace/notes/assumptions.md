@@ -1,0 +1,35 @@
+# Auslegung und Verwendung für o6_1c
+
+## Jahresbezug und Teilnahme
+
+Das Antragsjahr steht in `farm.year`. Das Maßnahmenblatt vom Oktober 2025 konkretisiert die Sonderrichtlinie vom 11. Oktober 2024. Die allgemeinen Teilnahmebedingungen vom April 2026 und die vier AMA-Meldungen wurden mit ihrem jeweiligen Geltungsbereich ausgewertet. Die Bezeichnung UBB folgt dem ausgeschriebenen Namen und der Kennung 1A im Maßnahmenteil und im Anhang L. In der betrieblichen Ausschlussliste auf Seite 18 der Richtlinie steht beim Namen UBB die Kennung 1B.
+
+Der letzte **Neueinstieg** in jede der beiden Kategorien ist 2027. Ein laufender Vertrag kann sich für 2028 verlängern. `antrag_jahreskriterien` prüft die fristgerechte Vorbeantragung, fortlaufende Teilnahme, den jährlichen MFA mit förderrelevanten Angaben und die Abmeldung je Kategorie. Die behördliche Genehmigung, Übernahme und fachliche Auflagenprüfung sind eigene Tatbestände. Das erste ÖPUL-Teilnahmejahr für die Betriebsmindestgröße kann vor dem ersten Jahr der Kategorie liegen.
+
+## Flächen und Zeitpunkte
+
+- Ein Eintrag in `land.parcels` bezeichnet für die Berechnung einen disjunkten, einheitlich bewirtschafteten Schlag oder Schlagteil mit eindeutiger `parcel_id`. Bei räumlich unterschiedlichen Pflegeterminen wird der Schlag in entsprechend große Teile zerlegt. Die 50-%-Rechnung zählt die vor dem 1. August regulär gepflegte Fläche im Kalenderjahr einmal. Die förderfähige Fläche nach dem 4-%-Deckel wäre als Nenner für diese Pflegeauflage zu klein.
+- `operations.cutting_dates` erfasst alle Mahden, einschließlich der gesondert als Reinigungsschnitte angegebenen Termine. `mulching_dates` erfasst das Häckseln. Beide Datumslisten bilden die tatsächlichen Arbeitsgänge ab. Ein qualifizierter Reinigungsschnitt entfällt beim Jahresmaximum und beim Frühflächenanteil. Die Quelle nennt für die zweijährige Mindestpflege keine entsprechende Ausnahme. Für eine durchgehend deklarierte NPA betrachtet die Prüfung zwei aufeinanderfolgende Antragsjahre.
+- Für den Reinigungsschnitt verlangt das Maßnahmenblatt Neuansaat und erstes Antragsjahr. Ein bereits bestehender Grünbrachenschlag kann nach Umbruch und Neuansaat diese Bedingung erfüllen. Ob ein erneuter Umbruch während einer **ununterbrochenen** NPA-Deklaration ein neues erstes Antragsjahr begründet, legt der Text nicht fest. Die Prüfung verwendet das gemeldete erste Antragsjahr des Schlages.
+- Die Eingaben verwenden ISO-Kalendertage. Beim Dünge- und Pflanzenschutzverbot zählt die Prüfung den Tag des Umbruchs bzw. der anderweitigen Deklaration zum Verbotszeitraum. Für mehrere Arbeitsgänge am selben Tag lässt die Quelle die Reihenfolge offen. In einem solchen Fall ist der tatsächliche Ablauf einzeln zu prüfen. Der erlaubte Anbau einer Folgekultur ist für sich keine Nutzung des Aufwuchses.
+- `average_width_m` ist die festgestellte Durchschnittsbreite. Die Dichte ergibt sich aus der Baumzahl je 100 Laufmeter. Der maximale Einzelabstand wird gesondert geprüft. Die Quellen geben kein Verfahren zum Vermessen unregelmäßiger Streifen vor. Der Bezug auf § 25 Abs. 4 GSP-AV setzt die fachliche Einstufung des konkreten Bestands voraus.
+- Für die Negativliste werden botanische Namen verwendet. Bei *Paulownia tomentosa* ist die Fertilität erheblich. Der Eintrag *Elaeagnus* umfasst die Gattung. Anwuchspflege, Bedarf an Pflegeschnitten, Zulässigkeit von Wirkstoffen und Zulassung des konkreten Verbissschutzmittels setzen eine fachliche Feststellung voraus. Eine Produktzulassungsliste ist im Quellenpaket nicht enthalten.
+- Die Gebietskörperschaftsausnahme wird nach SRL 1.4 auch bei bestimmendem öffentlichem Einfluss angewandt. Das Maßnahmenblatt konkretisiert den BIO-Teilbetrieb für die NPA-Ausnahme auf den Kulturbereich Wein, Obst und Hopfen. Eine Bio-Zertifizierung allein belegt keine Teilnahme an der ÖPUL-Maßnahme BIO.
+
+## Prämie und Anrechnung
+
+`data.oepul.o6_1c.schlagbefunde` ordnet feststellbare Abweichungen den Schlag-IDs zu. `betriebsbefunde` enthält betriebliche Befunde. Ein leerer Befund kann auch bei fehlenden Angaben entstehen. Ein ausdrückliches `null` bei Umbruch, Umdeklaration, Ersatzpflanzung oder Abmeldung bezeichnet das Ausbleiben des Ereignisses. Leere Ereignislisten bedeuten, dass keine solchen Ereignisse erfasst wurden.
+
+`praemienrahmen` verwendet die festgestellte prämienfähige Restfläche je Schlag nach den sonstigen Einzelflächenausschlüssen. Ein ausdrücklich festgestellter Zahlungsausschluss wie OP, ein betroffener Nationalpark oder ein nicht auflagenkonformer genehmigter Versuch setzt die Fläche auf null. Bei NPA wird die darin noch enthaltene GLÖZ-4-Überlappung abgezogen. Erst danach greift der betriebliche 4-%-Deckel. Die Ackerfläche im Nenner ist die maßgebliche österreichische Ackerfläche des MFA. Der Modulationsfaktor wird einmal aus der gesamten Heimfläche ermittelt und auf beide Kategorien angewendet. Das Ergebnis ist ein Jahresband vor etwaigen individuellen Kürzungen. Der bundesweit festgesetzte jährliche Einheitsbetrag, amtliche Rundungsvorgaben und individuelle Sanktionsentscheidungen sind aus den Betriebsdaten allein nicht bestimmbar.
+
+Anhang L unterscheidet mit „x“, „a“ und leeren Zellen die Einzelflächenprämien. Die Tabelle enthält beide Achsen einschließlich der Diagonale und sämtliche Fußnoten. Eine leere Diagonalzelle löst keinen Befund wegen Kombination mit einer anderen Maßnahme aus. Ein einer UBB-/BIO-Ackerfläche zugeordneter 1C-Agroforststreifen trägt ab 10 ha betrieblicher Ackerfläche zur örtlichen Vorgabe von mindestens 0,15 ha auf einem Feldstück über 5 ha bei. Sein Beitrag zur betrieblichen 7-%-Quote beträgt null.
+
+## Jahresausnahmen 2026
+
+Die Meldungen vom 22. Mai und 12. August ändern einzelne UBB-/BIO-DIV-Auflagen. Für NPA nach 1C bleiben das Verbot der Verbringung und Beweidung, die 50-%-Grenze und das Jahresmaximum maßgeblich. Die regionale automatische Anerkennung eines dürrebedingten Ernteausfalls betrifft erntepflichtige Spätsommer- bzw. Herbstkulturen. Die Rebzikadenmeldung betrifft den Insektizidverzicht im Weinbau. Ein einzelbetriebliches Ansuchen wegen höherer Gewalt ist möglich. Über die Anerkennung entscheidet die zuständige Stelle.
+
+Im Hinweis vom 5. August stehen für die Zwischenfruchtvarianten 1 und 2 die Daten „5. August bzw. 10. August“. Das Beispiel nennt für Variante 2 den 5. August. Die widersprüchliche Zuordnung ist im Katalog und im Coverage-Ledger vermerkt. Sie hat keine Auswirkung auf die Saat- oder Umbruchfrist bei 1C.
+
+## Nachweisführung
+
+Die Quellenbelege verwenden physische PDF-Seiten gemäß den Seitenmarkern, bei HTML den Artikelabschnitt. Die SHA-256-Werte beziehen sich auf die kopierten PDFs und HTML-Dateien. Bei der Kombinationstabelle wurden Textpositionen im PDF verwendet, da die einfachen Textzeilen leere Spalten nicht zuverlässig trennen. Die Vorschläge in `profile_changes.json` verwenden Punktpfade für zusätzliche Felder in den Namensräumen `farm.oepul` und `land.parcels[].o6_1c`. Maßgeblich bleibt jeweils die im Vorschlag angegebene Beleg- und Regelverknüpfung.
