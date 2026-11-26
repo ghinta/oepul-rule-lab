@@ -15,12 +15,19 @@ ausführbare fachliche Regeln benötigen dieselben überprüfbaren Quellenbelege
 
 ## Nutzungsgrenze (Codex und Claude)
 
-Ein Codex- oder Claude-Run darf nur mit mindestens 50 % Restbudget im
-Fünf-Stunden-Fenster starten; das Wochenfenster ist kein Gate. Bei
+Im Standardfall darf ein Codex- oder Claude-Run nur mit mindestens 50 % Restbudget im
+Fünf-Stunden-Fenster starten. Bei
 5 % Restbudget oder weniger ist er kontrolliert zu beenden und in einen
 sicheren, fortsetzbaren Zustand zu bringen; ein harter Limitfehler darf nicht
 als normaler Abschluss behandelt werden. Ein unterbrochener Run wird später
 fortgesetzt oder mit dem vorhandenen Stand finalisiert.
+
+Für die 26 Astra-6.2/high-`discover`-Runs aus Rule Lab #115 gilt das am
+20.11.2026 freigegebene Wochenfenster (10.080 Minuten). Am 26.11.2026 hat
+der Autor die Startgrenze auf mindestens 5 % Wochenrestbudget gesenkt. Misst
+der Runner während der Generierung höchstens 5 %, stoppt er den Versuch.
+Bei expliziter Wochenwahl übergibt er beide Grenzen und den Startwert im Auftrag.
+Alle fachlichen Vorgaben gelten weiter.
 
 ## Prioritäten
 

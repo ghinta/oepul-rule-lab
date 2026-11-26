@@ -73,11 +73,12 @@ Claude reads `five_hour` through a small, tool-free `claude -p` request.
 
 If a Codex plan exposes only a weekly window, the default refuses to start.
 After an explicitly authorized exception to the five-hour rule in AGENTS.md,
-`run --codex-usage-window weekly` applies the same thresholds to the reported
-10080-minute window. This is opt-in, with no automatic fallback. `run.json`
-records the selected window and duration; do not publish it as five-hour usage.
+`run --codex-usage-window weekly` uses the reported 10080-minute window.
+The 26 Astra 6.2/high discover runs in #115 may start with at least **5%**
+weekly budget remaining under the author's 26 November 2026 approval. The
+runner records the selected window, measured percentage and thresholds in `run.json`.
 
-A run starts with at least **50%** remaining. Usage is checked every 30 seconds.
+Other runs require at least **50%** remaining at start. All runs check usage every 30 seconds.
 At **5% or less**, the generator stops cleanly and records
 `aborted_usage_guard`. A Claude `rejected` status in any window also triggers
 a stop. If usage cannot be read, the run does not start.
