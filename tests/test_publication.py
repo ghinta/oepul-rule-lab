@@ -16,6 +16,14 @@ from rulelab import screening
 
 
 class PortableMetadataTests(unittest.TestCase):
+    def test_explorer_counts_each_published_run_id_once(self):
+        root = Path(__file__).resolve().parents[1]
+        lines = (root / "docs/assets/runs.js").read_text().splitlines()
+        rows = json.loads(next(line.removeprefix("const RAW_RUNS = ").removesuffix(";")
+                               for line in lines if line.startswith("const RAW_RUNS = ")))
+        run_ids = [row[3] for row in rows]
+        self.assertEqual(len(run_ids), len(set(run_ids)))
+
     def test_relocated_checkouts_produce_identical_records(self):
         records = []
         for root in (Path('/Users/example/projects/oepul-rule-lab'),

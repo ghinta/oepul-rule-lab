@@ -17,7 +17,7 @@ def render() -> str:
     # New local experiments are ignored. Only versioned publications belong on
     # the public site, even when this command runs on a developer's machine.
     tracked = subprocess.check_output(
-        ["git", "ls-files", "runs/*/run.json"], cwd=ROOT, text=True
+        ["git", "ls-files", "--", ":(glob)runs/*/run.json"], cwd=ROOT, text=True
     ).splitlines()
     for name in tracked:
         path = ROOT / name
