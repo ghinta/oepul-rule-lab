@@ -83,7 +83,9 @@ jq -s 'sort_by(.measure)[] | {run_id, status, generation_attempt, generator_exit
 
 ```sh
 review_dir=$(mktemp -d) &&
-cp -RL -- "$run" "$review_dir/" &&
+test -d "$run" && test ! -L "$run" &&
+cp -RP -- "$run" "$review_dir/" &&
+test -z "$(find "$review_dir" -type l -print -quit)" &&
 OPA_RUNTIME=local PYTHONPATH=src python3 -m rulelab finalize "$review_dir/$(basename "$run")"
 ```
 
