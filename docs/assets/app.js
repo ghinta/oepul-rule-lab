@@ -5,6 +5,7 @@ const MODEL_META = [
   { id: "gpt-5.6-terra", label: "GPT-5.6 Terra", provider: "Codex" },
   { id: "gpt-5.6-sol", label: "GPT-5.6 Sol", provider: "Codex" },
   { id: "gpt-6-astra", label: "GPT-6 Astra", provider: "Codex" },
+  { id: "gpt-6.2-astra", label: "GPT-6.2 Astra", provider: "Codex" },
   { id: "gpt-5.6-luna", label: "GPT-5.6 Luna", provider: "Codex" },
   { id: "gpt-5.5", label: "GPT-5.5", provider: "Codex" },
 ];

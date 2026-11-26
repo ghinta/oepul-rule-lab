@@ -125,6 +125,8 @@ independent reference cases remain necessary.
 
 - [Run Explorer](https://ghinta.github.io/oepul-rule-lab/) compares published
   run metrics. Counts describe outputs, not model quality.
+- [Astra 6.2 campaign](docs/analysis/astra-6.2-20261126/README.md) records
+  the 26 local results, each generation attempt and its validation outcome.
 - [Luna screening](docs/analysis/luna-screening-20261011/README.md) runs 78
   visible synthetic development cases across 26 historical candidates.
 - [Opus screening](docs/analysis/opus-screening-20261011/README.md) selects 26
