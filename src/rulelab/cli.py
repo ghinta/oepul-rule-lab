@@ -35,6 +35,8 @@ MIN_START_REMAINING_PERCENT = 50.0
 STOP_REMAINING_PERCENT = 5.0
 USAGE_POLL_SECONDS = 30.0
 USAGE_GUARD_EXIT_CODE = 75
+# These are the 26 prepared discover runs covered by the author's decision in #115.
+ASTRA_115 = re.compile(r"v3-(o6_(?:1[abc]|[2-9]|1[0-9]|2[0-4]))-astra-6\.2-high-20261120")
 USAGE_GUARDED_ADAPTERS = ("codex-cli", "claude-cli")
 CLAUDE_USAGE_PROBE_MODEL = "claude-haiku-4-5-20251001"
 CLAUDE_TOKEN_FILE_ENV = "RULELAB_CLAUDE_OAUTH_TOKEN_FILE"
@@ -901,6 +903,75 @@ def prepare_raw_attempt(raw_dir: Path) -> int:
     return archived_attempt + 1
 
 
+def fork_campaign_attempt(
+    source: Path, target: Path, metadata: dict, parent_attempt: int
+) -> dict:
+    """Carry the workspace into a new runs root without modifying the parent."""
+    if target == source or source in target.parents:
+        raise ValueError("Choose a separate runs root for the new attempt")
+    workspace = source / "workspace"
+    if workspace.is_symlink() or not workspace.is_dir():
+        raise ValueError("Expected a regular workspace directory")
+    for name in ("model.json", "prompt.md", "baseline_profile.json", "run.json"):
+        path = source / name
+        if path.is_symlink() or not path.is_file():
+            raise ValueError(f"Expected a regular parent input: {name}")
+    target.mkdir()  # Exclusive. A partial copy is evidence, never a reusable target.
+    (target / "raw").mkdir()
+    (target / "artifacts").mkdir()
+    for name in ("model.json", "prompt.md", "baseline_profile.json"):
+        shutil.copy2(source / name, target / name)
+    copied = target / "workspace"
+    shutil.copytree(workspace, copied, symlinks=True)
+    if any(entry.is_symlink() for entry in copied.rglob("*")):
+        raise ValueError("Symbolic links are not allowed in a copied model workspace")
+    parent = target / "raw" / "parent-run.json"
+    shutil.copy2(source / "run.json", parent)
+    if read_json(parent) != metadata:
+        raise ValueError("Parent run.json changed during the copy; verify the controller has stopped")
+    # Only prepare-time fields describe the new attempt. In particular, do not
+    # inherit a previous exit code, finalization result or inventory.
+    fields = ("contract_version", "run_id", "created_at", "mode", "measure", "model", "profile", "sources")
+    fresh = {key: metadata[key] for key in fields}
+    fresh.update(
+        status="prepared", parent_run=file_record(parent, target),
+        parent_generation_attempt=parent_attempt,
+    )
+    write_json(target / "run.json", fresh)
+    return fresh
+
+
+def archive_weekly_prompt(run_dir: Path, attempt: int, guard: dict, continuing: bool) -> Path:
+    archive = run_dir / "raw" / "prompts" / str(attempt)
+    archive.mkdir(parents=True, exist_ok=False)
+    base = archive / "prepared.md"
+    shutil.copyfile(run_dir / "prompt.md", base)
+    effective = archive / "effective.md"
+    amendment = (
+        f"\n\n## Budgetfreigabe für {run_dir.name} (Rule Lab #115, 20.11.2026)\n"
+        f"Für diesen Auftrag ersetzt das Wochenfenster ({guard['window_duration_minutes']} Minuten) "
+        "das Fünf-Stunden-Fenster in der kopierten AGENTS.md. "
+        f"Der Runner hat vor dem Start {guard['start_remaining_percent']} % Restbudget gemessen. "
+        f"Start ab {guard['minimum_start_remaining_percent']:g} %, "
+        f"Stopp bei höchstens {guard['stop_remaining_percent']:g} %. "
+        "Der Runner überwacht das Budget. Führe den Auftrag ohne erneute Budgetrückfrage aus.\n"
+    )
+    if continuing:
+        amendment += "Setze auf dem vorhandenen Workspace auf und prüfe zuerst die bisherigen Ausgaben.\n"
+    addition = archive / "amendment.md"
+    addition.write_bytes(amendment.encode("utf-8"))
+    effective.write_bytes(base.read_bytes() + addition.read_bytes())
+    write_json(archive / "record.json", {
+        "run_id": run_dir.name, "generation_attempt": attempt, "recorded_at": utc_now(),
+        "authorization": "ghinta/oepul-rule-lab#115, 2026-11-20",
+        "usage_guard": guard, "prepared": file_record(base, run_dir),
+        "amendment": file_record(addition, run_dir),
+        "effective": file_record(effective, run_dir),
+        "instructions": file_record(run_dir / "workspace/AGENTS.md", run_dir),
+    })
+    return effective
+
+
 def run_agent(args: argparse.Namespace) -> int:
     run_dir = Path(args.run_dir).resolve()
     metadata = read_json(run_dir / "run.json")
@@ -916,6 +987,36 @@ def run_agent(args: argparse.Namespace) -> int:
     window_minutes = 10080 if usage_window == "weekly" else 300
     if resume and adapter != "claude-cli":
         raise ValueError(f"--resume is not supported by adapter {adapter}")
+
+    campaign = ASTRA_115.fullmatch(run_dir.name) or ASTRA_115.fullmatch(metadata.get("run_id", ""))
+    fork_root = getattr(args, "attempt_root", None)
+    if fork_root and not campaign:
+        raise ValueError("--attempt-root is for the Astra campaign in #115")
+    parent_attempt = 0
+    if campaign:
+        if (
+            metadata.get("run_id") != run_dir.name or metadata.get("measure") != campaign[1]
+            or metadata.get("mode") != "discover" or adapter != "codex-cli"
+            or config.get("model") != "gpt-6.2-astra" or config.get("reasoning_effort") != "high"
+            or any(metadata["model"].get(key) != config.get(key)
+                   for key in ("model", "adapter", "reasoning_effort"))
+        ):
+            raise ValueError("Run identity or model settings differ from #115")
+        if usage_window != "weekly":
+            raise ValueError("Select the authorized #115 window with --codex-usage-window weekly")
+        if fork_root:
+            target = Path(fork_root).resolve() / run_dir.name
+            parent_attempt = metadata.get("generation_attempt", metadata.get("parent_generation_attempt", 0))
+            if not args.dry_run:
+                metadata = fork_campaign_attempt(run_dir, target, metadata, parent_attempt)
+            run_dir, workspace = target, target / "workspace"
+        elif not args.dry_run and (
+            metadata.get("status") != "prepared" or "generation_attempt" in metadata
+            or any((run_dir / "raw").iterdir()) or any((run_dir / "artifacts").iterdir())
+            or any(path.is_file() for name in ("rules", "policy", "tests", "data", "notes")
+                   for path in (workspace / name).rglob("*"))
+        ):
+            raise ValueError("Preserve the existing #115 attempt and use a fresh --attempt-root")
 
     model_environment = generator_environment(workspace)
     session_id: str | None = None
@@ -943,6 +1044,10 @@ def run_agent(args: argparse.Namespace) -> int:
         print(json.dumps(command, ensure_ascii=False, indent=2))
         return 0
 
+    if campaign:
+        # One writer, including preflight failures. A stopped process leaves the
+        # reservation in place so an explicit fork preserves the whole attempt.
+        (run_dir / "raw" / "prompts").mkdir()
     usage_guard = {
         "minimum_start_remaining_percent": MIN_START_REMAINING_PERCENT,
         "stop_remaining_percent": STOP_REMAINING_PERCENT,
@@ -978,6 +1083,8 @@ def run_agent(args: argparse.Namespace) -> int:
             print(f"Rule Lab usage guard: {exc}", file=sys.stderr)
             return USAGE_GUARD_EXIT_CODE
         usage_guard["start_remaining_percent"] = start_remaining
+        if campaign:
+            usage_guard["measured_at"] = utc_now()
         if start_remaining < MIN_START_REMAINING_PERCENT:
             usage_client.__exit__()
             metadata["status"] = "not_started_usage_guard"
@@ -992,40 +1099,46 @@ def run_agent(args: argparse.Namespace) -> int:
     else:
         usage_guard["status"] = "not_applicable"
 
-    if OPA_RUNNER.is_file():
-        shutil.copy2(OPA_RUNNER, workspace / "tools" / "opa_validate.py")
-    if OPA_VERSION_FILE.is_file():
-        shutil.copy2(OPA_VERSION_FILE, workspace / "tools" / "opa-version.txt")
-    opa_runtime = stage_workspace_opa(workspace)
-
-    generation_attempt = prepare_raw_attempt(run_dir / "raw")
-    if resume:
-        prompt_path.write_text(
-            CLAUDE_RESUME_PROMPT + finalization_feedback(run_dir), encoding="utf-8"
-        )
-    prompt = prompt_path.read_text(encoding="utf-8")
-    metadata["status"] = "running"
-    metadata["started_at"] = utc_now()
-    metadata["invocation"] = command
-    metadata["generation_attempt"] = generation_attempt
-    metadata["opa_runtime"] = opa_runtime
-    metadata["generator_environment"] = {
-        "opa_runtime": model_environment["OPA_RUNTIME"],
-        "opa_bin": model_environment["RULELAB_OPA_BIN"],
-        "path_prefix": "tools",
-    }
-    if session_id is not None:
-        metadata["generator_session_id"] = session_id
-    if resume:
-        metadata["resumed_attempts"] = [
-            *metadata.get("resumed_attempts", []),
-            generation_attempt,
-        ]
-    write_json(run_dir / "run.json", metadata)
-
-    timeout = int(config.get("timeout_seconds", 3600))
-    usage_aborted = False
     try:
+        if OPA_RUNNER.is_file():
+            shutil.copy2(OPA_RUNNER, workspace / "tools" / "opa_validate.py")
+        if OPA_VERSION_FILE.is_file():
+            shutil.copy2(OPA_VERSION_FILE, workspace / "tools" / "opa-version.txt")
+        opa_runtime = stage_workspace_opa(workspace)
+
+        generation_attempt = parent_attempt + 1 if campaign else prepare_raw_attempt(run_dir / "raw")
+        if campaign:
+            prompt_path = archive_weekly_prompt(run_dir, generation_attempt, usage_guard, parent_attempt > 0)
+            metadata["prompt_record"] = file_record(prompt_path.parent / "record.json", run_dir)
+        if resume:
+            prompt_path.write_text(
+                CLAUDE_RESUME_PROMPT + finalization_feedback(run_dir), encoding="utf-8"
+            )
+        prompt_bytes = (
+            prompt_path.read_bytes() if campaign
+            else prompt_path.read_text(encoding="utf-8").encode("utf-8")
+        )
+        metadata["status"] = "running"
+        metadata["started_at"] = utc_now()
+        metadata["invocation"] = command
+        metadata["generation_attempt"] = generation_attempt
+        metadata["opa_runtime"] = opa_runtime
+        metadata["generator_environment"] = {
+            "opa_runtime": model_environment["OPA_RUNTIME"],
+            "opa_bin": model_environment["RULELAB_OPA_BIN"],
+            "path_prefix": "tools",
+        }
+        if session_id is not None:
+            metadata["generator_session_id"] = session_id
+        if resume:
+            metadata["resumed_attempts"] = [
+                *metadata.get("resumed_attempts", []),
+                generation_attempt,
+            ]
+        write_json(run_dir / "run.json", metadata)
+
+        timeout = int(config.get("timeout_seconds", 3600))
+        usage_aborted = False
         with (
             (run_dir / "raw" / "events.jsonl").open("w", encoding="utf-8") as out,
             (run_dir / "raw" / "stderr.log").open("w", encoding="utf-8") as err,
@@ -1035,12 +1148,11 @@ def run_agent(args: argparse.Namespace) -> int:
                 stdin=subprocess.PIPE,
                 stdout=out,
                 stderr=err,
-                text=True,
                 cwd=workspace,
                 env=model_environment,
             )
             assert process.stdin is not None
-            process.stdin.write(prompt)
+            process.stdin.write(prompt_bytes)
             process.stdin.close()
             deadline = time.monotonic() + timeout
             while process.poll() is None:
@@ -1645,6 +1757,10 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument(
         "--codex-usage-window", choices=("five-hour", "weekly"), default="five-hour",
         help="Budget window; weekly requires an explicitly authorized exception to AGENTS.md",
+    )
+    run_parser.add_argument(
+        "--attempt-root", metavar="RUNS_ROOT",
+        help="Start a separate #115 attempt in a new directory under this existing runs root",
     )
     run_parser.add_argument(
         "--resume",
