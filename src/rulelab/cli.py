@@ -32,6 +32,7 @@ OPA_CHECKSUMS_FILE = OPA_RUNNER.parent / "opa-checksums.json"
 OPA_VALIDATION_TARGETS = ("policy", "data", "tests")
 GENERATOR_CONTRACTS = tuple(GENERATOR_CONTRACT_MODELS)
 MIN_START_REMAINING_PERCENT = 50.0
+ASTRA_115_MIN_START_REMAINING_PERCENT = 5.0
 STOP_REMAINING_PERCENT = 5.0
 USAGE_POLL_SECONDS = 30.0
 USAGE_GUARD_EXIT_CODE = 75
@@ -938,7 +939,7 @@ def archive_weekly_prompt(run_dir: Path, attempt: int, guard: dict, continuing: 
     shutil.copyfile(run_dir / "prompt.md", base)
     effective = archive / "effective.md"
     amendment = (
-        f"\n\n## Budgetfreigabe für {run_dir.name} (Rule Lab #115, 20.11.2026)\n"
+        f"\n\n## Budgetfreigabe für {run_dir.name} (Rule Lab #115, 26.11.2026)\n"
         f"Für diesen Auftrag ersetzt das Wochenfenster ({guard['window_duration_minutes']} Minuten) "
         "das Fünf-Stunden-Fenster in der kopierten AGENTS.md. "
         f"Der Runner hat vor dem Start {guard['start_remaining_percent']} % Restbudget gemessen. "
@@ -953,7 +954,7 @@ def archive_weekly_prompt(run_dir: Path, attempt: int, guard: dict, continuing: 
     effective.write_bytes(base.read_bytes() + addition.read_bytes())
     write_json(archive / "record.json", {
         "run_id": run_dir.name, "generation_attempt": attempt, "recorded_at": utc_now(),
-        "authorization": "ghinta/oepul-rule-lab#115, 2026-11-20",
+        "authorization": "ghinta/oepul-rule-lab#115, 2026-11-26",
         "usage_guard": guard, "prepared": file_record(base, run_dir),
         "amendment": file_record(addition, run_dir),
         "effective": file_record(effective, run_dir),
@@ -1038,8 +1039,9 @@ def run_agent(args: argparse.Namespace) -> int:
         # One writer, including preflight failures. A stopped process leaves the
         # reservation in place so an explicit fork preserves the whole attempt.
         (run_dir / "raw" / "prompts").mkdir()
+    minimum_start = ASTRA_115_MIN_START_REMAINING_PERCENT if campaign else MIN_START_REMAINING_PERCENT
     usage_guard = {
-        "minimum_start_remaining_percent": MIN_START_REMAINING_PERCENT,
+        "minimum_start_remaining_percent": minimum_start,
         "stop_remaining_percent": STOP_REMAINING_PERCENT,
         "poll_seconds": USAGE_POLL_SECONDS,
         "adapter": adapter,
@@ -1075,13 +1077,13 @@ def run_agent(args: argparse.Namespace) -> int:
         usage_guard["start_remaining_percent"] = start_remaining
         if campaign:
             usage_guard["measured_at"] = utc_now()
-        if start_remaining < MIN_START_REMAINING_PERCENT:
+        if start_remaining < minimum_start:
             usage_client.__exit__()
             metadata["status"] = "not_started_usage_guard"
             usage_guard["status"] = "blocked_start"
             usage_guard["reason"] = (
-                f"remaining quota {start_remaining:.1f}% is below the required "
-                f"{MIN_START_REMAINING_PERCENT:.0f}%"
+                f"remaining quota {start_remaining:g}% is below the required "
+                f"{minimum_start:g}%"
             )
             write_json(run_dir / "run.json", metadata)
             print(f"Rule Lab usage guard: {usage_guard['reason']}", file=sys.stderr)
