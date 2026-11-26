@@ -142,6 +142,18 @@ class CampaignPromptTests(unittest.TestCase):
         self.assertEqual(original, self.snapshot(self.run))
         self.assertEqual(rejection, self.snapshot(blocked))
 
+    def test_fork_rejects_a_workspace_link_before_preflight(self):
+        rules = self.run / "workspace/rules"
+        (rules / "note.txt").write_text("fixture")
+        (rules / "alias.txt").symlink_to("note.txt")
+        destination = self.root / "next"
+        destination.mkdir()
+        with self.assertRaises(SystemExit):
+            self.launch("--attempt-root", str(destination))
+        self.probe.assert_not_called()
+        self.assertFalse((destination / self.run.name / "run.json").exists())
+        self.assertTrue((destination / self.run.name / "workspace/rules/alias.txt").is_symlink())
+
     def test_default_and_other_explicit_weekly_jobs_get_no_campaign_amendment(self):
         for window, minutes in (("five-hour", 300), ("weekly", 10080)):
             with self.subTest(window=window):

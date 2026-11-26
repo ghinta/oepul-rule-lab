@@ -910,12 +910,22 @@ def fork_campaign_attempt(
     """Carry the workspace into a new runs root without modifying the parent."""
     if target == source or source in target.parents:
         raise ValueError("Choose a separate runs root for the new attempt")
+    workspace = source / "workspace"
+    if workspace.is_symlink() or not workspace.is_dir():
+        raise ValueError("Expected a regular workspace directory")
+    for name in ("model.json", "prompt.md", "baseline_profile.json", "run.json"):
+        path = source / name
+        if path.is_symlink() or not path.is_file():
+            raise ValueError(f"Expected a regular parent input: {name}")
     target.mkdir()  # Exclusive. A partial copy is evidence, never a reusable target.
     (target / "raw").mkdir()
     (target / "artifacts").mkdir()
     for name in ("model.json", "prompt.md", "baseline_profile.json"):
         shutil.copy2(source / name, target / name)
-    shutil.copytree(source / "workspace", target / "workspace")
+    copied = target / "workspace"
+    shutil.copytree(workspace, copied, symlinks=True)
+    if any(entry.is_symlink() for entry in copied.rglob("*")):
+        raise ValueError("Symbolic links are not allowed in a copied model workspace")
     parent = target / "raw" / "parent-run.json"
     shutil.copy2(source / "run.json", parent)
     if read_json(parent) != metadata:
