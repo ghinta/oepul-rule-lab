@@ -22,10 +22,11 @@ sicheren, fortsetzbaren Zustand zu bringen; ein harter Limitfehler darf nicht
 als normaler Abschluss behandelt werden. Ein unterbrochener Run wird später
 fortgesetzt oder mit dem vorhandenen Stand finalisiert.
 
-Für die 26 Astra-6.2/high-`discover`-Runs aus Rule Lab #115 hat der Autor am
-20.11.2026 dieselben Grenzen im Wochenfenster (10.080 Minuten) freigegeben.
-Bei expliziter Wochenwahl übergibt der Runner die Ausnahme samt gemessenem
-Startwert im Auftrag. Sie ersetzt für diesen Lauf die Fünf-Stunden-Prüfung.
+Für die 26 Astra-6.2/high-`discover`-Runs aus Rule Lab #115 gilt das am
+20.11.2026 freigegebene Wochenfenster (10.080 Minuten). Am 26.11.2026 hat
+der Autor die Startgrenze auf mindestens 5 % Wochenrestbudget gesenkt. Misst
+der Runner während der Generierung höchstens 5 %, stoppt er den Versuch.
+Bei expliziter Wochenwahl übergibt er beide Grenzen und den Startwert im Auftrag.
 Alle fachlichen Vorgaben gelten weiter.
 
 ## Prioritäten

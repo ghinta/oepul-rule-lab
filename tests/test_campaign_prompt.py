@@ -52,7 +52,7 @@ class CampaignPromptTests(unittest.TestCase):
 
     def test_actual_stdin_is_bound_to_the_preflight_and_prepared_prompt(self):
         before = self.snapshot(self.run)
-        self.budget(50)
+        self.budget(95)
         self.assertEqual(self.launch(), 0)
         meta = cli.read_json(self.run / "run.json")
         rec = cli.read_json(self.run / meta["prompt_record"]["path"])
@@ -66,8 +66,10 @@ class CampaignPromptTests(unittest.TestCase):
         self.assertEqual(before[Path("prompt.md")], rec["prepared"]["sha256"])
         self.assertEqual(received, prepared + amendment)
         self.assertEqual(received, (self.run / rec["effective"]["path"]).read_bytes())
-        self.assertEqual(rec["usage_guard"]["start_remaining_percent"], 50)
-        for detail in ("#115", "10080 Minuten", "50.0 % Restbudget", "Start ab 50 %", "höchstens 5 %"):
+        self.assertEqual(rec["usage_guard"]["start_remaining_percent"], 5)
+        self.assertEqual(rec["usage_guard"]["minimum_start_remaining_percent"], 5)
+        self.assertIn("2026-11-26", rec["authorization"])
+        for detail in ("#115", "10080 Minuten", "5.0 % Restbudget", "Start ab 5 %", "höchstens 5 %"):
             self.assertIn(detail, amendment.decode())
         self.assertEqual(meta["status"], "generated")
         self.assertEqual(cli.main(["finalize", str(self.run)]), 1)
@@ -75,11 +77,13 @@ class CampaignPromptTests(unittest.TestCase):
         self.assertTrue((self.run / "artifacts/grounding-validation.json").is_file())
 
     def test_blocked_preflight_has_no_effective_prompt_or_process(self):
-        self.budget(50.01)
+        self.budget(95.01)
         self.assertEqual(self.launch(), 75)
         self.assertFalse((self.run / "workspace/received.bin").exists())
         self.assertFalse(list(self.run.rglob("effective.md")))
-        self.assertNotIn("prompt_record", cli.read_json(self.run / "run.json"))
+        meta = cli.read_json(self.run / "run.json")
+        self.assertNotIn("prompt_record", meta)
+        self.assertIn("4.99% is below the required 5%", meta["usage_guard"]["reason"])
 
     def test_provider_denial_has_no_prompt_and_no_process(self):
         self.budget(2)
@@ -118,15 +122,15 @@ class CampaignPromptTests(unittest.TestCase):
         first, second = self.root / "first", self.root / "second"
         first.mkdir()
         second.mkdir()
-        self.budget(80)
+        self.budget(96)
         self.assertEqual(self.launch("--attempt-root", str(first)), 75)
         blocked = first / self.run.name
         rejection = self.snapshot(blocked)
-        self.budget(26.25)
+        self.budget(76.25)
         self.assertEqual(self.launch("--attempt-root", str(second), source=blocked), 0)
         child = second / self.run.name
         record = cli.read_json(child / "raw/prompts/2/record.json")
-        self.assertEqual(record["usage_guard"]["start_remaining_percent"], 73.75)
+        self.assertEqual(record["usage_guard"]["start_remaining_percent"], 23.75)
         self.assertIn("vorhandenen Workspace", (child / "workspace/received.bin").read_text())
         self.assertEqual(cli.sha256(child / "raw/parent-run.json"), rejection[Path("run.json")])
         self.assertEqual(cli.sha256(blocked / "raw/parent-run.json"), original[Path("run.json")])

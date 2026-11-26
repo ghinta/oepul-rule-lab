@@ -24,7 +24,9 @@ not log out. Removing that volume removes this runner's login.
 Preflight checks that the App Server initializes and the real Codex sandbox
 allows workspace writes while denying outside writes and network sockets.
 `account_present=false` means login is still needed. The existing Rule Lab
-runner reads the selected window, starts at >=50% remaining and stops at <=5%. Login and quota checks are not generation results.
+runner reads the selected window. The #115 Astra campaign can start at 5%
+weekly budget remaining. Other runs require 50% at start. A reading of 5% or
+less during generation stops the run.
 
 Run the existing command with the generated launcher on PATH, from the
 Rule Lab checkout that owns the prepared run. Use absolute paths when the
